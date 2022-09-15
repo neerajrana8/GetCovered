@@ -30,7 +30,7 @@ module Compliance
       private
         def find_leases
           @lease_ids = []
-          date = Date.current
+          date = Time.current.to_date
           master_policies = Policy.where(policy_type_id: 2, carrier_id: 2)
           master_policies.each do |master|
             master.insurables.communities.each do |community|

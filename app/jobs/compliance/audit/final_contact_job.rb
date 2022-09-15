@@ -7,7 +7,7 @@ module Compliance
       def perform(*)
         unless @leases.nil?
           @leases.each do |lease|
-            days = (Date.current - lease.created_at.to_date).to_i
+            days = (Time.current.to_date - lease.created_at.to_date).to_i
             if days % 2 == 0
               begin
                 Compliance::AuditMailer.with(organization: lease.account)
@@ -33,7 +33,7 @@ module Compliance
       private
         def find_leases
           @lease_ids = []
-          date = Date.current
+          date = Time.current.to_date
           master_policies = Policy.where(policy_type_id: 2, carrier_id: 2)
           master_policies.each do |master|
             master.insurables.communities.each do |community|
