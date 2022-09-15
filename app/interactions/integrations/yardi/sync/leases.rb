@@ -189,7 +189,7 @@ module Integrations
             end
           end
           in_system_lips = nil
-          # create active new and future leases
+          # create active new and future leases (and run updates)
           relevant_tenants.each.with_index do |tenant, tenant_index|
             da_tenants = [tenant] + (tenant["Roommate"].nil? ? [] : tenant["Roommate"].class == ::Array ? tenant["Roommate"] : [tenant["Roommate"]])
             ################### UPDATE MODE ######################
@@ -281,14 +281,16 @@ module Integrations
                 dl.integration_profiles.each{|ip| ip.delete }
                 dl.delete
               end
-              # now ensure we update the move in/out dates
+              # now ensure we update the move in/out dates and primary/lessee statuses
               lease.lease_users.reload.each do |lu|
                 ten = da_tenants.find{|t| t["Id"] == lu.integration_profiles.where(integration: integration).take.external_id }
                 next if ten.nil? # can't happen but just in case
                 moved_in_at = (Date.parse(ten["MoveIn"]) rescue nil)
                 moved_out_at = (Date.parse(ten["MoveOut"]) rescue nil)
-                if (lu.moved_in_at != moved_in_at && !moved_in_at.blank?) || (lu.moved_out_at != moved_out_at && !moved_out_at.blank?)
-                  lu.update(moved_in_at: moved_in_at, moved_out_at: moved_out_at)
+                primary = (tenant["Id"] == ten["Id"])
+                lessee = primary || (ten["Lessee"] == "Yes")
+                if (lu.moved_in_at != moved_in_at && !moved_in_at.blank?) || (lu.moved_out_at != moved_out_at && !moved_out_at.blank?) || (lu.primary != primary) || (lu.lessee != lessee)
+                  lu.update(moved_in_at: moved_in_at, moved_out_at: moved_out_at, primary: primary, lessee: lessee)
                 end
               end
               # skip create mode stuff since the lease was pre-existing
