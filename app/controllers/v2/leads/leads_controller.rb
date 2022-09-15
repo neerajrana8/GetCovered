@@ -77,6 +77,7 @@ module V2
         end
 
         leads = leads.not_converted
+        leads = leads.join_last_events
         leads = leads.by_last_visit(date_from, date_to)
 
         # Pagination
