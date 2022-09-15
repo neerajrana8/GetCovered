@@ -5,6 +5,8 @@ module V2
       before_action :authenticate_staff!
 
       def list
+        page = 1
+        per = 50
         filter = {}
         filter = params[:filter] if params[:filter].present?
 
@@ -27,6 +29,12 @@ module V2
           :branding_profile
         )
 
+        if current_staff.role == 'staff' && !current_staff.getcovered_agent?
+          if current_staff.organizable_type == 'Account'
+            filter[:account_id] = [current_staff.organizable.id]
+          end
+        end
+
         if current_staff.organizable_type == 'Agency'
           current_agency = Agency.find(current_staff.organizable_id)
           # We are root agency
@@ -43,12 +51,19 @@ module V2
         leads = leads.by_account(filter[:account_id]) unless filter[:account_id].nil?
         leads = leads.by_branding_profile(filter[:branding_profile_id]) unless filter[:branding_profile_id].nil?
         leads = leads.archived if filter[:archived] == true
-        leads = leads.not_converted
-        leads = leads.by_last_visit(date_from, date_to)
 
-        policy_type_id = filter[:lead_events][:policy_type_id] if filter[:lead_events]
+        if filter[:lead_events].present?
+          leads_by_policy_type =
+            Lead.select(:id).distinct(:id).presented.not_converted
+              .includes(:account, :agency, :branding_profile, :lead_events).preload(:lead_events)
+              .where(
+                lead_events: { policy_type_id: filter[:lead_events][:policy_type_id] },
+                last_visit: date_from..date_to,
+                archived: false
+              )
 
-        leads = leads.join_last_events(policy_type_id)
+          leads = leads.where(id: leads_by_policy_type.pluck(:lead_id))
+        end
 
         # Tracking urls and parameters filtering
 
@@ -61,11 +76,15 @@ module V2
           leads = leads.where(tracking_url_id: tracking_url_ids)
         end
 
+        leads = leads.not_converted
+        leads = leads.by_last_visit(date_from, date_to)
+
         # Pagination
         if params[:pagination].present?
-          params[:pagination][:page] += 1
-          params[:pagination][:per] = 20 if params[:pagination][:per].zero?
-          @leads = leads.page(params[:pagination][:page]).per(params[:pagination][:per])
+          page = params[:pagination][:page]
+          per = params[:pagination][:per] if params[:pagination][:per].present?
+          @leads = leads.page(page).per(per)
+
           # TODO: Deprecate headers pagination unless client side support fixed
           response.headers['total-pages'] = @leads.total_pages
           response.headers['current-page'] = @leads.current_page
@@ -73,6 +92,8 @@ module V2
         else
           @leads = leads.limit(2) # Limit 2 To comply with rspec test
         end
+
+        @meta = { total: leads.count, page: @leads.current_page, per: per }
 
         # TODO: Copied from old code, needs to be moved to separate endpoint
         if need_to_download?
