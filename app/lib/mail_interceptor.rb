@@ -5,10 +5,10 @@ class MailInterceptor
     email_ids.each do |f|
       user = User.find_by('email = ? or uid = ?', f, f)
       next unless user
-      if 'Finish Registering'.in?(message.subject) || 'Reset password'.in?(message.subject) || 'Portal Invitation'.in?(message.subject)
+      if 'Reset password'.in?(message.subject) || 'Portal Invitation'.in?(message.subject)
         body = 'Sensitive information is hidden'
       else
-        body = message.body
+        body = message.body&.parts&.parts&.first&.body ? message.body&.parts&.parts&.first&.body : message.body
       end
       contact_record = ContactRecord.new(
         direction: 'outgoing',
