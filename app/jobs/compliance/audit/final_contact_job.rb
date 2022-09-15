@@ -38,7 +38,7 @@ module Compliance
           master_policies.each do |master|
             master.insurables.communities.each do |community|
               community_lease_ids = Lease.where(insurable_id: community.units.pluck(:id),
-                                                created_at: (date - 4.days).at_beginning_of_day..,
+                                                created_at: DateTime.new(1900,1,1)..(date - 4.days).at_beginning_of_day,
                                                 start_date: date..,
                                                 covered: false).pluck(:id)
               @lease_ids = @lease_ids + community_lease_ids
