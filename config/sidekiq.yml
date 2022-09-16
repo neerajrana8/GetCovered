@@ -37,6 +37,9 @@ production:
   active_policies_reports_job:
     cron: '0 2 * * *'   # Every day at 2:00 AM
     class: Reports::ActivePoliciesReportsJob
+  generate_and_send_cancellation_list_job:
+    cron: '0 2 * * *'   # Every day at 2:00 AM
+    class: CarrierQBE::GenerateandSendCancellationListJob
   confie_report:
     cron: '35 * * * *' # Every hour, thirty-five minutes in
     class: Reports::ConfieReportJob
