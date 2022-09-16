@@ -85,6 +85,9 @@ module V2
         if params[:pagination].present?
           page = params[:pagination][:page]
           per = params[:pagination][:per] if params[:pagination][:per].present?
+          # TODO: Support frontend flaw behaviour
+          page = 1 if page.zero?
+          per = 50 if per.zero?
           @leads = leads.page(page).per(per)
 
           # TODO: Deprecate headers pagination unless client side support fixed
