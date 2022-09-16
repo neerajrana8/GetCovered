@@ -29,13 +29,15 @@ module V2
           end
 
           if params[:filter][:has_policies].present?
-            policy_users_ids = PolicyUser.all.pluck(:user_id)
-            users = users.where(id: policy_users_ids)
+            users = users.where(has_existing_policies: true)
           end
 
           if params[:filter][:has_leases].present?
-            lease_users_ids = LeaseUser.all.pluck(:user_id)
-            users = users.where(id: lease_users_ids)
+            users = users.where(has_leases: true)
+          end
+
+          if params[:filter][:has_current_leases].present?
+            users = users.where(has_current_leases: true)
           end
 
           if params[:filter][:full_name].present?
