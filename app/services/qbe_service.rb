@@ -324,7 +324,11 @@ class QbeService
       request_time = Time.current
       policies_list = []
 
-      policies_list.concat Policy.current.unpaid.where(billing_behind_since: Time.current.to_date - 1.days)
+      offset = request_time.wday == 1 ? 2 : 1
+
+      policies_list.concat Policy.current.unpaid.where(billing_behind_since: Time.current.to_date - offset.days,
+                                                       carrier_id: 1,
+                                                       policy_type_id: 1)
       policies_list.concat Policy.current.RESCINDED
 
       options[:data] = {
