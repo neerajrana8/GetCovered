@@ -164,7 +164,7 @@ module V2
         render json: stats
       end
 
-      def list
+      def list_deprecated
         filter = {}
         filter = params[:filter] if params[:filter].present?
 
