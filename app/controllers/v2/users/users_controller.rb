@@ -28,16 +28,16 @@ module V2
             users = users.includes(:account_users).where(account_users: { account_id: account_ids })
           end
 
-          if params[:filter][:has_policies].present?
-            users = users.where(has_existing_policies: true)
+          if params[:filter][:has_existing_policies].present?
+            users = users.where(has_existing_policies: params[:filter][:has_existing_policies])
           end
 
           if params[:filter][:has_leases].present?
-            users = users.where(has_leases: true)
+            users = users.where(has_leases: params[:filter][:has_leases])
           end
 
           if params[:filter][:has_current_leases].present?
-            users = users.where(has_current_leases: true)
+            users = users.where(has_current_leases:  params[:filter][:has_current_leases])
           end
 
           if params[:filter][:full_name].present?
@@ -48,6 +48,7 @@ module V2
             users = users.where("email ILIKE '%#{params[:filter][:email]}%'")
           end
         end
+        Rails.logger.info "#DEBUG #{users.to_sql}"
 
         # Sorting
         if params[:sort].present?
