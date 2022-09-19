@@ -361,8 +361,8 @@ module Integrations
                 roommate_index = 0
                 policy_hash = {
                   Customer: {
-                    Identification: users_to_export.map{|u| { "IDValue" => u[:external_id], "IDType" => !u[:external_id].downcase.start_with?("r") ? "Resident ID" : "Roomate#{roommate_index += 1} ID" } },
-                    #Identification: users_to_export.map{|u| { "IDValue" => u[:external_id], "IDType" => u[:policy_user].primary ? "Resident ID" : "Roomate#{roommate_index += 1} ID" } },
+                    #Identification: users_to_export.map{|u| { "IDValue" => u[:external_id], "IDType" => !u[:external_id].downcase.start_with?("r") ? "Resident ID" : "Roomate#{roommate_index += 1} ID" } },
+                    Identification: users_to_export.map{|u| { "IDValue" => u[:external_id], "IDType" => u[:policy_user].primary ? "Resident ID" : "Roomate#{roommate_index += 1} ID" } },
                     Name: {
                         "FirstName" => priu[:policy_user].user.profile.first_name,
                         "MiddleName" => priu[:policy_user].user.profile.middle_name.blank? ? nil : priu[:policy_user].user.profile.middle_name,
