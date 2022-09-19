@@ -34,9 +34,6 @@ production:
     cron: '0 5 * * *' # Every Day at 5:00 AM
     class: Compliance::Audit::FinalContactJob
   # Reports
-  active_policies_reports_job:
-    cron: '0 2 * * *'   # Every day at 2:00 AM
-    class: Reports::ActivePoliciesReportsJob
   generate_and_send_cancellation_list_job:
     cron: '0 2 * * *'   # Every day at 2:00 AM
     class: CarrierQBE::GenerateandSendCancellationListJob
