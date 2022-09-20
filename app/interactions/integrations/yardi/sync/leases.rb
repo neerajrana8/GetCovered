@@ -101,7 +101,7 @@ module Integrations
         
         def fix_ridiculous_swaps(lease, tenant, da_tenants)
           # look for residents whose codes have swapped
-          from_system = lease.lease_users.map{|lu| [lu.integration_profiles.external_id, { lease_user: lu, first_name: lu.user.profile.first_name, last_name: lu.user.profile.last_name, middle_name: lu.user.profile.middle_name }] }.to_h
+          from_system = lease.lease_users.map{|lu| [lu.integration_profiles.take&.external_id, { lease_user: lu, first_name: lu.user.profile.first_name, last_name: lu.user.profile.last_name, middle_name: lu.user.profile.middle_name }] }.to_h
           from_yardi = da_tenants.map do |ten|
             firster = (ten["FirstName"].blank? ? "Unknown" : ten["FirstName"]).strip
             laster = (ten["LastName"].blank? ? "Unknown" : ten["LastName"]).strip
