@@ -16,7 +16,6 @@ module Policies
         'Hallo Verlierer,',
         'QeyHa \'moHwI\',',
         'Arr, matey,',
-        'Иди на хуй,',
         'Sataa kuin Esterin perseestä',
         'ته دې په بشپړه توګه تباه شې!',
         'ψ I̴̖̖̍̾̚͝ ̴̨̫̜͖̯͐ẅ̵̗̌́i̶̜̫̲̎͂̉̄̚l̷͚̭͎̞̤̈́͛l̶̲̻͓͈̗̈́̃̆͑̑ ̶͎̩̇͐͠d̶̼̫̦͘͝ë̶͙́͒͌v̴͉̜̭͂͊̽ͅo̶̡͕͔̭̻̓͝ŭ̴̩̘̭̗́̃͝ŕ̵̖̉͐̎͛ ̸͔̯͎̭̉͒ŷ̵̪̻͔o̷̪͎̙̮͒̽͠ǘ̶̱r̶̦̟̤̮̙͋̅͐ ̴̫͒̎̔s̶̢͂o̵͕̩͂͋̀̀ử̶͓̖͔̐̎l̶̛̳͙͉̆ ψ',
@@ -88,9 +87,10 @@ module Policies
     end
 
     private
+
+
     def set_variables
       @policy = params[:policy]
-      @staff = params[:staff]
       @staff = params[:staff]
       @agency = @policy.agency
       @account = @policy.account

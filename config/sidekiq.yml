@@ -22,7 +22,7 @@ production:
     class: Insurables::RefreshInsurableDataJob
   # Compliance
   configuration_sweep_job:
-    cron: '0 2 * * *'   # Every day at 3:00 AM
+    cron: '0 2 * * *'   # Every day at 2:00 AM
     class: Compliance::Policies::MasterCoverageSweepJob
   first_contact_job:
     cron: '0 3 * * *' # Every Day at 3:00 AM
@@ -34,9 +34,9 @@ production:
     cron: '0 5 * * *' # Every Day at 5:00 AM
     class: Compliance::Audit::FinalContactJob
   # Reports
-  active_policies_reports_job:
+  generate_and_send_cancellation_list_job:
     cron: '0 2 * * *'   # Every day at 2:00 AM
-    class: Reports::ActivePoliciesReportsJob
+    class: CarrierQBE::GenerateandSendCancellationListJob
   confie_report:
     cron: '35 * * * *' # Every hour, thirty-five minutes in
     class: Reports::ConfieReportJob
@@ -101,6 +101,9 @@ production:
   create_commissions_for_policy_premium_item_transactions_job:
     cron: '0 5 * * *' # Every day at 5:00 AM
     class: CreateCommissionsForPolicyPremiumItemTransactionsJob
+  gmail_mail_sync_job:
+    cron: '0 1 * * *'   # Every day at 1:00 AM
+    class: GmailMailSyncJob
   # Yardi Sync
   yardi_sync_job:
     cron: '0 1 * * *' # Every day at 1:00 AM

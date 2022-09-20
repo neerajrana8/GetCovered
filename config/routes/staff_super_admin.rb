@@ -42,6 +42,7 @@
     post :accounts_index, action: :index, controller: :accounts
 
     resources :addresses, only: [:index]
+    #resources :communities, only: [:index]
 
     resources :refunds,
       only: [ :index, :create, :update] do
@@ -227,6 +228,8 @@
         post :pay_with_stripe
       end
     end
+
+    resources :fees, only: [:index, :show, :create, :update]
 
     resources :global_agency_permissions, only: [:update] do
       collection do
@@ -443,5 +446,10 @@
 
     resources :notification_settings,
               only: [ :index, :show, :update ]
+    resources :contact_records, only: [:index, :show]
+    get '/gmail_sync', to: 'contact_records#gmail_sync'
+    post '/contact_records', to: 'contact_records#user_mails'
+
+
   end
 # end

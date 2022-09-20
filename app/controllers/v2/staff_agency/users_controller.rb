@@ -10,13 +10,16 @@ module V2
       check_privileges 'property_management.users'
 
       def index
-
         query = @agency.active_users
         if params[:community_like]
           communities = Insurable.where(insurable_type_id: InsurableType::COMMUNITIES_IDS).where("title ILIKE ?", "%#{params[:community_like]}%")
           unit_ids = communities.map{ |c| c.units.pluck(:id) }.flatten
           policy_ids = PolicyInsurable.where(insurable_id: unit_ids).pluck(:policy_id)
           query = query.references(:policy_users).includes(:policy_users).where(policy_users: { policy_id: policy_ids })
+        end
+
+        if params[:t_code]
+          query = query.joins(:integration_profiles).where(integration_profiles: { external_id: params[:t_code], external_context: "resident" })
         end
 
         super(:@users, query, :profile, :accounts)

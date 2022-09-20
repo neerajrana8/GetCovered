@@ -117,14 +117,17 @@ gem 'ruby-prof', require: false
 gem 'addressable'
 
 gem 'klaviyo', :github => 'getcoveredllc/ruby-klaviyo'
-gem 'minuteman'
 
 gem 'rack-attack'
 gem 'dry-monads'
 
 gem 'rails-i18n', '~> 6.0.0'
+gem 'google-apis-gmail_v1'
+gem 'sendgrid-ruby'
 
 gem 'rswag-api'
+
+gem 'data_migrate'
 
 group :local, :development, :test, :test_container do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console

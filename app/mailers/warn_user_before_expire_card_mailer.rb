@@ -14,4 +14,5 @@ class WarnUserBeforeExpireCardMailer < ApplicationMailer
 
     mail(from: 'support@' + @branding_profile.url, to: @user.email, subject: subject)
   end
+
 end

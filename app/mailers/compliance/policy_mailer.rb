@@ -16,7 +16,7 @@ module Compliance
       subject = "Your insurance will expire soon!"
 
       mail(to: @user.contact_email,
-           bcc: ['brandon@getcovered.io', 'dylan@getcovered.io'],
+           bcc: "systememails@getcovered.io",
            from: @from,
            subject: subject,
            template_path: 'compliance/policy',
@@ -44,7 +44,7 @@ module Compliance
                 "policyverify@getcovered.io"
 
       mail(to: @user.contact_email,
-           bcc: ['brandon@getcovered.io', 'dylan@getcovered.io'],
+           bcc: "systememails@getcovered.io",
            from: @from,
            subject: "You are out of compliance",
            template_path: 'compliance/policy')
@@ -63,7 +63,7 @@ module Compliance
       @from = @pm_account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] : "policyverify@getcovered.io"
 
       mail(to: @user.contact_email,
-           bcc: ['brandon@getcovered.io', 'dylan@getcovered.io'],
+           bcc: "systememails@getcovered.io",
            from: @from,
            subject: "Default Policy Enrollment",
            template_path: 'compliance/policy')
@@ -80,9 +80,12 @@ module Compliance
 
       @onboarding_url = tokenized_url(@user, @community)
 
-      @from = @pm_account&.contact_info&.has_key?("contact_email") &&
-        !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] :
-                "policyverify@getcovered.io"
+      @from = nil
+      unless @pm_account.nil?
+        @from = @pm_account&.contact_info["contact_email"] if @pm_account&.contact_info&.has_key?("contact_email") &&
+          (!@pm_account&.contact_info["contact_email"].nil? || !@pm_account&.contact_info["contact_email"].blank?)
+      end
+      @from = "policyverify@getcovered.io" if @from.nil?
 
       case @policy.status
       when "EXTERNAL_UNVERIFIED"
@@ -97,7 +100,7 @@ module Compliance
         ['EXTERNAL_UNVERIFIED','EXTERNAL_VERIFIED','EXTERNAL_REJECTED'].include?(@policy.status)
 
       mail(to: @user.contact_email,
-           bcc: ['brandon@getcovered.io', 'dylan@getcovered.io'],
+           bcc: "systememails@getcovered.io",
            from: @from,
            subject: subject,
            template_path: 'compliance/policy') if sending_condition
