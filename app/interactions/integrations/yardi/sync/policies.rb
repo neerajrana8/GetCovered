@@ -7,39 +7,39 @@ module Integrations
         array :property_ids, default: nil
         date :from_date, default: nil
         
-        def export_policy_document(property_id:, policy:, resident_id:, policy_ip: policy.integration_profiles.where(integration: integration).take)
+        def export_policy_document(property_id:, policy:, resident_id:, policy_ip: policy.integration_profiles.to_a.find{|pip| pip.integration_id == integration.id).take)
+          return "Document push not enabled" unless integration.configuration.dig('sync', 'policy_push', 'push_document')
+          return "Attachment type not set up" unless !integration.configuration.dig('sync', 'policy_push', 'attachment_type').blank?
+          return nil unless policy.documents.count > 0
+          return nil unless !policy_ip.configuration['exported_to_primary']
+          
           problem = nil
-          if  (
-                integration.configuration.dig('sync', 'policy_push', 'push_document') &&
-                !integration.configuration.dig('sync', 'policy_push', 'attachment_type').blank? &&
-                policy.documents.count > 0 &&
-                !policy_ip.configuration['exported_to_primary']
-              )
-            policy_document = policy.documents.last # MOOSE WARNING: change to something more reliable once we have a system for labelling documents properly
-            result2 = Integrations::Yardi::ResidentData::ImportTenantLeaseDocumentPDF.run!(
-              integration: integration,
-              property_id: property_id,
-              resident_id: resident_id,
-              attachment_type: integration.configuration['sync']['policy_push']['attachment_type'],
-              description: "(GC) Policy ##{policy.number}",
-              attachment: policy_document
-            )
-            attachment_result = (result2[:parsed_response].dig("Envelope", "Body", "ImportTenantLeaseDocumentPDFResponse", "ImportTenantLeaseDocumentPDFResult", "ImportAttach", "DocumentAttachment", "Result") rescue nil)
-            policy_ip.configuration['exported_documents_to'] ||= {}
-            if !attachment_result.blank? && attachment_result.start_with?("Successful")
-              #policy_ip.configuration['exported_to_primary'] = true
-              #policy_ip.configuration['exported_to_primary_as'] = (attachment_result.split(':')[1] rescue nil) # cut off initial "Successful:"
-              #policy_ip.configuration['exported_to_primary_freak_response'] = result2[:parsed_response] if  policy_ip.configuration['exported_to_primary_as'].nil?
-              policy_ip.configuration['exported_documents_to'][resident_id] = { success: true, event_id: result2[:event]&.id, filename: (attachment_result.split(':')[1] rescue nil) }
-              policy_ip.save
-            else
-              problem = "Yardi responded to our upload request in a way that could not be understood."
-              #policy_ip.configuration['exported_to_primary'] = false
-              #policy_ip.configuration['exported_to_primary_as'] = nil
-              #policy_ip.configuration['exported_to_primary_freak_response'] = result2[:parsed_response]
-              policy_ip.configuration['exported_documents_to'][resident_id] = { success: false, event_id: result2[:event]&.id }
-              policy_ip.save
+          policy_document = policy.documents.last # MOOSE WARNING: change to something more reliable once we have a system for labelling documents properly
+          result2 = Integrations::Yardi::ResidentData::ImportTenantLeaseDocumentPDF.run!(
+            integration: integration,
+            property_id: property_id,
+            resident_id: resident_id,
+            attachment_type: integration.configuration['sync']['policy_push']['attachment_type'],
+            description: "(GC) Policy ##{policy.number}",
+            attachment: policy_document
+          )
+          attachment_result = (result2[:parsed_response].dig("Envelope", "Body", "ImportTenantLeaseDocumentPDFResponse", "ImportTenantLeaseDocumentPDFResult", "ImportAttach", "DocumentAttachment", "Result") rescue nil)
+          policy_ip.configuration['exported_documents_to'] ||= {}
+          if !attachment_result.blank? && attachment_result.start_with?("Successful")
+            #policy_ip.configuration['exported_to_primary'] = true
+            #policy_ip.configuration['exported_to_primary_as'] = (attachment_result.split(':')[1] rescue nil) # cut off initial "Successful:"
+            #policy_ip.configuration['exported_to_primary_freak_response'] = result2[:parsed_response] if  policy_ip.configuration['exported_to_primary_as'].nil?
+            policy_ip.configuration['exported_documents_to'][resident_id] = { success: true, event_id: result2[:event]&.id, filename: (attachment_result.split(':')[1] rescue nil) }
+            unless policy_ip.save
+              problem = "Had a problem saving policy IP changes: #{policy_ip.errors.to_h}"
             end
+          else
+            problem = "Yardi responded to our upload request in a way that could not be understood."
+            #policy_ip.configuration['exported_to_primary'] = false
+            #policy_ip.configuration['exported_to_primary_as'] = nil
+            #policy_ip.configuration['exported_to_primary_freak_response'] = result2[:parsed_response]
+            policy_ip.configuration['exported_documents_to'][resident_id] = { success: false, event_id: result2[:event]&.id }
+            policy_ip.save
           end
           return problem
         end

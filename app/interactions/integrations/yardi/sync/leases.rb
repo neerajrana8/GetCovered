@@ -99,40 +99,30 @@ module Integrations
           return user
         end
         
-        def create_user(tenant, ten, created_by_email, created_users, user_errors, user_ip_ids, create_ip: true) # tenant is a t-code resident hash, ren is either the same hash or a roommate hash from inside it
-          userobj = ::User.create_with_random_password(email: ten["Email"], profile_attributes: {
-            first_name: ten["FirstName"],
-            last_name: ten["LastName"],
-            middle_name: ten["MiddleName"],
-            contact_phone: ten["Phone"]&.select{|x| x["PhoneDescription"] == "cell" || x["PhoneDescription"] == "home" }&.sort_by{|x| { "cell" => 0, "home" => 1 }[x["PhoneDescription"]] || 999 }&.first&.[]("PhoneNumber")
-          }.compact)
-          unless userobj.id
-            user_errors[tenant["Id"]] ||= {}
-            user_errors[tenant["Id"]][ten["Id"]] = "Failed to create user #{ten["FirstName"]} #{ten["LastName"]}: #{userobj.errors.to_h}"
-            return nil
+        def fix_ridiculous_swaps(lease, tenant, da_tenants)
+          # look for residents whose codes have swapped
+          from_system = lease.lease_users.map{|lu| [lu.integration_profiles.external_id, { lease_user: lu, first_name: lu.user.profile.first_name, last_name: lu.user.profile.last_name, middle_name: lu.user.profile.middle_name }] }.to_h
+          from_yardi = da_tenants.mapdo |ten|
+            firster = (ten["FirstName"].blank? ? "Unknown" : ten["FirstName"]).strip
+            laster = (ten["LastName"].blank? ? "Unknown" : ten["LastName"]).strip
+            middler = ten["MiddleName"]
+            [ten["Id"], { first_name: ten["FirstName"], last_name: ten["LastName"], middle_name: middler }]
+          end.to_h
+          # build name-based mapping
+          changed = []
+          mapping = from_system.map do |eid, system_data|
+            next [eid, eid] if from_yardi[eid]&.[](:first_name) == system_data[:first_name] && from_yardi[eid]&.[](:last_name) == system_data[:last_name]
+            next [eid,
+              from_yardi.select{|yeid, ydata| ydata[:first_name] == system_data[:first_name] && ydata[:last_name] == system_data[:last_name] }.keys&.first
+            ]
+          end.to_h
+          # find flipsy flopsies and flop their ids about
+          kings_of_the_sea = []
+          mapping.each{|seid, yeid| kings_of_the_sea.push({ seid: seid, yeid: yeid }) if yeid != seid && mapping[yeid] == seid && !kings_of_the_sea.any?{|flipper| flipper[:seid] == yeid && flipper[:yeid] == seid } }
+          kings_of_the_sea.each do |flipper|
+            next if !from_system.has_key(flipper[:seid]) || !from_system.has_key(flipper[:yeid])
+            Integrations::Yardi::SwapResidentIds.run!(integration: integration, id1: flipper[:seid], id2: flipper[:yeid])
           end
-          created_by_email[ten["Email"]&.downcase] = userobj unless ten["Email"].blank?
-          created_users[tenant["Id"]] ||= {}
-          created_users[tenant["Id"]][ten["Id"]] = userobj
-          if create_ip
-            created_profile = IntegrationProfile.create(
-              integration: integration,
-              profileable: userobj,
-              external_context: "resident",
-              external_id: ten["Id"],
-              configuration: {
-                'synced_at' => Time.current.to_s
-              }
-            )
-            if created_profile.id.nil?
-              user_errors[tenant["Id"]] ||= {}
-              user_errors[tenant["Id"]][ten["Id"]] = "Failed to create IntegrationProfile for user #{ten["FirstName"]} #{ten["LastName"]} (GC id #{userobj.id}): #{created_profile.errors.to_h}"
-              return nil
-            else
-              user_ip_ids[ten["Id"]] = created_profile.id
-            end
-          end
-          return userobj
         end
         
         
@@ -293,6 +283,8 @@ module Integrations
                   lu.update(moved_in_at: moved_in_at, moved_out_at: moved_out_at, primary: primary, lessee: lessee)
                 end
               end
+              # handle ridiculous swaps
+              fix_ridiculous_swaps(lease, tenant, da_tenants)
               # skip create mode stuff since the lease was pre-existing
               next 
             end
