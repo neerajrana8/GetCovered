@@ -47,7 +47,7 @@ module V2
           end
 
           # We are sub agency
-          filter[:agency_id] = current_agency.id unless current_agency.agency_id.nil?
+          filter[:agency_id] = [current_agency.id] unless current_agency.agency_id.nil?
         end
 
         leads = leads.by_agency(filter[:agency_id]) unless filter[:agency_id].nil?

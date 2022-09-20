@@ -30,7 +30,7 @@ module V2
             filter[:agency_id] = sub_agencies_ids
           end
 
-          filter[:agency_id] = current_agency.id unless current_agency.agency_id.nil?
+          filter[:agency_id] = [current_agency.id] unless current_agency.agency_id.nil?
         end
 
         cache_key = generate_cache_key(CACHE_KEY, filter)
