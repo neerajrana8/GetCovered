@@ -7,7 +7,7 @@ module Integrations
         array :property_ids, default: nil
         date :from_date, default: nil
         
-        def export_policy_document(property_id:, policy:, resident_id:, policy_ip: policy.integration_profiles.to_a.find{|pip| pip.integration_id == integration.id).take)
+        def export_policy_document(property_id:, policy:, resident_id:, policy_ip: policy.integration_profiles.to_a.find{|pip| pip.integration_id == integration.id }.take)
           return "Document push not enabled" unless integration.configuration.dig('sync', 'policy_push', 'push_document')
           return "Attachment type not set up" unless !integration.configuration.dig('sync', 'policy_push', 'attachment_type').blank?
           return nil unless policy.documents.count > 0
@@ -113,8 +113,7 @@ module Integrations
                 next nil if temp.nil?
                 temp = [temp] unless temp.class == ::Array
                 temp.map{|t| t["IDValue"] }
-              end.compact.flatten,
-              profileable_type: "User"
+              end.compact.flatten
             ).select(:external_id, :profileable_id).distinct.pluck(:external_id, :profileable_id).to_h
             # get data on policies that for whatever reason we need to try importing regardless of updated status (maybe we failed to save a Policy record for them last time, for example)
             not_present_in_yardi = [] # track policy numbers that were in pending_yardi_policy_numbers but that Yardi says it's never heard of
