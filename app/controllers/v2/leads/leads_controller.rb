@@ -45,6 +45,9 @@ module V2
             sub_agencies_ids << current_staff.organizable_id
             filter[:agency_id] = sub_agencies_ids
           end
+
+          # We are sub agency
+          filter[:agency_id] = current_agency.id unless current_agency.agency_id.nil?
         end
 
         leads = leads.by_agency(filter[:agency_id]) unless filter[:agency_id].nil?
