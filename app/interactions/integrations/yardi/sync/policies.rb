@@ -10,8 +10,8 @@ module Integrations
         def export_policy_document(property_id:, policy:, resident_id:, policy_ip: policy.integration_profiles.to_a.find{|pip| pip.integration_id == integration.id }.take)
           return "Document push not enabled" unless integration.configuration.dig('sync', 'policy_push', 'push_document')
           return "Attachment type not set up" unless !integration.configuration.dig('sync', 'policy_push', 'attachment_type').blank?
-          return nil unless policy.documents.count > 0
-          return nil unless !policy_ip.configuration['exported_to_primary']
+          return false unless policy.documents.count > 0 # return false instead of nil to say not only were there no errors but also we didn't do anything
+          return false unless !policy_ip.configuration['exported_to_primary']
           
           problem = nil
           policy_document = policy.documents.last # MOOSE WARNING: change to something more reliable once we have a system for labelling documents properly
@@ -26,9 +26,9 @@ module Integrations
           attachment_result = (result2[:parsed_response].dig("Envelope", "Body", "ImportTenantLeaseDocumentPDFResponse", "ImportTenantLeaseDocumentPDFResult", "ImportAttach", "DocumentAttachment", "Result") rescue nil)
           policy_ip.configuration['exported_documents_to'] ||= {}
           if !attachment_result.blank? && attachment_result.start_with?("Successful")
-            #policy_ip.configuration['exported_to_primary'] = true
             #policy_ip.configuration['exported_to_primary_as'] = (attachment_result.split(':')[1] rescue nil) # cut off initial "Successful:"
             #policy_ip.configuration['exported_to_primary_freak_response'] = result2[:parsed_response] if  policy_ip.configuration['exported_to_primary_as'].nil?
+            policy_ip.configuration['exported_to_primary'] = true if policy.policy_users.find{|pu| pu.primary }&.integration_profiles&.take&.external_id == resident_id
             policy_ip.configuration['exported_documents_to'][resident_id] = { success: true, event_id: result2[:event]&.id, filename: (attachment_result.split(':')[1] rescue nil) }
             unless policy_ip.save
               problem = "Had a problem saving policy IP changes: #{policy_ip.errors.to_h}"
@@ -415,7 +415,7 @@ module Integrations
                 export_problem = export_policy_document(property_id: property_id, policy: policy, resident_id: priu[:external_id], policy_ip: policy_ip)
                 if export_problem.nil?
                   to_return[:policy_documents_exported].push(policy.number)
-                else
+                elsif export_problem # it will be false if it neither errored nor needed to be run
                   to_return[:policy_export_errors][policy.number] = "Document upload failure: #{export_problem}"
                 end
               end # end if !policy_document_exported
