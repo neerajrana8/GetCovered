@@ -30,7 +30,7 @@ class GmailMailSyncJob < ApplicationJob
     service.authorization = authorize
     user_id = 'me'
     history_id = ContactRecord.where(source: 'gmail').last.thread_id
-    result = service.list_user_histories(user_id, start_history_id: history_id)
+    result = service.list_user_histories(user_id, start_history_id: history_id, max_results: 500)
     if result&.history
       result.history.each do |f|
         begin
@@ -61,14 +61,17 @@ class GmailMailSyncJob < ApplicationJob
   def process_message(mail_data)
     from_email_id = find_email(mail_data.payload.headers.detect { |f| f.name === 'From' }.value).downcase
     to_email_id = find_email(mail_data.payload.headers.detect { |f| f.name === 'To' }.value).downcase
-    user = User.where(email: [from_email_id, to_email_id]).or(User.where(uid: [from_email_id, to_email_id]))
-    if user
+    if User.where(email: [from_email_id, to_email_id]).or(User.where(uid: [from_email_id, to_email_id]))&.count > 0
+      user = User.where(email: [from_email_id, to_email_id]).or(User.where(uid: [from_email_id, to_email_id]))
+    else
+      user = User.joins(:profile).where(profile: { contact_email: [from_email_id, to_email_id] })
+    end
+    if user&.count > 0
       record_mail(mail_data, user.last)
     else
       logger.info to_email_id + 'user not found'
     end
   end
-
   def record_mail(mail_data, user)
 
     contact_record = ContactRecord.new(
@@ -76,7 +79,12 @@ class GmailMailSyncJob < ApplicationJob
       direction: 'incoming',
       status: 'Delivered',
       contactable: user,
-      body: mail_data.payload.body.data ? mail_data.payload.body.data : mail_data.snippet ,
+      body: if mail_data.payload.body.data
+              mail_data.payload.body.data
+            elsif mail_data.payload&.parts&.first&.body&.data
+              mail_data.payload&.parts&.first&.body&.data
+            else mail_data.snippet
+            end,
       source: 'gmail',
       thread_id: mail_data.history_id,
       subject: mail_data.payload.headers.detect { |f| f.name === 'Subject' }.value,
