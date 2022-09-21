@@ -120,7 +120,7 @@ module Integrations
           kings_of_the_sea = []
           mapping.each{|seid, yeid| kings_of_the_sea.push({ seid: seid, yeid: yeid }) if yeid != seid && mapping[yeid] == seid && !kings_of_the_sea.any?{|flipper| flipper[:seid] == yeid && flipper[:yeid] == seid } }
           kings_of_the_sea.each do |flipper|
-            next if !from_system.has_key(flipper[:seid]) || !from_system.has_key(flipper[:yeid])
+            next if !from_system.has_key?(flipper[:seid]) || !from_system.has_key?(flipper[:yeid])
             Integrations::Yardi::SwapResidentIds.run!(integration: integration, id1: flipper[:seid], id2: flipper[:yeid])
           end
         end
