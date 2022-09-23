@@ -42,7 +42,7 @@
     post :accounts_index, action: :index, controller: :accounts
 
     resources :addresses, only: [:index]
-    resources :communities, only: [:index]
+    #resources :communities, only: [:index]
 
     resources :refunds,
       only: [ :index, :create, :update] do
@@ -451,5 +451,10 @@
     post '/contact_records', to: 'contact_records#user_mails'
 
 
+    scope module: :special_tasks, path: "special_tasks" do
+      get '/lcr/:account_id', to: "lease_coverage_reports_controller#defaults_for"
+      post '/lcr', to: "lease_coverage_reports_controller#generate"
+    end
+    
   end
 # end

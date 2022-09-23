@@ -241,3 +241,13 @@ render(
   status: 401
 )
 ```
+
+##### Using data migrations
+
+Currently we split schema migrations and data migrations to keep track of changes on prod. Please each time when you understand that there is a need to change any field value on prod or dev create data migration and run deploy with steps decribed below. For separating migrations we use gem https://github.com/ilyakatz/data-migrate 
+1) create data migration with command ```  rails g data_migration add_this_to_that ``` 
+2) find your newly created migration in db/data folder
+3) add any data updates which need to be applied (don't forget about up and down methods to make it revertable)
+4) run ``` rake data:migrate ``` and check how it goes. if needed use ``` rake data:rollback  ``` to revert data migration and fix if needed 
+5) after successful migration db/data_schema.rb file will be updated with new version 
+6) commit changes and after deploy it will be automatically applied after successful schema migration (``` rake db:migrate ``` ). if schema migration failed data migration will not be applied. 

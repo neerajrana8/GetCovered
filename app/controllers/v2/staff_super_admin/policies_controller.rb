@@ -52,6 +52,13 @@ module V2
         total = @policies.count
 
         # TODO: Fix cause, - Pages from frontend starts counting from 0, page=1 better to be 1 not 0
+        unless params[:pagination].present?
+          params[:pagination] = {
+            page: 0,
+            per: 10
+          }
+        end
+
         params[:pagination][:page] += 1
 
         @policies = @policies.order(created_at: :desc).page(params[:pagination][:page]).per(params[:pagination][:per])

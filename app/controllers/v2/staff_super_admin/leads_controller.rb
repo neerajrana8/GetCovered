@@ -2,7 +2,7 @@ module V2
   module StaffSuperAdmin
     class LeadsController < StaffSuperAdminController
       include ActionController::MimeResponds
-      include Leads::LeadsRecentMethods
+      include Concerns::Leads::LeadsRecentMethods
 
       before_action :set_lead, only: %i[update show]
       before_action :set_substrate, only: :index
