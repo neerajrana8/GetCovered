@@ -103,6 +103,11 @@ module V2
 
         @meta = { total: leads.count, page: @leads.current_page, per: per }
 
+         if params[:sort].present?
+          @leads = leads.order(last_visit: params[:sort][:last_visit]) if params[:sort][:last_visit].present?
+          @leads = leads.order(created_at: params[:sort][:created_at]) if params[:sort][:created_at].present?
+        end
+
         # TODO: Copied from old code, needs to be moved to separate endpoint
         if need_to_download?
           ::Leads::RecentLeadsReportJob.perform_later(@leads.pluck(:id), params.as_json, current_staff.email)
