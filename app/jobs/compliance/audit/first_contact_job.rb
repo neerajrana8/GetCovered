@@ -34,9 +34,15 @@ module Compliance
           master_policies = Policy.where(policy_type_id: 2, carrier_id: 2)
           master_policies.each do |master|
             master.insurables.communities.each do |community|
-              community_lease_ids = Lease.where(insurable_id: community.units.pluck(:id),
+              #TODO: not the best option because seems that we do not update covered flags anymore for Lease & Insurable properly
+              excluded_leases = Lease.joins(insurable: :policies).where(insurable_id: community.units.pluck(:id),
+                                                                        created_at: date.at_beginning_of_day..date.at_end_of_day,
+                                                                        start_date: (date + 2.days)..).pluck(:id)
+              community_lease_ids = Lease.where.not(id: excluded_leases)
+                                      .where(insurable_id: community.units.pluck(:id),
                                                 created_at: date.at_beginning_of_day..date.at_end_of_day,
-                                                start_date: (date + 2.days)..).pluck(:id)
+                                                start_date: (date + 2.days)..)
+                                         .pluck(:id)
               @lease_ids = @lease_ids + community_lease_ids
             end
           end
