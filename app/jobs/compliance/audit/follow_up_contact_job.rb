@@ -1,8 +1,17 @@
 module Compliance
   module Audit
     class FollowUpContactJob < ApplicationJob
+      include Compliance::Audit::Concerns::LeasesEmailsMethods
+
       queue_as :default
-      before_perform :find_leases
+
+      before_perform do |job|
+        date = Time.current.to_date
+        created_at_search_range = (date - 2.days).at_beginning_of_day..(date - 2.days).at_end_of_day
+        start_date_search_range = date..(date + 2.weeks)
+
+        find_leases(created_at_search_range, start_date_search_range)
+      end
 
       def perform(*)
         unless @leases.nil?
@@ -27,32 +36,6 @@ module Compliance
         end
       end
 
-      private
-        def find_leases
-          @lease_ids = []
-          date = Time.current.to_date
-          master_policies = Policy.where(policy_type_id: 2, carrier_id: 2)
-          master_policies.each do |master|
-            master.insurables.communities.each do |community|
-              #TODO: not the best option because seems that we do not update covered flags anymore for Lease & Insurable properly
-              excluded_leases = Lease.joins(insurable: :policies).where(insurable_id: community.units.pluck(:id),
-                                                                        created_at: (date - 2.days).at_beginning_of_day..(date - 2.days).at_end_of_day,
-                                                                        start_date: date..(date + 2.weeks),
-                                                                        policies: {
-                                                                          policy_type_id: 1,
-                                                                          status: %i[BOUND BOUND_WITH_WARNING EXTERNAL_VERIFIED]
-                                                                        }).pluck(:id)
-              community_lease_ids = Lease.where.not(id: excluded_leases)
-                                      .where(insurable_id: community.units.pluck(:id),
-                                                created_at: (date - 2.days).at_beginning_of_day..(date - 2.days).at_end_of_day,
-                                                start_date: date..(date + 2.weeks),
-                                                covered: false).pluck(:id)
-              @lease_ids = @lease_ids + community_lease_ids
-            end
-          end
-
-          @leases = @lease_ids.blank? ? nil : Lease.find(@lease_ids)
-        end
     end
   end
 end
