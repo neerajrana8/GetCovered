@@ -37,7 +37,11 @@ module Compliance
               #TODO: not the best option because seems that we do not update covered flags anymore for Lease & Insurable properly
               excluded_leases = Lease.joins(insurable: :policies).where(insurable_id: community.units.pluck(:id),
                                                                         created_at: (date - 2.days).at_beginning_of_day..(date - 2.days).at_end_of_day,
-                                                                        start_date: date..(date + 2.weeks)).pluck(:id)
+                                                                        start_date: date..(date + 2.weeks),
+                                                                        policies: {
+                                                                          policy_type_id: 1,
+                                                                          status: %i[BOUND BOUND_WITH_WARNING EXTERNAL_VERIFIED]
+                                                                        }).pluck(:id)
               community_lease_ids = Lease.where.not(id: excluded_leases)
                                       .where(insurable_id: community.units.pluck(:id),
                                                 created_at: (date - 2.days).at_beginning_of_day..(date - 2.days).at_end_of_day,
