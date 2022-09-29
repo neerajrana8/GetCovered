@@ -6,7 +6,6 @@ module Compliance
       queue_as :default
 
       before_perform do |job|
-        puts "in before"
         date = Time.current.to_date
         created_at_search_range = (DateTime.new(1900,1,1)..(date - 4.days).at_beginning_of_day)
         start_date_search_range = (date..)
@@ -14,10 +13,7 @@ module Compliance
         find_leases(created_at_search_range, start_date_search_range)
       end
 
-      before_perform :test_arg
-
       def perform(*)
-        puts "in perform"
         unless @leases.nil?
           @leases.each do |lease|
             days = (Time.current.to_date - lease.created_at.to_date).to_i
@@ -41,10 +37,6 @@ module Compliance
             end
           end
         end
-      end
-
-      def test_arg
-        puts "heeereeeee"
       end
 
     end

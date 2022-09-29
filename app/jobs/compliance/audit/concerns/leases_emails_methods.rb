@@ -4,10 +4,7 @@ module Compliance
       module LeasesEmailsMethods
         extend ActiveSupport::Concern
 
-        include do
-
         def find_leases(created_at_search_range, start_date_search_range)
-          puts "In find"
           @lease_ids = []
           master_policies = Policy.where(policy_type_id: 2, carrier_id: 2)
           master_policies.each do |master|
@@ -33,7 +30,6 @@ module Compliance
         end
       end
     end
-      end
-end
-end
 
+  end
+end
