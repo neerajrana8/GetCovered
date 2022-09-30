@@ -11,7 +11,7 @@ module CarrierQBE
         message = qbe_service.build_request
         if Rails.env == "production"
           ActionMailer::Base.mail(from: 'no-reply@getcovered.io',
-                                  to: ['dylan@getcoveredllc.com', 'jared@getcoveredllc.com'],
+                                  to: ['dylan@getcovered.io', 'jared@getcovered.io'],
                                   subject: "PEX/REX Sample XML",
                                   body: message).deliver_now()
         end
