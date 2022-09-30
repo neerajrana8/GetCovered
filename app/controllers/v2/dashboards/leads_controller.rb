@@ -133,6 +133,7 @@ module V2
           unless total_by_status.nil?
 
             total_by_status_grouped = leads.grouped_by_date(trunc_by)
+            Rails.logger.info "#DEBUG SQL=#{total_by_status_grouped.to_sql}"
 
             stats = {
               leads: leads_cx,
