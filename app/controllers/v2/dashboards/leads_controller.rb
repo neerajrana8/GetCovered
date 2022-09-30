@@ -37,8 +37,8 @@ module V2
 
         stats = Rails.cache.read(cache_key)
 
-        if stats.nil? and true
-          leads = Lead.actual.presented
+        if stats.nil?
+          leads = Lead.all
           date_slug_format = '%Y-%m-%d'
           date_utc_format = '%Y-%m-%d %H:%M:%S'
           trunc_by = 'day'
@@ -107,11 +107,13 @@ module V2
             end
           end
 
+          lead_events_total = leads.sum(:lead_events_cx)
+          leads = leads.actual.presented
           leads = leads.by_last_visit(date_from, date_to)
           leads_cx = leads.not_converted.count
           leads_ids = leads.pluck(:id)
 
-          lead_events_total = leads.sum(:lead_events_cx)
+          # lead_events_total = leads.sum(:lead_events_cx)
 
           total_by_status = Lead.get_stats(
             [date_from, date_to],
