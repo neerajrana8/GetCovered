@@ -198,6 +198,8 @@ module PoliciesMethods
         :account_id, :agency_id, :policy_type_id, :insurable_id,
         :effective_date, :expiration_date, :number, :status, :out_of_system_carrier_title,
         documents: [],
+        policy_insurables_attributes: [:insurable_id],
+        policy_users_attributes: [:user_id],
         policy_coverages_attributes: %i[id limit title deductible enabled designation]
       )
 
