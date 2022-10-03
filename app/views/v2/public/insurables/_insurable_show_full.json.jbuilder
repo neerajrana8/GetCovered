@@ -15,13 +15,16 @@ end
 
 json.active_master_policy do
   if @master_policy.present?
-    json.partial! 'v2/shared/policies/fields.json.jbuilder', policy: @master_policy
-    json.coverage_attributes do
-      #TODO: need to move to one query
-      json.master_policy_liability @master_policy.policy_coverages.where(designation: 'liability_coverage').take
-      json.master_policy_contents  @master_policy.policy_coverages.where(designation: 'liability_contents').take
-      #TODO: need to update when migration will be applied on dev
-      json.master_policy_per_month_charge MasterPolicyConfiguration.where(configurable_id: @master_policy.id)&.first&.placement_cost
+    @mpc = insurable.insurable_type_id == 1 ? @master_policy.find_closest_master_policy_configuration(insurable) : @master_policy.find_closest_master_policy_configuration(insurable.parent_community)
+      unless @mpc.lease_violation_only
+      json.partial! 'v2/shared/policies/fields.json.jbuilder', policy: @master_policy
+      json.coverage_attributes do
+        #TODO: need to move to one query
+        json.master_policy_liability @master_policy.policy_coverages.where(designation: 'liability_coverage').take
+        json.master_policy_contents  @master_policy.policy_coverages.where(designation: 'liability_contents').take
+        #TODO: need to update when migration will be applied on dev
+        json.master_policy_per_month_charge MasterPolicyConfiguration.where(configurable_id: @master_policy.id)&.first&.placement_cost
+      end
     end
   end
 end

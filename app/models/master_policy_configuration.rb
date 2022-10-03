@@ -1,3 +1,27 @@
+# == Schema Information
+#
+# Table name: master_policy_configurations
+#
+#  id                         :bigint           not null, primary key
+#  program_type               :integer          default("auto")
+#  grace_period               :integer          default(0)
+#  integration_charge_code    :string
+#  prorate_charges            :boolean          default(FALSE)
+#  auto_post_charges          :boolean          default(TRUE)
+#  consolidate_billing        :boolean          default(TRUE)
+#  program_start_date         :datetime
+#  program_delay              :integer          default(0)
+#  placement_cost             :integer          default(0)
+#  force_placement_cost       :integer
+#  carrier_policy_type_id     :bigint           not null
+#  configurable_type          :string           not null
+#  configurable_id            :bigint           not null
+#  created_at                 :datetime         not null
+#  updated_at                 :datetime         not null
+#  enabled                    :boolean          default(FALSE)
+#  integration_account_number :string
+#  lease_violation_only       :boolean          default(TRUE)
+#
 # Master Policy Configuration model
 # file: app/models/master_policy_configuration.rb
 #
@@ -56,6 +80,17 @@ class MasterPolicyConfiguration < ApplicationRecord
     return amount
   end
 
+  def find_closest_account
+    if self.configurable_type == "Account"
+      return self.configurable
+    elsif self.configurable_type == "Policy" ||
+          self.configurable_type == "Insurable"
+      return self.configurable&.account
+    else
+      return nil
+    end
+  end
+
   private
 
   def set_program_start_date
@@ -64,7 +99,7 @@ class MasterPolicyConfiguration < ApplicationRecord
 
   def uniqueness_of_assignment
     if MasterPolicyConfiguration.exists?(carrier_policy_type: self.carrier_policy_type, configurable: self.configurable)
-      errors.add(:base, message: "#{ self.configurable.title } already has a configuration for a Master Policy with #{ self.carrier_policy_type.carrier.title }")
+      errors.add(:base, message: "#{ self.configurable.class.name } already has a configuration for a Master Policy with #{ self.carrier_policy_type.carrier.title }")
     end
   end
 end

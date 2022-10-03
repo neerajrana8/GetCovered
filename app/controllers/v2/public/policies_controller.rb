@@ -58,19 +58,39 @@ module V2
       end
 
       def add_coverage_proof
-        @policy                  = Policy.new(coverage_proof_params)
+        if Policy.where(number: coverage_proof_params[:number]).count > 0
+          self.external_unverified_proof(coverage_proof_params)
+        else
+          self.apply_proof(coverage_proof_params)
+        end
+      end
+
+      private
+
+      def external_unverified_proof(params)
+        @policy = Policy.find_by_number params[:number]
+        if !@policy.nil? && @policy.policy_in_system == false && self.external_policy_status_check(@policy)
+          if @policy.update(params)
+            @policy.policy_coverages.where.not(id: @policy.policy_coverages.order(id: :asc).last.id).each do |coverage|
+              coverage.destroy
+            end
+            render :show, status: :ok
+          else
+            render json: @policy.errors, status: 422
+          end
+        end
+      end
+
+      def apply_proof(params)
+        @policy                  = Policy.new(params)
         @policy.policy_in_system = false
-        @policy.status           = 'BOUND' if coverage_proof_params[:status].blank?
+        @policy.status           = 'EXTERNAL_UNVERIFIED' if params[:status].blank?
         add_error_master_types(@policy.policy_type_id)
         if @policy.errors.blank? && @policy.save
           result = Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes]&.values)
           if result.failure?
             render json: result.failure, status: 422
           else
-            #TODO: need to add rule to determine who uploaded from tenant portal and who no
-            PmTenantPortal::InvitationToPmTenantPortalMailer.external_policy_submitted(user_email: @policy&.primary_user&.email,
-                                                                                       community_id: @policy&.primary_insurable&.insurable_id || insurable_id_param,
-                                                                                       policy_id: @policy.id).deliver_now
             render :show, status: :created
           end
         else
@@ -78,14 +98,24 @@ module V2
         end
       end
 
-      private
-
       def set_community
         @community = Insurable.find(params[:id])
       end
 
       def enrollment_params
         params.permit(user_attributes: [:email, :first_name, :last_name])
+      end
+
+      def external_policy_status_check(policy)
+        to_return = false
+        if ["EXTERNAL_UNVERIFIED", "EXTERNAL_REJECTED"].include?(policy.status)
+          to_return = true
+        elsif policy.status == "EXTERNAL_VERIFIED"
+          if (Time.now .. (Time.now + 30.days)) === policy.expiration_date
+            to_return = true
+          end
+        end
+        return to_return
       end
 
     end

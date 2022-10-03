@@ -73,6 +73,7 @@
         delete :faq_delete, path: '/faqs/:faq_id/faq_delete'
         delete :faq_question_delete, path: '/faqs/:faq_id/faq_question_delete/:faq_question_id'
         post :attach_images, path: '/attach_images'
+        delete :second_logo_delete, path: '/images/second_logo_delete'
       end
 
       collection do
@@ -146,11 +147,11 @@
     post 'insurables/:insurable_id/policies_index', controller: 'policies', action: :index
 
     resources :insurable_types, path: "insurable-types", only: [ :index ]
-    
+
     get 'integrations/:provider', controller: 'integrations', action: :show
     post 'integrations/:provider', controller: 'integrations', action: :create
     put 'integrations/:provider', controller: 'integrations', action: :update
-    
+
     resources :leases,
       only: [ :create, :update, :destroy, :index, :show ] do
         member do
@@ -276,7 +277,8 @@
           get "search", to: 'users#search'
         end
       end
-
+    resources :contact_records, only: [:index, :show]
+    post '/contact_records', to: 'contact_records#user_mails'
     resources :notification_settings,
               only: [ :index, :show, :update ]
   end

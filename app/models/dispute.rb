@@ -1,3 +1,17 @@
+# == Schema Information
+#
+# Table name: disputes
+#
+#  id               :bigint           not null, primary key
+#  stripe_id        :string           not null
+#  amount           :integer          not null
+#  stripe_reason    :integer          not null
+#  status           :integer          not null
+#  active           :boolean          default(TRUE), not null
+#  created_at       :datetime         not null
+#  updated_at       :datetime         not null
+#  stripe_charge_id :bigint
+#
 class Dispute < ApplicationRecord
   # ActiveRecord Callbacks
 

@@ -9,13 +9,16 @@ module V2
       before_action :set_user, only: %i[update show]
 
       def index
-
         query = current_staff.organizable.active_users
         if params[:community_like]
           communities = Insurable.where(insurable_type_id: InsurableType::COMMUNITIES_IDS).where("title ILIKE ?", "%#{params[:community_like]}%")
           unit_ids = communities.map{ |c| c.units.pluck(:id) }.flatten
           policy_ids = PolicyInsurable.where(insurable_id: unit_ids).pluck(:policy_id)
           query = query.references(:policy_users).includes(:policy_users).where(policy_users: { policy_id: policy_ids })
+        end
+
+        if params[:t_code]
+          query = query.joins(:integration_profiles).where(integration_profiles: { external_id: params[:t_code], external_context: "resident" })
         end
 
         super(:@users, query, :profile, :accounts)
@@ -131,7 +134,9 @@ module V2
           updated_at: %i[scalar array interval],
           has_existing_policies: %i[scalar array],
           has_current_leases: %i[scalar array],
-          accounts: { agency_id: %i[scalar array], id: %i[scalar array] }
+          accounts: { agency_id: %i[scalar array], id: %i[scalar array] },
+          insurables: { id: %i[scalar array], title: %i[scalar array like] },
+          integration_profiles: { external_context: %i[scalar array], external_id: %i[scalar array like] }
         }
       end
 

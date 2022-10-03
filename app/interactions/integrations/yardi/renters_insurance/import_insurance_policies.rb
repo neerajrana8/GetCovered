@@ -15,6 +15,10 @@ module Integrations
           }.compact)
         end
         
+        def response_has_error?(response_body)
+          return response_body&.index("Xml Imported:") ? false : true #### a normal error contains 'XSD Error'; a permissions error contains 'Access Denied'
+        end
+        
         
         def get_policy_xml_from_hash
           harsh = policy_hash.deep_stringify_keys
@@ -33,9 +37,7 @@ module Integrations
           names.each do |name|
             strang += "  <MITS:Name>\n"
             strang += "    <MITS:FirstName>#{name["FirstName"]}</MITS:FirstName>\n"
-            if(name["MiddleName"])
-              strang += "    <MITS:MiddleName>#{name["MiddleName"]}</MITS:MiddleName>\n"
-            end
+            strang += "    <MITS:MiddleName>#{name["MiddleName"]}</MITS:MiddleName>\n" unless name["MiddleName"].blank?
             strang += "    <MITS:LastName>#{name["LastName"]}</MITS:LastName>\n"
             strang += "    <MITS:Relationship>#{name["Relationship"]}</MITS:Relationship>\n" unless name["Relationship"].blank?
             strang += "  </MITS:Name>\n"

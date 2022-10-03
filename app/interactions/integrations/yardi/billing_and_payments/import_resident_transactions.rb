@@ -16,6 +16,10 @@ module Integrations
           "ImportResidentTransactions_Login"
         end
         
+        def get_eventable
+          invoice || super
+        end
+        
         def get_new_charge_xml_from_hash
           harsh = charge_hash.deep_stringify_keys
           strang = ""

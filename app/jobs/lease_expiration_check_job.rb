@@ -20,6 +20,6 @@ class LeaseExpirationCheckJob < ApplicationJob
   private
     
   def set_leases
-    @leases = Lease.current.where(end_date: Time.current.to_date - 1.day)
+    @leases = Lease.current.where(status: 'current').where("end_date < ?", Time.current.to_date)
   end
 end

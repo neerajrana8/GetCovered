@@ -1,3 +1,15 @@
+# == Schema Information
+#
+# Table name: policy_application_answers
+#
+#  id                          :bigint           not null, primary key
+#  data                        :jsonb
+#  section                     :integer          default("fields"), not null
+#  policy_application_field_id :bigint
+#  policy_application_id       :bigint
+#  created_at                  :datetime         not null
+#  updated_at                  :datetime         not null
+#
 require 'rails_helper'
 
 RSpec.describe PolicyApplication, type: :model do

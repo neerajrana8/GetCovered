@@ -4,15 +4,16 @@ module V2
       include BrandingProfilesMethods
       before_action :set_branding_profile,
                     only: %i[update show destroy faqs faq_create faq_update
-                             faq_question_create faq_question_update attach_images export update_from_file]
+                             faq_question_create faq_question_update attach_images export update_from_file
+second_logo_delete second_footer_logo_delete]
 
       def create
         branding_profile_outcome = BrandingProfiles::CreateFromDefault.run(account: @account)
 
         if branding_profile_outcome.valid?
           @branding_profile = branding_profile_outcome.result
-          render template: 'v2/shared/branding_profiles/show', status: :created          
-        else          
+          render template: 'v2/shared/branding_profiles/show', status: :created
+        else
           render json: standard_error(
                          :branding_profile_was_not_created,
                          'Branding profile was not created',
@@ -143,7 +144,7 @@ module V2
 
         params.require(:branding_profile).permit(
           :default, :profileable_id, :profileable_type,
-          :footer_logo_url, :logo_url, :subdomain, :subdomain_test, :enabled, images: [],
+          :footer_logo_url, :logo_url, :second_logo_url, :subdomain, :subdomain_test, :enabled, images: [],
           styles: {}
         )
       end

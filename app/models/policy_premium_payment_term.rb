@@ -1,3 +1,24 @@
+# == Schema Information
+#
+# Table name: policy_premium_payment_terms
+#
+#  id                              :bigint           not null, primary key
+#  original_first_moment           :datetime         not null
+#  original_last_moment            :datetime         not null
+#  first_moment                    :datetime         not null
+#  last_moment                     :datetime         not null
+#  unprorated_proportion           :decimal(, )      default(1.0), not null
+#  prorated                        :boolean          default(FALSE), not null
+#  time_resolution                 :integer          default("day"), not null
+#  cancelled                       :boolean          default(FALSE), not null
+#  default_weight                  :integer
+#  term_group                      :string
+#  invoice_available_date_override :date
+#  invoice_due_date_override       :date
+#  created_at                      :datetime         not null
+#  updated_at                      :datetime         not null
+#  policy_premium_id               :bigint
+#
 class PolicyPremiumPaymentTerm < ApplicationRecord
 
   # Associations

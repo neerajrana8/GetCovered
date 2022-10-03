@@ -20,7 +20,12 @@ module V2
             Policy.where(agency: @agency)
           end
 
-        super(:@policies, relation, :agency, :account, :primary_user, :primary_insurable, :carrier, :policy_type, invoices: :line_items)
+        if params[:insurable_id].present?
+          relation = relation.joins(:policy_insurables)
+                       .where(policy_insurables: { insurable_id: params[:insurable_id] })
+        end
+
+        super(:@policies, relation, :account, :primary_user, :policy_type)
       end
 
       def search

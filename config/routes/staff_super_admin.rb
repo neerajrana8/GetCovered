@@ -28,11 +28,11 @@
 
           put :enable
           put :disable
-          
+
           get 'coverage-options',
             to: 'insurable_rate_configurations#get_parent_options',
             defaults: { type: 'Account', carrier_id: 5, insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS.first }
-            
+
           post 'coverage-options',
             to: 'insurable_rate_configurations#set_options',
             defaults: { type: 'Account', carrier_id: 5, insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS.first }
@@ -42,6 +42,7 @@
     post :accounts_index, action: :index, controller: :accounts
 
     resources :addresses, only: [:index]
+    #resources :communities, only: [:index]
 
     resources :refunds,
       only: [ :index, :create, :update] do
@@ -75,11 +76,11 @@
 
           put :enable
           put :disable
-          
+
           get 'coverage-options',
             to: 'insurable_rate_configurations#get_parent_options',
             defaults: { type: 'Agency', carrier_id: 5, insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS.first }
-            
+
           post 'coverage-options',
             to: 'insurable_rate_configurations#set_options',
             defaults: { type: 'Agency', carrier_id: 5, insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS.first }
@@ -123,6 +124,8 @@
           delete :faq_delete, path: '/faqs/:faq_id/faq_delete'
           delete :faq_question_delete, path: '/faqs/:faq_id/faq_question_delete/:faq_question_id'
           post :attach_images, path: '/attach_images'
+          delete :second_logo_delete, path: '/images/second_logo_delete'
+          delete :second_footer_logo_delete, path: '/images/second_footer_logo_delete'
         end
 
         collection do
@@ -151,12 +154,8 @@
           get :carrier_agencies
           get :toggle_billing_strategy
           get :billing_strategies_list
-          get :commission_list
           post :unassign_agency_from_carrier
           post :add_billing_strategy
-          post :add_commissions
-          put :update_commission
-          get :commission
           get :available_agencies
 
           post :add_fee
@@ -230,6 +229,8 @@
       end
     end
 
+    resources :fees, only: [:index, :show, :create, :update]
+
     resources :global_agency_permissions, only: [:update] do
       collection do
         get :available_permissions
@@ -245,7 +246,7 @@
         get :coverage_report
         get :policies
         get 'related-insurables', to: 'insurables#related_insurables'
-        
+
         get 'coverage-options',
           to: 'insurable_rate_configurations#get_parent_options',
           defaults: { type: 'Insurable', carrier_id: 5, insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS.first }
@@ -274,7 +275,7 @@
     post :insurables_index, action: :index, controller: :insurables
 
     resources :insurable_types, path: "insurable-types", only: [ :index ]
-    
+
     get 'integrations/:provider/:account_id', controller: 'integrations', action: :show
 
     resources :leads, only: [:index, :show, :update]
@@ -445,5 +446,15 @@
 
     resources :notification_settings,
               only: [ :index, :show, :update ]
+    resources :contact_records, only: [:index, :show]
+    get '/gmail_sync', to: 'contact_records#gmail_sync'
+    post '/contact_records', to: 'contact_records#user_mails'
+
+
+    scope module: :special_tasks, path: "special_tasks" do
+      get '/lcr/:account_id', to: "lease_coverage_reports_controller#defaults_for"
+      post '/lcr', to: "lease_coverage_reports_controller#generate"
+    end
+    
   end
 # end

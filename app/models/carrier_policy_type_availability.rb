@@ -1,3 +1,15 @@
+# == Schema Information
+#
+# Table name: carrier_policy_type_availabilities
+#
+#  id                     :bigint           not null, primary key
+#  state                  :integer
+#  available              :boolean          default(FALSE), not null
+#  zip_code_blacklist     :jsonb
+#  carrier_policy_type_id :bigint
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
+#
 ##
 # =Carrier Policy Type Availability Model
 # file: +app/models/carrier_policy_type_availability.rb+

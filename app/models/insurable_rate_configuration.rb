@@ -1,4 +1,19 @@
-
+# == Schema Information
+#
+# Table name: insurable_rate_configurations
+#
+#  id                     :bigint           not null, primary key
+#  carrier_info           :jsonb            not null
+#  configurable_type      :string
+#  configurable_id        :bigint
+#  configurer_type        :string
+#  configurer_id          :bigint
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
+#  configuration          :jsonb            not null
+#  rates                  :jsonb            not null
+#  carrier_policy_type_id :bigint           not null
+#
 class InsurableRateConfiguration < ApplicationRecord
 
   include Structurable
@@ -826,7 +841,7 @@ class InsurableRateConfiguration < ApplicationRecord
         when ::QbeService.carrier_id
           interval = { 'FL' => 'annual', 'SA' => 'bi_annual', 'QT' => 'quarter', 'QBE_MoRe' => 'month' }[billing_strategy_carrier_code]
           # try to fix things if our irc is missing info the qbe prepare method already verified that it has (should be because there are duplicate IRCs and one is missing data)
-          if on_retry == 0 && irc&.rates&.[]('rates')&.[](additional_insured_count.to_i + 1)&.[](interval).blank?
+          if on_retry == 0 && (irc&.rates&.[]('rates')&.[](additional_insured_count.to_i + 1)&.[](interval).blank? rescue false)
             ircs = ::InsurableRateConfiguration.where(configurable: irc.configurable, configurer: irc.configurer, carrier_policy_type_id: irc.carrier_policy_type_id).select{|i| irc_filter_block.call(i) }
             if ircs.count > 1
               survivor = ircs.max{|i| i.created_at }
@@ -970,7 +985,7 @@ class InsurableRateConfiguration < ApplicationRecord
       unless cip.data['rates_resolution']&.[](number_insured.to_s) &&
             ::InsurableRateConfiguration.where(
               configurer_type: "Carrier", configurer_id: ::QbeService.carrier_id, configurable: community, carrier_policy_type: cpt,
-            ).find{|irc| irc.rates['applicability'] == applicability && irc.rates['rates']&.[](number_insured.to_i) }
+            ).find{|irc| irc.rates['applicability'] == applicability && !irc.rates['rates']&.[](number_insured.to_i)&.blank? }
         # begin 'unless' code here, sorry for the hideous indentation
         if cip.data['rates_resolution']&.[](number_insured.to_s)
           cip.data['rates_resolution'][number_insured.to_s] = false

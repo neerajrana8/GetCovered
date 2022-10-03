@@ -1,3 +1,23 @@
+# == Schema Information
+#
+# Table name: policy_group_quotes
+#
+#  id                          :bigint           not null, primary key
+#  reference                   :string
+#  external_reference          :string
+#  status                      :integer
+#  status_updated_on           :datetime
+#  premium                     :integer
+#  tax                         :integer
+#  est_fees                    :integer
+#  total_premium               :integer
+#  agency_id                   :bigint
+#  account_id                  :bigint
+#  policy_application_group_id :bigint
+#  created_at                  :datetime         not null
+#  updated_at                  :datetime         not null
+#  policy_group_id             :bigint
+#
 class PolicyGroupQuote < ApplicationRecord
   include CarrierPensioPolicyQuote
   include InvoiceableQuote

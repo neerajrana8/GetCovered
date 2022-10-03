@@ -2,7 +2,7 @@ module V2
   module StaffAccount
     class LeadsController < StaffAccountController
       include ActionController::MimeResponds
-      include Leads::LeadsRecentMethods
+      include Concerns::Leads::LeadsRecentMethods
 
       before_action :set_substrate, only: :index
       before_action :set_lead, only: %i[update show]
@@ -40,7 +40,7 @@ module V2
       end
 
       def set_substrate
-        @substrate = access_model(::Lead)
+        @substrate = access_model(::Lead).presented.not_converted
       end
 
       def supported_orders

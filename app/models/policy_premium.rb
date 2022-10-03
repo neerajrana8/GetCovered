@@ -1,3 +1,26 @@
+# == Schema Information
+#
+# Table name: policy_premia
+#
+#  id                         :bigint           not null, primary key
+#  total_premium              :integer          default(0), not null
+#  total_fee                  :integer          default(0), not null
+#  total_tax                  :integer          default(0), not null
+#  total                      :integer          default(0), not null
+#  prorated                   :boolean          default(FALSE), not null
+#  prorated_last_moment       :datetime
+#  prorated_first_moment      :datetime
+#  force_no_refunds           :boolean          default(FALSE), not null
+#  created_at                 :datetime         not null
+#  updated_at                 :datetime         not null
+#  error_info                 :string
+#  policy_quote_id            :bigint
+#  policy_id                  :bigint
+#  commission_strategy_id     :bigint
+#  archived_policy_premium_id :bigint
+#  total_hidden_fee           :integer          default(0), not null
+#  total_hidden_tax           :integer          default(0), not null
+#
 ##
 # =Policy Premium Model
 # file: +app/models/policy_premium.rb+
@@ -21,6 +44,8 @@ class PolicyPremium < ApplicationRecord
   has_many :fees,
     as: :assignable
   def carrier_agency_policy_type; @capt ||= ::CarrierAgencyPolicyType.where(policy_type_id: self.policy_rep.policy_type_id, carrier_agency_id: self.policy_rep.carrier_agency.id).take; end
+  has_many :commission_items,
+    through: :policy_premium_item_commissions
 
   # Callbacks
   before_validation :set_default_commission_strategy,
@@ -74,8 +99,10 @@ class PolicyPremium < ApplicationRecord
       result = self.itemize_premium(premium_amount, and_update_totals: false, term_group: term_group, collector: collector, first_payment_down_payment: first_payment_down_payment, first_payment_down_payment_override: first_payment_down_payment_override)
       raise ActiveRecord::Rollback unless result.nil?
       # taxes
-      result = self.itemize_taxes(tax, and_update_totals: false, term_group: term_group, collector: collector, recipient: tax_recipient, first_payment_down_payment: first_payment_down_payment, first_payment_down_payment_override: first_tax_payment_down_payment_override) unless tax.nil? || tax == 0
-      raise ActiveRecord::Rollback unless result.nil?
+      unless tax.nil? || tax == 0
+        result = self.itemize_taxes(tax, and_update_totals: false, term_group: term_group, collector: collector, recipient: tax_recipient, first_payment_down_payment: first_payment_down_payment, first_payment_down_payment_override: first_tax_payment_down_payment_override)
+        raise ActiveRecord::Rollback unless result.nil?
+      end
       # fees
       result = self.itemize_fees(premium_amount, and_update_totals: false, term_group: term_group, collector: collector, filter: filter_fees)
       raise ActiveRecord::Rollback unless result.nil?

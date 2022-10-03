@@ -1,3 +1,13 @@
+# == Schema Information
+#
+# Table name: lease_types
+#
+#  id         :bigint           not null, primary key
+#  title      :string
+#  enabled    :boolean          default(FALSE)
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
+#
 # Lease Type Model
 # file: +app/models/address.rb+
 

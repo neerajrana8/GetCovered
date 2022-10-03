@@ -38,4 +38,5 @@ class RentGuaranteeNotificationsMailer < ApplicationMailer
                 agency_title: @agency.title)
     mail(from: @from, to: @user.email, subject: subject)
   end
+
 end

@@ -15,17 +15,8 @@
   </p>
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
     <span style="font-size: 16px;">
-      Get Covered is reviewing your policy to ensure that it meets the requirements of your management company.
-      Your management company (<%= @pm_account&.title %>) has the following requirements:
+      Get Covered is reviewing your policy to ensure that it meets the requirements of <%= @pm_account&.title %>
     </span>
-  </p>
-  <p style="margin-bottom: 0; margin-left: 50px; margin-right: 50px; margin-top: 0; padding-bottom: 2em;">
-    <span style="font-size: 16px;">
-      Liability Coverage: {{ Liability Coverage Min }}
-    </span>
-  </p>
-  <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-    <span style="font-size: 16px;"> For reference, your Review # is: <b><%= @policy.id %></b> </span>
   </p>
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
     <span style="font-size: 16px;"> We will notify you as soon as the review is complete.</span>
@@ -37,23 +28,17 @@
   ----
   --->
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-    <span style="font-size: 16px;">Hi <%= @user.profile.full_name %>,</span>
+    <span style="font-size: 16px;">Hello <%= @user.profile.full_name %>,</span>
   </p>
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-    <span style="font-size: 16px;">
-      <b>Cool Beans!</b>
-      Your insurance meets all the requirements of your management company (<%= @pm_account.title %>) and has been approved.
-    </span>
-  </p>
-  <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-    <span style="font-size: 16px;"> Review #:  <b><%= @policy.id %></b> </span>
+    <span style="font-size: 16px;">This email is to confirm we have received, verified, and approved your insurance policy.
+      <%= @community.title %> has been notified of your active policy and no further action is needed. If you have
+      any questions, please reply to this email.</span>
   </p>
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
     <span style="font-size: 16px;">
       If you decide to switch carriers, please make sure to upload your new policy information in the Get Covered portal at
-      <a href="<%= @onboarding_url %>" target="_blank">
-        <%= @onboarding_url %>
-      </a>
+      <a href="<%= @onboarding_url %>" target="_blank"><%= @branding_profile.url %></a>
     </span>
   </p>
 <% elsif @policy.status == "EXTERNAL_REJECTED" %>
@@ -63,44 +48,38 @@
   ----
   --->
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-    <span style="font-size: 16px;">Hi <%= @user.profile.full_name %>,</span>
+    <span style="font-size: 16px;">Hello <%= @user.profile.full_name %>,</span>
   </p>
+
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-    <span style="font-size: 16px;">
-      <b>Wait a minute... Action Needed! </b>
-      The policy information that you submitted does not meet the requirements of your management company (<%= @pm_account.title %>).
-    </span>
+    <span style="font-size: 16px;">While evaluating your insurance policy submitted to Get Covered, we have found the policy does
+      not meet the requirements specified by <%= @community.title %>.</span>
   </p>
+
+  <% if @policy.system_data.has_key?("rejection_reasons") && @policy.system_data["rejection_reasons"].length >= 1 %>
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-    <span style="font-size: 16px;">
-      Please resolve the following error(s) listed below:
-    </span>
+    <span style="font-size: 16px;">Please resolve the following error(s) listed below:</span>
   </p>
-  <% if @policy.system_data.has_key?("rejection_reasons") %>
-    <% if @policy.system_data["rejection_reasons"].length > 1 %>
-      <ul style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-        <% @policy.system_data["rejection_reasons"].each do |reason| %>
-        <li style="font-size: 16px;"><%= reason %>></li>
-        <% end %>
-      </ul>
-    <% else %>
-    <p><strong><%= @policy.system_data["rejection_reasons"][0] %></strong></p>
+
+  <ul style="padding-left: 20px; list-style-type: circle;">
+    <% @policy.system_data["rejection_reasons"].each do |reason| %>
+    <li>
+      <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+        <span style="font-size: 16px;"><%= reason %></span>
+      </p>
+    </li>
     <% end %>
+  </ul>
   <% end %>
+
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-    <span style="font-size: 16px;"> Review #: <b><%= @policy.id %></b> </span>
-  </p>
-  <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-    <span style="font-size: 16px;">
-      Either reupload your new file on our portal at
-      <a href="<%= @onboarding_url %>" target="_blank">
-        <%= @onboarding_url %>}
-      </a>
-      or email
-      <a href="mailto: <%= @from %>" target="_blank">
-        <%= @from %>
-      </a>
-      with your new file attached.
-    </span>
+    <span style="font-size: 16px;">Upload your updated insurance policy on <a href="<%= @onboarding_url %>">our portal</a>. Once
+      verified, <%= @community.title %> will be notified of your active policy and no further action is needed.<br><br>
+      We appreciate your prompt attention to the above insurance requirement. If you have any questions, please reply
+      to this email.</span>
   </p>
 <% end %>
+<p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+  <span style="font-size: 16px;">Thank you,<br> <%= @pm_account.title %> & Get Covered<br>
+    <a href="mailto:<%= @from %>"><%= @from %></a></span>
+</p>

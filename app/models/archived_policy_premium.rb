@@ -1,3 +1,31 @@
+# == Schema Information
+#
+# Table name: archived_policy_premia
+#
+#  id                      :bigint           not null, primary key
+#  base                    :integer          default(0)
+#  taxes                   :integer          default(0)
+#  total_fees              :integer          default(0)
+#  total                   :integer          default(0)
+#  enabled                 :boolean          default(FALSE), not null
+#  enabled_changed         :datetime
+#  policy_quote_id         :bigint
+#  policy_id               :bigint
+#  billing_strategy_id     :bigint
+#  commission_strategy_id  :bigint
+#  created_at              :datetime         not null
+#  updated_at              :datetime         not null
+#  estimate                :integer
+#  calculation_base        :integer          default(0)
+#  deposit_fees            :integer          default(0)
+#  amortized_fees          :integer          default(0)
+#  carrier_base            :integer          default(0)
+#  special_premium         :integer          default(0)
+#  include_special_premium :boolean          default(FALSE)
+#  unearned_premium        :integer          default(0)
+#  only_fees_internal      :boolean          default(FALSE)
+#  external_fees           :integer          default(0)
+#
 class ArchivedPolicyPremium < ApplicationRecord
   belongs_to :policy, optional: true
   belongs_to :policy_quote, optional: true

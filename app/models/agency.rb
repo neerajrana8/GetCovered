@@ -1,3 +1,29 @@
+# == Schema Information
+#
+# Table name: agencies
+#
+#  id                      :bigint           not null, primary key
+#  title                   :string
+#  slug                    :string
+#  call_sign               :string
+#  enabled                 :boolean          default(FALSE), not null
+#  whitelabel              :boolean          default(FALSE), not null
+#  tos_accepted            :boolean          default(FALSE), not null
+#  tos_accepted_at         :datetime
+#  tos_acceptance_ip       :string
+#  verified                :boolean          default(FALSE), not null
+#  stripe_id               :string
+#  master_agency           :boolean          default(FALSE), not null
+#  contact_info            :jsonb
+#  settings                :jsonb
+#  agency_id               :bigint
+#  created_at              :datetime         not null
+#  updated_at              :datetime         not null
+#  staff_id                :bigint
+#  integration_designation :string
+#  producer_code           :string
+#  carrier_preferences     :jsonb            not null
+#
 # Agency model
 # file: app/models/agency.rb
 #
@@ -15,7 +41,7 @@ class Agency < ApplicationRecord
 
   # Active Record Callbacks
   after_initialize :initialize_agency
-  before_validation :set_producer_code, on: :create
+  before_validation :set_producer_code, on: :create, unless: Proc.new{|gnc| !gnc.producer_code.blank? }
 
   # belongs_to relationships
   belongs_to :agency,
@@ -122,6 +148,10 @@ class Agency < ApplicationRecord
     @gcag ||= Agency.find(GET_COVERED_ID)
   end
   
+  def self.find_like(str, all = false)
+    Agency.where("title ILIKE '%#{str}%'").send(all ? :to_a : :take)
+  end
+  
   # returns the carrier id to use for a given policy type and insurable
   # accepts an optional block for additional filtering which should take a carrier id as its only parameter and return:
   #   true if the id should be used
@@ -219,10 +249,6 @@ class Agency < ApplicationRecord
     else
       nil
     end
-  end
-
-  def commission_balance
-    commission_deductions.map(&:unearned_balance).reduce(:+) || 0
   end
 
   def parent_agencies_ids
