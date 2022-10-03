@@ -107,9 +107,9 @@ module V2
             end
           end
 
+          leads = leads.by_last_visit(date_from, date_to)
           lead_events_total = leads.sum(:lead_events_cx)
           leads = leads.actual.presented
-          leads = leads.by_last_visit(date_from, date_to)
           leads_cx = leads.not_converted.count
           leads_ids = leads.pluck(:id)
 
