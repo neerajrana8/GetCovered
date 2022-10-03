@@ -53,6 +53,8 @@ class PolicyQuote < ApplicationRecord
 
   has_many :invoices, as: :invoiceable
 
+  has_many :commission_items, through: :policy_premium
+
   has_many_attached :documents
 
   accepts_nested_attributes_for :policy_premium

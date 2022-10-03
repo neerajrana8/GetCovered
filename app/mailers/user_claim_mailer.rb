@@ -29,4 +29,5 @@ class UserClaimMailer < ApplicationMailer
   def check_user_presence
     return false if @user.nil?
   end
+
 end

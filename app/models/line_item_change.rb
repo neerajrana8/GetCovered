@@ -72,6 +72,7 @@ class LineItemChange < ApplicationRecord
                 error_message = "Failed to update LineItemChange to reflect handling! Errors: #{self.errors.to_h}"
                 raise ActiveRecord::Rollback
               end
+              # MOOSE WARNING: not updating the PolicyPremium itself...
             when 'total_received'
               # update the PPI
               unless ppi.update(total_received: ppi.total_received + self.amount)

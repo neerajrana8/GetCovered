@@ -43,5 +43,7 @@ module Policies
       @policy_type_title = I18n.t("policy_type_model.#{@policy.policy_type.title.parameterize.underscore}")
       @agency_policy_type = "#{@agency.title} - #{@policy_type_title}"
     end
+
+
   end
 end

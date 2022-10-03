@@ -4,7 +4,7 @@ module Integrations
       class ImportTenantLeaseDocumentPDF < Integrations::Yardi::ResidentData::Base
         string :property_id
         string :resident_id
-        string :attachment
+        object :attachment, class: :Object
         string :attachment_type
         string :description, default: "GC Verified Policy"
         

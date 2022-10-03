@@ -1,8 +1,8 @@
 module V2
   module StaffAccount
     class LeadsDashboardController < StaffAccountController
-      include Leads::LeadsDashboardCalculations
-      include Leads::LeadsDashboardMethods
+      include Concerns::Leads::LeadsDashboardCalculations
+      include Concerns::Leads::LeadsDashboardMethods
 
       before_action :set_substrate, only: :index
 

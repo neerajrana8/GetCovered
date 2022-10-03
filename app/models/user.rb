@@ -82,6 +82,9 @@ class User < ApplicationRecord
 
   after_create_commit :add_to_mailchimp,
                       :set_qbe_id
+  
+  before_update :ensure_email_based,
+    if: Proc.new{|u| u.will_save_change_to_attribute?('sign_in_count') && u.attribute_in_database('sign_in_count') == 0 && u.provider != 'email' }
 
 	has_many :invoices, as: :payer
 
@@ -134,6 +137,7 @@ class User < ApplicationRecord
   has_many :agencies, through: :accounts
   has_many :notification_settings, as: :notifyable
   has_many :insurables, through: :policies
+  has_many :contact_records, as: :contactable
 
   accepts_nested_attributes_for :payment_profiles, :address
   accepts_nested_attributes_for :profile, update_only: true
@@ -178,7 +182,7 @@ class User < ApplicationRecord
     u.save
     return u
   end
-  
+
   def self.create_with_random_password!(*lins, **keys)
     u = ::User.new(*lins, **keys)
     u.send(:set_random_password)
@@ -362,6 +366,7 @@ class User < ApplicationRecord
     }
   end
 
+
   def get_owners
     owners_array = Array.new
     self.accounts.each do |a|
@@ -451,6 +456,13 @@ class User < ApplicationRecord
     self.provider = (self.email.blank? ? 'altuid' : 'email')
     self.altuid = Time.current.to_i.to_s + rand.to_s
     self.uid = self.altuid
+  end
+  
+  def ensure_email_based
+    dat_email = self.email || self.profile.contact_email
+    self.provider = 'email'
+    self.email = dat_email
+    self.uid = dat_email
   end
 
   	def add_to_mailchimp

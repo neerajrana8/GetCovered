@@ -27,6 +27,8 @@ class PolicyPremiumItemCommission < ApplicationRecord
   belongs_to :policy_premium_item
   belongs_to :recipient,
     polymorphic: true
+  has_many :commission_items,
+    as: :commissionable
   
   # Validations
   validates_presence_of :status
