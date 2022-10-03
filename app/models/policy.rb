@@ -290,6 +290,18 @@ class Policy < ApplicationRecord
     sent: 2
   }
 
+  enum rejection_reason: {
+    liability_not_correct: I18n.t('policy_model.rejection_reasons.liability_not_correct'),
+    pm_not_additional_interest: I18n.t('policy_model.rejection_reasons.pm_not_additional_interest'),
+    policy_not_active: I18n.t('policy_model.rejection_reasons.policy_not_active'),
+    name_not_correct: I18n.t('policy_model.rejection_reasons.name_not_correct'),
+    other: I18n.t('policy_model.rejection_reasons.other')}
+
+  #TODO: need to refactor to enum values for policy-support dashboard too
+  def is_rejection_reason_added?(current_rejection_reason)
+    self.system_data["rejection_reasons"].map(&:downcase).any?(current_rejection_reason&.downcase)
+  end
+
   def current_quote
     self.policy_quotes.accepted.order('created_at desc').first
   end
@@ -662,7 +674,7 @@ class Policy < ApplicationRecord
     return true
     # the below is commented out because it was breaking upload
 =begin
-    to_return = false 
+    to_return = false
     to_save = false
     account_condition = (self.account_id.nil? || self.account_id == 0)
     agency_condition = (self.agency_id.nil? || self.agency_id == 0)

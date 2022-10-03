@@ -44,6 +44,16 @@ class CompliancePolicyMailerPreview < ActionMailer::Preview
                                                 force: true)
   end
 
+  def external_policy_status_changed
+    self.set_account_by_env()
+    @essex = Account.find(7)
+    @lease = Lease.find(20)
+    policy_id, insurable_id = Policy.where(status: Policy.statuses["EXTERNAL_REJECTED"]).map{|el| [el.id,el.primary_insurable&.id]}.reject{|el| el.last.nil?}&.last
+    @policy = Policy.find(policy_id)
+    Compliance::PolicyMailer.with(organization: @essex)
+                            .external_policy_status_changed(policy: @policy)
+  end
+
   private
   def set_account_by_env
     case Rails.env
