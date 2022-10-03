@@ -10,6 +10,7 @@ module PoliciesMethods
         end
       end
       Policies::UpdateDocuments.run!(policy: @policy)
+      @policy = access_model(::Policy, params[:id])
       render :show, status: :ok
     else
       render json: @policy.errors, status: :unprocessable_entity
