@@ -25,6 +25,6 @@ json.primary_campaign_medium lead&.tracking_url&.campaign_medium
 #json.premium_first lead&.user&.policy_applications&.last&.policy_quotes&.last&.invoices&.first&.total_due || (last_event&.data.present? ? last_event&.data['premium_first'] : nil)
 #json.billing_strategy lead&.user&.policy_applications&.last&.policy_quotes&.last&.policy_premium&.billing_strategy&.title
 
-json.premium_total lead.data['premium_total']
+json.premium_total lead.premium_total #data['premium_total']
 json.premium_first lead.data['premium_first']
 json.billing_strategy lead&.user&.policy_applications&.last&.policy_quotes&.last&.policy_premium&.billing_strategy&.title
