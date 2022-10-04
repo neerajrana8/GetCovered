@@ -273,6 +273,7 @@
     post 'insurables/:insurable_id/policies_index', controller: 'policies', action: :index
     get :agency_filters, controller: 'insurables', to: 'insurables#agency_filters', path: 'insurables/filters/agency_filters'
     post :insurables_index, action: :index, controller: :insurables
+    post 'insurables/upload', controller: 'insurables', action: :upload
 
     resources :insurable_types, path: "insurable-types", only: [ :index ]
 
@@ -451,5 +452,10 @@
     post '/contact_records', to: 'contact_records#user_mails'
 
 
+    scope module: :special_tasks, path: "special_tasks" do
+      get '/lcr/:account_id', to: "lease_coverage_reports_controller#defaults_for"
+      post '/lcr', to: "lease_coverage_reports_controller#generate"
+    end
+    
   end
 # end

@@ -135,6 +135,7 @@ module Integrations
         result = Integrations::Yardi::ResidentData::GetAttachmentTypes.run!(integration: integration)
         if result[:success] && result[:parsed_response].class == ::Hash && !result[:parsed_response].dig("Envelope", "Body", "GetAttachmentTypesResponse", "GetAttachmentTypesResult", "AttachmentTypes", "Type").nil?
           attachment_types = result[:parsed_response].dig("Envelope", "Body", "GetAttachmentTypesResponse", "GetAttachmentTypesResult", "AttachmentTypes", "Type")
+          attachment_types = [attachment_types] unless attachment_types.class == ::Array
           if !attachment_types.blank?
             integration.configuration['sync']['policy_push']['attachment_type_options'] = attachment_types.map{|at| at.class == ::String ? at : at["__content__"] }
             integration.configuration['sync']['policy_push']['attachment_type'] = nil unless integration.configuration['sync']['policy_push']['attachment_type_options'].include?(integration.configuration['sync']['policy_push']['attachment_type'])
