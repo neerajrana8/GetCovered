@@ -80,6 +80,7 @@ Rails.application.routes.draw do
     draw :public
     draw :sdk
     draw :dashboards
+    draw :users
     draw :agencies
     draw :insurables
     draw :leads
