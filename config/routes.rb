@@ -81,6 +81,8 @@ Rails.application.routes.draw do
     draw :sdk
     draw :dashboards
     draw :users
+    draw :agencies
+    draw :insurables
     draw :leads
   end
 
