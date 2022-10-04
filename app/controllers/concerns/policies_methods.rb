@@ -79,6 +79,7 @@ module PoliciesMethods
       if result.failure?
         render json: result.failure, status: 422
       else
+        Policies::UpdateDocuments.run!(policy: @policy)
         render :show, status: :ok
       end
     else
