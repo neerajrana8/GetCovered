@@ -59,8 +59,8 @@ class GmailMailSyncJob < ApplicationJob
   end
 
   def process_message(mail_data)
-    from_email_id = find_email(mail_data.payload.headers.detect { |f| f.name === 'From' }.value).downcase
-    to_email_id = find_email(mail_data.payload.headers.detect { |f| f.name === 'To' }.value).downcase
+    from_email_id = find_email(mail_data.payload.headers.detect { |f| f.name === 'From' }&.value).downcase if mail_data.payload.headers.detect { |f| f.name === 'From' }
+    to_email_id = find_email(mail_data.payload.headers.detect { |f| f.name === 'To' }&.value).downcase if mail_data.payload.headers.detect { |f| f.name === 'To' }
     if User.where(email: [from_email_id, to_email_id]).or(User.where(uid: [from_email_id, to_email_id]))&.count > 0
       user = User.where(email: [from_email_id, to_email_id]).or(User.where(uid: [from_email_id, to_email_id]))
     else
