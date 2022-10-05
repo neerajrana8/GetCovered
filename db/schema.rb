@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_09_30_072700) do
+ActiveRecord::Schema.define(version: 2022_10_05_071609) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -1000,6 +1000,7 @@ ActiveRecord::Schema.define(version: 2022_09_30_072700) do
     t.integer "lead_events_cx"
     t.json "lead_events_timeseries"
     t.integer "premium_total"
+    t.datetime "premium_last_updated_at"
     t.index ["archived", "last_visit", "status", "email"], name: "leads_archived_last_visit_status_email_idx"
     t.index ["archived"], name: "leads_archived_idx"
     t.index ["email"], name: "index_leads_on_email"
