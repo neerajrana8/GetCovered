@@ -55,13 +55,14 @@ module V2
         # leads = leads.by_account(filter[:account_id]) unless filter[:account_id].nil?
         # leads = leads.by_branding_profile(filter[:branding_profile_id]) unless filter[:branding_profile_id].nil?
 
+        leads = leads.archived if filter[:archived] == true
+        leads = leads.actual if filter[:archived] == false || !filter[:archived].present?
+
         # NOTE: OR Logic for filters
         leads = leads.or(Lead.by_agency(filter[:agency_id])) unless filter[:agency_id].nil?
         leads = leads.or(Lead.by_account(filter[:account_id])) unless filter[:account_id].nil?
         leads = leads.or(Lead.by_branding_profile(filter[:branding_profile_id])) unless filter[:branding_profile_id].nil?
 
-        leads = leads.archived if filter[:archived] == true
-        leads = leads.actual if filter[:archived] == false || !filter[:archived].present?
 
         if filter[:lead_events].present?
           leads_by_policy_type =
