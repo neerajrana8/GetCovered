@@ -50,9 +50,16 @@ module V2
           filter[:agency_id] = [current_agency.id] unless current_agency.agency_id.nil?
         end
 
-        leads = leads.by_agency(filter[:agency_id]) unless filter[:agency_id].nil?
-        leads = leads.by_account(filter[:account_id]) unless filter[:account_id].nil?
-        leads = leads.by_branding_profile(filter[:branding_profile_id]) unless filter[:branding_profile_id].nil?
+        # NOTE: Moved to OR logic below
+        # leads = leads.by_agency(filter[:agency_id]) unless filter[:agency_id].nil?
+        # leads = leads.by_account(filter[:account_id]) unless filter[:account_id].nil?
+        # leads = leads.by_branding_profile(filter[:branding_profile_id]) unless filter[:branding_profile_id].nil?
+
+        # NOTE: OR Logic for filters
+        leads = leads.or(Lead.by_agency(filter[:agency_id])) unless filter[:agency_id].nil?
+        leads = leads.or(Lead.by_account(filter[:account_id])) unless filter[:account_id].nil?
+        leads = leads.or(Lead.by_branding_profile(filter[:branding_profile_id])) unless filter[:branding_profile_id].nil?
+
         leads = leads.archived if filter[:archived] == true
         leads = leads.actual if filter[:archived] == false || !filter[:archived].present?
 

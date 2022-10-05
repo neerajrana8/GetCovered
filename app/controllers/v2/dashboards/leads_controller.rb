@@ -77,9 +77,15 @@ module V2
           # Interface filters
           if filter
             leads = leads.archived unless filter[:archived].nil?
-            leads = leads.by_agency(filter[:agency_id]) unless filter[:agency_id].nil?
-            leads = leads.by_account(filter[:account_id]) unless filter[:account_id].nil?
-            leads = leads.by_branding_profile(filter[:branding_profile_id]) unless filter[:branding_profile_id].nil?
+
+            # NOTE: Moved to OR logic below
+            # leads = leads.by_agency(filter[:agency_id]) unless filter[:agency_id].nil?
+            # leads = leads.by_account(filter[:account_id]) unless filter[:account_id].nil?
+            # leads = leads.by_branding_profile(filter[:branding_profile_id]) unless filter[:branding_profile_id].nil?
+
+            leads = leads.or(Lead.by_agency(filter[:agency_id])) unless filter[:agency_id].nil?
+            leads = leads.or(Lead.by_account(filter[:account_id])) unless filter[:account_id].nil?
+            leads = leads.or(Lead.by_branding_profile(filter[:branding_profile_id])) unless filter[:branding_profile_id].nil?
 
             # Tracking urls and parameters filtering
             tracking_urls = TrackingUrl.all
