@@ -1,0 +1,63 @@
+<!doctype html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width"/>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  <title>Get Covered | Insurables Upload Report</title>
+  <link rel="stylesheet" href="<%= Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym]["api"] %>/assets/mail.css">
+</head>
+<body class="">
+<table border="0" cellpadding="0" cellspacing="0" class="body">
+  <tr>
+    <td>&nbsp;</td>
+    <td class="container">
+      <div class="content">
+
+        <!-- START CENTERED WHITE CONTAINER -->
+        <span class="preheader">Insurables Upload Report</span>
+        <table class="main">
+
+          <!-- START MAIN CONTENT AREA -->
+          <tr>
+            <td class="wrapper">
+              <table border="0" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <p>Your file upload has <%= @status ? 'succeeded' : 'failed. This is the error:' %></p>
+                    <% unless @status %>
+                      <p>
+                        <ol>
+                          <%= @message %>
+                        </ol>
+                      </p>
+                    <% end %>
+
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- END MAIN CONTENT AREA -->
+        </table>
+
+        <!-- START FOOTER -->
+        <div class="footer">
+          <table border="0" cellpadding="0" cellspacing="0">
+            <tr>
+              <td class="content-block">
+                <span class="apple-link">Get Covered LLC, 270 Lafayette St, New York, NY 10012</span>
+              </td>
+            </tr>
+          </table>
+        </div>
+        <!-- END FOOTER -->
+
+        <!-- END CENTERED WHITE CONTAINER -->
+      </div>
+    </td>
+    <td>&nbsp;</td>
+  </tr>
+</table>
+</body>
+</html>

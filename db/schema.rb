@@ -146,7 +146,6 @@ ActiveRecord::Schema.define(version: 2022_10_05_071609) do
     t.string "integration_designation"
     t.string "producer_code"
     t.jsonb "carrier_preferences", default: {"by_policy_type"=>{}}, null: false
-    t.boolean "passthrough", default: false
     t.index ["agency_id"], name: "index_agencies_on_agency_id"
     t.index ["call_sign"], name: "index_agencies_on_call_sign", unique: true
     t.index ["integration_designation"], name: "index_agencies_on_integration_designation", unique: true
@@ -662,19 +661,6 @@ ActiveRecord::Schema.define(version: 2022_10_05_071609) do
     t.index ["contactable_id"], name: "index_contact_records_on_contactable_id"
   end
 
-  create_table "daily_reports", force: :cascade do |t|
-    t.bigint "account_id"
-    t.json "report"
-    t.string "report_type"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-    t.string "reportable_type", null: false
-    t.bigint "reportable_id", null: false
-    t.integer "resolution"
-    t.index ["account_id"], name: "index_daily_reports_on_account_id"
-    t.index ["reportable_type", "reportable_id"], name: "index_daily_reports_on_reportable"
-  end
-
   create_table "disputes", force: :cascade do |t|
     t.string "stripe_id", null: false
     t.integer "amount", null: false
@@ -766,14 +752,6 @@ ActiveRecord::Schema.define(version: 2022_10_05_071609) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["agency_id"], name: "index_global_agency_permissions_on_agency_id"
-  end
-
-  create_table "global_permissions", force: :cascade do |t|
-    t.jsonb "permissions"
-    t.bigint "ownerable_id"
-    t.string "ownerable_type"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
   end
 
   create_table "histories", force: :cascade do |t|
@@ -974,7 +952,6 @@ ActiveRecord::Schema.define(version: 2022_10_05_071609) do
     t.bigint "policy_type_id"
     t.bigint "agency_id"
     t.integer "branding_profile_id"
-    t.bigint "session_id"
     t.index ["agency_id"], name: "index_lead_events_on_agency_id"
     t.index ["created_at"], name: "lead_events_created_at_idx"
     t.index ["lead_id"], name: "index_lead_events_on_lead_id"
@@ -1691,6 +1668,7 @@ ActiveRecord::Schema.define(version: 2022_10_05_071609) do
     t.jsonb "carrier_payment_data"
     t.index ["account_id"], name: "index_policy_quotes_on_account_id"
     t.index ["agency_id"], name: "index_policy_quotes_on_agency_id"
+    t.index ["external_id"], name: "index_policy_quotes_on_external_id", unique: true
     t.index ["policy_application_id"], name: "index_policy_quotes_on_policy_application_id"
     t.index ["policy_group_quote_id"], name: "index_policy_quotes_on_policy_group_quote_id"
     t.index ["policy_id"], name: "index_policy_quotes_on_policy_id"
@@ -1832,20 +1810,6 @@ ActiveRecord::Schema.define(version: 2022_10_05_071609) do
     t.datetime "updated_at", null: false
     t.index ["global_agency_permission_id"], name: "index_staff_permissions_on_global_agency_permission_id"
     t.index ["staff_id"], name: "index_staff_permissions_on_staff_id"
-  end
-
-  create_table "staff_roles", force: :cascade do |t|
-    t.integer "role", default: 0
-    t.boolean "primary", default: false
-    t.bigint "staff_id", null: false
-    t.string "organizable_type"
-    t.bigint "organizable_id"
-    t.boolean "active", default: false
-    t.boolean "enabled", default: true
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-    t.index ["organizable_type", "organizable_id"], name: "index_staff_roles_on_organizable_type_and_organizable_id"
-    t.index ["staff_id"], name: "index_staff_roles_on_staff_id"
   end
 
   create_table "staffs", force: :cascade do |t|
@@ -2021,5 +1985,4 @@ ActiveRecord::Schema.define(version: 2022_10_05_071609) do
   add_foreign_key "policy_coverages", "policies"
   add_foreign_key "policy_coverages", "policy_applications"
   add_foreign_key "policy_types", "policy_types", column: "master_policy_id"
-  add_foreign_key "staff_roles", "staffs"
 end
