@@ -79,7 +79,8 @@ module PoliciesMethods
       if result.failure?
         render json: result.failure, status: 422
       else
-        Policies::UpdateDocuments.run!(policy: @policy)
+        @policy.primary_insurable.insurable_id = update_coverage_params[:policy_insurables_attributes].first[:insurable_id]
+        @policy.save!
         render :show, status: :ok
       end
     else
