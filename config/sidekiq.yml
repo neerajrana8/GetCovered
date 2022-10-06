@@ -67,6 +67,9 @@ production:
   leads_status_update_job:
     cron: '0 6 * * *' # Every day at 6:00 AM
     class: LeadsStatusUpdateJob
+  leads_premium_total_calculate_job:
+    cron: '0 5 * * *' # Every day at 5:00 AM
+    class: LeadsPremiumTotalCalculateJob
   # Leases
   lease_start_check_job:
     cron: '0 6 * * *' # Every day at 6:00 AM
