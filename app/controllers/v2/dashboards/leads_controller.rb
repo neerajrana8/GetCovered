@@ -78,10 +78,24 @@ module V2
           if filter
             leads = leads.archived unless filter[:archived].nil?
 
-            # NOTE: Moved to OR logic below
-            leads = leads.by_agency(filter[:agency_id]) unless filter[:agency_id].nil?
-            leads = leads.by_account(filter[:account_id]) unless filter[:account_id].nil?
-            leads = leads.by_branding_profile(filter[:branding_profile_id]) unless filter[:branding_profile_id].nil?
+
+            # NOTE: OR logic for certain filters
+            filter_keys_exists = !(filter.keys & %w[agency_id account_id branding_profile_id]).empty?
+
+            if filter_keys_exists
+              leads = leads.where(
+                '(agency_id = ? OR account_id = ? OR branding_profile_id = ?)',
+                filter[:agency_id],
+                filter[:account_id],
+                filter[:branding_profile_id]
+              )
+
+              # NOTE: Move to OR logic
+              # leads = leads.by_agency(filter[:agency_id]) unless filter[:agency_id].nil?
+              # leads = leads.by_account(filter[:account_id]) unless filter[:account_id].nil?
+              # leads = leads.by_branding_profile(filter[:branding_profile_id]) unless filter[:branding_profile_id].nil?
+
+            end
 
             # Tracking urls and parameters filtering
             tracking_urls = TrackingUrl.all
