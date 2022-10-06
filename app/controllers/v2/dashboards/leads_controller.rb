@@ -37,7 +37,7 @@ module V2
 
         stats = Rails.cache.read(cache_key)
 
-        if stats.nil?
+        if true # stats.nil? and false
           leads = Lead.all
           date_slug_format = '%Y-%m-%d'
           date_utc_format = '%Y-%m-%d %H:%M:%S'
@@ -76,19 +76,19 @@ module V2
 
           # Interface filters
           if filter
-            leads = leads.archived unless filter[:archived].nil?
-
+            leads = leads.archived if !filter[:archived].nil? && filter[:acrhived] == true
 
             # NOTE: OR logic for certain filters
             filter_keys_exists = !(filter.keys & %w[agency_id account_id branding_profile_id]).empty?
 
             if filter_keys_exists
               leads = leads.where(
-                '(agency_id IN (?) OR account_id = (?) OR branding_profile_id = (?))',
+                '(agency_id IN (?) OR account_id IN (?) OR branding_profile_id IN (?))',
                 filter[:agency_id],
                 filter[:account_id],
                 filter[:branding_profile_id]
               )
+              Rails.logger.info "#DEBUG filter_keys matched OK"
 
               # NOTE: Move to OR logic
               # leads = leads.by_agency(filter[:agency_id]) unless filter[:agency_id].nil?
@@ -126,6 +126,8 @@ module V2
           leads = leads.by_last_visit(date_from, date_to)
           lead_events_total = leads.sum(:lead_events_cx)
           leads = leads.actual.presented
+          Rails.logger.info "#DEBUG LEADS=#{leads.to_sql}"
+
           leads_cx = leads.not_converted.count
           leads_ids = leads.pluck(:id)
 
