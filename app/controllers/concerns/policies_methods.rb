@@ -79,7 +79,9 @@ module PoliciesMethods
       if result.failure?
         render json: result.failure, status: 422
       else
-        @policy.primary_insurable.insurable_id = update_coverage_params[:policy_insurables_attributes].first[:insurable_id]
+        Rails.logger.info "#DEBUG #{update_coverage_params}"
+        selected_insurable = Insurable.find(update_coverage_params[:policy_insurables_attributes].first[:insurable_id])
+        @policy.primary_insurable = selected_insurable
         @policy.save!
         @policy = access_model(::Policy, params[:id])
         render :show, status: :ok
