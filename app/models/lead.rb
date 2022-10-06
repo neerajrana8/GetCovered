@@ -150,17 +150,19 @@ class Lead < ApplicationRecord
     account_id = [0] if account_id.nil?
     branding_profile_id = [0] if branding_profile_id.nil?
 
-    sql += ' AND ( '
-    sql += " agency_id IN (#{agency_id.join(',')})" # unless agency_id.nil?
-    sql += " OR branding_profile_id IN (#{branding_profile_id.join(',')})" # unless branding_profile_id.nil?
-    sql += " OR account_id IN (#{account_id.join(',')})" # unless account_id.nil?
-    sql += ' ) '
+    have_filters = [agency_id, account_id, branding_profile_id].transpose.map {|x| x.inject(:+)}
+
+    unless have_filters.first.zero?
+
+      sql += ' AND ( '
+      sql += " agency_id IN (#{agency_id.join(',')})" # unless agency_id.nil?
+      sql += " OR branding_profile_id IN (#{branding_profile_id.join(',')})" # unless branding_profile_id.nil?
+      sql += " OR account_id IN (#{account_id.join(',')})" # unless account_id.nil?
+      sql += ' ) '
+
+    end
 
     sql += " AND id IN (#{leads_ids.join(',')})" unless leads_ids.count.zero?
-
-    puts sql
-    Rails.logger.info "#DEBUG AAA"
-    Rails.logger.info "#DEBUG SQL=#{sql}"
 
     record = ActiveRecord::Base.connection.execute(sql)
     record.first unless record.first.values.compact.empty?

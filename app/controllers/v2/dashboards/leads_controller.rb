@@ -126,7 +126,6 @@ module V2
           leads = leads.by_last_visit(date_from, date_to)
           lead_events_total = leads.sum(:lead_events_cx)
           leads = leads.actual.presented
-          Rails.logger.info "#DEBUG LEADS=#{leads.to_sql}"
 
           leads_cx = leads.not_converted.count
           leads_ids = leads.pluck(:id)
@@ -151,7 +150,6 @@ module V2
           unless total_by_status.nil?
 
             total_by_status_grouped = leads.grouped_by_date(trunc_by)
-            Rails.logger.info "#DEBUG SQL=#{total_by_status_grouped.to_sql}"
 
             stats = {
               leads: leads_cx,
