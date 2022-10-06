@@ -81,6 +81,7 @@ module PoliciesMethods
       else
         @policy.primary_insurable.insurable_id = update_coverage_params[:policy_insurables_attributes].first[:insurable_id]
         @policy.save!
+        @policy = access_model(::Policy, params[:id])
         render :show, status: :ok
       end
     else
