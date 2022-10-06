@@ -84,7 +84,7 @@ module V2
 
             if filter_keys_exists
               leads = leads.where(
-                '(agency_id = ? OR account_id = ? OR branding_profile_id = ?)',
+                '(agency_id IN (?) OR account_id = (?) OR branding_profile_id = (?))',
                 filter[:agency_id],
                 filter[:account_id],
                 filter[:branding_profile_id]
