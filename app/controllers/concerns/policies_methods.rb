@@ -82,6 +82,7 @@ module PoliciesMethods
         Rails.logger.info "#DEBUG #{update_coverage_params}"
         selected_insurable = Insurable.find(update_coverage_params[:policy_insurables_attributes].first[:insurable_id])
         @policy.primary_insurable = selected_insurable
+        @policy.primary_insurable.save!
         @policy.save!
         @policy = access_model(::Policy, params[:id])
         render :show, status: :ok
