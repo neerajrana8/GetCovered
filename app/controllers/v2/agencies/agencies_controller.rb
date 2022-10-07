@@ -18,6 +18,11 @@ module V2
         agencies_ids << current_staff.organizable.id if current_staff.role == :agent.to_s
         agencies = agencies.where(id: agencies_ids) if %(staff, agent).include?(current_staff.role)
 
+        # Handle sub-agency
+        if current_staff.role == :agent.to_s && current_staff.organizable_type == 'Agency'
+          agencies = Agency.where(id: current_staff.organizable_id)
+        end
+
         # Filtering
         if params[:filter].present?
           agencies = agencies.where(agency_id: params[:filter][:agency_id]) if params[:filter][:agency_id].present?
