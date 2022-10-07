@@ -16,6 +16,7 @@ module V2
         agencies_ids = [current_staff.organizable.agency_id] if current_staff.role == :staff.to_s
         agencies_ids << current_staff.organizable.id if current_staff.role == :agent.to_s
 
+        # Rails.logger.info "#DEBUG #{agencies_ids}"
         # Prepareing filters by role
         if current_staff.role == 'staff' && !current_staff.getcovered_agent?
           if current_staff.organizable_type == 'Account'
@@ -26,7 +27,7 @@ module V2
         if current_staff.organizable_type == 'Agency'
           current_agency = Agency.find(current_staff.organizable_id)
           # We are root agency
-          if current_agency.agency_id.nil? && filter[:agency_id].blank?
+          if current_agency.agency_id.nil?
             sub_agencies_ids = []
             sub_agencies = current_agency.agencies
             sub_agencies_ids = sub_agencies.pluck(:id) if sub_agencies.count.positive?
