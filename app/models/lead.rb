@@ -152,12 +152,13 @@ class Lead < ApplicationRecord
 
     have_filters = agency_id + account_id + branding_profile_id
 
-    unless have_filters.first.zero?
+    have_filters = have_filters.inject(0){ |sum, x| sum + x }
+    unless have_filters.zero?
 
       sql += ' AND ( '
-      sql += " agency_id IN (#{agency_id.join(',')})" # unless agency_id.nil?
-      sql += " OR branding_profile_id IN (#{branding_profile_id.join(',')})" # unless branding_profile_id.nil?
-      sql += " OR account_id IN (#{account_id.join(',')})" # unless account_id.nil?
+      sql += " agency_id IN (#{agency_id.join(',')})"
+      sql += " OR branding_profile_id IN (#{branding_profile_id.join(',')})"
+      sql += " OR account_id IN (#{account_id.join(',')})"
       sql += ' ) '
 
     end

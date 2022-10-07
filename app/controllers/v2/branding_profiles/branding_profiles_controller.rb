@@ -33,6 +33,9 @@ module V2
             sub_agencies_ids = sub_agencies.pluck(:id) if sub_agencies.count.positive?
             sub_agencies_ids << current_staff.organizable_id
             profileable_ids = sub_agencies_ids
+
+            # Fetch accounts of agencies
+            accounts = current_agency.accounts.pluck(:id)
           end
 
           # filter[:agency_id] = [current_agency.id] unless current_agency.agency_id.nil?
@@ -46,6 +49,10 @@ module V2
             profileable_type: profileable_type,
             profileable_id: profileable_ids
           )
+          if accounts
+            account_profiles = BrandingProfile.where(profileable_type: 'Account', profileable_id: accounts)
+            profiles = profiles.or(account_profiles)
+          end
         end
 
         profiles = BrandingProfile.all if profileable_type.nil?

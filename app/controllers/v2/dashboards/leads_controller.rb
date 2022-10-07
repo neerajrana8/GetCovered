@@ -33,6 +33,8 @@ module V2
           filter[:agency_id] = [current_agency.id] unless current_agency.agency_id.nil?
         end
 
+        Rails.logger.info "#DEBUG ROLE=#{current_staff.organizable_type}"
+        Rails.logger.info "#DEBUG filter=#{filter.inspect}"
         cache_key = generate_cache_key(CACHE_KEY, filter)
 
         stats = Rails.cache.read(cache_key)
@@ -132,13 +134,19 @@ module V2
 
           # lead_events_total = leads.sum(:lead_events_cx)
 
-          total_by_status = Lead.get_stats(
-            [date_from, date_to],
-            filter[:agency_id],
-            filter[:branding_profile_id],
-            filter[:account_id],
-            leads_ids
-          )
+          # NOTE: Remove when stable
+          # Rails.logger.info "#DEBUG leads_sql=#{leads.to_sql}"
+          # Rails.logger.info "#DEBUG leads_ids=#{leads_ids}"
+
+          unless leads_ids.count.zero?
+            total_by_status = Lead.get_stats(
+              [date_from, date_to],
+              filter[:agency_id],
+              filter[:branding_profile_id],
+              filter[:account_id],
+              leads_ids
+            )
+          end
 
           # Prepare charts data
 
