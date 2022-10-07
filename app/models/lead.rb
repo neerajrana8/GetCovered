@@ -150,7 +150,7 @@ class Lead < ApplicationRecord
     account_id = [0] if account_id.nil?
     branding_profile_id = [0] if branding_profile_id.nil?
 
-    have_filters = [agency_id, account_id, branding_profile_id].transpose.map {|x| x.inject(:+)}
+    have_filters = agency_id + account_id + branding_profile_id
 
     unless have_filters.first.zero?
 
