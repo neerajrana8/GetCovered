@@ -65,7 +65,12 @@
     <% @policy.system_data["rejection_reasons"].each do |reason| %>
     <li>
       <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-        <span style="font-size: 16px;"><%= reason %></span>
+        <!-- TODO: need to update initially on ui & with migration on BE too and delete this condition -->
+        <% if reason == Policy.rejection_reasons["pm_not_additional_interest"] %>
+          <span style="font-size: 16px;"><%= I18n.t('policy_model.rejection_reasons.pm_not_additional_interest_new') %></span>
+        <% else %>
+          <span style="font-size: 16px;"><%= reason %></span>
+        <% end %>
       </p>
       <% if reason == Policy.rejection_reasons["pm_not_additional_interest"] %>
       <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
