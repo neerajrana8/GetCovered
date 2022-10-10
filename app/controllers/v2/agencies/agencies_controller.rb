@@ -18,11 +18,6 @@ module V2
         agencies_ids << current_staff.organizable.id if current_staff.role == :agent.to_s
         agencies = agencies.where(id: agencies_ids) if %(staff, agent).include?(current_staff.role)
 
-        # Handle sub-agency
-        if current_staff.role == :agent.to_s && current_staff.organizable_type == 'Agency'
-          agencies = Agency.where(id: current_staff.organizable_id)
-        end
-
         # Filtering
         if params[:filter].present?
           agencies = agencies.where(agency_id: params[:filter][:agency_id]) if params[:filter][:agency_id].present?
@@ -42,6 +37,15 @@ module V2
 
         agencies = agencies.page(page).per(per)
         children = Agency.where(agency_id: agencies.pluck(:id)) if params[:filter][:include_children].present?
+
+        # Handle sub-agency
+        if current_staff.role == :agent.to_s && current_staff.organizable_type == 'Agency'
+          agencies = Agency.where(id: current_staff.organizable_id)
+
+          # TODO: Move handling to fronend instead of hack with set nil for agency_id to make work
+          # agency filter component on frontend
+          agencies[0].agency_id = nil
+        end
 
         @agencies = agencies + children
         render 'v2/agencies/agencies/filter'
