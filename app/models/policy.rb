@@ -221,6 +221,10 @@ class Policy < ApplicationRecord
       if payload[:profile].present?
         where('profiles.full_name LIKE ?', "%#{payload[:profile][:full_name][:like]}%")
       end
+
+      if payload[:id].present?
+        where(users: { id: payload[:id] })
+      end
     end
   }
 
