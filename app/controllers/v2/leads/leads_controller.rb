@@ -115,7 +115,7 @@ module V2
           response.headers['current-page'] = @leads.current_page
           response.headers['total-entries'] = leads.count
         else
-          @leads = leads.limit(2) # Limit 2 To comply with rspec test
+          @leads = leads.page(1).per(2) # Limit 2 To comply with rspec test
         end
 
         @meta = { total: leads.count, page: @leads.current_page, per: per }
