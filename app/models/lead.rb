@@ -131,13 +131,38 @@ class Lead < ApplicationRecord
   SQL
 
   def self.get_stats(range, agency_id, branding_profile_id, account_id, leads_ids)
+    # NOTE: Moved to OR logic
+    # sql = "SELECT #{STATUS_CASE_SQL} FROM leads"
+    # sql += ' WHERE '
+    # sql += '  archived = False'
+    # sql += " AND (email != '' OR email IS NOT NULL)"
+    # sql += " AND agency_id IN (#{agency_id.join(',')})" unless agency_id.nil?
+    # sql += " AND branding_profile_id IN (#{branding_profile_id.join(',')})" unless branding_profile_id.nil?
+    # sql += " AND account_id IN (#{account_id.join(',')})" unless account_id.nil?
+    # sql += " AND id IN (#{leads_ids.join(',')})" unless leads_ids.count.zero?
+
     sql = "SELECT #{STATUS_CASE_SQL} FROM leads"
     sql += ' WHERE '
     sql += '  archived = False'
     sql += " AND (email != '' OR email IS NOT NULL)"
-    sql += " AND agency_id IN (#{agency_id.join(',')})" unless agency_id.nil?
-    sql += " AND branding_profile_id IN (#{branding_profile_id.join(',')})" unless branding_profile_id.nil?
-    sql += " AND account_id IN (#{account_id.join(',')})" unless account_id.nil?
+
+    agency_id = [0] if agency_id.nil?
+    account_id = [0] if account_id.nil?
+    branding_profile_id = [0] if branding_profile_id.nil?
+
+    have_filters = agency_id + account_id + branding_profile_id
+
+    have_filters = have_filters.inject(0){ |sum, x| sum + x }
+    unless have_filters.zero?
+
+      sql += ' AND ( '
+      sql += " agency_id IN (#{agency_id.join(',')})"
+      sql += " OR branding_profile_id IN (#{branding_profile_id.join(',')})"
+      sql += " OR account_id IN (#{account_id.join(',')})"
+      sql += ' ) '
+
+    end
+
     sql += " AND id IN (#{leads_ids.join(',')})" unless leads_ids.count.zero?
 
     record = ActiveRecord::Base.connection.execute(sql)
