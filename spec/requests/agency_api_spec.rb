@@ -41,7 +41,9 @@ describe 'Agency invitation spec', type: :request do
   def staff_params(agency)
     {
       staff: {
-        email: 'new_test@getcovered.com',
+        email: 'new_test_agency_staff@getcovered.com',
+        uid: 'new_test_agency_staff@getcovered.com',
+        provider: 'emails',
         organizable_id: agency.id,
         organizable_type: 'Agency',
         role: 'agent'
