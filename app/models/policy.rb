@@ -213,17 +213,17 @@ class Policy < ApplicationRecord
     where('number LIKE ?', "%#{number[:like]}%")
   }
 
+
   # TODO: Change after controller structure refactoring
   scope :filter_by_users, ->(payload) {
     if payload[:email]
-      where('users.email LIKE ?', "%#{payload['email']['like']}%")
+      return where('users.email LIKE ?', "%#{payload['email']['like']}%")
     else
       if payload[:profile].present?
-        where('profiles.full_name LIKE ?', "%#{payload[:profile][:full_name][:like]}%")
+        return where('profiles.full_name LIKE ?', "%#{payload[:profile][:full_name][:like]}%")
       end
-
       if payload[:id].present?
-        where(users: { id: payload[:id] })
+        return where(users: { id: payload[:id] })
       end
     end
   }
