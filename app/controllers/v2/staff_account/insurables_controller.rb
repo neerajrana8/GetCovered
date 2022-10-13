@@ -163,7 +163,34 @@ module V2
         end
       end
 
+      def upload
+        if file_correct?
+          file = insurable_upload_params
+          filename = "#{file.original_filename.split('.').first}-#{DateTime.now.to_i}.csv"
+          file_path = Rails.root.join("tmp", filename)
+          File.open(file_path, 'wb') do |tmp_file|
+            tmp_file << file.read
+          end
+          ::Insurables::UploadJob.perform_later(file: file_path.to_s, email: current_staff.email)
+          render json: {
+              title: "Insurables File Uploaded",
+              message: "File scheduled for import. Insurables will be available soon."
+          }.to_json,
+                 status: :ok
+        else
+          render json: {
+              title: "Insurables File Upload Failed",
+              message: "File could not be scheduled for import"
+          }.to_json,
+                 status: 422
+        end
+      end
+
       private
+
+      def insurable_upload_params
+        params.require(:file)
+      end
 
       def view_path
         super + '/insurables'
@@ -178,6 +205,11 @@ module V2
       end
 
       def destroy_allowed?
+        true
+      end
+
+      #TO DO: better to add validation for headers and amount of rows during parsing in background job to prevent double reading of file
+      def file_correct?
         true
       end
 
@@ -207,7 +239,8 @@ module V2
         params.require(:insurables).permit(
           common_attributes: [
             :category, :covered, :enabled, :insurable_id, :occupied,
-            :insurable_type_id, addresses_attributes: %i[
+            :insurable_type_id, :additional_interest_name, :additional_interest,
+            addresses_attributes: %i[
               city country county id latitude longitude
               plus_four state street_name street_number
               street_two timezone zip_code
@@ -222,7 +255,8 @@ module V2
 
         to_return = params.require(:insurable).permit(
           :category, :covered, :enabled, :insurable_id, :occupied,
-          :insurable_type_id, :title, addresses_attributes: %i[
+          :insurable_type_id, :title, :additional_interest_name, :additional_interest,
+          addresses_attributes: %i[
             city country county id latitude longitude
             plus_four state street_name street_number
             street_two timezone zip_code
@@ -245,7 +279,8 @@ module V2
 
         to_return = params.require(:insurable).permit(
           :covered, :enabled, :insurable_id, :occupied,
-          :title, addresses_attributes: %i[
+          :title, :additional_interest_name, :additional_interest,
+          addresses_attributes: %i[
             city country county id latitude longitude
             plus_four state street_name street_number
             street_two timezone zip_code

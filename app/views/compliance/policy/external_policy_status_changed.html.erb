@@ -61,15 +61,37 @@
     <span style="font-size: 16px;">Please resolve the following error(s) listed below:</span>
   </p>
 
-  <ul style="padding-left: 20px; list-style-type: circle;">
+  <span style="padding-left: 20px; list-style-type: circle;">
     <% @policy.system_data["rejection_reasons"].each do |reason| %>
     <li>
       <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-        <span style="font-size: 16px;"><%= reason %></span>
+        <!-- TODO: need to update initially on ui & with migration on BE too and delete this condition -->
+        <% if reason == Policy.rejection_reasons["pm_not_additional_interest"] %>
+          <span style="font-size: 16px;"><%= I18n.t('policy_model.rejection_reasons.pm_not_additional_interest_new') %></span>
+        <% else %>
+          <span style="font-size: 16px;"><%= reason %></span>
+        <% end %>
       </p>
+      <% if reason == Policy.rejection_reasons["pm_not_additional_interest"] %>
+      <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+        <p style="font-size: 16px;">Contact your <% @policy.out_of_system_carrier_title %>  and request the additional interest on your
+                          policy is updated to the below then resubmit your policy for approval.</p>
+              <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em; padding-left: 3em">
+                 <span style="font-size: 16px;"><%= @policy.primary_insurable.additional_interest_name %></span>
+              </p>
+              <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em; padding-left: 3em">
+                <span style="font-size: 16px;"><%= @policy&.account&.addresses&.take&.combined_street_address %></span>
+              </p>
+              <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em; padding-left: 3em">
+                <span style="font-size: 16px;"><%= @policy&.account&.addresses&.take&.city %>, <%= @policy&.account&.addresses&.take&.state %>, <%= @policy&.account&.addresses&.take&.zip_code %></span>
+              </p>
+
+        </p>
+    <% end %>
     </li>
     <% end %>
-  </ul>
+
+  </span>
   <% end %>
 
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">

@@ -50,10 +50,26 @@ module V2
           filter[:agency_id] = [current_agency.id] unless current_agency.agency_id.nil?
         end
 
-        leads = leads.by_agency(filter[:agency_id]) unless filter[:agency_id].nil?
-        leads = leads.by_account(filter[:account_id]) unless filter[:account_id].nil?
-        leads = leads.by_branding_profile(filter[:branding_profile_id]) unless filter[:branding_profile_id].nil?
         leads = leads.archived if filter[:archived] == true
+
+        # NOTE: OR logic for certain filters
+        filter_keys_exists = !(filter.keys & %w[agency_id account_id branding_profile_id]).empty?
+
+        if filter_keys_exists
+          leads = leads.where(
+            '(agency_id IN (?) OR account_id IN (?) OR branding_profile_id IN (?))',
+            filter[:agency_id],
+            filter[:account_id],
+            filter[:branding_profile_id]
+          )
+
+          # NOTE: Move to OR logic
+          # leads = leads.by_agency(filter[:agency_id]) unless filter[:agency_id].nil?
+          # leads = leads.by_account(filter[:account_id]) unless filter[:account_id].nil?
+          # leads = leads.by_branding_profile(filter[:branding_profile_id]) unless filter[:branding_profile_id].nil?
+
+        end
+
         leads = leads.actual if filter[:archived] == false || !filter[:archived].present?
 
         if filter[:lead_events].present?
@@ -84,6 +100,7 @@ module V2
         leads = leads.join_last_events
         leads = leads.by_last_visit(date_from, date_to)
 
+        Rails.logger.info "#DEBUG SQL=#{leads.to_sql}"
         # Pagination
         if params[:pagination].present?
           page = params[:pagination][:page]
@@ -102,6 +119,11 @@ module V2
         end
 
         @meta = { total: leads.count, page: @leads.current_page, per: per }
+
+        if params[:sort].present?
+          @leads = leads.order(last_visit: params[:sort][:last_visit]) if params[:sort][:last_visit].present?
+          @leads = leads.order(created_at: params[:sort][:created_at]) if params[:sort][:created_at].present?
+        end
 
         # TODO: Copied from old code, needs to be moved to separate endpoint
         if need_to_download?
