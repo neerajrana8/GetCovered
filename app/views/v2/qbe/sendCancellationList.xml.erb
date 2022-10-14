@@ -28,12 +28,12 @@
           <% request[:data][:policies].each do |policy| %>
           
           <Policy>
-            <TransactionCode><%= policy.billing_status =~ /BEHIND|RESCINDED/ ? "C" : "R" %></TransactionCode>
+            <TransactionCode><%= ["BEHIND", "RESCINDED"].include?(policy.billing_status) ? policy.billing_status == "BEHIND" ? "C" : "R" : nil %></TransactionCode>
             <PolicyNumber><%= policy.number %></PolicyNumber>
             <PrimaryNameOnPolicy><%= policy.primary_user.profile.full_name %></PrimaryNameOnPolicy>
             <EffectiveDt><%= policy.effective_date.strftime("%m/%d/%Y") %></EffectiveDt>
             <ExpirationDt><%= policy.expiration_date.strftime("%m/%d/%Y") %></ExpirationDt>
-            <CancelReason><%= policy.billing_status =~ /BEHIND|RESCINDED/ ? "Nonpay" : "Rescind" %></CancelReason>
+            <CancelReason><%= ["BEHIND", "RESCINDED"].include?(policy.billing_status) ? policy.billing_status == "BEHIND" ? "Nonpay" : "Rescind" : nil %></CancelReason>
           </Policy>
           
           <% end %>

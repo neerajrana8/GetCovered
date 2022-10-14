@@ -35,26 +35,26 @@ production:
     class: Compliance::Audit::FinalContactJob
   # Reports
   generate_and_send_cancellation_list_job:
-    cron: '0 2 * * *'   # Every day at 2:00 AM
+    cron: '30 2 * * *'   # Every day at 2:30 AM
     class: CarrierQBE::GenerateandSendCancellationListJob
   confie_report:
     cron: '35 * * * *' # Every hour, thirty-five minutes in
     class: Reports::ConfieReportJob
   # Invoices
   bill_due_invoices:
-    cron: '0 2 * * *'   # Every day at 2:00 AM
+    cron: '30 0 * * *'   # Every day at 12:30 AM
     class: BillDueInvoicesJob
-  bill_past_due_invoices: # Every day at 2:00 AM
-    cron: '0 2 * * *'
+  bill_past_due_invoices:
+    cron: '30 0 * * *'   # Every day at 12:30 AM
     class: BillPastDueInvoicesJob
-  make_invoices_missed: # Every day at 3:00 AM
-    cron: '0 3 * * *'
+  make_invoices_missed:
+    cron: '30 1 * * *'   # Every day at 1:30 AM
     class: MakeInvoicesMissedJob
   make_invoices_available:
-    cron: '0 1 * * *'   # Every day at 1:00 AM
+    cron: '0 0 * * *'   # Every day at 12:01 AM
     class: MakeInvoicesAvailableJob
   handle_unresponsive_charges:
-    cron: '0 3 * * *'   # Every day at 3:00 AM
+    cron: '30 1 * * *'   # Every day at 1:30 AM
     class: HandleUnresponsiveChargesJob
   # Policies
   cancel_unpaid_policies:
@@ -112,6 +112,6 @@ production:
     cron: '0 1 * * *' # Every day at 1:00 AM
     class: YardiSyncJob
   # Generic Actions
-  perform_scheduled_actoins_job:
+  perform_scheduled_actions_job:
     cron: '45 * * * *' # every hour, 45 minutes in
     class: PerformScheduledActionsJob

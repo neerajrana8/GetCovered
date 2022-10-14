@@ -325,7 +325,7 @@ class QbeService
 
       offset = request_time.wday == 1 ? true : false
       range = offset ? (Time.current.to_date - 3.days)..Time.current.to_date :
-                Time.current.to_date - 2.days
+                Time.current.to_date - 1.days
 
       policies_list = Array.new
       policies_list.concat Policy.current.where(billing_behind_since: range, billing_status: "BEHIND", carrier_id: 1, policy_type_id: 1)
