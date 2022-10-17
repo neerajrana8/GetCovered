@@ -6,7 +6,7 @@ module Compliance
 
         def find_leases(created_at_search_range, start_date_search_range)
           @lease_ids = []
-          master_policies = Policy.where(policy_type_id: 2, carrier_id: 2)
+          master_policies = Policy.includes(:insurables).where(policy_type_id: 2, carrier_id: 2)
           master_policies.each do |master|
             master.insurables.communities.each do |community|
               #TODO: not the best option because seems that we do not update covered flags anymore for Lease & Insurable properly
@@ -14,7 +14,7 @@ module Compliance
                                                                       created_at: created_at_search_range,
                                                                          policies: {
                                                                            policy_type_id: [PolicyType::RESIDENTIAL_ID, PolicyType::MASTER_COVERAGE_ID],
-                                                                           status: %i[BOUND BOUND_WITH_WARNING EXTERNAL_VERIFIED]
+                                                                           status: %i[BOUND BOUND_WITH_WARNING EXTERNAL_VERIFIED EXTERNAL_UNVERIFIED]
                                                                          },
                                                                       start_date: start_date_search_range).pluck(:id)
               community_lease_ids = Lease.where(insurable_id: community.units.pluck(:id),
