@@ -104,7 +104,30 @@ class PolicyPremiumItem < ApplicationRecord
   # Public Class Methods
   
   # Public Instance Methods
-  
+=begin
+  def change_remaining_total_by(quantity)
+    error_message = nil
+    ActiveRecord::Base.transaction(requires_new: true) do
+      # lock our bois
+      invoice_array = ::Invoice.where(id: self.line_items.map{|li| li.invoice_id }).order(id: :asc).lock.to_a
+      line_item_array = self.line_items.order(id: :asc).lock.to_a
+      self.lock!
+      # flee if nonsense
+      if quantity < 0 && -quantity > total_due
+        error_message = "PolicyPremiumItem total_due cannot be negative"
+        raise ActiveRecord::Rollback
+      end
+      # begin
+      to_return = self.policy_premium_item_payment_terms.references(:policy_premium_payment_terms).includes(:policy_premium_payment_term)
+                      .order("policy_premium_payment_terms.original_first_moment ASC, policy_premium_payment_terms.original_last_moment DESC")
+                      .map{|pt| ::LineItem.new(chargeable: pt, title: self.title, hidden: self.hidden, original_total_due: 0, analytics_category: "policy_#{self.category}", policy_quote: self.policy_quote) }
+      
+      
+      
+    end
+    return error_message
+  end
+=end
   def generate_line_items
     return "Line items are not permitted since this PolicyPremiumItem's commission calculation is set to no_payments" if self.commission_calculation == 'no_payments'
     # verify we haven't already done this & clean our PolicyPremiumItemPaymentTerms
@@ -236,7 +259,7 @@ class PolicyPremiumItem < ApplicationRecord
     end
     ppics = locked_ppic_array
     ppics.sort!
-    approx_100 = ppics.inject(0.to_d){|sum,ppic| sum + ppic.percentage } # just in case the decimal %s somehow add up to 99.99 or something (which should be impossible, but better safe than sorry with decimals)
+    approx_100 = ppics.inject(0.to_d){|sum,ppic| sum + ppic.percentage } # just in case the decimal %s somehow add up to 99.99 or something (which should be impossible, but better safe than sorry)
     ppic_total_due = ppics.inject(0){|sum,ppic| sum + ppic.total_expected }
     ppic_total_received = ppics.inject(0){|sum,ppic| sum + ppic.total_received }
     # distribute total changes

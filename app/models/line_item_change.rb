@@ -49,7 +49,7 @@ class LineItemChange < ApplicationRecord
         ActiveRecord::Base.transaction do
           ppipt = self.line_item.chargeable_type == 'PolicyPremiumItemPaymentTerm' ? self.line_item.chargeable : nil
           ppi = ppipt.nil? ? self.line_item.chargeable : ppipt.policy_premium_item
-          self.lock!
+          self.lock! # NOTE: all these locks are in a specific order to avoid deadlocking if multiple of these run at once. Don't flip 'em around.
           ppipt.lock! unless ppipt.nil?
           ppi.lock!
           ppic_array = ppi.policy_premium_item_commissions.order(id: :asc).lock.to_a
