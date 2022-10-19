@@ -79,6 +79,12 @@ module PoliciesMethods
       if result.failure?
         render json: result.failure, status: 422
       else
+        Rails.logger.info "#DEBUG #{update_coverage_params}"
+        selected_insurable = Insurable.find(update_coverage_params[:policy_insurables_attributes].first[:insurable_id])
+        @policy.primary_insurable = selected_insurable
+        @policy.primary_insurable.save!
+        @policy.save!
+        @policy = access_model(::Policy, params[:id])
         render :show, status: :ok
       end
     else
@@ -195,7 +201,11 @@ module PoliciesMethods
 
     permitted_params =
       params.require(:policy).permit(
+        :account_id, :agency_id, :policy_type_id, :insurable_id,
         :effective_date, :expiration_date, :number, :status, :out_of_system_carrier_title,
+        documents: [],
+        policy_insurables_attributes: [:insurable_id],
+        policy_users_attributes: [:user_id],
         policy_coverages_attributes: %i[id limit title deductible enabled designation]
       )
 
