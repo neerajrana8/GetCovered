@@ -11,7 +11,9 @@ module PoliciesMethods
       end
       # NOTE: Add threading for multiple background metods being launched
       Thread.new do
-        Policies::UpdateDocuments.run!(policy: @policy)
+        # Policies::UpdateDocuments.run!(policy: @policy)
+        @policy.documents.purge
+        @policy.send("#{@policy.carrier.integration_designation}_issue_policy")
       end.join
       render :show, status: :ok
     else
