@@ -9,7 +9,10 @@ module PoliciesMethods
           user.update(user_param)
         end
       end
-      Policies::UpdateDocuments.run!(policy: @policy)
+      # NOTE: Add threading for multiple background metods being launched
+      Thread.new do
+        Policies::UpdateDocuments.run!(policy: @policy)
+      end.join
       render :show, status: :ok
     else
       render json: @policy.errors, status: :unprocessable_entity
