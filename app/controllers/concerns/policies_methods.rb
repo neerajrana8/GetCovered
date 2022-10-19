@@ -9,7 +9,7 @@ module PoliciesMethods
           user.update(user_param)
         end
       end
-      # NOTE: Add threading for multiple background metods being launched
+      # NOTE: Fix race-condition inside Policies::UpdateDocuments
       Thread.new do
         # Policies::UpdateDocuments.run!(policy: @policy)
         @policy.documents.purge
