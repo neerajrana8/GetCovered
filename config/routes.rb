@@ -85,6 +85,7 @@ Rails.application.routes.draw do
     draw :insurables
     draw :leads
     draw :branding_profiles
+    draw :policies
   end
 
   root to: "application#redirect_home"
