@@ -8,7 +8,7 @@ module V2
       include PoliciesMethods
 
       before_action :set_policy,
-                    only: %i[update show]
+                    only: %i[update show update_coverage_proof delete_policy_document]
       before_action :set_optional_coverages, only: [:show]
 
       before_action :set_substrate, only: [:index]

@@ -23,6 +23,7 @@ scope module: :staff_policy_support, path: "policy-support" do
 
   resources :accounts, only: [ :index]
   resources :communities, only: [ :index]
+  post :accounts_index, action: :index, controller: :accounts
 
   resources :insurables, only: [:create, :update, :index, :show, :destroy], concerns: :reportable do
     member do
