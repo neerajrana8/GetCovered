@@ -24,16 +24,16 @@ module CarrierQBE
                           request: message,
                           eventable: Carrier.find(1))
 
-        if event.save!
+        if event.save
 
           FileUtils.mkdir_p(Rails.root.join('tmp','pex-rex')) unless File.directory?(Rails.root.join('tmp','pex-rex'))
           File.open(filepath, "w+") { |f| f.write(message) }
 
           event.started = Time.current
-          sftp = SFTPService.new(Rails.application.credentials.qbe_sftp[:local][:url], Rails.application.credentials.qbe_sftp[:local][:login], password: Rails.application.credentials.qbe_sftp[:local][:password])
+          sftp = SFTPService.new(Rails.application.credentials.qbe_sftp[Rails.env.to_sym][:url], Rails.application.credentials.qbe_sftp[Rails.env.to_sym][:login], password: Rails.application.credentials.qbe_sftp[Rails.env.to_sym][:password])
           sftp.connect
 
-          upload = sftp.upload_file(filepath.to_s, "#{ Rails.application.credentials.qbe_sftp[:local][:workdir] }#{ filename }")
+          upload = sftp.upload_file(filepath.to_s, "#{ Rails.application.credentials.qbe_sftp[Rails.env.to_sym][:workdir] }#{ filename }")
 
           if upload
             sftp.disconnect
@@ -45,8 +45,8 @@ module CarrierQBE
               policy.update billing_status: 'CURRENT'
             end
 
-            if event.save!
-              File.delete(filepath)
+            if event.save
+              # File.delete(filepath)
             end
           else
             event.update status: "error", completed: Time.current
