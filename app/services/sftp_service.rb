@@ -21,8 +21,22 @@ class SFTPService
 
   def upload_file(local_path, remote_path)
     to_return = false
-    @sftp_client.upload!(local_path, remote_path)do |event|
+    @sftp_client.upload!(local_path, remote_path)do |event, uploader, *args|
       case event
+      when :open then
+        # args[0] : file metadata
+        puts "starting upload: #{args[0].local} -> #{args[0].remote} (#{args[0].size} bytes}"
+      when :put then
+        # args[0] : file metadata
+        # args[1] : byte offset in remote file
+        # args[2] : data being written (as string)
+        puts "writing #{args[2].length} bytes to #{args[0].remote} starting at #{args[1]}"
+      when :close then
+        # args[0] : file metadata
+        puts "finished with #{args[0].remote}"
+      when :mkdir then
+        # args[0] : remote path name
+        puts "creating directory #{args[0]}"
       when :finish
         to_return = true
       end
