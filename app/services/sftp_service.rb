@@ -20,8 +20,14 @@ class SFTPService
   end
 
   def upload_file(local_path, remote_path)
-    @sftp_client.upload!("#{ Rails.root.to_s }/#{ local_path }", remote_path)
-    puts "Uploaded #{local_path}"
+    to_return = false
+    @sftp_client.upload!(local_path, remote_path)do |event|
+      case event
+      when :finish
+        to_return = true
+      end
+    end
+    return to_return
   end
 
   def download_file(remote_path, local_path)
