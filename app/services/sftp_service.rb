@@ -1,7 +1,7 @@
 require 'net/sftp'
 require 'uri'
 
-class SFTPClient
+class SFTPService
   def initialize(host, user, password)
     @host = host
     @user = user
@@ -20,7 +20,7 @@ class SFTPClient
   end
 
   def upload_file(local_path, remote_path)
-    @sftp_client.upload!(local_path, remote_path)
+    @sftp_client.upload!("#{ Rails.root.to_s }/#{ local_path }", remote_path)
     puts "Uploaded #{local_path}"
   end
 
