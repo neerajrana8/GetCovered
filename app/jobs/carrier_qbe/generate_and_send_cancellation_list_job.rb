@@ -14,6 +14,7 @@ module CarrierQBE
 
         filename = "pex-rex-#{ Rails.env }-#{ Time.current.strftime('%Y-%m-%d') }.xml"
         filepath = Rails.root.join('tmp', 'pex-rex', filename)
+        remotepath = Rails.env == "production" ? "Inbound/#{ filename }" : "#{ filename }"
 
         event = Event.new(verb: 'post',
                           format: 'xml',
@@ -33,7 +34,7 @@ module CarrierQBE
           sftp = SFTPService.new(Rails.application.credentials.qbe_sftp[Rails.env.to_sym][:url], Rails.application.credentials.qbe_sftp[Rails.env.to_sym][:login], password: Rails.application.credentials.qbe_sftp[Rails.env.to_sym][:password])
           sftp.connect
 
-          upload = sftp.upload_file(filepath.to_s, "#{ Rails.application.credentials.qbe_sftp[Rails.env.to_sym][:workdir] }#{ filename }")
+          upload = sftp.upload_file(filepath.to_s, remotepath)
 
           if upload
             sftp.disconnect
