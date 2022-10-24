@@ -339,7 +339,7 @@ class QbeService
 
       options[:data] = {
         client_dt: request_time.strftime('%m/%d/%Y'),
-        version: ENV.fetch('APP_VERSION'),
+        version: "2.4.23",
         rq_uid: "CL#{request_time.strftime('%d%m%Y')}",
         transaction_request_date: request_time.strftime('%m/%d/%Y'),
         policies: policies_list
