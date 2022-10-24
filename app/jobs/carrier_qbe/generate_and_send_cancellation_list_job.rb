@@ -51,35 +51,26 @@ module CarrierQBE
 
             puts "\nUpload of #{ filename } has been completed.  Connection closed.\n\n"
 
-            event.completed = Time.current
-            event.status = "success"
+            event.update completed: Time.current, status: "success"
 
             Policy.current.where(carrier_id: 1, policy_type_id: 1, billing_status: 'RESCINDED').find_each do |policy|
               policy.update billing_status: 'CURRENT'
             end
 
-            if event.save
-              File.delete(filepath)
-            end
           else
             sftp.disconnect
 
             puts "\nUpload of #{ filename } has failed.  Connection closed.\n\n"
 
-            event.update status: "error", completed: Time.current
-
-            if Rails.env == "production"
-              if ActionMailer::Base.mail(from: 'no-reply@getcovered.io',
-                                         to: ['dylan@getcovered.io', 'jared@getcovered.io'],
-                                         subject: "PEX/REX Backup Copy",
-                                         body: message).deliver_now()
-                Policy.current.where(carrier_id: 1, policy_type_id: 1, billing_status: 'RESCINDED').find_each do |policy|
-                  policy.update billing_status: 'CURRENT'
-                end
-              end
-            end
+            event.update completed: Time.current, status: "error"
           end
         end
+
+        ActionMailer::Base.mail(from: 'no-reply@getcovered.io',
+                                to: ['dylan@getcovered.io', 'jared@getcovered.io'],
+                                subject: "PEX/REX Backup Copy",
+                                body: message).deliver_now() if Rails.env == "production"
+
       end
     end
 
