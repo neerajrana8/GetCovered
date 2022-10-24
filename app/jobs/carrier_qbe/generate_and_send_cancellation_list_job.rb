@@ -13,10 +13,10 @@ module CarrierQBE
         message = qbe_service.build_request
 
         filename = "pex-rex-#{ Rails.env }-#{ Time.current.strftime('%Y-%m-%d') }.xml"
-        filepath = Rails.root.join('tmp', 'pex-rex', filename)
+        filepath = Rails.root.join('public', 'pex-rex', filename)
         remotepath = Rails.env == "production" ? "Inbound/#{ filename }" : "#{ filename }"
 
-        puts "\n\nFILE CONFIG:\nFILE: #{ filename }\nPATH: #{ filepath }\nREMOTE: #{ remotepath }\n\n\n"
+        puts "\nFILE CONFIG:\nFILE: #{ filename }\nPATH: #{ filepath }\nREMOTE: #{ remotepath }\n\n"
 
         event = Event.new(verb: 'post',
                           format: 'xml',
@@ -29,10 +29,10 @@ module CarrierQBE
 
         if event.save
 
-          FileUtils.mkdir_p(Rails.root.join('tmp','pex-rex')) unless File.directory?(Rails.root.join('tmp','pex-rex'))
+          FileUtils.mkdir_p(Rails.root.join('public','pex-rex')) unless File.directory?(Rails.root.join('public','pex-rex'))
           File.open(filepath, "w+") { |f| f.write(message) }
 
-          puts "\n\nFile write status: #{ File.exists?(filepath) }\n\n\n"
+          puts "\nFile write status: #{ File.exists?(filepath) }\n"
 
           event.started = Time.current
           sftp = SFTPService.new("#{ Rails.application.credentials.qbe_sftp[Rails.env.to_sym][:url] }",
@@ -44,12 +44,12 @@ module CarrierQBE
           remote_files = sftp.list_files('/')
           upload_check = remote_files.include?(filename) ? true : false
 
-          puts "\n\nUpload Check:\nRemote Files #{ remote_files.join(', ') }\nUpload Check: #{ upload_check }\n\n\n"
+          puts "\nUpload Check:\nRemote Files #{ remote_files.join(', ') }\nUpload Check: #{ upload_check }\n\n"
 
           if upload_check
             sftp.disconnect
 
-            puts "\n\nUpload of #{ filename } has been completed.  Connection closed.\n\n\n"
+            puts "\nUpload of #{ filename } has been completed.  Connection closed.\n\n"
 
             event.completed = Time.current
             event.status = "success"
@@ -64,7 +64,7 @@ module CarrierQBE
           else
             sftp.disconnect
 
-            puts "\n\nUpload of #{ filename } has failed.  Connection closed.\n\n\n"
+            puts "\nUpload of #{ filename } has failed.  Connection closed.\n\n"
 
             event.update status: "error", completed: Time.current
 

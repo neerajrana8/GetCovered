@@ -43,3 +43,6 @@ dump.rdb
 /coverage/*
 
 /.irb_history
+
+/public/pex-rex
+/public/pex-rex/*
