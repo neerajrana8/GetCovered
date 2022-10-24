@@ -20,7 +20,6 @@ class SFTPService
   end
 
   def upload_file(local_path, remote_path)
-    to_return = false
     @sftp_client.upload!(local_path, remote_path)do |event, uploader, *args|
       case event
       when :open then
@@ -38,21 +37,21 @@ class SFTPService
         # args[0] : remote path name
         puts "creating directory #{args[0]}"
       when :finish
-        to_return = true
+        puts "all done!"
       end
     end
-    return to_return
   end
 
   def download_file(remote_path, local_path)
     @sftp_client.download!(remote_path, local_path)
-    puts "Downloaded #{remote_path}"
   end
 
   def list_files(remote_path)
+    files = Array.new
     @sftp_client.dir.foreach(remote_path) do |entry|
-      puts entry.longname
+      files << entry.name
     end
+    return files
   end
 
   def sftp_client

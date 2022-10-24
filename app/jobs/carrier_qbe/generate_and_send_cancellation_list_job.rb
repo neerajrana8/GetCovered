@@ -31,13 +31,18 @@ module CarrierQBE
           File.open(filepath, "w+") { |f| f.write(message) }
 
           event.started = Time.current
-          sftp = SFTPService.new(Rails.application.credentials.qbe_sftp[Rails.env.to_sym][:url], Rails.application.credentials.qbe_sftp[Rails.env.to_sym][:login], password: Rails.application.credentials.qbe_sftp[Rails.env.to_sym][:password])
+          sftp = SFTPService.new("#{ Rails.application.credentials.qbe_sftp[Rails.env.to_sym][:url] }",
+                                 "#{ Rails.application.credentials.qbe_sftp[Rails.env.to_sym][:login] }",
+                                 password: Rails.application.credentials.qbe_sftp[Rails.env.to_sym][:password])
           sftp.connect
 
-          upload = sftp.upload_file(filepath.to_s, remotepath)
+          sftp.upload_file(filepath.to_s, remotepath)
+          upload_check = sftp.list_files('/').include?(filename) ? true : false
 
-          if upload
+          if upload_check
             sftp.disconnect
+
+            puts "\n\nUpload of #{ filename } has been completed.  Connection closed.\n\n\n"
 
             event.completed = Time.current
             event.status = "success"
@@ -50,6 +55,10 @@ module CarrierQBE
               # File.delete(filepath)
             end
           else
+            sftp.disconnect
+
+            puts "\n\nUpload of #{ filename } has failed.  Connection closed.\n\n\n"
+
             event.update status: "error", completed: Time.current
 
             if Rails.env == "production"
