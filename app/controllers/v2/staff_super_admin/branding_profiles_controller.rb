@@ -29,9 +29,10 @@ second_logo_delete second_footer_logo_delete]
               ::BrandingProfiles::CreateFromDefault.run(account: profileable)
             end
 
-
           if branding_profile_outcome.valid?
             @branding_profile = branding_profile_outcome.result
+            ::BrandingProfiles::Populate.run!(branding_profile: @branding_profile)
+
             render template: 'v2/shared/branding_profiles/show', status: :created
           else
             render json: standard_error(
