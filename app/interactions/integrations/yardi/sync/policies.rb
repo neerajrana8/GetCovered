@@ -326,7 +326,9 @@ module Integrations
               policy_imported = (policy_ip&.configuration&.[]('history') == 'imported_from_yardi')
               policy_exported = (policy_ip&.configuration&.[]('history') == 'exported_to_yardi')
               policy_document_exported = policy_ip&.configuration&.[]('exported_to_primary')
-              dunny_mcdonesters = policy_imported || (policy_exported && policy_document_exported)
+              dunny_mcdonesters = policy_imported || (policy_exported && policy_document_exported && (
+                (DateTime.parse(policy_ip.configuration['synced_at']) >= ([policy.updated_at] + policy.policy_users.map(&:updated_at) + policy.policy_coverages.map(&:updated_at)).max) rescue false
+              )) # WARNING: ideally we would create the policy_hash and compare to the cached one instead of doing this... but for now this works
               next if dunny_mcdonesters
               # grab more data
               lease_users = LeaseUser.includes(:lease).references(:leases).where(user_id: policy.policy_users.map{|pu| pu.user_id }, leases: { insurable_id: policy.policy_insurables.find{|pi| pi.primary }&.insurable_id })
@@ -353,37 +355,38 @@ module Integrations
               policy_priu = users_to_export.find{|u| u[:policy_user].primary }
               lease_priu = users_to_export.find{|u| !u[:external_id].downcase.start_with?("r") }
               next if policy_priu.blank? # MOOSE WARNING: we are rejecting policies whose primary user is not on the lease...
-              # go go go
-              if !policy_exported
-                priu = policy_priu
-                # export the policy
-                roommate_index = 0
-                policy_hash = {
-                  Customer: {
-                    #Identification: users_to_export.map{|u| { "IDValue" => u[:external_id], "IDType" => !u[:external_id].downcase.start_with?("r") ? "Resident ID" : "Roomate#{roommate_index += 1} ID" } },
-                    Identification: users_to_export.map{|u| { "IDValue" => u[:external_id], "IDType" => u[:policy_user].primary ? "Resident ID" : "Roomate#{roommate_index += 1} ID" } },
-                    Name: {
-                        "FirstName" => priu[:policy_user].user.profile.first_name,
-                        "MiddleName" => priu[:policy_user].user.profile.middle_name.blank? ? nil : priu[:policy_user].user.profile.middle_name,
-                        "LastName" => priu[:policy_user].user.profile.last_name#,
-                        #"Relationship"=> priu[:policy_user].primary ? nil : priu[:policy_user].spouse ? "Spouse" : "Roommate"
-                    }.compact
-                  },
-                  Insurer: { Name: policy.carrier&.title || policy.out_of_system_carrier_title },
-                  PolicyNumber: policy.number,
-                  PolicyTitle: policy.number,
-                  PolicyDetails: {
-                    EffectiveDate: policy.effective_date.to_s,
-                    ExpirationDate: policy.expiration_date&.to_s, # MOOSE WARNING: should we do something else for MPCs?
-                    IsRenew: policy.auto_renew,
-                    LiabilityAmount: '%.2f' % (policy.get_liability.nil? ? nil : (policy.get_liability.to_d / 100.to_d)) #,
-                    #Notes: "GC Verified" #, TEMP DISALBRD CAUSSES BROKEENNN
-                    #IsRequiredForMoveIn: "false",
-                    #IsPMInterestedParty: "true"
-                    # MOOSE WARNING: are these weirdos required?
+              # set up export stuff
+              priu = policy_priu
+              # export the policy
+              roommate_index = 0
+              policy_hash = {
+                Customer: {
+                  #Identification: users_to_export.map{|u| { "IDValue" => u[:external_id], "IDType" => !u[:external_id].downcase.start_with?("r") ? "Resident ID" : "Roomate#{roommate_index += 1} ID" } },
+                  Identification: users_to_export.map{|u| { "IDValue" => u[:external_id], "IDType" => u[:policy_user].primary ? "Resident ID" : "Roomate#{roommate_index += 1} ID" } },
+                  Name: {
+                      "FirstName" => priu[:policy_user].user.profile.first_name,
+                      "MiddleName" => priu[:policy_user].user.profile.middle_name.blank? ? nil : priu[:policy_user].user.profile.middle_name,
+                      "LastName" => priu[:policy_user].user.profile.last_name#,
+                      #"Relationship"=> priu[:policy_user].primary ? nil : priu[:policy_user].spouse ? "Spouse" : "Roommate"
                   }.compact
-                }
-                result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: false)
+                },
+                Insurer: { Name: policy.carrier&.title || policy.out_of_system_carrier_title },
+                PolicyNumber: policy.number,
+                PolicyTitle: policy.number,
+                PolicyDetails: {
+                  EffectiveDate: policy.effective_date.to_s,
+                  ExpirationDate: policy.expiration_date&.to_s, # MOOSE WARNING: should we do something else for MPCs?
+                  IsRenew: policy.auto_renew,
+                  LiabilityAmount: '%.2f' % (policy.get_liability.nil? ? nil : (policy.get_liability.to_d / 100.to_d)) #,
+                  #Notes: "GC Verified" #, TEMP DISALBRD CAUSSES BROKEENNN
+                  #IsRequiredForMoveIn: "false",
+                  #IsPMInterestedParty: "true"
+                  # MOOSE WARNING: are these weirdos required?
+                }.compact
+              }
+              #export
+              if !policy_exported || policy_hash != policy_ip&.configuration&.[]('exported_hash')
+                result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: policy_exported)
                 if !result[:success] && !result[:request].response&.body&.index("Policy already exists in database")
                   to_return[:policy_export_errors][policy.number] = "Failed to export policy due to error response from Yardi's API (Event id #{result[:event]&.id})."
                   next
@@ -397,17 +400,23 @@ module Integrations
                       external_id: policy.number,
                       configuration: {
                         'history' => 'exported_to_yardi',
-                        'synced_at' => Time.current.to_s
+                        'synced_at' => Time.current.to_s,
+                        'exported_hash' => policy_hash
                       }
                     )
                     if(policy_ip.id.nil?)
                       to_return[:policy_export_errors][policy.number] = "Failed to create IntegrationProfile: #{policy_ip.errors.to_h}"
                       next
                     end
+                  else
+                    policy_ip.configuration['history'] = 'exported_to_yardi'
+                    policy_ip.configuration['synced_at'] = Time.current.to_s
+                    policy_ip.configuration['exported_hash'] = policy_hash
+                    policy_ip.save
                   end
                   to_return[:policies_exported][policy.number] = policy
                 end
-              end # end if !policy_exported
+              end # end if !policy_exported...
               if !policy_document_exported
                 priu = policy_priu
                 next if priu.nil?
