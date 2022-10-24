@@ -84,7 +84,7 @@ module PoliciesMethods
         @policy.primary_insurable = selected_insurable
         @policy.primary_insurable.save!
         @policy.save!
-        @policy = access_model(::Policy, params[:id])
+        @policy = Policy.find(params[:id]) # TODO: Not working -> access_model(::Policy, params[:id])
         render :show, status: :ok
       end
     else
