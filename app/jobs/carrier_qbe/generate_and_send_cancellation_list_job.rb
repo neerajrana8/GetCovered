@@ -16,6 +16,8 @@ module CarrierQBE
         filepath = Rails.root.join('tmp', 'pex-rex', filename)
         remotepath = Rails.env == "production" ? "Inbound/#{ filename }" : "#{ filename }"
 
+        puts "\n\nFILE CONFIG:\nFILE: #{ filename }\nPATH: #{ filepath }\nREMOTE: #{ remotepath }\n\n\n"
+
         event = Event.new(verb: 'post',
                           format: 'xml',
                           interface: 'SFTP',
@@ -30,6 +32,8 @@ module CarrierQBE
           FileUtils.mkdir_p(Rails.root.join('tmp','pex-rex')) unless File.directory?(Rails.root.join('tmp','pex-rex'))
           File.open(filepath, "w+") { |f| f.write(message) }
 
+          puts "\n\nFile write status: #{ File.exists?(filepath) }\n\n\n"
+
           event.started = Time.current
           sftp = SFTPService.new("#{ Rails.application.credentials.qbe_sftp[Rails.env.to_sym][:url] }",
                                  "#{ Rails.application.credentials.qbe_sftp[Rails.env.to_sym][:login] }",
@@ -37,7 +41,10 @@ module CarrierQBE
           sftp.connect
 
           sftp.upload_file(filepath.to_s, remotepath)
-          upload_check = sftp.list_files('/').include?(filename) ? true : false
+          remote_files = sftp.list_files('/')
+          upload_check = remote_files.include?(filename) ? true : false
+
+          puts "\n\nUpload Check:\nRemote Files #{ remote_files.join(', ') }\nUpload Check: #{ upload_check }\n\n\n"
 
           if upload_check
             sftp.disconnect
@@ -52,7 +59,7 @@ module CarrierQBE
             end
 
             if event.save
-              # File.delete(filepath)
+              File.delete(filepath)
             end
           else
             sftp.disconnect
