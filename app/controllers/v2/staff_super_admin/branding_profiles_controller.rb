@@ -24,9 +24,9 @@ second_logo_delete second_footer_logo_delete]
           branding_profile_outcome =
             case profileable
             when Agency
-              BrandingProfiles::CreateFromDefault.run(agency: profileable)
+              ::BrandingProfiles::CreateFromDefault.run(agency: profileable)
             when Account
-              BrandingProfiles::CreateFromDefault.run(account: profileable)
+              ::BrandingProfiles::CreateFromDefault.run(account: profileable)
             end
 
 
