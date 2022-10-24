@@ -7,11 +7,12 @@ module LeasesMethods
       users_params[:users]&.each do |user_params|
         user = ::User.find_by(id: user_params[:user][:id]) || ::User.find_by(email: user_params[:user][:email])
         if user.nil?
+          # TODO: Move to standard method for user creation
           user = ::User.new(user_params[:user])
           user.password = SecureRandom.base64(12)
+          user.password_confirmation = user.password
           user.invite! if user.save
         end
-
         ::LeaseUser.create(lease: @lease, user: user, primary: user_params[:primary])
       end
 
@@ -45,6 +46,7 @@ module LeasesMethods
           if user.nil?
             user = ::User.new(user_params[:user])
             user.password = SecureRandom.base64(12)
+            user.password_confirmation = user.password
             user.invite! if user.save
           else
             user.update(user_params[:user])
