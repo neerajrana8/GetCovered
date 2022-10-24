@@ -35,7 +35,7 @@ module V2
 
         filtering_keys = %i[policy_in_system agency_id status account_id policy_type_id number]
         params_slice ||= []
-        params_slice = params[:filter].slice(*filtering_keys) if params[:filter].present?
+        params_slice = filter.slice(*filtering_keys)
         policies = Policy.filter(params_slice).includes(users: :profile).references(:profiles)
 
         # Profile fields filtering
