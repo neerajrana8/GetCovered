@@ -327,8 +327,8 @@ module Integrations
               policy_exported = (policy_ip&.configuration&.[]('history') == 'exported_to_yardi')
               policy_document_exported = policy_ip&.configuration&.[]('exported_to_primary')
               dunny_mcdonesters = policy_imported || (policy_exported && policy_document_exported && (
-                (DateTime.parse(policy_ip.configuration['synced_at']) >= ([policy.updated_at] + policy.policy_users.map(&:updated_at) + policy.policy_coverages.map(&:updated_at)).max rescue false)
-              ) # WARNING: ideally we would create the policy_hash and compare to the cached one instead of doing this... but for now this works
+                (DateTime.parse(policy_ip.configuration['synced_at']) >= ([policy.updated_at] + policy.policy_users.map(&:updated_at) + policy.policy_coverages.map(&:updated_at)).max) rescue false
+              )) # WARNING: ideally we would create the policy_hash and compare to the cached one instead of doing this... but for now this works
               next if dunny_mcdonesters
               # grab more data
               lease_users = LeaseUser.includes(:lease).references(:leases).where(user_id: policy.policy_users.map{|pu| pu.user_id }, leases: { insurable_id: policy.policy_insurables.find{|pi| pi.primary }&.insurable_id })
