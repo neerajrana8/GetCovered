@@ -21,21 +21,22 @@ module Integrations
             resident_id: resident_id,
             attachment_type: integration.configuration['sync']['policy_push']['attachment_type'],
             description: "(GC) Policy ##{policy.number}",
-            attachment: policy_document
+            attachment: policy_document,
+            eventable: policy
           )
           attachment_result = (result2[:parsed_response].dig("Envelope", "Body", "ImportTenantLeaseDocumentPDFResponse", "ImportTenantLeaseDocumentPDFResult", "ImportAttach", "DocumentAttachment", "Result") rescue nil)
           policy_ip.configuration['exported_documents_to'] ||= {}
           if !attachment_result.blank? && attachment_result.start_with?("Successful")
             #policy_ip.configuration['exported_to_primary_as'] = (attachment_result.split(':')[1] rescue nil) # cut off initial "Successful:"
             #policy_ip.configuration['exported_to_primary_freak_response'] = result2[:parsed_response] if  policy_ip.configuration['exported_to_primary_as'].nil?
-            policy_ip.configuration['exported_to_primary'] = true if policy.policy_users.find{|pu| pu.primary }&.integration_profiles&.take&.external_id == resident_id
+            policy_ip.configuration['exported_to_primary'] = true # disabled just in case it was causing duplicate uploads: if policy.policy_users.find{|pu| pu.primary }&.integration_profiles&.take&.external_id == resident_id
             policy_ip.configuration['exported_documents_to'][resident_id] = { success: true, event_id: result2[:event]&.id, filename: (attachment_result.split(':')[1] rescue nil) }
             unless policy_ip.save
               problem = "Had a problem saving policy IP changes: #{policy_ip.errors.to_h}"
             end
           else
             problem = "Yardi responded to our upload request in a way that could not be understood."
-            #policy_ip.configuration['exported_to_primary'] = false
+            policy_ip.configuration['exported_to_primary'] = 'maybe'
             #policy_ip.configuration['exported_to_primary_as'] = nil
             #policy_ip.configuration['exported_to_primary_freak_response'] = result2[:parsed_response]
             policy_ip.configuration['exported_documents_to'][resident_id] = { success: false, event_id: result2[:event]&.id }
@@ -325,7 +326,7 @@ module Integrations
               policy_ip = policy.integration_profiles.find{|ip| ip.integration_id == integration.id }
               policy_imported = (policy_ip&.configuration&.[]('history') == 'imported_from_yardi')
               policy_exported = (policy_ip&.configuration&.[]('history') == 'exported_to_yardi')
-              policy_document_exported = policy_ip&.configuration&.[]('exported_to_primary')
+              policy_document_exported = (policy_ip&.configuration&.[]('exported_to_primary') ? true : false)
               dunny_mcdonesters = policy_imported || (policy_exported && policy_document_exported && (
                 (DateTime.parse(policy_ip.configuration['synced_at']) >= ([policy.updated_at] + policy.policy_users.map(&:updated_at) + policy.policy_coverages.map(&:updated_at)).max) rescue false
               )) # WARNING: ideally we would create the policy_hash and compare to the cached one instead of doing this... but for now this works
