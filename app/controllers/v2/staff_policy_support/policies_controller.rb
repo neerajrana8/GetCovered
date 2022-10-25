@@ -64,7 +64,8 @@ module V2
       end
 
       def set_policy
-        @policy = access_model(::Policy, params[:id])
+        # @policy = access_model(::Policy, params[:id])
+        @policy = Policy.find(params[:id])
         unless @policy.policy_in_system == false && ["EXTERNAL_UNVERIFIED", "EXTERNAL_VERIFIED", "EXTERNAL_REJECTED"].include?(@policy.status)
           render json: standard_error(error: "Invalid Selection", message: "This policy does not meet the criteria for review")
         end
