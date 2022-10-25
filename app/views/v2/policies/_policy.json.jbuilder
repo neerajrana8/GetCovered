@@ -6,6 +6,14 @@ json.cache! policy do
                 :renew_count, :updated_at, :status, :out_of_system_carrier_title, :address
 
 
+  json.account do
+    if policy.account.present?
+      json.title policy.account&.title
+    else
+      json.title policy.insurables&.last&.account&.title
+    end
+  end
+
   json.carrier do
     json.title policy.carrier&.title
   end

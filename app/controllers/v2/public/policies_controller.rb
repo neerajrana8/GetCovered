@@ -87,7 +87,7 @@ module V2
         @policy.status           = 'EXTERNAL_UNVERIFIED' if params[:status].blank?
         add_error_master_types(@policy.policy_type_id)
         if @policy.errors.blank? && @policy.save
-          result = Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes]&.values)
+          result = ::Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes]&.values)
           if result.failure?
             render json: result.failure, status: 422
           else
