@@ -12,6 +12,8 @@ module ExpandedCovered
         self.expanded_covered[policy_type_id.to_s] << policy_id unless self.expanded_covered[policy_type_id.to_s].include?(policy_id)
         self.covered = true
 
+        Rails.logger.info "#DEBUG expanded_covered=#{expanded_covered}"
+
         if policy_type_id == 1
           if self.expanded_covered.has_key?("3") && self.expanded_covered["3"].length > 0
             self.expanded_covered["3"].each do |master_coverage_policy_id|
