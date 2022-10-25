@@ -387,7 +387,10 @@ module Integrations
               #export
               if !policy_exported || policy_hash != policy_ip&.configuration&.[]('exported_hash')
                 result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: policy_exported)
-                if !result[:success] && !result[:request].response&.body&.index("Policy already exists in database")
+                if result[:request].response&.body&.index("Policy already exists in database")
+                  result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: true)
+                end
+                if !result[:success]
                   to_return[:policy_export_errors][policy.number] = "Failed to export policy due to error response from Yardi's API (Event id #{result[:event]&.id})."
                   next
                 else
