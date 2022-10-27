@@ -85,7 +85,6 @@ module PoliciesMethods
         if result.failure?
           render json: result.failure, status: 422
         else
-
           selected_insurable = Insurable.find(update_coverage_params[:policy_insurables_attributes].first[:insurable_id])
           @policy.primary_insurable = selected_insurable
           @policy.primary_insurable.save!
