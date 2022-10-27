@@ -81,18 +81,18 @@ module PoliciesMethods
     if @policy.errors.blank? && @policy.update_as(current_staff, update_coverage_params)
       ActiveRecord::Base.transaction do
         result = Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes])
+        selected_insurable = Insurable.find(update_coverage_params[:policy_insurables_attributes].first[:insurable_id])
+        @policy.primary_insurable = selected_insurable
+        @policy.primary_insurable.save!
+        @policy.save!
+        @policy.policy_coverages.delete_all
+        @policy.policy_coverages.create!(update_coverage_params[:policy_coverages_attributes])
+        @policy.send(:create_necessary_policy_coverages_for_external)
+        @policy = Policy.find(params[:id]) # TODO: Not working -> access_model(::Policy, params[:id])
 
         if result.failure?
           render json: result.failure, status: 422
         else
-          selected_insurable = Insurable.find(update_coverage_params[:policy_insurables_attributes].first[:insurable_id])
-          @policy.primary_insurable = selected_insurable
-          @policy.primary_insurable.save!
-          @policy.save!
-          @policy.policy_coverages.delete_all
-          @policy.policy_coverages.create!(update_coverage_params[:policy_coverages_attributes])
-          @policy.send(:create_necessary_policy_coverages_for_external)
-          @policy = Policy.find(params[:id]) # TODO: Not working -> access_model(::Policy, params[:id])
           render :show, status: :ok
         end
       end
