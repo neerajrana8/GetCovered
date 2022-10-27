@@ -79,12 +79,13 @@ module PoliciesMethods
     type_id = update_coverage_params[:policy_type_id]
     add_error_master_types(type_id) if type_id.present?
     if @policy.errors.blank? && @policy.update_as(current_staff, update_coverage_params)
-      result = Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes])
+      ActiveRecord::Base.transaction do
+        result = Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes])
 
-      if result.failure?
-        render json: result.failure, status: 422
-      else
-        ActiveRecord::Base.transaction do
+        if result.failure?
+          render json: result.failure, status: 422
+        else
+
           selected_insurable = Insurable.find(update_coverage_params[:policy_insurables_attributes].first[:insurable_id])
           @policy.primary_insurable = selected_insurable
           @policy.primary_insurable.save!
@@ -93,7 +94,8 @@ module PoliciesMethods
           @policy.policy_coverages.create!(update_coverage_params[:policy_coverages_attributes])
           @policy.send(:create_necessary_policy_coverages_for_external)
           @policy = Policy.find(params[:id]) # TODO: Not working -> access_model(::Policy, params[:id])
-        render :show, status: :ok
+          render :show, status: :ok
+        end
       end
     else
       render json: @policy.errors, status: :unprocessable_entity
