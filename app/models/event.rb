@@ -38,7 +38,7 @@ class Event < ApplicationRecord
               
   enum format: ['json', 'xml', 'empty']
   
-  enum interface: ['REST', 'SOAP']
+  enum interface: ['REST', 'SOAP', 'SFTP']
   
   enum status: ['in_progress', 'success', 'error']
   

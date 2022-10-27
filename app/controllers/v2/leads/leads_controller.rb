@@ -100,7 +100,6 @@ module V2
         leads = leads.join_last_events
         leads = leads.by_last_visit(date_from, date_to)
 
-        Rails.logger.info "#DEBUG SQL=#{leads.to_sql}"
         # Pagination
         if params[:pagination].present?
           page = params[:pagination][:page]
@@ -108,16 +107,23 @@ module V2
           # TODO: Support frontend flaw behaviour
           page = 1 if page.zero?
           per = 50 if per.zero?
-          @leads = leads.page(page).per(per)
+          leads = leads.page(page).per(per)
 
+          # NOTE: Deprecated
           # TODO: Deprecate headers pagination unless client side support fixed
-          response.headers['total-pages'] = @leads.total_pages
-          response.headers['current-page'] = @leads.current_page
-          response.headers['total-entries'] = leads.count
+          # response.headers['total-pages'] = @leads.total_pages
+          # response.headers['current-page'] = @leads.current_page
+          # response.headers['total-entries'] = leads.count
         else
-          @leads = leads.limit(2) # Limit 2 To comply with rspec test
+          leads = leads.page(1).per(2) # Limit 2 To comply with rspec test
         end
 
+        if params[:sort].present?
+          leads = leads.order(last_visit: params[:sort][:last_visit]) if params[:sort][:last_visit].present?
+          leads = leads.order(created_at: params[:sort][:created_at]) if params[:sort][:created_at].present?
+        end
+
+        @leads = leads
         @meta = { total: leads.count, page: @leads.current_page, per: per }
 
         if params[:sort].present?

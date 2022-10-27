@@ -100,7 +100,8 @@
       path: "application-modules",
       only: [ :create, :update, :index, :show ]
 
-    resources :assignments, only: [ :index, :show ]
+    resources :assignments,
+      only: [ :create, :update, :destroy, :index, :show ]
 
     resources :billing_strategies, path: "billing-strategies", only: [ :create, :update, :index, :show ] do
       member do

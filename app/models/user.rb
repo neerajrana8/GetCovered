@@ -73,16 +73,9 @@ class User < ApplicationRecord
     on: :create,
     if: Proc.new{|u| u.email.nil? && u.password.blank? }
 
-  before_validation :set_default_provider,
-    on: :create
-
-  before_validation :set_random_password,
-    on: :create,
-    if: Proc.new{|u| u.email.nil? && u.password.blank? }
-
   after_create_commit :add_to_mailchimp,
                       :set_qbe_id
-  
+
   before_update :ensure_email_based,
     if: Proc.new{|u| u.will_save_change_to_attribute?('sign_in_count') && u.attribute_in_database('sign_in_count') == 0 && u.provider != 'email' }
 
@@ -446,18 +439,6 @@ class User < ApplicationRecord
     self.uid = self.altuid
   end
 
-  def set_random_password
-    secure_tmp_password = SecureRandom.base64(12)
-    self.password = secure_tmp_password
-    self.password_confirmation = secure_tmp_password
-  end
-
-  def set_default_provider
-    self.provider = (self.email.blank? ? 'altuid' : 'email')
-    self.altuid = Time.current.to_i.to_s + rand.to_s
-    self.uid = self.altuid
-  end
-  
   def ensure_email_based
     dat_email = self.email || self.profile.contact_email
     self.provider = 'email'

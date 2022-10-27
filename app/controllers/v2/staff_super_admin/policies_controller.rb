@@ -76,9 +76,13 @@ module V2
         render json: @policies.to_json, status: 200
       end
 
+      # TODO: Old code related to leads, need refactoring
       def get_leads
-        @leads = [@policy.primary_user.lead]
-        @site_visits = @leads.last.lead_events.order("DATE(created_at)").group("DATE(created_at)").count.keys.size
+        unless @policy.primary_user.lead.nil?
+          @leads = [@policy.primary_user.lead]
+          # @site_visits = @leads.last.lead_events.order("DATE(created_at)").group("DATE(created_at)").count.keys.size
+          @site_visites = @leads.first.lead_events_cx
+        end
         render 'v2/shared/leads/leads_by_policy'
       end
 
