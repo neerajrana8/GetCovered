@@ -9,7 +9,12 @@ module PoliciesMethods
           user.update(user_param)
         end
       end
-      Policies::UpdateDocuments.run!(policy: @policy)
+      # NOTE: Fix race-condition inside Policies::UpdateDocuments
+      Thread.new do
+        # Policies::UpdateDocuments.run!(policy: @policy)
+        @policy.documents.purge
+        @policy.send("#{@policy.carrier.integration_designation}_issue_policy")
+      end.join
       render :show, status: :ok
     else
       render json: @policy.errors, status: :unprocessable_entity
