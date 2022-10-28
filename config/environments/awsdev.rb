@@ -101,7 +101,7 @@ Rails.application.configure do
     get '/rails/mailers/*path'   => "rails/mailers#preview"
   end
 
-  config.action_mailer.delivery_method = :letter_opener
+  config.action_mailer.delivery_method = :letter_opener_web
   config.action_mailer.perform_deliveries = true
   #TODO: need to revert with letter_opener
   #config.action_mailer.delivery_method = :mailgun
