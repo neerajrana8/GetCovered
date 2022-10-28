@@ -20,7 +20,7 @@ module Compliance
       # Hard coded to QBE for now.
       set_master_policy_and_configuration(@community, 2)
       get_insurable_liability_range(@community)
-      set_locale(@user.profile&.language)
+      set_locale(@user&.profile&.language || "en")
 
       @onboarding_url = tokenized_url(@user, @community)
       @requirements_date = @configuration.nil? ? lease_start_date : lease_start_date + @configuration.grace_period
