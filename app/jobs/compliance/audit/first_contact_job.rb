@@ -4,16 +4,14 @@ module Compliance
       include Compliance::Audit::Concerns::LeasesEmailsMethods
 
       queue_as :default
-
-      before_perform do |job|
+      
+      def perform(*)
         date = Time.current.to_date - 1.days
         created_at_search_range = (date.at_beginning_of_day..date.at_end_of_day)
         start_date_search_range = ((date + 2.days)..)
 
         find_leases(created_at_search_range, start_date_search_range)
-      end
 
-      def perform(*)
         unless @leases.nil?
           @leases.each do |lease|
             begin

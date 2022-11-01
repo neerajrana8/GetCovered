@@ -129,6 +129,14 @@ gem 'rswag-api'
 
 gem 'data_migrate'
 
+#Need to open letters in dev_mode - put here temporarily to test emails.
+#Need to return to dev group
+gem 'letter_opener'
+gem 'letter_opener_web', '~> 1.0'
+gem 'guard'
+gem 'guard-shell'
+
+
 group :local, :development, :test, :test_container do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: %i[mri mingw x64_mingw]
@@ -153,11 +161,6 @@ group :development do
   gem 'rails-erd'
   gem 'spring'
   gem 'spring-watcher-listen', '~> 2.0.0'
-  #need to open letters in dev_mode
-  gem 'letter_opener'
-  gem 'letter_opener_web', '~> 1.0'
-  gem 'guard'
-  gem 'guard-shell'
   #rubymine specific debug gems
   #gem 'ruby-debug-ide' #, '0.7.0'
   #gem 'debase' , '0.2.4'
