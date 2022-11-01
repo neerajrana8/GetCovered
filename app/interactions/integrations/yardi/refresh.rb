@@ -123,6 +123,7 @@ module Integrations
         result = Integrations::Yardi::RentersInsurance::GetPropertyConfigurations.run!(integration: integration)
         if result[:success] && result[:parsed_response].class == ::Hash
           result[:comms] = result[:parsed_response].dig("Envelope", "Body", "GetPropertyConfigurationsResponse", "GetPropertyConfigurationsResult", "Properties", "Property")
+          result[:comms] = [result[:comms]] if result[:comms].class == ::Hash
           if result[:comms].class == ::Array
             integration.configuration['sync']['syncable_communities'] = result[:comms].map{|c| [c["Code"], {
               'name' => c["MarketingName"],
