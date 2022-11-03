@@ -50,6 +50,14 @@ module V2
           policies = policies.where(policy_insurables: { insurable_id: filter[:insurable_id] })
         end
 
+        # Tcode filtering
+        if filter[:tcode].present?
+          matched_integrations = IntegrationProfile
+                                   .where('external_id LIKE ? AND profileable_type = ?', "%#{filter[:tcode]}%", 'Policy')
+          matched_integrations_ids = matched_integrations.pluck(:profileable_id)
+          policies = policies.where(id: matched_integrations_ids)
+        end
+
         if params[:pagination].present?
           per = params[:pagination][:per] if params[:pagination][:per].present?
           page = params[:pagination][:page] if params[:pagination][:page].present?
