@@ -1,10 +1,17 @@
 module Compliance
   module Audit
     class FirstContactJob < ApplicationJob
-      queue_as :default
-      before_perform :find_leases
+      include Compliance::Audit::Concerns::LeasesEmailsMethods
 
+      queue_as :default
+      
       def perform(*)
+        date = Time.current.to_date - 1.days
+        created_at_search_range = (date.at_beginning_of_day..date.at_end_of_day)
+        start_date_search_range = ((date + 2.days)..)
+
+        find_leases(created_at_search_range, start_date_search_range)
+
         unless @leases.nil?
           @leases.each do |lease|
             begin
@@ -27,22 +34,6 @@ module Compliance
         end
       end
 
-      private
-        def find_leases
-          @lease_ids = []
-          date = Time.current.to_date - 1.days
-          master_policies = Policy.where(policy_type_id: 2, carrier_id: 2)
-          master_policies.each do |master|
-            master.insurables.communities.each do |community|
-              community_lease_ids = Lease.where(insurable_id: community.units.pluck(:id),
-                                                created_at: date.at_beginning_of_day..date.at_end_of_day,
-                                                start_date: (date + 2.days)..).pluck(:id)
-              @lease_ids = @lease_ids + community_lease_ids
-            end
-          end
-
-          @leases = @lease_ids.blank? ? nil : Lease.find(@lease_ids)
-        end
     end
   end
 end

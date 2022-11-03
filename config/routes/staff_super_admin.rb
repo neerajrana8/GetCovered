@@ -100,7 +100,8 @@
       path: "application-modules",
       only: [ :create, :update, :index, :show ]
 
-    resources :assignments, only: [ :index, :show ]
+    resources :assignments,
+      only: [ :create, :update, :destroy, :index, :show ]
 
     resources :billing_strategies, path: "billing-strategies", only: [ :create, :update, :index, :show ] do
       member do
@@ -273,6 +274,7 @@
     post 'insurables/:insurable_id/policies_index', controller: 'policies', action: :index
     get :agency_filters, controller: 'insurables', to: 'insurables#agency_filters', path: 'insurables/filters/agency_filters'
     post :insurables_index, action: :index, controller: :insurables
+    post 'insurables/upload', controller: 'insurables', action: :upload
 
     resources :insurable_types, path: "insurable-types", only: [ :index ]
 

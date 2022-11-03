@@ -61,7 +61,9 @@ module V2
       end
 
       def set_policy
-        @policy = access_model(::Policy, params[:id])
+        # NOTE: Need refactoring, access_model returns nil
+        # @policy = access_model(::Policy, params[:id])
+        @policy = Policy.find(params[:id])
       end
 
       def set_substrate

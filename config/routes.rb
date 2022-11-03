@@ -16,6 +16,7 @@ Rails.application.routes.draw do
   end
 
   mount Sidekiq::Web, at: '/sidekiq'
+  mount LetterOpenerWeb::Engine, at: "/letter_opener" #if Rails.env.development?
 
   mount_devise_token_auth_for 'User',
     at: 'v2/user/auth',
@@ -80,7 +81,12 @@ Rails.application.routes.draw do
     draw :public
     draw :sdk
     draw :dashboards
+    draw :users
+    draw :agencies
+    draw :insurables
     draw :leads
+    draw :branding_profiles
+    draw :policies
   end
 
   root to: "application#redirect_home"

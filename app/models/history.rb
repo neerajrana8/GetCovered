@@ -29,6 +29,6 @@ class History < ApplicationRecord
   private
 
   def initialize_history
-    self.author ||= authorable.nil? ? 'System' : "#{authorable.class.name}: #{authorable.profile.full_name}"
+    self.author ||= authorable.nil? ? 'System' : "#{authorable.class.name}: #{authorable&.profile&.full_name}"
   end
 end

@@ -322,18 +322,24 @@ class QbeService
     elsif action == 'sendCancellationList'
 
       request_time = Time.current
-      policies_list = []
+      range = nil
+      case request_time.wday
+      when 1
+        range = (request_time - 4.days).to_date..(request_time - 2.days).to_date
+      when 2..5
+        range = request_time - 2.days
+      end
 
-      offset = request_time.wday == 1 ? 2 : 1
+      policies_list = Array.new
 
-      policies_list.concat Policy.current.unpaid.where(billing_behind_since: Time.current.to_date - offset.days,
-                                                       carrier_id: 1,
-                                                       policy_type_id: 1)
-      policies_list.concat Policy.current.RESCINDED
+      unless range.nil?
+        policies_list.concat Policy.current.where(billing_behind_since: range, billing_status: "BEHIND", carrier_id: 1, policy_type_id: 1)
+        policies_list.concat Policy.current.where(carrier_id: 1, policy_type_id: 1, billing_status: 'RESCINDED')
+      end
 
       options[:data] = {
         client_dt: request_time.strftime('%m/%d/%Y'),
-        version: ENV.fetch('APP_VERSION'),
+        version: "2.4.23",
         rq_uid: "CL#{request_time.strftime('%d%m%Y')}",
         transaction_request_date: request_time.strftime('%m/%d/%Y'),
         policies: policies_list

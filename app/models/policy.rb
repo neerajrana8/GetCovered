@@ -213,13 +213,17 @@ class Policy < ApplicationRecord
     where('number LIKE ?', "%#{number[:like]}%")
   }
 
+
   # TODO: Change after controller structure refactoring
   scope :filter_by_users, ->(payload) {
     if payload[:email]
-      where('users.email LIKE ?', "%#{payload['email']['like']}%")
+      return where('users.email LIKE ?', "%#{payload['email']['like']}%")
     else
       if payload[:profile].present?
-        where('profiles.full_name LIKE ?', "%#{payload[:profile][:full_name][:like]}%")
+        return where('profiles.full_name LIKE ?', "%#{payload[:profile][:full_name][:like]}%")
+      end
+      if payload[:id].present?
+        return where(users: { id: payload[:id] })
       end
     end
   }
@@ -244,9 +248,10 @@ class Policy < ApplicationRecord
   validate :date_order,
   unless: proc { |pol| pol.effective_date.nil? || pol.expiration_date.nil? }
 
+  #TODO:  WITHOUT_STATUS must be deleted after fix under GCVR2-768 ticket
   enum status: { AWAITING_PAYMENT: 0, AWAITING_ACH: 1, PAID: 2, BOUND: 3, BOUND_WITH_WARNING: 4,
     BIND_ERROR: 5, BIND_REJECTED: 6, RENEWING: 7, RENEWED: 8, EXPIRED: 9, CANCELLED: 10,
-    REINSTATED: 11, EXTERNAL_UNVERIFIED: 12, EXTERNAL_VERIFIED: 13, EXTERNAL_REJECTED: 14 }
+    REINSTATED: 11, EXTERNAL_UNVERIFIED: 12, EXTERNAL_VERIFIED: 13, EXTERNAL_REJECTED: 14, WITHOUT_STATUS: nil }
 
   enum billing_status: { CURRENT: 0, BEHIND: 1, REJECTED: 2, RESCINDED: 3, ERROR: 4, EXTERNAL: 5 }
 
@@ -289,6 +294,18 @@ class Policy < ApplicationRecord
     at_hand: 1,
     sent: 2
   }
+
+  enum rejection_reason: {
+    liability_not_correct: I18n.t('policy_model.rejection_reasons.liability_not_correct'),
+    pm_not_additional_interest: I18n.t('policy_model.rejection_reasons.pm_not_additional_interest'),
+    policy_not_active: I18n.t('policy_model.rejection_reasons.policy_not_active'),
+    name_not_correct: I18n.t('policy_model.rejection_reasons.name_not_correct'),
+    other: I18n.t('policy_model.rejection_reasons.other')}
+
+  #TODO: need to refactor to enum values for policy-support dashboard too
+  def is_rejection_reason_added?(current_rejection_reason)
+    self.system_data["rejection_reasons"].map(&:downcase).any?(current_rejection_reason&.downcase)
+  end
 
   def current_quote
     self.policy_quotes.accepted.order('created_at desc').first
@@ -663,7 +680,7 @@ class Policy < ApplicationRecord
     return true
     # the below is commented out because it was breaking upload
 =begin
-    to_return = false 
+    to_return = false
     to_save = false
     account_condition = (self.account_id.nil? || self.account_id == 0)
     agency_condition = (self.agency_id.nil? || self.agency_id == 0)

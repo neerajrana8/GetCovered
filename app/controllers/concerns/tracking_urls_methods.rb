@@ -31,7 +31,26 @@ module TrackingUrlsMethods
     end
 
     def get_leads
-      @leads = params[:archived].present? ? @tracking_url.leads : @tracking_url.leads.not_archived
+      filter = {}
+      filter = params[:filter] if params[:filter].present?
+
+      # NOTE: LEGACY
+      # @leads = params[:archived].present? ? @tracking_url.leads : @tracking_url.leads.not_archived
+      # NOTE: END LEGACY
+
+      leads = Lead.where(tracking_url_id: @tracking_url.id)
+      leads = leads.actual if filter[:archived] == false || !filter[:archived].present?
+      leads = leads.join_last_events
+      page = 1
+      per = 10
+
+      if params[:pagination].present?
+        page = params[:pagination][:page]
+        per = params[:pagination][:per] if params[:pagination][:per].present?
+      end
+
+      @leads = leads.page(page).per(per)
+      @meta = { total: leads.count, page: @leads.current_page, per: per }
       render 'v2/shared/leads/index'
     end
 

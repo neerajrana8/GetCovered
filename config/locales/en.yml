@@ -134,6 +134,13 @@ en:
      cancellation_already_pending: "Policy cancellation is already pending"
      proration_failed: "Encountered an error while prorating policy; cancellation marked as pending"
      document_wrong_format: "The document wrong format, only: PDF, DOC, DOCX, XLSX, XLS, CSV, JPG, JPEG, PNG, GIF, SVG, TXT"
+     rejection_reasons:
+       liability_not_correct: "Policy Liability Coverage does not meet the Property Management’s requirement"
+       pm_not_additional_interest: "Property Management Account is not listed as an Additional Interest"
+       pm_not_additional_interest_new: "Property Management Company is not listed as an Additional Interest"
+       policy_not_active: "The submitted policy is not active"
+       name_not_correct: "Submitted name does not match a policyholder name"
+       other: "Some other Reason"
   billing_strategy_model:
     must_be_assigned_to_carrier: "must be assigned to carrier:"
   policy_user_model:
@@ -300,7 +307,6 @@ en:
       address_state_required: "Property manager address state is required"
       address_zip_required: "Property manager address zip is required"
       address_state_invalid: "Property manager address state is invalid"
-      address_zip_required: "Property manager address zip is invalid"
   coverage_options:
     estimated_premium_errors: 'Contents selection is required'
     cannot_be_blank_counties: "cannot be blank if counties are specified"

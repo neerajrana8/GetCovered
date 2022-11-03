@@ -5,7 +5,7 @@ class Devise::Users::PasswordsController < DeviseTokenAuth::PasswordsController
     return render_create_error_missing_email unless resource_params[:email]
 
     @email = get_case_insensitive_field_from_resource_params(:email)
-    @resource = find_resource(:uid, @email)
+    @resource = find_resource(:email, @email)
     if @resource
       yield @resource if block_given?
       @resource.settings['last_reset_password_base_url'] = request.headers['origin']

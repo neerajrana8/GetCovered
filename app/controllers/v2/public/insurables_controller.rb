@@ -24,6 +24,16 @@ module V2
         _, @user_id, _, @community_id = EncryptionService.decrypt(insurable_encoded_params).split
       end
 
+      def additional_interest_name_usage
+        if params[:community_id].blank?
+          render json: standard_error(:insurable_id_param_blank,'insurable_id parameter can\'t be blank'),
+                 status: :unprocessable_entity
+        else
+          @insurable = Insurable.find(params[:community_id])
+          render template: 'v2/public/insurables/show', status: :ok
+        end
+      end
+
       def insurable_encoded_params
         if params[:token].present?
           params.require(:token)

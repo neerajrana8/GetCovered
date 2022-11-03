@@ -33,12 +33,14 @@ module V2
           filter[:agency_id] = [current_agency.id] unless current_agency.agency_id.nil?
         end
 
+        Rails.logger.info "#DEBUG ROLE=#{current_staff.organizable_type}"
+        Rails.logger.info "#DEBUG filter=#{filter.inspect}"
         cache_key = generate_cache_key(CACHE_KEY, filter)
 
         stats = Rails.cache.read(cache_key)
 
-        if stats.nil? and true
-          leads = Lead.actual.presented
+        if true # stats.nil? and false
+          leads = Lead.all
           date_slug_format = '%Y-%m-%d'
           date_utc_format = '%Y-%m-%d %H:%M:%S'
           trunc_by = 'day'
@@ -76,10 +78,26 @@ module V2
 
           # Interface filters
           if filter
-            leads = leads.archived unless filter[:archived].nil?
-            leads = leads.by_agency(filter[:agency_id]) unless filter[:agency_id].nil?
-            leads = leads.by_account(filter[:account_id]) unless filter[:account_id].nil?
-            leads = leads.by_branding_profile(filter[:branding_profile_id]) unless filter[:branding_profile_id].nil?
+            leads = leads.archived if !filter[:archived].nil? && filter[:acrhived] == true
+
+            # NOTE: OR logic for certain filters
+            filter_keys_exists = !(filter.keys & %w[agency_id account_id branding_profile_id]).empty?
+
+            if filter_keys_exists
+              leads = leads.where(
+                '(agency_id IN (?) OR account_id IN (?) OR branding_profile_id IN (?))',
+                filter[:agency_id],
+                filter[:account_id],
+                filter[:branding_profile_id]
+              )
+              Rails.logger.info "#DEBUG filter_keys matched OK"
+
+              # NOTE: Move to OR logic
+              # leads = leads.by_agency(filter[:agency_id]) unless filter[:agency_id].nil?
+              # leads = leads.by_account(filter[:account_id]) unless filter[:account_id].nil?
+              # leads = leads.by_branding_profile(filter[:branding_profile_id]) unless filter[:branding_profile_id].nil?
+
+            end
 
             # Tracking urls and parameters filtering
             tracking_urls = TrackingUrl.all
@@ -108,18 +126,27 @@ module V2
           end
 
           leads = leads.by_last_visit(date_from, date_to)
+          lead_events_total = leads.sum(:lead_events_cx)
+          leads = leads.actual.presented
+
           leads_cx = leads.not_converted.count
           leads_ids = leads.pluck(:id)
 
-          lead_events_total = leads.sum(:lead_events_cx)
+          # lead_events_total = leads.sum(:lead_events_cx)
 
-          total_by_status = Lead.get_stats(
-            [date_from, date_to],
-            filter[:agency_id],
-            filter[:branding_profile_id],
-            filter[:account_id],
-            leads_ids
-          )
+          # NOTE: Remove when stable
+          # Rails.logger.info "#DEBUG leads_sql=#{leads.to_sql}"
+          # Rails.logger.info "#DEBUG leads_ids=#{leads_ids}"
+
+          unless leads_ids.count.zero?
+            total_by_status = Lead.get_stats(
+              [date_from, date_to],
+              filter[:agency_id],
+              filter[:branding_profile_id],
+              filter[:account_id],
+              leads_ids
+            )
+          end
 
           # Prepare charts data
 

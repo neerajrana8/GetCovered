@@ -45,6 +45,7 @@ class BrandingProfile < ApplicationRecord
   has_many_attached :images
 
   scope :default, -> { where(default: true) }
+  scope :url_like, ->(url) { where("url ILIKE '%#{url}%'") }
 
   accepts_nested_attributes_for :branding_profile_attributes
   accepts_nested_attributes_for :faqs
