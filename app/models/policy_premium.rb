@@ -116,6 +116,7 @@ class PolicyPremium < ApplicationRecord
     premium_amount,
     start_date,
     and_modify_invoices: true,
+    use_later_invoice_if_needed: true,
     term_group: nil,
     collector: nil
   )
@@ -135,7 +136,7 @@ class PolicyPremium < ApplicationRecord
       # invoices
       if and_modify_invoices
         if self.policy_quote.nil?
-          result = "Cannot create invoices because PolicyQuote does not yet exist"
+          result = "Cannot modify invoices because PolicyQuote does not yet exist"
           raise ActiveRecord::Rollback
         end
         # generate line items
@@ -145,11 +146,27 @@ class PolicyPremium < ApplicationRecord
           result = "Unable to generate line items: #{line_items}"
           raise ActiveRecord::Rollback
         end
-        # add line items to invoices MOOSE WARNING: ideally we would lock the invoices if we're considering 'available' ones...
+        # add line items to invoices MOOSE WARNING: ideally we would lock ourselves and the invoices here, but there's a specific order of model locking that needs to be looked up somewhere in the documentation to be sure it's followed so that deadlocks remain impossible before that's implemented
         line_items.each do |line_item|
- ##########################         invoice = self.policy_quote.invoices.where(status: ['available', 'upcoming']).where("due_date >= ?", 
+          # find the invoice
+          invoice = self.policy_quote.invoices.where(status: ['available', 'upcoming']).where("due_date <= ?", line_item.chargeable.policy_premium_payment_term.first_moment.to_date).order("due_date desc").first
+          if invoice.nil?
+            if !use_later_invoice_if_needed
+              result = "There is no available or upcoming invoice with due_date less than or equal to the policy premium item term start date (#{line_item.chargeable.policy_premium_payment_term.first_moment.to_date})"
+              raise ActiveRecord::Rollback
+            else
+              invoice = self.policy_quote.invoices.where(stauts: ['available', 'upcoming']).order("due_date asc").first
+              if invoice.nil?
+                result = "The policy quote has no available or upcoming invoices, so line items could not be added"
+                raise ActiveRecord::Rollback
+              end
+            end
+          end
+          # add the line item
+          invoice.line_items.push(line_item)
+          invoice.send(:mark_line_items_priced_in) # private method normally called within on_create callback
+          invoice.save!
         end
- ########### MOOSE WARNING: distribute line items over invoices ##########################
       end
       # update totals to reflect the new fella
       self.update_totals(persist: true)
