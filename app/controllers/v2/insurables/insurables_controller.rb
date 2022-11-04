@@ -79,6 +79,10 @@ module V2
               "OR insurables.id NOT IN (#{insurables_with_active_policies_ids.to_sql})"
             )
 
+        if filter[:title].present?
+          insurables_query = insurables_query.where('title LIKE ?', "%#{filter[:title][:like]}%") if filter[:title][:like].present?
+        end
+
         insurables = insurables_query.page(page).per(per)
 
         @insurables = insurables
