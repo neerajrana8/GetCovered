@@ -1,6 +1,8 @@
 module V2
   module Users
     class UsersController < ApiController
+      include ActionController::Caching
+
       before_action :authenticate_staff!
       before_action :check_permissions
 
