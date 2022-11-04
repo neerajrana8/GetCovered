@@ -8,7 +8,8 @@ module BrandingProfiles
       agency = branding_profile.profileable
       parent_agency = agency.agency
       parent_agency = agency if agency.agency.nil?
-      return false unless parent_agency&.branding_profiles&.count&.positive?
+      # Find GC Agency if nothing else exists
+      parent_agency = Agency.find(Agency::GET_COVERED_ID) unless parent_agency&.branding_profiles&.count&.positive?
 
       blueprint_bp = parent_agency.branding_profiles.first
       blueprint_bp.pages.each do |page|
