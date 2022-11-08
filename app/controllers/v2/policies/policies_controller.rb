@@ -75,6 +75,11 @@ module V2
         render 'v2/policies/list'
       end
 
+      def show
+        @policy = Policy.find(params[:id])
+        render 'v2/policies/show'
+      end
+
       private
 
       def check_permissions
