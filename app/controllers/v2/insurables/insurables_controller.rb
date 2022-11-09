@@ -108,6 +108,7 @@ module V2
         insurables = insurables.where(insurable_type_id: types)
         insurables = insurables.where(account_id: filter[:account_id]) if filter[:account_id]
         insurables = insurables.where(agency_id: filter[:agency_id]) if filter[:agency_id]
+        insurables = insurables.where('title LIKE ?', "%#{filter[:title]}%") if filter[:title]
 
         insurables = insurables.order(created_at: :desc).page(page).per(per)
         @insurables = insurables
