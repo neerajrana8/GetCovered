@@ -4,4 +4,5 @@ scope module: :insurables, path: 'insurables' do
     post :upload, action: :upload
   end
 
+  post :top_available, controller: :insurables, action: :top_available
 end
