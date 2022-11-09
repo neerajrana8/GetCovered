@@ -94,6 +94,27 @@ module V2
         render 'v2/insurables/top_available'
       end
 
+      def list
+        page = 1
+        per = 50
+
+        filter = {}
+        filter = params[:filter] if params[:filter]
+
+        types = InsurableType::COMMUNITIES_IDS
+        types = filter[:types] if filter[:types].present?
+
+        insurables = Insurable.all
+        insurables = insurables.where(insurable_type_id: types)
+        insurables = insurables.where(account_id: filter[:account_id]) if filter[:account_id]
+        insurables = insurables.where(agency_id: filter[:agency_id]) if filter[:agency_id]
+
+        insurables = insurables.order(created_at: :desc).page(page).per(per)
+        @insurables = insurables
+        @meta = { total: insurables.total_count, page: insurables.current_page, per: per }
+        render 'v2/insurables/list'
+      end
+
       private
 
       def s3_bucket
