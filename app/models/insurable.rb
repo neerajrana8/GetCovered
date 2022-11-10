@@ -661,6 +661,10 @@ class Insurable < ApplicationRecord
     return to_return
   end
 
+  def slug_url
+    "/#{self.insurable_type.title.split(' ')[0].downcase}/#{self.slug}-#{self.id}"
+  end
+
   private
 
   def flush_parent_insurable_id
@@ -722,5 +726,4 @@ class Insurable < ApplicationRecord
     def set_confirmed_automatically
       self.confirmed = !self.account_id.nil?
     end
-
 end
