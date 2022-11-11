@@ -301,7 +301,6 @@ class PolicyPremium < ApplicationRecord
       total_due: payments_total,
       proration_calculation: 'payment_term_exclusive',
       proration_refunds_allowed: false,
-      # MOOSE WARNING: preprocessed
       hidden: fee.hidden,
       recipient: recipient || fee.ownerable,
       collector: collector || self.carrier_agency_policy_type&.collector || ::PolicyPremium.default_collector,
@@ -463,7 +462,7 @@ class PolicyPremium < ApplicationRecord
       # prorate our terms
       self.policy_premium_payment_terms.order(id: :asc).lock.each do |pppt|
         unless pppt.update_proration(self.prorated_first_moment, self.prorated_last_moment)
-          to_return = "Applying proration to PolicyPremiumPaymentTerm ##{pppt.id} failed, errors: #{pppt.respond_to?(:errors) ? pppt.errors.to_h : '(return value did not respond to errors call)'}"
+          to_return = "Applying proration to PolicyPremiumPaymentTerm ##{pppt.id} failed, errors: #{pppt.respond_to?(:errors) ? pppt.errors.to_h : '(return value did not respond to errors call; type '#{pppt.class.name}')}"
           raise ActiveRecord::Rollback
         end
       end
