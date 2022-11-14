@@ -1,6 +1,6 @@
 module Compliance
   module Policies
-    class LapsedJob < ApplicationJob
+    class ExpiringSoonJob < ApplicationJob
       queue_as :default
       before_perform :find_policies
 
