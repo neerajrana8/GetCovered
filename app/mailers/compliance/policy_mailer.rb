@@ -30,8 +30,8 @@ module Compliance
       @address = @street_address.nil? ? nil : "#{ @street_address.combined_street_address }, #{ @policy&.primary_insurable.title }, #{ @street_address.city }, #{ @street_address.state }, #{ @street_address.zip_code }"
 
       @user = @policy.primary_user()
-      @pm_account = @policy.account
       @community = @policy&.primary_insurable&.parent_community
+      @pm_account = @community.account
 
       @onboarding_url = tokenized_url(@user, @community)
       get_insurable_liability_range(@community)
@@ -117,7 +117,7 @@ module Compliance
 
     def set_master_policy_and_configuration(community, carrier_id)
       @master_policy = community.policies.where(policy_type_id: 2, carrier_id: carrier_id).take
-      @configuration = @master_policy.find_closest_master_policy_configuration(community)
+      @configuration = @master_policy&.find_closest_master_policy_configuration(community)
     end
 
   end

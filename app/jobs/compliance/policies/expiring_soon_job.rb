@@ -11,6 +11,7 @@ module Compliance
       end
 
       private
+
       def find_policies
         date_one = DateTime.current.to_date + 7.days
         date_two = DateTime.current.to_date + 14.days
