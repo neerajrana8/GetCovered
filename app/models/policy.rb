@@ -95,6 +95,8 @@ class Policy < ApplicationRecord
   include AgencyConfiePolicy
   include RecordChange
 
+  before_save :set_status_changed_on, if: Proc.new { |policy| policy.status_changed? }
+
   after_create :schedule_coverage_reminders, if: -> { policy_type&.master_coverage }
   after_create :create_necessary_policy_coverages_for_external, unless: -> { in_system? }
   after_save :update_users_status
@@ -673,6 +675,10 @@ class Policy < ApplicationRecord
         end
       end
     end
+  end
+
+  def set_status_changed_on
+    self.status_changed_on = DateTime.current
   end
 
   def inline_fix_external_policy_relationships
