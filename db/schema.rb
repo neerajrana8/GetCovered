@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_10_05_071609) do
+ActiveRecord::Schema.define(version: 2022_10_27_161133) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -582,9 +582,6 @@ ActiveRecord::Schema.define(version: 2022_10_05_071609) do
     t.datetime "updated_at", null: false
     t.integer "type_of_loss", default: 0, null: false
     t.text "staff_notes"
-    t.string "name"
-    t.string "address"
-    t.string "nature_of_claim"
     t.integer "amount"
     t.index ["claimant_type", "claimant_id"], name: "index_claims_on_claimant"
     t.index ["insurable_id"], name: "index_claims_on_insurable_id"
@@ -867,6 +864,7 @@ ActiveRecord::Schema.define(version: 2022_10_05_071609) do
     t.boolean "additional_interest", default: false
     t.string "additional_interest_name"
     t.integer "minimum_liability"
+    t.integer "special_status", default: 0, null: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
     t.index ["insurable_id"], name: "index_insurables_on_insurable_id"
@@ -953,7 +951,6 @@ ActiveRecord::Schema.define(version: 2022_10_05_071609) do
     t.bigint "agency_id"
     t.integer "branding_profile_id"
     t.index ["agency_id"], name: "index_lead_events_on_agency_id"
-    t.index ["created_at"], name: "lead_events_created_at_idx"
     t.index ["lead_id"], name: "index_lead_events_on_lead_id"
     t.index ["policy_type_id"], name: "index_lead_events_on_policy_type_id"
   end
@@ -973,21 +970,12 @@ ActiveRecord::Schema.define(version: 2022_10_05_071609) do
     t.boolean "archived", default: false
     t.integer "account_id"
     t.integer "branding_profile_id"
-    t.bigint "session_id"
     t.integer "lead_events_cx"
     t.json "lead_events_timeseries"
     t.integer "premium_total"
     t.datetime "premium_last_updated_at"
-    t.index ["archived", "last_visit", "status", "email"], name: "leads_archived_last_visit_status_email_idx"
-    t.index ["archived"], name: "leads_archived_idx"
     t.index ["email"], name: "index_leads_on_email"
-    t.index ["email"], name: "leads_email_idx", where: "(email IS NOT NULL)"
-    t.index ["email"], name: "leads_email_idx1", where: "(email IS NULL)"
     t.index ["identifier"], name: "index_leads_on_identifier", unique: true
-    t.index ["last_visit"], name: "leads_last_visit_idx"
-    t.index ["last_visit"], name: "leads_last_visit_idx1"
-    t.index ["last_visit"], name: "leads_last_visit_idx2", using: :brin
-    t.index ["status", "last_visit"], name: "leads_status_last_visit_idx"
     t.index ["tracking_url_id"], name: "index_leads_on_tracking_url_id"
     t.index ["user_id"], name: "index_leads_on_user_id"
   end
@@ -1711,7 +1699,6 @@ ActiveRecord::Schema.define(version: 2022_10_05_071609) do
     t.datetime "disputed_at"
     t.integer "dispute_status", default: 0
     t.text "dispute_reason"
-    t.bigint "insured_address_id"
     t.index ["policy_application_id"], name: "index_policy_users_on_policy_application_id"
     t.index ["policy_id"], name: "index_policy_users_on_policy_id"
     t.index ["user_id"], name: "index_policy_users_on_user_id"
@@ -1967,7 +1954,6 @@ ActiveRecord::Schema.define(version: 2022_10_05_071609) do
     t.boolean "has_current_leases", default: false
     t.boolean "has_leases", default: false
     t.string "altuid"
-    t.bigint "insured_address_id"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["invitation_token"], name: "index_users_on_invitation_token", unique: true
