@@ -86,6 +86,7 @@ module Compliance
           (!@pm_account&.contact_info["contact_email"].nil? || !@pm_account&.contact_info["contact_email"].blank?)
       end
       @from = "policyverify@getcovered.io" if @from.nil?
+      @final = nil
 
       case @policy.status
       when "EXTERNAL_UNVERIFIED"
@@ -93,7 +94,13 @@ module Compliance
       when "EXTERNAL_VERIFIED"
         subject = t('invitation_to_pm_tenant_portal_mailer.policy_accepted_email.subject')
       when "EXTERNAL_REJECTED"
-        subject = t('invitation_to_pm_tenant_portal_mailer.policy_declined_email.subject')
+        if @policy.status_changed_on <= DateTime.current - 7.days
+          @final = true
+          subject = t('invitation_to_pm_tenant_portal_mailer.policy_declined_email.subject')
+        else
+          @final = false
+          subject = t('invitation_to_pm_tenant_portal_mailer.policy_declined_email.subject')
+        end
       end
 
       sending_condition = @policy.policy_in_system == false &&
