@@ -100,6 +100,8 @@ module Integrations
         end
         
         def fix_ridiculous_swaps(lease, tenant, da_tenants)
+          # this has been superseded by roommate sync, but I am leaving the code here for now in case it's needed
+          return
           # look for residents whose codes have swapped
           from_system = lease.lease_users.map{|lu| [lu.integration_profiles.take&.external_id, { lease_user: lu, first_name: lu.user.profile.first_name, last_name: lu.user.profile.last_name, middle_name: lu.user.profile.middle_name }] }.to_h
           from_yardi = da_tenants.map do |ten|
@@ -164,7 +166,7 @@ module Integrations
           # mark defunct those leases which the horrific architecture of Yardi's database requires to be removed from their system when they have been superseded
           # MOOSE WARNING: the 'defunct' boolean is a placeholder architectural solution just to get the feature working. ultimately we should be giving these leases a special status and doing something to their IPs...
           IntegrationProfile.where(integration: integration, external_context: 'lease', profileable: unit.leases.where(defunct: false)).where.not(external_id: in_system).each do |lip|
-            lip.profileable.update(defunct: true, status: 'expired')
+            lip.profileable.update(defunct: true, status: 'expired') 
           end
           # update expired old leases
           in_system_lips = IntegrationProfile.references(:leases).includes(:lease).where(integration: integration, external_context: 'lease', external_id: past_tenants.map{|l| l['Id'] }, profileable_type: "Lease", leases: { status: ['current', 'pending'] })
@@ -193,6 +195,8 @@ module Integrations
               lease.defunct = false # just in case it was once missing from yardi and now is magically back, for example if it got moved to a different unit. likewise, update statuses in case someone defuncted and expired us previously because we jumped units
               lease.status = 'current' if (lease.end_date.nil? || lease.end_date > Time.current.to_date) && RESIDENT_STATUSES['present'].include?(tenant["Status"])
               lease.status = 'pending' if (lease.end_date.nil? || lease.end_date > Time.current.to_date) && RESIDENT_STATUSES['future'].include?(tenant["Status"]) || RESIDENT_STATUSES['potential'].include?(tenant["Status"])
+              lease.sign_date = Date.parse(tenant["LeaseSign"]) unless tenant["LeaseSign"].blank?
+              lease.sign_date ||= (Date.parse(tenant["LeaseFrom"]) rescue nil)
               lease.save if lease.changed?
               user_profiles = IntegrationProfile.where(integration: integration, profileable: lease.users).to_a
               # take any tenants that don't correspond to a user, construct/find a user for them, and set up LeaseUser stuff appropriately
@@ -236,7 +240,6 @@ module Integrations
                 # roommate sync might have promoted a roommate to primary, and will have had to change the primary's tcode to "was_#{prev_tcode}"; but if they are still at least a roommate, they might still be here, so check
                 lease.lease_users.where.not(id: IntegrationProfile.where(integration: integration, external_context: "lease_user_for_lease_#{tenant["Id"]}", external_id: da_tenants.map{|dt| dt["Id"] }).select(:profileable_id)).each do |lu|
                   if lu.user.profile.contact_email == ten["Email"] && lu.user.profile.first_name&.downcase&.strip == (ten["FirstName"].blank? ? "Unknown" : ten["FirstName"]).strip.downcase && lu.user.profile.last_name&.downcase&.strip == (ten["FirstName"].blank? ? "Unknown" : ten["FirstName"]).strip.downcase
-                    # MOOSE WARNING: this section doesn't have error handling if the create/update/save calls fail
                     ip = lu.integration_profiles.where(integration: integration, external_context: "lease_user_for_lease_#{tenant["Id"]}").take
                     if ip.nil?
                       user = ip.profileable
@@ -245,10 +248,14 @@ module Integrations
                       ip.configuration['tcode_changes'] ||= {}
                       ip.configuration['tcode_changes'][Time.current.to_date.to_s] = {
                         old_code: ip.external_id,
-                        new_code: ten["Id"]
+                        new_code: ten["Id"],
+                        reason: 'postpromotion_match'
                       }
                       ip.external_id = ten["Id"] # gotta do this again here, the update_all won't be reflected in the loaded model
-                      ip.save
+                      unless ip.save
+                        failed = true
+                        next # MOOSE WARNING: whine in the logs?
+                      end
                     end
                     next
                   end
@@ -288,7 +295,7 @@ module Integrations
               end
               # we can assume all tenants have corresponding users & lease users & appropriate IPs, if we're here
               # remove any lease users that don't correspond to tenants
-              doomed_lus = lease.lease_users.select{|lu| lu.integration_profiles.where(integration: integration, external_context: "lease_user_for_lease_#{tenant["Id"]}", external_id: da_tenants.map{|t| t["Id"] }).count == 0 }
+              doomed_lus = lease.lease_users.select{|lu| lu.moved_out_at.nil? && lu.integration_profiles.where(integration: integration, external_context: "lease_user_for_lease_#{tenant["Id"]}", external_id: da_tenants.map{|t| t["Id"] }).count == 0 }
               doomed_lus.each do |dl|
                 dl.integration_profiles.each{|ip| ip.delete }
                 dl.delete
@@ -317,6 +324,7 @@ module Integrations
               lease = unit.leases.create(
                 start_date: Date.parse(tenant["LeaseFrom"]),
                 end_date: tenant["LeaseTo"].blank? ? nil : Date.parse(tenant["LeaseTo"]),
+                sign_date: (Date.parse(tenant["LeaseSign"]) rescue Date.parse(tenant["LeaseFrom"])),
                 lease_type_id: LeaseType.residential_id,
                 account: integration.integratable
               )

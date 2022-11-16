@@ -64,15 +64,15 @@ module Integrations
             # handle stuff
             ActiveRecord::Base.transaction do
               # mark stuff handled
-              created = IntegrationProfile.create(
+              loggo = IntegrationProfile.create(
                 integration: integration,
                 profileable: integration,
                 external_context: "log_roommate_promotion",
                 external_id: "#{new_roommate_code}__#{old_roommate_code}__#{old_king_code}",
                 configuration: { property_id: property_id, yardi_data: promotion }
               )
-              unless created.id
-                to_return[:errors].push("Aborted roommate promotion due to failed IP save: #{created.errors.to_h}")
+              unless loggo.id
+                to_return[:errors].push("Aborted roommate promotion due to failed IP save: #{loggo.errors.to_h}")
                 update_last_sync_f = false # weird error, make sure we retry these by not updating the last sync date
               end
               # change the user-referring tcode folk NOTE: order matters! the new roommate tcode can be the same as the prior tenant tcode -____-"
@@ -100,7 +100,9 @@ module Integrations
               to_update['tcode_changes'][last_sync_f] = {
                 old_code: promotion["PriorTenant"]["Code"],
                 new_code: tcode_headstone,
-                move_out_date: promotion["MoveOutDate"]
+                move_out_date: promotion["MoveOutDate"],
+                reason: 'promotion',
+                details: "IntegrationProfile##{loggo.id}"
               }
               prior_lease_user_ip.update(configuration: to_update)
               # update the new LeaseUser
@@ -114,7 +116,9 @@ module Integrations
                 to_update['tcode_changes'][last_sync_f] = {
                   old_code: old_roommate_code,
                   new_code: new_roommate_code,
-                  move_out_date: nil
+                  move_out_date: nil,
+                  reason: 'promotion',
+                  details: "IntegrationProfile##{loggo.id}"
                 }
                 new_lease_user_ip.update(configuration: to_update)
                 new_lease_user_ip.profileable&.update(moved_out_at: nil, primary: true)
