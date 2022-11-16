@@ -78,7 +78,7 @@ module Compliance
       @community = @policy.primary_insurable.parent_community
       @pm_account = @community.account
 
-      @onboarding_url = tokenized_url(@user, @community)
+      @onboarding_url = tokenized_url(@user, @community, "upload-coverage-proof")
 
       @from = nil
       unless @pm_account.nil?
