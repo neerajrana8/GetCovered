@@ -94,3 +94,8 @@ json.branding_profile_url policy.branding_profile&.url
 if policy.integration_profiles.present?
   json.tcode policy&.integration_profiles&.first&.external_id
 end
+
+json.lease do
+  json.lease policy&.primary_user&.leases&.last
+  json.tenants policy&.primary_user&.leases&.last&.users
+end
