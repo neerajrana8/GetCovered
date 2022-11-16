@@ -1,6 +1,6 @@
 module Integrations
   module Yardi
-    module CommonData
+    module ResidentData
       class GetRoommatePromotions < Integrations::Yardi::CommonData::Base
         string :property_id
         date :move_out_start, default: nil
@@ -9,8 +9,8 @@ module Integrations
         def execute
           super(**{
             YardiPropertyId: property_id,
-            MoveOutFrom: move_out_start,
-            MoveOutTo: move_out_end
+            MoveOutFrom: move_out_start&.to_date&.to_s,
+            MoveOutTo: move_out_end&.to_date&.to_s
           }.compact)
         end
 
