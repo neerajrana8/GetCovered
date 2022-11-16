@@ -83,12 +83,12 @@
                    <span style="font-size: 16px;"><%= @policy&.account&.additional_interest ? (@policy&.account&.additional_interest_name || @policy&.account&.title) : (@policy.primary_insurable&.parent_community&.additional_interest_name || @policy.primary_insurable&.parent_community&.title) %></span>
                 </p>
                 <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em; padding-left: 3em">
-                  <span style="font-size: 16px;"><%= @policy&.account&.additional_interest ? @policy&.account&.primary_address&.combined_street_address + @policy&.account&.primary_address&.street_two : @policy&.primary_insurable&.parent_community&.primary_address&.combined_street_address + @policy&.primary_insurable&.parent_community&.primary_address&.street_two %></span>
+                  <span style="font-size: 16px;"><%= @policy&.account&.additional_interest ? @policy&.account&.primary_address&.combined_street_address : @policy&.primary_insurable&.parent_community&.primary_address&.combined_street_address %></span>
+                  <span style="font-size: 16px;"><%= @policy&.account&.additional_interest ? @policy&.account&.primary_address&.street_two : @policy&.primary_insurable&.parent_community&.primary_address&.street_two %></span>
                 </p>
                 <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em; padding-left: 3em">
                   <span style="font-size: 16px;"><%= @policy&.account&.additional_interest ? @policy&.account&.primary_address&.city : @policy&.primary_insurable&.parent_community&.primary_address&.city %>, <%= @policy&.account&.additional_interest ? @policy&.account&.primary_address&.state : @policy&.primary_insurable&.parent_community&.primary_address&.state %>, <%= @policy&.account&.additional_interest ? @policy&.account&.primary_address&.zip_code : @policy&.primary_insurable&.parent_community&.primary_address&.zip_code %></span>
                 </p>
-
           </p>
       <% end %>
       </li>
