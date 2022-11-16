@@ -73,7 +73,7 @@ module Compliance
       @policy = policy
       @user = @policy.primary_user
 
-      set_locale(@user.profile&.language)
+      set_locale(@user.profile&.language || "en")
 
       @community = @policy.primary_insurable.parent_community
       @pm_account = @community.account

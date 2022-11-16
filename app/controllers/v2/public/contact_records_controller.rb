@@ -8,7 +8,7 @@ module V2
         sg = SendGrid::API.new(api_key: Rails.application.credentials.sendgrid[ENV['RAILS_ENV'].to_sym])
         params[:_json].each do |event|
           email = event['email']
-          user = ::User.find_by('email = ? or uid = ?', email, email) ? ::User.where('email = ? or uid = ?', email, email) : User.joins(:profile).where(profile: { contact_email: email })
+          user = ::User.find_by('email = ? or uid = ?', email, email) ? ::User.where('email = ? or uid = ?', email, email) : ::User.joins(:profile).where(profile: { contact_email: email })
           if user&.count > 0
             next unless events_to_process.include? event['event']
             next unless event['template_id'].present?

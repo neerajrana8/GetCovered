@@ -21,7 +21,8 @@ module GlobalAgencyPermissions
       'insurables.create' => true,
       'insurables.communities' => true,
       'insurables.buildings' => true,
-      'insurables.units' => true
+      'insurables.units' => true,
+      'leases.leases' => true
     }.freeze
   end
 end
