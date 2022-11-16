@@ -63,6 +63,7 @@ module Integrations
             unit_exclusions: {},  # [community prop id][unit id] = explanation string (errors are not present here, just exclusions)
             lease_errors: {},
             user_errors: {},
+            promotion_errors: {},
             sync_results: []
           }
           output_array = []
@@ -443,6 +444,9 @@ module Integrations
    
           tenant_array = []
           output_array.each do |comm|
+            result = Integrations::Yardi::Sync::Roommates.run!(integration: integration, property_id: comm[:yardi_id])
+            comm[:last_sync_f] = result[:last_sync_f]
+            to_return[:promotion_errors][comm[:yardi_id]] = result[:errors] unless result[:errors].blank?
             comm[:buildings].each do |bldg|
               bldg[:units].each do |unit|
                 next if unit[:yardi_data]["Resident"].blank?
@@ -470,6 +474,8 @@ module Integrations
             integration.configuration['sync']['syncable_communities'][comm[:yardi_id]] ||= {}
             integration.configuration['sync']['syncable_communities'][comm[:yardi_id]]["name"] = comm[:title]
             integration.configuration['sync']['syncable_communities'][comm[:yardi_id]]["gc_id"] = comm[:insurable]&.id
+            integration.configuration['sync']['syncable_communities'][comm[:yardi_id]]["last_sync_f"] = comm[:last_sync_f]
+            integration.configuration['sync']['syncable_communities'][comm[:yardi_id]]["last_sync_i"] = Time.current.to_date.to_s
           end
           integration.configuration['sync']['sync_history'] ||= []
           integration.configuration['sync']['sync_history'].push({

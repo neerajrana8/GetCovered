@@ -26,7 +26,7 @@ module Integrations
           # figure out if the email is used & if a matching user already exists
           firster = (ten["FirstName"].blank? ? "Unknown" : ten["FirstName"]).strip
           laster = (ten["LastName"].blank? ? "Unknown" : ten["LastName"]).strip
-          email_bearer = ten["email"].blank? ? nil : User.where(email: ten["Email"])
+          email_bearer = ten["email"].blank? ? nil : User.where(email: ten["Email"])  # MOOSE WARNING: the query on the following line for users is INCOMPREHENSIBLY HORRIFYING. CHANGE IT, it is so inefficient, omfg...
           candidates = ten["Email"].blank? || (firster == "Unknown" || laster == "Unknown") ? [] : ([email_bearer] + User.references(:profiles).includes(:profile).where.not(email: ten["Email"]).where(profiles: { contact_email: ten["Email"] }).to_a).compact
           candidates.select!{|u| u.profile.first_name&.downcase&.strip == firster.downcase && u.profile.last_name&.downcase&.strip == laster.downcase }
           user = candidates.find{|c| c.integration_profiles.any?{|ip| ip.integration_id == integration.id } } || candidates.first # there should be at most 1 candidate; if not, we could merge them, but instead lets just take the best one and continue
@@ -231,8 +231,30 @@ module Integrations
                     next
                   end
                 end
-                # since the impossible situation wasn't the case, continue as normal
-                user = find_or_create_user(tenant, ten)
+                # in the rest of this we'll use a user object
+                user = nil
+                # roommate sync might have promoted a roommate to primary, and will have had to change the primary's tcode to "was_#{prev_tcode}"; but if they are still at least a roommate, they might still be here, so check
+                lease.lease_users.where.not(id: IntegrationProfile.where(integration: integration, external_context: "lease_user_for_lease_#{tenant["Id"]}", external_id: da_tenants.map{|dt| dt["Id"] }).select(:profileable_id)).each do |lu|
+                  if lu.user.profile.contact_email == ten["Email"] && lu.user.profile.first_name&.downcase&.strip == (ten["FirstName"].blank? ? "Unknown" : ten["FirstName"]).strip.downcase && lu.user.profile.last_name&.downcase&.strip == (ten["FirstName"].blank? ? "Unknown" : ten["FirstName"]).strip.downcase
+                    # MOOSE WARNING: this section doesn't have error handling if the create/update/save calls fail
+                    ip = lu.integration_profiles.where(integration: integration, external_context: "lease_user_for_lease_#{tenant["Id"]}").take
+                    if ip.nil?
+                      user = ip.profileable
+                    else
+                      IntegrationProfile.where(integration: integration, profileable_type: Integration::YARDI_TCODE_CHANGERS, external_id: ip.external_id).update_all(external_id: ten["Id"])
+                      ip.configuration['tcode_changes'] ||= {}
+                      ip.configuration['tcode_changes'][Time.current.to_date.to_s] = {
+                        old_code: ip.external_id,
+                        new_code: ten["Id"]
+                      }
+                      ip.external_id = ten["Id"] # gotta do this again here, the update_all won't be reflected in the loaded model
+                      ip.save
+                    end
+                    next
+                  end
+                end
+                # since the weird situations weren't the case, continue as normal
+                user ||= find_or_create_user(tenant, ten)
                 if user.nil?
                   failed = true
                   next

@@ -376,13 +376,13 @@ module Integrations
                 PolicyTitle: policy.number,
                 PolicyDetails: {
                   EffectiveDate: policy.effective_date.to_s,
-                  ExpirationDate: policy.expiration_date&.to_s, # MOOSE WARNING: should we do something else for MPCs?
+                  ExpirationDate: policy.expiration_date&.to_s, # WARNING: should we do something else for MPCs?
                   IsRenew: policy.auto_renew,
                   LiabilityAmount: '%.2f' % (policy.get_liability.nil? ? nil : (policy.get_liability.to_d / 100.to_d)) #,
-                  #Notes: "GC Verified" #, TEMP DISALBRD CAUSSES BROKEENNN
+                  #Notes: "GC Verified" #, DISALBRD CAUSSES BROKEENNN
                   #IsRequiredForMoveIn: "false",
                   #IsPMInterestedParty: "true"
-                  # MOOSE WARNING: are these weirdos required?
+                  # WARNING: are these weirdos required? LATER ANSWER: apparently not.
                 }.compact
               }
               #export
@@ -390,6 +390,9 @@ module Integrations
                 result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: policy_exported)
                 if result[:request].response&.body&.index("Policy already exists in database")
                   result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: true)
+                end
+                if result[:request].response&.body&.index("could not locate insurance policy based on policy number and tenant identifier")
+                  result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: false)
                 end
                 if !result[:success]
                   to_return[:policy_export_errors][policy.number] = "Failed to export policy due to error response from Yardi's API (Event id #{result[:event]&.id})."
