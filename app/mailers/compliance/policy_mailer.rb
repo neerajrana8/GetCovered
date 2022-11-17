@@ -119,7 +119,7 @@ module Compliance
         ['EXTERNAL_UNVERIFIED','EXTERNAL_VERIFIED','EXTERNAL_REJECTED'].include?(@policy.status)
 
       mail(to: @user.contact_email,
-           bcc: t('system_email'),
+           bcc: ([t('system_email')] + @policy.account.staffs.map(&:email)),
            from: @from,
            subject: subject,
            template_path: 'compliance/policy') if sending_condition
