@@ -6,6 +6,7 @@ module Integrations
         string :property_list_id, default: nil
         array :property_ids, default: nil
         date :from_date, default: nil
+        boolean :efficiency_mode, default: false
         
         def export_policy_document(property_id:, policy:, resident_id:, policy_ip: policy.integration_profiles.to_a.find{|pip| pip.integration_id == integration.id }.take)
           return "Document push not enabled" unless integration.configuration.dig('sync', 'policy_push', 'push_document')
@@ -69,8 +70,16 @@ module Integrations
             propz = [propz] if !propz.nil? && propz.class != ::Array
             propz = propz&.map{|comm| comm["Code"] }
             return(to_return) if propz.blank?
+            if efficency_mode
+              propz.each{|propid| Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [propid], efficiency_mode: true) }
+              return to_return # blank
+            end
             return propz.inject(to_return){|tr, property_id| tr.deep_merge(Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id])) }
           elsif true_property_ids.length > 1
+            if efficiency_mode
+              true_property_ids.each{|propid| Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id]) }
+              return to_return # blank
+            end
             return true_property_ids.inject(to_return){|tr, property_id| tr.deep_merge(Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id])) }
           elsif true_property_ids.length == 0
             return(to_return)

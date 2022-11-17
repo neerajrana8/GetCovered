@@ -43,7 +43,7 @@ module Integrations
             tcode_headstone = "was_#{Time.current.to_date.to_s}_#{old_king_code}"
             old_roommate_code = promotion["NewTenant"]&.[]("OldRoomateCode") || promotion["NewTenant"]&.[]("OldRoommateCode") # just in case yardi ever fixes their stupid spelling inconsistency...
             new_roommate_code = promotion["NewTenant"]&.[]("Code")
-            # MOOSE WARNING: error handling for if yardi doesn't give us enough fields?? for now we will just skip it
+            # MOOSE WARNING: error handling for if yardi doesn't give us enough fields?? for now we will just log it and skip it
             if old_king_code.nil? || old_roommate_code.nil? || new_roommate_code.nil?
               IntegrationProfile.create(
                 integration: integration,
@@ -55,12 +55,40 @@ module Integrations
               next
             end
             # make sure we haven't already handled this one
-            if integration.integration_profiles.where(external_context: "log_roommate_promotion", external_id: "#{new_roommate_code}__#{old_roommate_code}__#{old_king_code}").count > 0
+            if integration.integration_profiles.where(external_context: "log_roommate_promotion", external_id: "#{new_roommate_code}__#{old_roommate_code}__#{old_king_code}")
+                          .or(integration.integration_profiles.where(external_context: ["log_roommate_promotion_broken", "log_roommate_promotion_unlogged"], external_id: "#{property_id}__#{last_sync_f}__#{promotion_index}"))
+                          .count > 0
               next
             end
             # check more deeply to see if we haven't handled this one (not logically necessary, but the legacy system attempted to DEDUCE tcode swaps and did not log them with IPs, so to maintain backwards compatibility we have to consider the possibility of unlogged swaps;
             # this code can be removed after it has run for a bit)
-            if integration.integration_profiles.where(
+            if(
+              integration.integration_profiles.where(external_context: "resident", external_id: old_roommate_code).blank?
+              &&
+              integration.integration_profiles.where(external_context: "resident", external_id: new_roommate_code).count > 0
+              &&
+              (old_king_code == new_roommate_code || integration.integration_profiles.where(external_context: "resident", external_id: old_king_code).blank?)
+            )
+              skip_it = (old_king_code != new_roommate_code)
+              unless skip_it
+                prof = integration.integration_profiles.where(external_context: "resident", external_id: new_roommate_code).take.profileable.profile
+                skip_it = (
+                  promotion['NewTenant']['Name'].downcase.strip.start_with?( (prof.first_name == "Unknown" && !promotion['NewTenant']['Name'].strip.start_with?('Unknown') ? "" : prof.first_name).downcase.strip )
+                  &&
+                  promotion['NewTenant']['Name'].downcase.strip.end_with?( (prof.last_name == "Unknown" && !promotion['NewTenant']['Name'].strip.end_with?('Unknown') ? "" : prof.last_name).downcase.strip )
+                )
+              end
+              if skip_it
+                IntegrationProfile.create(
+                  integration: integration,
+                  profileable: integration,
+                  external_context: "log_roommate_promotion_unlogged",
+                  external_id: "#{property_id}__#{last_sync_f}__#{promotion_index}",
+                  configuration: { property_id: property_id, sync_time: last_sync_f, yardi_data: promotion }
+                )
+                next
+              end
+            end
             # handle stuff
             ActiveRecord::Base.transaction do
               # mark stuff handled
