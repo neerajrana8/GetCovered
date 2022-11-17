@@ -196,7 +196,6 @@ module Integrations
               lease.status = 'current' if (lease.end_date.nil? || lease.end_date > Time.current.to_date) && RESIDENT_STATUSES['present'].include?(tenant["Status"])
               lease.status = 'pending' if (lease.end_date.nil? || lease.end_date > Time.current.to_date) && RESIDENT_STATUSES['future'].include?(tenant["Status"]) || RESIDENT_STATUSES['potential'].include?(tenant["Status"])
               lease.sign_date = Date.parse(tenant["LeaseSign"]) unless tenant["LeaseSign"].blank?
-              lease.sign_date ||= (Date.parse(tenant["LeaseFrom"]) rescue nil)
               lease.save if lease.changed?
               user_profiles = IntegrationProfile.where(integration: integration, profileable: lease.users).to_a
               # take any tenants that don't correspond to a user, construct/find a user for them, and set up LeaseUser stuff appropriately
@@ -324,7 +323,7 @@ module Integrations
               lease = unit.leases.create(
                 start_date: Date.parse(tenant["LeaseFrom"]),
                 end_date: tenant["LeaseTo"].blank? ? nil : Date.parse(tenant["LeaseTo"]),
-                sign_date: (Date.parse(tenant["LeaseSign"]) rescue Date.parse(tenant["LeaseFrom"])),
+                sign_date: tenant["LeaseSign"].blank? ? nil : Date.parse(tenant["LeaseSign"]),
                 lease_type_id: LeaseType.residential_id,
                 account: integration.integratable
               )
