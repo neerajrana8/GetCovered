@@ -63,18 +63,15 @@ module Integrations
             # check more deeply to see if we haven't handled this one (not logically necessary, but the legacy system attempted to DEDUCE tcode swaps and did not log them with IPs, so to maintain backwards compatibility we have to consider the possibility of unlogged swaps;
             # this code can be removed after it has run for a bit)
             if(
-              integration.integration_profiles.where(external_context: "resident", external_id: old_roommate_code).blank?
-              &&
-              integration.integration_profiles.where(external_context: "resident", external_id: new_roommate_code).count > 0
-              &&
+              integration.integration_profiles.where(external_context: "resident", external_id: old_roommate_code).blank? &&
+              (integration.integration_profiles.where(external_context: "resident", external_id: new_roommate_code).count > 0) &&
               (old_king_code == new_roommate_code || integration.integration_profiles.where(external_context: "resident", external_id: old_king_code).blank?)
             )
               skip_it = (old_king_code != new_roommate_code)
               unless skip_it
                 prof = integration.integration_profiles.where(external_context: "resident", external_id: new_roommate_code).take.profileable.profile
                 skip_it = (
-                  promotion['NewTenant']['Name'].downcase.strip.start_with?( (prof.first_name == "Unknown" && !promotion['NewTenant']['Name'].strip.start_with?('Unknown') ? "" : prof.first_name).downcase.strip )
-                  &&
+                  promotion['NewTenant']['Name'].downcase.strip.start_with?( (prof.first_name == "Unknown" && !promotion['NewTenant']['Name'].strip.start_with?('Unknown') ? "" : prof.first_name).downcase.strip ) &&
                   promotion['NewTenant']['Name'].downcase.strip.end_with?( (prof.last_name == "Unknown" && !promotion['NewTenant']['Name'].strip.end_with?('Unknown') ? "" : prof.last_name).downcase.strip )
                 )
               end
