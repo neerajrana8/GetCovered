@@ -40,29 +40,39 @@ class MasterPolicyConfiguration < ApplicationRecord
   enum program_type: { auto: 0, choice: 1 }
 
   def charge_amount(force = false)
-    return_charge = if force == false
-                      self.placement_cost
-                    else
-                      self.force_placement_cost.nil? ? self.placement_cost : self.force_placement_cost
-                    end
-    return return_charge
+    return force ? self.force_placement_cost.nil? ? self.placement_cost : self.force_placement_cost : self.placement_cost
+  end
+
+  def admin_fee_amount(force = false)
+    return force ? self.force_admin_fee.nil? ? self.admin_fee : self.force_admin_fee : admin_fee
+  end
+
+  def daily_amount(amount: 0, day_count: 0)
+    return amount.to_f / day_count
   end
 
   def term_amount(coverage = nil, t = DateTime.current)
     amount = nil
     coverage_check = coverage.nil? ? false : coverage.is_a?(Policy) && ::PolicyType::MASTER_COVERAGE_ID == coverage.policy_type_id
     if coverage_check
-      first_month = t.month == coverage.effective_date.month &&
-                    t.year == coverage.effective_date.year
+      amount = 0
+      output = Array.new
 
+      first_month = t.month == coverage.effective_date.month && t.year == coverage.effective_date.year
       last_month = coverage.expiration_date.nil? ? false : t.month == coverage.expiration_date.month &&
                                                            t.year == coverage.expiration_date.year
 
       total_monthly_charge = charge_amount(coverage.force_placed)
-      if prorate_charges == true && (first_month || last_month)
-        days_in_month = t.end_of_month.day
+      total_admin_charge = admin_fee_amount(coverage.force_placed)
+
+      output << "Total Charge Amount: #{ total_monthly_charge }"
+      output << "Total Admin Fee: #{ total_admin_charge }"
+
+      if (prorate_charges == true || prorate_admin_fee == true) && (first_month || last_month)
         current_day = coverage.effective_date.day - 1
-        daily_charge_amount = total_monthly_charge.to_f / days_in_month
+        days_in_month = t.end_of_month.day
+        daily_charge_amount = daily_amount(amount: total_monthly_charge, day_count: days_in_month)
+        daily_admin_amount = daily_amount(amount: total_admin_charge, day_count: days_in_month)
 
         if first_month && last_month
           days = coverage.expiration_date.day - current_day
@@ -72,11 +82,29 @@ class MasterPolicyConfiguration < ApplicationRecord
           days = coverage.expiration_date.day
         end
 
-        amount = (daily_charge_amount * days).ceil(0)
-      else
-        amount = total_monthly_charge
+        output << "Days in month: #{ days_in_month }"
+        output << "Days: #{ days }"
+        output << "Daily Charge Amount: #{ daily_charge_amount }"
+        output << "Daily Admin Fee: #{ daily_admin_amount }"
+        output << "Prorate Charge: #{ prorate_charges }"
+        output << "Prorated Charge: #{ (daily_charge_amount * days).ceil(0) }"
+        output << "Prorate Admin Fee: #{ prorate_admin_fee }"
+        output << "Prorated Admin Fee: #{ (daily_admin_amount * days).ceil(0) }"
+
+        amount += (daily_charge_amount * days).ceil(0) if prorate_charges == true
+        amount += (daily_admin_amount * days).ceil(0) if prorate_admin_fee == true
+
+        output << "Response Amount Output 1: #{ amount }"
       end
+
+      amount += total_monthly_charge if prorate_charges == false
+      amount += total_admin_charge if prorate_admin_fee == false
+
+      output << "Response Amount Output 1: #{ amount }"
+
     end
+
+    puts output
     return amount
   end
 
