@@ -260,32 +260,34 @@ module Integrations
                   end
                 end
                 # since the weird situations weren't the case, continue as normal
-                user ||= find_or_create_user(tenant, ten)
-                if user.nil?
-                  failed = true
-                  next
-                end
-                lu = lease.lease_users.find{|lu| lu.user_id == user.id && lu.integration_profiles.where(integration: integration, external_context: "lease_user_for_lease_#{tenant["Id"]}").blank? } || lease.lease_users.create(
-                  user: user,
-                  primary: ten["Id"] == tenant["Id"],
-                  lessee: (ten["Id"] == tenant["Id"] || ten["Lessee"] == "Yes"),
-                  moved_in_at: (Date.parse(ten["MoveIn"]) rescue nil),
-                  moved_out_at: (Date.parse(ten["MoveOut"]) rescue nil)
-                )
-                if lu&.id.nil?
-                  failed = true
-                  next # MOOSE WARNING: whine in the logs?
-                end
-                luip = IntegrationProfile.create(
-                  integration: integration,
-                  external_context: "lease_user_for_lease_#{tenant["Id"]}",
-                  external_id: ten["Id"],
-                  profileable: lu,
-                  configuration: { 'synced_at' => Time.current.to_s, 'post_fix_em' => true }
-                )
-                if luip&.id.nil?
-                  failed = true
-                  next # MOOSE WARNING: whine in the logs?
+                ActiveRecord::Base.transaction(requires_new: true) do
+                  user ||= find_or_create_user(tenant, ten)
+                  if user.nil?
+                    failed = true
+                    raise ActiveRecord::Rollback
+                  end
+                  lu = lease.lease_users.find{|lu| lu.user_id == user.id && lu.integration_profiles.where(integration: integration, external_context: "lease_user_for_lease_#{tenant["Id"]}").blank? } || lease.lease_users.create(
+                    user: user,
+                    primary: ten["Id"] == tenant["Id"],
+                    lessee: (ten["Id"] == tenant["Id"] || ten["Lessee"] == "Yes"),
+                    moved_in_at: (Date.parse(ten["MoveIn"]) rescue nil),
+                    moved_out_at: (Date.parse(ten["MoveOut"]) rescue nil)
+                  )
+                  if lu&.id.nil?
+                    failed = true
+                    raise ActiveRecord::Rollback # MOOSE WARNING: whine in the logs?
+                  end
+                  luip = IntegrationProfile.create(
+                    integration: integration,
+                    external_context: "lease_user_for_lease_#{tenant["Id"]}",
+                    external_id: ten["Id"],
+                    profileable: lu,
+                    configuration: { 'synced_at' => Time.current.to_s, 'post_fix_em' => true }
+                  )
+                  if luip&.id.nil?
+                    failed = true
+                    raise ActiveRecord::Rollback # MOOSE WARNING: whine in the logs?
+                  end
                 end
               end
               if failed
