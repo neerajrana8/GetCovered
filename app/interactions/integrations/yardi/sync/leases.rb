@@ -260,10 +260,11 @@ module Integrations
                   end
                 end
                 # since the weird situations weren't the case, continue as normal
+                local_failed = false
                 ActiveRecord::Base.transaction(requires_new: true) do
                   user ||= find_or_create_user(tenant, ten)
                   if user.nil?
-                    failed = true
+                    local_failed = true
                     raise ActiveRecord::Rollback
                   end
                   lu = lease.lease_users.find{|lu| lu.user_id == user.id && lu.integration_profiles.where(integration: integration, external_context: "lease_user_for_lease_#{tenant["Id"]}").blank? } || lease.lease_users.create(
@@ -274,7 +275,7 @@ module Integrations
                     moved_out_at: (Date.parse(ten["MoveOut"]) rescue nil)
                   )
                   if lu&.id.nil?
-                    failed = true
+                    local_failed = true
                     raise ActiveRecord::Rollback # MOOSE WARNING: whine in the logs?
                   end
                   luip = IntegrationProfile.create(
@@ -285,11 +286,13 @@ module Integrations
                     configuration: { 'synced_at' => Time.current.to_s, 'post_fix_em' => true }
                   )
                   if luip&.id.nil?
-                    failed = true
+                    local_failed = true
                     raise ActiveRecord::Rollback # MOOSE WARNING: whine in the logs?
                   end
                 end
-              end
+                failed ||= local_failed
+                next if local_failed # at end of loop but if we add more stuff we don't want to forget this
+              end # end ten loop
               if failed
                 # at least one user was uncreatable; stop processing the lease further, since we need to be able to assume all users are present in the below code
                 next
