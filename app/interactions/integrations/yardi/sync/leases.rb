@@ -238,7 +238,7 @@ module Integrations
                 user = nil
                 # roommate sync might have promoted a roommate to primary, and will have had to change the primary's tcode to "was_#{date}_#{prev_tcode}"; but if they are still at least a roommate, they might still be here, so check
                 lease.lease_users.where.not(id: IntegrationProfile.where(integration: integration, external_context: "lease_user_for_lease_#{tenant["Id"]}", external_id: da_tenants.map{|dt| dt["Id"] }).select(:profileable_id)).each do |lu|
-                  if lu.user.profile.contact_email == ten["Email"] && lu.user.profile.first_name&.downcase&.strip == (ten["FirstName"].blank? ? "Unknown" : ten["FirstName"]).strip.downcase && lu.user.profile.last_name&.downcase&.strip == (ten["FirstName"].blank? ? "Unknown" : ten["FirstName"]).strip.downcase
+                  if lu.user.profile.contact_email == ten["Email"] && lu.user.profile.first_name&.downcase&.strip == (ten["FirstName"].blank? ? "Unknown" : ten["FirstName"]).strip.downcase && lu.user.profile.last_name&.downcase&.strip == (ten["LastName"].blank? ? "Unknown" : ten["LastName"]).strip.downcase
                     ip = lu.integration_profiles.where(integration: integration, external_context: "lease_user_for_lease_#{tenant["Id"]}").take
                     if ip.nil?
                       user = ip.profileable
@@ -265,7 +265,7 @@ module Integrations
                   failed = true
                   next
                 end
-                lu = lease.lease_users.find{|lu| lu.user_id == user.id && lu.integration_profiles.where(integration: integration, external_context: "lease_user_for_lease_#{tenant["Id"]}").blank? } || LeaseUser.create(
+                lu = lease.lease_users.find{|lu| lu.user_id == user.id && lu.integration_profiles.where(integration: integration, external_context: "lease_user_for_lease_#{tenant["Id"]}").blank? } || lease.lease_users.create(
                   user: user,
                   primary: ten["Id"] == tenant["Id"],
                   lessee: (ten["Id"] == tenant["Id"] || ten["Lessee"] == "Yes"),
