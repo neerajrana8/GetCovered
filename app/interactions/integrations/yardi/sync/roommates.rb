@@ -17,7 +17,7 @@ module Integrations
           last_sync_f = Time.current.to_date.to_s # we'll set to_return[:last_sync_f] to this before returning, but it's convenient to wait so we can easily return without it if errors arise
           update_last_sync_f = true
           # perform
-          result = Integrations::Yardi::ResidentData::GetRoommatePromotions.run!(integration: integration, property: property_id, move_out_from: moveout_cutoff)
+          result = Integrations::Yardi::ResidentData::GetRoommatePromotions.run!(integration: integration, property_id: property_id, move_out_from: moveout_cutoff)
           unless result[:success]
             to_return[:errors].push("Yardi call error (event ##{result[:event].id})")
             return(to_return)
@@ -58,6 +58,17 @@ module Integrations
             if integration.integration_profiles.where(external_context: "log_roommate_promotion", external_id: "#{new_roommate_code}__#{old_roommate_code}__#{old_king_code}")
                           .or(integration.integration_profiles.where(external_context: ["log_roommate_promotion_broken", "log_roommate_promotion_unlogged"], external_id: "#{property_id}__#{last_sync_f}__#{promotion_index}"))
                           .count > 0
+              next
+            end
+            # mark handled if the folk haven't even been imported yet (or if both are changed, which amounts ot the same thing)
+            if integration.integration_profiles.where(external_context: "resident", external_id: [old_roommate_code, old_king_code]).count == 0
+              IntegrationProfile.create(
+                integration: integration,
+                profileable: integration,
+                external_context: "log_roommate_promotion",
+                external_id: "#{new_roommate_code}__#{old_roommate_code}__#{old_king_code}",
+                configuration: { property_id: property_id, special_note: "promotion encountered before import", yardi_data: promotion }
+              )
               next
             end
             # check more deeply to see if we haven't handled this one (not logically necessary, but the legacy system attempted to DEDUCE tcode swaps and did not log them with IPs, so to maintain backwards compatibility we have to consider the possibility of unlogged swaps;

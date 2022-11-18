@@ -9,8 +9,8 @@ module Integrations
         def execute
           super(**{
             YardiPropertyId: property_id,
-            MoveOutFrom: move_out_start&.to_date&.to_s,
-            MoveOutTo: move_out_end&.to_date&.to_s
+            MoveOutFrom: move_out_from&.to_date&.to_s,
+            MoveOutTo: move_out_to&.to_date&.to_s
           }.compact)
         end
 
