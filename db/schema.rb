@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_11_16_215134) do
+ActiveRecord::Schema.define(version: 2022_11_18_053048) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -876,7 +876,7 @@ ActiveRecord::Schema.define(version: 2022_11_16_215134) do
   create_table "integration_profiles", force: :cascade do |t|
     t.string "external_id"
     t.jsonb "configuration", default: {}
-    t.boolean "enabled", default: false
+    t.boolean "enabled", default: true
     t.bigint "integration_id"
     t.string "profileable_type"
     t.bigint "profileable_id"
