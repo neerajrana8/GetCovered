@@ -32,7 +32,7 @@ class MasterPolicyConfiguration < ApplicationRecord
   belongs_to :carrier_policy_type
   belongs_to :configurable, polymorphic: true
 
-  validate :uniqueness_of_assignment
+  # validate :uniqueness_of_assignment
   validates :placement_cost, numericality: { greater_than: 0 }
   validates :force_placement_cost, numericality: { greater_than: :placement_cost },
                                   unless: Proc.new { self.force_placement_cost.nil? }
@@ -56,7 +56,6 @@ class MasterPolicyConfiguration < ApplicationRecord
     coverage_check = coverage.nil? ? false : coverage.is_a?(Policy) && ::PolicyType::MASTER_COVERAGE_ID == coverage.policy_type_id
     if coverage_check
       amount = 0
-      output = Array.new
 
       first_month = t.month == coverage.effective_date.month && t.year == coverage.effective_date.year
       last_month = coverage.expiration_date.nil? ? false : t.month == coverage.expiration_date.month &&
@@ -64,9 +63,6 @@ class MasterPolicyConfiguration < ApplicationRecord
 
       total_monthly_charge = charge_amount(coverage.force_placed)
       total_admin_charge = admin_fee_amount(coverage.force_placed)
-
-      output << "Total Charge Amount: #{ total_monthly_charge }"
-      output << "Total Admin Fee: #{ total_admin_charge }"
 
       if (prorate_charges == true || prorate_admin_fee == true) && (first_month || last_month)
         current_day = coverage.effective_date.day - 1
@@ -82,29 +78,14 @@ class MasterPolicyConfiguration < ApplicationRecord
           days = coverage.expiration_date.day
         end
 
-        output << "Days in month: #{ days_in_month }"
-        output << "Days: #{ days }"
-        output << "Daily Charge Amount: #{ daily_charge_amount }"
-        output << "Daily Admin Fee: #{ daily_admin_amount }"
-        output << "Prorate Charge: #{ prorate_charges }"
-        output << "Prorated Charge: #{ (daily_charge_amount * days).ceil(0) }"
-        output << "Prorate Admin Fee: #{ prorate_admin_fee }"
-        output << "Prorated Admin Fee: #{ (daily_admin_amount * days).ceil(0) }"
-
         amount += (daily_charge_amount * days).ceil(0) if prorate_charges == true
         amount += (daily_admin_amount * days).ceil(0) if prorate_admin_fee == true
-
-        output << "Response Amount Output 1: #{ amount }"
       end
 
       amount += total_monthly_charge if prorate_charges == false
       amount += total_admin_charge if prorate_admin_fee == false
-
-      output << "Response Amount Output 1: #{ amount }"
-
     end
 
-    puts output
     return amount
   end
 
@@ -126,8 +107,8 @@ class MasterPolicyConfiguration < ApplicationRecord
   end
 
   def uniqueness_of_assignment
-    if MasterPolicyConfiguration.exists?(carrier_policy_type: self.carrier_policy_type, configurable: self.configurable)
-      errors.add(:base, message: "#{ self.configurable.class.name } already has a configuration for a Master Policy with #{ self.carrier_policy_type.carrier.title }")
-    end
+    # if MasterPolicyConfiguration.exists?(carrier_policy_type: self.carrier_policy_type, configurable: self.configurable)
+    #   errors.add(:base, message: "#{ self.configurable.class.name } already has a configuration for a Master Policy with #{ self.carrier_policy_type.carrier.title }")
+    # end
   end
 end

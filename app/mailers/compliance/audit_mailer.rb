@@ -17,12 +17,13 @@ module Compliance
       @street_address = @community&.primary_address()
       @address = @street_address.nil? ? nil : "#{ @street_address.combined_street_address }, #{ @unit.title }, #{ @street_address.city }, #{ @street_address.state }, #{ @street_address.zip_code }"
 
+      available_lease_date = lease_sign_date.nil? ? lease_start_date : lease_sign_date
+
       # Hard coded to QBE for now.
-      set_master_policy_and_configuration(@community, 2)
+      set_master_policy_and_configuration(@community, 2, available_lease_date)
       get_insurable_liability_range(@community)
       set_locale(@user&.profile&.language || "en")
 
-      available_lease_date = lease_sign_date.nil? ? lease_start_date : lease_sign_date
       @min_liability = @community.coverage_requirements_by_date(date: available_lease_date)&.amount
 
       @onboarding_url = tokenized_url(@user, @community)
@@ -59,9 +60,9 @@ module Compliance
       @GC_ADDRESS = Agency.find(1).primary_address()
     end
 
-    def set_master_policy_and_configuration(community, carrier_id)
+    def set_master_policy_and_configuration(community, carrier_id, cutoff_date = nil)
       @master_policy = community.policies.where(policy_type_id: 2, carrier_id: carrier_id).take
-      @configuration = @master_policy.find_closest_master_policy_configuration(community)
+      @configuration = @master_policy&.find_closest_master_policy_configuration(community, cutoff_date)
     end
   end
 end
