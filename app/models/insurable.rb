@@ -668,9 +668,7 @@ class Insurable < ApplicationRecord
   end
 
   def coverage_requirements_by_date(date: DateTime.current.to_date)
-    requirements = self.coverage_requirements.where("start_date < ?", date)
-    requirements.sort
-    return requirements.max
+    return self.coverage_requirements.where("start_date < ?", date).order("start_date desc").limit(1).take
   end
 
   private

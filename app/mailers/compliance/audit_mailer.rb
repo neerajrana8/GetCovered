@@ -23,7 +23,7 @@ module Compliance
       set_locale(@user&.profile&.language || "en")
 
       available_lease_date = lease_sign_date.nil? ? lease_start_date : lease_sign_date
-      @min_liability = @community.coverage_requirements_by_date(date: available_lease_date)
+      @min_liability = @community.coverage_requirements_by_date(date: available_lease_date)&.amount
 
       @onboarding_url = tokenized_url(@user, @community)
       @requirements_date = @configuration.nil? ? lease_start_date : lease_start_date + @configuration.grace_period
