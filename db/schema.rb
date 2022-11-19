@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_11_16_215134) do
+ActiveRecord::Schema.define(version: 2022_11_19_180326) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -658,6 +658,16 @@ ActiveRecord::Schema.define(version: 2022_11_16_215134) do
     t.index ["contactable_id"], name: "index_contact_records_on_contactable_id"
   end
 
+  create_table "coverage_requirements", force: :cascade do |t|
+    t.string "designation"
+    t.integer "amount"
+    t.date "start_date"
+    t.bigint "insurable_id", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["insurable_id"], name: "index_coverage_requirements_on_insurable_id"
+  end
+
   create_table "disputes", force: :cascade do |t|
     t.string "stripe_id", null: false
     t.integer "amount", null: false
@@ -864,7 +874,6 @@ ActiveRecord::Schema.define(version: 2022_11_16_215134) do
     t.boolean "additional_interest", default: false
     t.string "additional_interest_name"
     t.integer "minimum_liability"
-    t.integer "special_status", default: 0, null: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
     t.index ["insurable_id"], name: "index_insurables_on_insurable_id"
@@ -1150,6 +1159,9 @@ ActiveRecord::Schema.define(version: 2022_11_16_215134) do
     t.boolean "enabled", default: false
     t.string "integration_account_number"
     t.boolean "lease_violation_only", default: true
+    t.integer "admin_fee", default: 0
+    t.integer "force_admin_fee"
+    t.boolean "prorate_admin_fee", default: false
     t.index ["carrier_policy_type_id", "configurable_type", "configurable_id"], name: "index_cpt_and_conf_on_mpc", unique: true
     t.index ["configurable_type", "configurable_id"], name: "index_master_policy_configurations_on_configurable"
   end
