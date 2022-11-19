@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_11_17_193317) do
+ActiveRecord::Schema.define(version: 2022_11_19_180326) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -656,6 +656,16 @@ ActiveRecord::Schema.define(version: 2022_11_17_193317) do
     t.string "thread_id", default: "0000"
     t.string "subject"
     t.index ["contactable_id"], name: "index_contact_records_on_contactable_id"
+  end
+
+  create_table "coverage_requirements", force: :cascade do |t|
+    t.string "designation"
+    t.integer "amount"
+    t.date "start_date"
+    t.bigint "insurable_id", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["insurable_id"], name: "index_coverage_requirements_on_insurable_id"
   end
 
   create_table "disputes", force: :cascade do |t|
