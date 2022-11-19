@@ -37,6 +37,9 @@ module Compliance
       get_insurable_liability_range(@community)
       set_master_policy_and_configuration(@community, 2)
 
+      available_lease_date = lease.sign_date.nil? ? lease.start_date : lease.sign_date
+      @min_liability = @community.coverage_requirements_by_date(date: available_lease_date)
+
       @placement_cost = @configuration.nil? ? 0 : @configuration.charge_amount(true).to_f / 100
 
       @from = @pm_account&.contact_info&.has_key?("contact_email") &&

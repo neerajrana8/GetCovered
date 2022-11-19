@@ -4,7 +4,7 @@ module Compliance
     layout 'branded_mailer'
     before_action :set_variables
 
-    def intro(user:, unit:, lease_start_date:, follow_up:)
+    def intro(user:, unit:, lease_start_date:, follow_up:, lease_sign_date: nil)
       raise ArgumentError.new(
         "Expected a follow up value of 0 to 2, got #{ follow_up.nil? ? 'nil' : follow_up }"
       ) if follow_up.nil? || follow_up > 2
@@ -21,6 +21,9 @@ module Compliance
       set_master_policy_and_configuration(@community, 2)
       get_insurable_liability_range(@community)
       set_locale(@user&.profile&.language || "en")
+
+      available_lease_date = lease_sign_date.nil? ? lease_start_date : lease_sign_date
+      @min_liability = @community.coverage_requirements_by_date(date: available_lease_date)
 
       @onboarding_url = tokenized_url(@user, @community)
       @requirements_date = @configuration.nil? ? lease_start_date : lease_start_date + @configuration.grace_period
