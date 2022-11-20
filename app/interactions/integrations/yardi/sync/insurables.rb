@@ -505,7 +505,7 @@ module Integrations
                   unless skip_lease_sync
                     next if unit[:yardi_data]["Resident"].blank?
                     result = Integrations::Yardi::Sync::Leases.run!(integration: integration, update_old: update_old_leases, unit: unit[:insurable], resident_data: unit[:yardi_data]["Resident"].class == ::Array ? unit[:yardi_data]["Resident"] : [unit[:yardi_data]["Resident"]])
-                    =unless result[:lease_update_errors].blank?
+                    unless result[:lease_update_errors].blank?
                       to_return[:lease_update_errors][comm[:yardi_id]] ||= {}
                       to_return[:lease_update_errors][comm[:yardi_id]][unit[:yardi_id]] = result[:lease_update_errors]
                     end
