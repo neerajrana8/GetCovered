@@ -141,7 +141,7 @@ class Policy < ApplicationRecord
   through: :primary_policy_user,
   source: :user
 
-  has_one :master_policy_configuration, as: :configurable
+  has_many :master_policy_configurations, as: :configurable
 
   has_one :primary_policy_insurable, -> { where(primary: true) }, class_name: 'PolicyInsurable'
   has_one :primary_insurable, class_name: 'Insurable', through: :primary_policy_insurable, source: :insurable

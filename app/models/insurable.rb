@@ -83,6 +83,8 @@ class Insurable < ApplicationRecord
   has_many :insurable_rate_configurations,
            as: :configurable
 
+  has_many :coverage_requirements
+
   accepts_nested_attributes_for :addresses, allow_destroy: true
 
   enum category: %w[property entity]
@@ -668,6 +670,10 @@ class Insurable < ApplicationRecord
 
   def slug_url
     "/#{self.insurable_type.title.split(' ')[0].downcase}/#{self.slug}-#{self.id}"
+  end
+
+  def coverage_requirements_by_date(date: DateTime.current.to_date)
+    return self.coverage_requirements.where("start_date < ?", date).order("start_date desc").limit(1).take
   end
 
   private

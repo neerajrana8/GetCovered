@@ -19,7 +19,8 @@ module Compliance
                                      .intro(user: lease.primary_user(),
                                             unit: lease.insurable,
                                             lease_start_date: lease.start_date,
-                                            follow_up: 0).deliver_now()
+                                            follow_up: 0,
+                                            lease_sign_date: lease.sign_date).deliver_now()
             rescue Exception => e
               message = "Unable to generate first contact email for lease id: #{ lease.id }\n\n"
               message += "#{ e.to_json }\n\n"
