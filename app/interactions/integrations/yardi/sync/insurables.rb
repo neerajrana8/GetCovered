@@ -135,7 +135,7 @@ module Integrations
             Proc.new{|u| u["UnitType"]&.downcase&.index("bmr") }
           elsif forbidden_unit_types == "essex_bmr"
             # allow BRM also for now because he made that typo in the email so it could exist in the db...
-            Proc.new{|u| ["BMR", "BRM"].include?( (u["Identification"].class == ::Array ? u["Identification"] : [u["Identification"]]).find{|i| i["IDType"] == "LeaseDesc" }&.[]("IDValue")&.strip&.upcase ) }
+            Proc.new{|u| u["UnitType"]&.downcase&.index("bmr") || ["BMR", "BRM"].include?( (u["Identification"].class == ::Array ? u["Identification"] : [u["Identification"]]).find{|i| i["IDType"] == "LeaseDesc" }&.[]("IDValue")&.strip&.upcase ) }
           else
             nil
           end
