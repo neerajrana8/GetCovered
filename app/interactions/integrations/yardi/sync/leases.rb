@@ -10,6 +10,7 @@ module Integrations
         object :unit, class: Insurable
         array :resident_data
         boolean :update_old, default: false # if you pass true, will run update on past leases that are already in the system; if false, it will ignore them
+        boolean :cleanse_lease_users, default: false
         
         RESIDENT_STATUSES = {
           'past' => ['Past', 'Canceled', 'Cancelled'],
@@ -507,10 +508,12 @@ module Integrations
               next unless fmr[:success] # at least one user was uncreatable; stop processing the lease further, since we need to be able to assume all users are present in the below code
               # we can assume all tenants have corresponding users & lease users & appropriate IPs, if we're here
               # remove any lease users that don't correspond to tenants
-              doomed_lus = lease.lease_users.select{|lu| lu.moved_out_at.nil? && lu.integration_profiles.where(integration: integration, external_context: "lease_user_for_lease_#{tenant["Id"]}", external_id: da_tenants.map{|t| t["Id"] }).count == 0 }
-              doomed_lus.each do |dl|
-                dl.integration_profiles.each{|ip| ip.delete }
-                dl.delete
+              if cleanse_lease_users
+                doomed_lus = lease.lease_users.select{|lu| lu.moved_out_at.nil? && lu.integration_profiles.where(integration: integration, external_context: "lease_user_for_lease_#{tenant["Id"]}", external_id: da_tenants.map{|t| t["Id"] }).count == 0 }
+                doomed_lus.each do |dl|
+                  dl.integration_profiles.each{|ip| ip.delete }
+                  dl.delete
+                end
               end
               # now ensure we update the move in/out dates and primary/lessee statuses
               lease.lease_users.reload.each do |lu|
