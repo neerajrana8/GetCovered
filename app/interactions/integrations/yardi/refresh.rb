@@ -107,10 +107,10 @@ module Integrations
         integration.configuration['sync'] ||= {}
         integration.configuration['sync']['syncable_communities'] ||= {}
         integration.configuration['sync']['pull_policies'] = false if integration.configuration['sync']['pull_policies'].nil?
-        integration.configuration['sync']['push_policies'] = true if integration.configuration['sync']['push_policies'].nil?
+        integration.configuration['sync']['push_policies'] = false if integration.configuration['sync']['push_policies'].nil?
         integration.configuration['sync']['push_master_policy_invoices'] = false if integration.configuration['sync']['push_master_policy_invoices'].nil?
         integration.configuration['sync']['policy_push'] ||= {}
-        integration.configuration['sync']['policy_push']['push_document'] = true if integration.configuration['sync']['policy_push']['push_document'].nil?
+        integration.configuration['sync']['policy_push']['push_document'] = false if integration.configuration['sync']['policy_push']['push_document'].nil?
         integration.configuration['sync']['policy_push']['attachment_type_options'] ||= []
         integration.configuration['sync']['policy_push']['attachment_type'] ||= nil
         integration.configuration['sync']['master_policy_invoices'] ||= {}
@@ -123,6 +123,7 @@ module Integrations
         result = Integrations::Yardi::RentersInsurance::GetPropertyConfigurations.run!(integration: integration)
         if result[:success] && result[:parsed_response].class == ::Hash
           result[:comms] = result[:parsed_response].dig("Envelope", "Body", "GetPropertyConfigurationsResponse", "GetPropertyConfigurationsResult", "Properties", "Property")
+          result[:comms] = [result[:comms]] if result[:comms].class == ::Hash
           if result[:comms].class == ::Array
             integration.configuration['sync']['syncable_communities'] = result[:comms].map{|c| [c["Code"], {
               'name' => c["MarketingName"],

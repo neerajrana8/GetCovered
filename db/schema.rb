@@ -885,7 +885,7 @@ ActiveRecord::Schema.define(version: 2022_11_19_180326) do
   create_table "integration_profiles", force: :cascade do |t|
     t.string "external_id"
     t.jsonb "configuration", default: {}
-    t.boolean "enabled", default: false
+    t.boolean "enabled", default: true
     t.bigint "integration_id"
     t.string "profileable_type"
     t.bigint "profileable_id"

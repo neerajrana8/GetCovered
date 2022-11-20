@@ -7,6 +7,7 @@ module Integrations
         object :attachment, class: :Object
         string :attachment_type
         string :description, default: "GC Verified Policy"
+        object :eventable, class: :Object, default: nil
         
         def execute
           super(**{
@@ -24,6 +25,10 @@ module Integrations
         
         def camelbase_datacase
           true
+        end
+        
+        def get_eventable
+          return eventable
         end
         
         def request_template(**params) # we overrode this when debugging; since it works there is no reason to unoverride it. but camelbase_datacase should give us the same result if we used the same format as in the _ext version, we shouldn't need the itf: stuff

@@ -7,7 +7,7 @@ class YardiSyncJob < ApplicationJob
       integration = Integration.where(id: integration_id).take
       next if integration.nil?
       begin
-        Integrations::Yardi::Sync::Insurables.run!(integration: integration)
+        Integrations::Yardi::Sync::Insurables.run!(integration: integration, efficiency_mode: true)
       rescue
         begin
           integration.configuration['sync']['sync_history'].push({
@@ -22,7 +22,7 @@ class YardiSyncJob < ApplicationJob
         end
       end
       begin
-        Integrations::Yardi::Sync::Policies.run!(integration: integration)
+        Integrations::Yardi::Sync::Policies.run!(integration: integration, efficiency_mode: true)
       rescue
         begin
           integration.configuration['sync']['sync_history'].push({

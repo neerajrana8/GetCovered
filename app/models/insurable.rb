@@ -89,7 +89,12 @@ class Insurable < ApplicationRecord
 
   enum category: %w[property entity]
 
-  #validates_presence_of :title, :slug MOOSE WARNING: RESTORE ME WHEN YOU CAN! THIS IS DISABLED TO ALLOW TITLELESS NONPREFERRED UNITS!
+  enum special_status: {
+    none: 0,
+    affordable: 1
+  }, _prefix: true
+
+  #validates_presence_of :title, :slug WARNING: THIS IS DISABLED TO ALLOW TITLELESS NONPREFERRED UNITS!
 
   validate :must_belong_to_same_account_if_parent_insurable
   validate :title_uniqueness, on: :create

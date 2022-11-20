@@ -5,6 +5,12 @@ module Integrations
         object :integration
         string :property_list_id, default: nil
         array :property_ids, default: nil
+        boolean :insurables_only, default: false # disabled roommate & lease sync (policy sync is never invoked by insurables sync)
+        boolean :efficiency_mode, default: false # skip a bunch of logging and stuff to reduce load on the instance (could be improved even further...)
+        boolean :update_old_leases, default: true # don't skip expired leases when updating leases already in the system based on yardi changes
+        boolean :skip_roommate_sync, default: false # skip roommate sync in particular (shouldn't do this normally, as RS correctly handles tcode changes and LS does not)
+        boolean :skip_lease_sync, default: false # skip lease sync in particular
+        boolean :skip_leases_on_roommate_error, default: false # skips lease sync if roommate sync encounters a problem
         
         def account_id
           integration.integratable_id
@@ -61,8 +67,10 @@ module Integrations
             community_errors: {}, # [community prop id] = error string
             unit_errors: {},      # [community prop id][unit id] = error string
             unit_exclusions: {},  # [community prop id][unit id] = explanation string (errors are not present here, just exclusions)
+            lease_update_errors: {},
             lease_errors: {},
             user_errors: {},
+            promotion_errors: {},
             sync_results: []
           }
           output_array = []
@@ -111,10 +119,26 @@ module Integrations
             end
           end
           
+          if efficiency_mode && all_units.keys.count > 1
+            all_units.keys.each do |k|
+              Integrations::Yardi::Sync::Insurables.run!(integration: integration.reload, property_ids: [k], insurables_only: insurables_only, efficiency_mode: true)
+            end
+            return to_return # empty
+          end
+          
           ###### APPLY FORBIDDEN UNIT TYPES ######
           
           forbidden_unit_types = integration.configuration['sync']['forbidden_unit_types'] || []
-          is_forbidden = forbidden_unit_types.class == ::Array ? Proc.new{|ut| forbidden_unit_types.include?(ut) } : forbidden_unit_types == "bmr" ? Proc.new{|ut| ut&.downcase&.index("bmr") } : nil
+          is_forbidden = if forbidden_unit_types.class == ::Array
+            Proc.new{|u| forbidden_unit_types.include?(u["UnitType"]) }
+          elsif forbidden_unit_types == "bmr"
+            Proc.new{|u| u["UnitType"]&.downcase&.index("bmr") }
+          elsif forbidden_unit_types == "essex_bmr"
+            # allow BRM also for now because he made that typo in the email so it could exist in the db...
+            Proc.new{|u| u["UnitType"]&.downcase&.index("bmr") || ["BMR", "BRM"].include?( (u["Identification"].class == ::Array ? u["Identification"] : [u["Identification"]]).find{|i| i["IDType"] == "LeaseDesc" }&.[]("IDValue")&.strip&.upcase ) }
+          else
+            nil
+          end
           unless forbidden_unit_types.blank?
             all_units = all_units.map do |k,v|
               uresult = ::Integrations::Yardi::ResidentData::GetUnitInformation.run!(integration: integration, property_id: k)
@@ -123,8 +147,35 @@ module Integrations
                 next [k, nil]
               end
               verboten = uresult[:parsed_response].dig("Envelope", "Body", "GetUnitInformationResponse", "GetUnitInformationResult", "UnitInformation", "Property", "Units", "UnitInfo")
-                                                  .select{|u| is_forbidden.call(u["Unit"]["UnitType"]) }
+                                                  .select{|u| is_forbidden.call(u["Unit"]) }
                                                   .map{|u| u["UnitID"]["__content__"] }
+              ### format example:
+              # <UnitInfo>
+              #   <UnitID UniqueID="85223">506</UnitID>
+              #   <PersonID Type="Current Resident">t0586444</PersonID>
+              #   <Unit>
+              #     <Identification IDType="LeaseDesc" IDValue="Conventional" />
+              #     <Identification IDType="RentalType" IDValue="Residential" />
+              #     <Identification IDType="UnitTypeUniqueID" IDValue="2331" />
+              #     <UnitType>6712j</UnitType>
+              #     <UnitBedrooms>1</UnitBedrooms>
+              #     <UnitBathrooms>1.00</UnitBathrooms>
+              #     <MinSquareFeet>750</MinSquareFeet>
+              #     <MaxSquareFeet>750</MaxSquareFeet>
+              #     <MarketRent>1705.00</MarketRent>
+              #     <UnitEconomicStatus>residential</UnitEconomicStatus>
+              #     <UnitEconomicStatusDescription>Occupied No Notice</UnitEconomicStatusDescription>
+              #     <FloorplanName>1x1 740 - 760 SQFT - Aritosthenes</FloorplanName>
+              #     <BuildingName />
+              #     <Address AddressType="property">
+              #       <AddressLine1>101 BIG MOOSE AVE APT 506</AddressLine1>
+              #       <City>Little Rock</City>
+              #       <State>AR</State>
+              #       <PostalCode>72076</PostalCode>
+              #     </Address>
+              #   </Unit>
+              # </UnitInfo>
+              ###
               next [k,
                 v.select do |u|
                   if verboten.include?(u["UnitId"])
@@ -442,21 +493,35 @@ module Integrations
           ###### TENANT IMPORT ######
    
           tenant_array = []
-          output_array.each do |comm|
-            comm[:buildings].each do |bldg|
-              bldg[:units].each do |unit|
-                next if unit[:yardi_data]["Resident"].blank?
-                result = Integrations::Yardi::Sync::Leases.run!(integration: integration, update_old: true, unit: unit[:insurable], resident_data: unit[:yardi_data]["Resident"].class == ::Array ? unit[:yardi_data]["Resident"] : [unit[:yardi_data]["Resident"]])
-                unless result[:lease_errors].blank?
-                  to_return[:lease_errors][comm[:yardi_id]] ||= {}
-                  to_return[:lease_errors][comm[:yardi_id]][unit[:yardi_id]] = result[:lease_errors]
-                end
-                unless result[:user_errors].blank?
-                  to_return[:user_errors][comm[:yardi_id]] ||= {}
-                  to_return[:user_errors][comm[:yardi_id]][unit[:yardi_id]] = result[:user_errors]
-                end
-                [:leases_created, :leases_found, :leases_expired, :users_created, :users_found].each do |prop|
-                  unit[prop] = result[prop]
+          unless insurables_only
+            output_array.each do |comm|
+              unless skip_roommate_sync
+                result = Integrations::Yardi::Sync::Roommates.run!(integration: integration, property_id: comm[:yardi_id])
+                comm[:last_sync_f] = result[:last_sync_f]
+                to_return[:promotion_errors][comm[:yardi_id]] = result[:errors] unless result[:errors].blank?
+                next if skip_leases_on_roommate_error && !result[:errors].blank?
+              end
+              comm[:buildings].each do |bldg|
+                bldg[:units].each do |unit|
+                  unless skip_lease_sync
+                    next if unit[:yardi_data]["Resident"].blank?
+                    result = Integrations::Yardi::Sync::Leases.run!(integration: integration, update_old: update_old_leases, unit: unit[:insurable], resident_data: unit[:yardi_data]["Resident"].class == ::Array ? unit[:yardi_data]["Resident"] : [unit[:yardi_data]["Resident"]])
+                    unless result[:lease_update_errors].blank?
+                      to_return[:lease_update_errors][comm[:yardi_id]] ||= {}
+                      to_return[:lease_update_errors][comm[:yardi_id]][unit[:yardi_id]] = result[:lease_update_errors]
+                    end
+                    unless result[:lease_errors].blank?
+                      to_return[:lease_errors][comm[:yardi_id]] ||= {}
+                      to_return[:lease_errors][comm[:yardi_id]][unit[:yardi_id]] = result[:lease_errors]
+                    end
+                    unless result[:user_errors].blank?
+                      to_return[:user_errors][comm[:yardi_id]] ||= {}
+                      to_return[:user_errors][comm[:yardi_id]][unit[:yardi_id]] = result[:user_errors]
+                    end
+                    [:leases_created, :leases_found, :leases_expired, :users_created, :users_found].each do |prop|
+                      unit[prop] = result[prop]
+                    end
+                  end
                 end
               end
             end
@@ -470,6 +535,8 @@ module Integrations
             integration.configuration['sync']['syncable_communities'][comm[:yardi_id]] ||= {}
             integration.configuration['sync']['syncable_communities'][comm[:yardi_id]]["name"] = comm[:title]
             integration.configuration['sync']['syncable_communities'][comm[:yardi_id]]["gc_id"] = comm[:insurable]&.id
+            integration.configuration['sync']['syncable_communities'][comm[:yardi_id]]["last_sync_f"] = comm[:last_sync_f]
+            integration.configuration['sync']['syncable_communities'][comm[:yardi_id]]["last_sync_i"] = Time.current.to_date.to_s
           end
           integration.configuration['sync']['sync_history'] ||= []
           integration.configuration['sync']['sync_history'].push({
@@ -485,7 +552,7 @@ module Integrations
           
           to_return[:unit_errors].select!{|k,v| !v.blank? }
           to_return[:unit_exclusions].select!{|k,v| !v.blank? }
-          to_return[:sync_results] = output_array
+          to_return[:sync_results] = output_array unless efficiency_mode
           return to_return
 
         end # end execute
