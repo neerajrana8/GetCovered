@@ -553,7 +553,6 @@ class Policy < ApplicationRecord
   end
 
   def refund_available_days
-    raise StandardError.new("Outdated broken method")
     max_days_for_full_refund =
       (CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_id).
         take&.max_days_for_full_refund || 0).
