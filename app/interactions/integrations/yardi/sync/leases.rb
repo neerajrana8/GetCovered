@@ -18,6 +18,12 @@ module Integrations
         ALLOW_USER_CHANGE = true # true to allow previously imported users that aren't primary leaseholders to change to emailless users if their email appears used by a distinct primary user
         ATTEMPT_TO_USE_EMAIL = false # true to attempt to make email-bearing users with email UIDs, 'primary' to try only for primary leaseholders, false to never try (and if ALLOW_USER_CHANGE is true, users who have logged in & primary leaseholders will have priority in doing so)
         
+        def tenant_user_match(ten, user)
+          firster = (ten["FirstName"].blank? ? "Unknown" : ten["FirstName"]).strip.downcase
+          laster = (ten["LastName"].blank? ? "Unknown" : ten["LastName"]).strip.downcase
+          return (user.profile.contact_email || "") == (ten["Email"] || "") && firster == user.profile.first_name.strip.downcase && laster == user.profile.last_name.strip.downcase)
+        end
+        
         def find_or_create_user(tenant, ten)
           # grab the fellow directly if they have already been imported
           primary = (tenant["Id"] == ten["Id"])
@@ -86,7 +92,8 @@ module Integrations
               external_id: ten["Id"],
               configuration: {
                 'synced_at' => Time.current.to_s,
-                'post_fix_em' => 'IMPORT'
+                'post_fix_em' => 'IMPORT',
+                'post_revamp' => true
               }
             )
             if ip.id.nil?
@@ -127,7 +134,300 @@ module Integrations
           end
         end
         
-        
+
+        # find folk lacking something
+        def fix_missing(lease, da_tenants)
+          # get ready boyo
+          errors = []
+
+          # grab folk with lacks
+          uips = integration.integration_profiles.where(external_context: "resident", external_id: da_tenants.map{|dt| dt["Id"] })
+          luips = integration.integration_profiles.where(profileable: lease.lease_users)
+          tenanted_luips = luips.select{|luip| da_tenants.any?{|t| t["Id"] == luip.external_id } }
+          lacks_both = da_tenants.map{|dt| dt["Id"] }.select{|i| !uips.any?{|uip| uip.external_id == i } && !luips.any?{|luip| luip.external_id == i } }
+          lacks_uip = (da_tenants.map{|dt| dt["Id"] } - lacks_both).select{|i| !uips.any?{|uip| uip.external_id == i } }
+          lacks_luip = (da_tenants.map{|dt| dt["Id"] } - lacks_both).select{|i| !luips.any?{|luip| luip.external_id == i } }
+          lacks_match = (da_tenants.map{|dt| dt["Id"] } - (lacks_uip | lacks_luip | lacks_both)).select{|i| uips.find{|uip| uip.external_id == i }.profileable_id != luips.find{|luip| luip.external_id == i }.profileable.user_id }
+          # grab full tenant hashes instead
+          lacks_both = da_tenants.select{|dt| lacks_both.include?(dt["Id"]) }
+          lacks_uip = da_tenants.select{|dt| lacks_uip.include?(dt["Id"]) }
+          lacks_luip = da_tenants.select{|dt| lacks_luip.include?(dt["Id"]) }
+          lacks_match = da_tenants.select{|dt| lacks_match.include?(dt["Id"]) }
+          # set up other useful things
+          free_lus = lease.lease_users.select{|lu| !tenanted_luips.any?{|luip| luip.profileable_id == lu.id } }.to_a
+          lacks_both_no_more = []
+          lacks_uip_no_more = []
+          lacks_luip_no_more = []
+          lacks_match_no_more = []
+
+          # handle match-lackers
+
+          lacks_match.each do |ten|
+            luip = luips.find{|luip| luip.external_id == ten["Id"] }
+            uip = uips.find{|uip| uip.external_id == ten["Id"] }
+            succeeded = false
+            if tenant_user_match(ten, luip.profileable.user)
+              if tenant_user_match(ten, uip.profileable)
+                # both user records are the right user; time to merge 'em
+                saved = [uip.profileable, luip.profileable.user].max_by{|x| [x.sign_in_count, -x.created_at.to_i] }
+                doomed = [uip.profileable, luip.profileable.user].find{|x| x.id != saved.id }
+                doomed_id = doomed.id
+                result = saved.absorb!(doomed)
+                if result.nil?
+                  succeeded = true
+                else
+                  errors.push("Failed to merge User models ##{} and ##{} (tenant #{ten["Id"]})! #{result.class.name}: #{(result.message rescue "<no message>")}"
+                  next
+                end
+              else
+                # only the luip matches ten
+                # WARNING: should we set the user to "was_whatever" to log that this happened?
+                if uip.update(profileable_id: luip.profileable.user_id)
+                  succeeded = true 
+                else
+                  errors.push("Failed to move UIP##{uip.id} from User##{uip.profileable_id} to User##{luip.profileable.uiser_id} (tenant #{ten["Id"]})! #{uip.errors.to_h}")
+                  next
+                end
+              end
+            elsif tenant_user_match(ten, uip.profileable)
+              # only the uip matches ten
+              if luip.profileable.update(user_id: uip.profileable_id)
+                succeeded = true
+              else
+                errors.push("Failed to move LUIP##{luip.id}'s LeaseUser##{luip.profileable_id} from User##{luip.profileable.user_id} to User##{uip.profileable_id} (tenant #{ten["Id"]})! #{luip.errors.to_h}")
+              end
+            else
+              # neither of the records match ten; switch them both to different tcodes
+              begin
+                ActiveRecord::Base.transaction(requires_new: true) do
+                  new_external_id = "had_lease_user_#{Time.current.to_date.to_s}_#{luip.external_id}"
+                  luip.configuration ||= {}
+                  luip.configuration['tcode_changes'] ||= {}
+                  luip.configuration['tcode_changes'][Time.current.to_date] = {
+                    old_code: luip.external_id,
+                    new_code: new_external_id,
+                    reason: 'lacked_match',
+                    detals: "User##{uip.profileable_id}"
+                  }
+                  luip.external_id = new_external_id
+                  luip.save!
+                  uip.update!(external_id: "was_#{Time.current.to_date.to_s}_#{luip.external_id}")
+                  # mark successful
+                  tenanted_luips.delete(luip)
+                  free_lus.push(luip.profileable)
+                  uips.delete(uip)
+                  lacks_both.push(ten)
+                  succeeded = true
+                end
+              rescue StandardError => e
+                errors.push("Failed to change tcodes of UIP##{uip.id} and LUIP##{luip.id}, which do not match the tenant (tenant #{ten["Id"]})! #{e.class.name}: #{(e.message rescue "")}")
+              end
+            end
+            # handle success
+            if succeeded
+              # mark successful
+              lacks_match_no_more.push(ten)
+              next
+            end
+          end
+
+          # handle uip-lackers
+
+          lacks_uip.each do |ten|
+            luip = luips.find{|luip| luip.external_id == ten["Id"] }
+            uip = integration.integration_profiles.create(
+              profileable_type: "User",
+              profielable_id: luip.profileable.user_id,
+              external_context: "resident",
+              external_id: ten["Id"],
+              configuration: {
+                'synced_at' => Time.current.to_s,
+                'post_fix_em' => true,
+                'post_revamp' => true
+              }
+            )
+            if uip.id.nil?
+              errors.push("Failed to create UIP for User##{luip.profileable.user_id} corresponding to LUIP##{luip.id} (tenant #{ten["Id"]})! #{uip.errors.to_h}")
+            else
+              lacks_uip_no_more.push(ten)
+            end
+          end
+
+          # handle both-lackers
+
+          lacks_both.each do |ten|
+            # first make sure there's no exact name/email match
+            candidate_lu = free_lus.find{|lu| tenant_user_match(ten, lu.user) }
+            unless candidate_lu.nil?
+              # we have someone who matches the name and email
+              luip = integration.integration_profiles.create(
+                external_context: "lease_user_for_lease_#{tenant["Id"]}",
+                external_id: ten["Id"],
+                profileable: candidate_lu,
+                configuration: { 'synced_at' => Time.current.to_s, 'post_fix_em' => true, 'post_revamp' => true }
+              )
+              unless luip.id
+                errors.push("Failed to create LUIP for LU##{candidate_lu.id} based on User match (tenant #{ten["Id"]})! #{luip.errors.to_h}")
+                next
+              end
+              # mark successful
+              luips.push(luip)
+              tenanted_luips.push(luip)
+              free_lus.select!{|fl| fl.id != luip.profileable_id }
+              lacks_both_no_more.push(ten)
+              next
+            end
+            # then fall back to creating something new
+            local_failed = false
+            user = nil
+            luip = nil
+            ActiveRecord::Base.transaction(requires_new: true) do
+              user ||= find_or_create_user(tenant, ten) # this creates the UIP as well
+              if user.nil?
+                errors.push("Failed to find-or-create User for tenant (tenant #{ten["Id"]})!")
+                local_failed = true
+                raise ActiveRecord::Rollback
+              end
+              lu = lease.lease_users.create(
+                user: user,
+                primary: ten["Id"] == tenant["Id"],
+                lessee: (ten["Id"] == tenant["Id"] || ten["Lessee"] == "Yes"),
+                moved_in_at: (Date.parse(ten["MoveIn"]) rescue nil),
+                moved_out_at: (Date.parse(ten["MoveOut"]) rescue nil)
+              )
+              if lu.id.nil?
+                errors.push("Failed to create LeaseUser for (possibly about-to-be-rolled-back) User##{user.id} (tenant #{ten["Id"]})! #{lu.errors.to_h}")
+                local_failed = true
+                raise ActiveRecord::Rollback
+              end
+              luip = integration.integration_profiles.create(
+                external_context: "lease_user_for_lease_#{tenant["Id"]}",
+                external_id: ten["Id"],
+                profileable: lu,
+                configuration: { 'synced_at' => Time.current.to_s, 'post_fix_em' => true, 'post_revamp' => true }
+              )
+              if luip&.id.nil?
+                errors.push("Failed to create LUIP for (possibly about-to-be-rolled-back) User##{user.id} (tenant #{ten["Id"]})! #{luip.errors.to_h}")
+                local_failed = true
+                raise ActiveRecord::Rollback
+              end
+            end
+            unless local_failed
+              # mark successful
+              uips.push(user.integration_profiles.where(integration: integration, external_context: "resident", external_id: ten["Id"]).take)
+              luips.push(luip)
+              tenanted_luips.push(luip)
+              free_lus.select!{|fl| fl.id != luip.profileable_id }
+              lacks_both_no_more.push(ten)
+              next
+            end
+          end
+
+          # handle luip-lackers
+
+          lacks_luip.each do |ten|
+            uip = uips.find{|ip| ip.external_id == ten["Id"] }
+            # first make sure there's no exact User match
+            candidate_lu = lease.lease_users.find{|lu| lu.user_id == uip.profileable_id }
+            unless candidate_lu.nil?
+              # we have an exact match for the user we're looking for
+              luip = integration.integration_profiles.create(
+                external_context: "lease_user_for_lease_#{tenant["Id"]}",
+                external_id: ten["Id"],
+                profileable: candidate_lu,
+                configuration: { 'synced_at' => Time.current.to_s, 'post_fix_em' => true, 'post_revamp' => true }
+              )
+              unless luip.id
+                errors.push("Failed to create LUIP for LU##{candidate_lu.id} based on exact User id match (tenant #{ten["Id"]})! #{luip.errors.to_h}")
+                next
+              end
+              # mark successful
+              luips.push(luip)
+              tenanted_luips.push(luip)
+              free_lus.select!{|fl| fl.id != luip.profileable_id }
+              lacks_luip_no_more.push(ten)
+              next
+            end
+            # then make sure there's no exact name/email match
+            candidate_lu = free_lus.find{|lu| tenant_user_match(ten, lu.user) }
+            unless candidate_lu.nil?
+              # we have someone who matches the name and email of the other guy
+              saved = [candidate_lu.user, uip.profileable].max_by{|x| [x.sign_in_count, -x.created_at.to_i] }
+              doomed = [candidate_lu.user, uip.profileable].find{|x| x.id != saved.id }
+              doomed_id = doomed.id
+              result = saved.absorb!(doomed)
+              unless result.nil?
+                errors.push("Failed to merge User##{doomed.id} into User##{saved.id} (tenant #{ten["Id"]})! #{result.class.name}: #{(result.message rescue "")}")
+                next
+              end
+              # create luip
+              luip = integration.integration_profiles.create(
+                external_context: "lease_user_for_lease_#{tenant["Id"]}",
+                external_id: ten["Id"],
+                profileable: saved,
+                configuration: { 'synced_at' => Time.current.to_s, 'post_fix_em' => true, 'post_revamp' => true }
+              )
+              unless luip.id
+                errors.push("Failed to create LUIP for User##{saved.id} after merging in User##{doomed_id} (tenant #{ten["Id"]})! #{luip.errors.to_h}")
+                next
+              end
+              # mark successful
+              luips.push(luip)
+              tenanted_luips.push(luip)
+              free_lus.select!{|fl| fl.id != luip.profileable_id && fl.id != doomed_id }
+              lacks_luip_no_more.push(ten)
+              next
+            end
+            # then fall back to creating something new
+            local_failed = false
+            ActiveRecord::Base.transaction(requires_new: true) do
+              lu = lease.lease_users.create(
+                user: uip.profileable,
+                primary: ten["Id"] == tenant["Id"],
+                lessee: (ten["Id"] == tenant["Id"] || ten["Lessee"] == "Yes"),
+                moved_in_at: (Date.parse(ten["MoveIn"]) rescue nil),
+                moved_out_at: (Date.parse(ten["MoveOut"]) rescue nil)
+              )
+              if lu.id.nil?
+                local_failed = true
+                errors.push("Failed to create LeaseUser for User##{uip.profileable_id} (tenant #{ten["Id"]})! #{lu.errors.to_h}")
+                raise ActiveRecord::Rollback
+              end
+              luip = integration.integration_profiles.create(
+                external_context: "lease_user_for_lease_#{tenant["Id"]}",
+                external_id: ten["Id"],
+                profileable: lu,
+                configuration: { 'synced_at' => Time.current.to_s, 'post_fix_em' => true, 'post_revamp' => true }
+              )
+              if luip.id.nil?
+                local_failed = true
+                errors.push("Failed to create LUIP for to-be-rolled-back LeaseUser for User##{uip.profileable_id} (tenant #{ten["Id"]})! #{luip.errors.to_h}")
+                raise ActiveRecord::Rollback
+              end
+            end
+            unless local_failed
+              # mark successful
+              luips.push(luip)
+              tenanted_luips.push(luip)
+              free_lus.select!{|fl| fl.id != luip.profileable_id }
+              lacks_luip_no_more.push(ten)
+              next
+            end
+          end
+          
+          # handle results
+          lacks_both -= lacks_both_no_more
+          lacks_uip -= lacks_uip_no_more
+          lacks_luip -= lacks_luip_no_more
+          lacks_match -= lacks_match_no_more
+          
+          # all done
+          return({
+            success: lacks_both.blank? && lacks_uip.blank? && lacks_luip.blank? && lacks_match.blank?,
+            errors: errors
+          })
+        end # end fix_missing(lease, da_tenants)
+
         
         
         
@@ -143,6 +443,7 @@ module Integrations
           user_errors = {}
           created_users = {}
           found_users = {}
+          update_errors = {}
           # group resident leases
           resident_datas = resident_data.group_by{|td| td["Status"] }
           future_tenants = (
@@ -198,105 +499,9 @@ module Integrations
               lease.sign_date = Date.parse(tenant["LeaseSign"]) unless tenant["LeaseSign"].blank?
               lease.save if lease.changed?
               user_profiles = IntegrationProfile.where(integration: integration, profileable: lease.users).to_a
-              # take any tenants that don't correspond to a user, construct/find a user for them, and set up LeaseUser stuff appropriately
-              userless_tenants = da_tenants.select{|t| !user_profiles.any?{|up| up.external_id == t["Id"] } }
-              failed = false
-              userless_tenants.each do |ten|
-                # even though this situation should be impossible, try it, since doing so makes our data more robust; note that failures at the right point during trying will actually make the situation possible after all
-                luip = IntegrationProfile.where(integration: integration, external_context: "lease_user_for_lease_#{tenant["Id"]}", external_id: ten["Id"]).take
-                unless luip.nil?
-                  lu = luip.profileable
-                  if lu.lease_id != lease.id
-                    # WARNING: a serious problem! should NOT happen!
-                    luip.delete
-                    lu.delete if lu.integration_profiles.reload.count == 0
-                  elsif lu.user.nil?
-                    lu.integration_profiles.each{|garble| garble.delete }
-                    lu.delete
-                  else
-                    # lu.user is who we seek, the UIP is just incomprehensibly missing
-                    created = (IntegrationProfile.create(
-                      integration: integration,
-                      profileable: lu.user,
-                      external_context: "resident",
-                      external_id: ten["Id"],
-                      configuration: {
-                        'synced_at' => Time.current.to_s,
-                        'post_fix_em' => true
-                      }
-                    ) rescue nil)
-                    unless created&.id # failure
-                      puts "Failed to create IntegrationProfile for user #{u.id}: #{created&.errors&.to_h}"
-                      failed = true
-                      next
-                    end
-                    user_profiles.push(created)
-                    next
-                  end
-                end
-                # in the rest of this we'll use a user object
-                user = nil
-                # roommate sync might have promoted a roommate to primary, and will have had to change the primary's tcode to "was_#{date}_#{prev_tcode}"; but if they are still at least a roommate, they might still be here, so check
-                lease.lease_users.where.not(id: IntegrationProfile.where(integration: integration, external_context: "lease_user_for_lease_#{tenant["Id"]}", external_id: da_tenants.map{|dt| dt["Id"] }).select(:profileable_id)).each do |lu|
-                  if lu.user.profile.contact_email == ten["Email"] && lu.user.profile.first_name&.downcase&.strip == (ten["FirstName"].blank? ? "Unknown" : ten["FirstName"]).strip.downcase && lu.user.profile.last_name&.downcase&.strip == (ten["LastName"].blank? ? "Unknown" : ten["LastName"]).strip.downcase
-                    ip = lu.integration_profiles.where(integration: integration, external_context: "lease_user_for_lease_#{tenant["Id"]}").take
-                    if ip.nil?
-                      user = ip.profileable
-                    else
-                      IntegrationProfile.where(integration: integration, profileable_type: Integration::YARDI_TCODE_CHANGERS, external_id: ip.external_id).update_all(external_id: ten["Id"])
-                      ip.configuration['tcode_changes'] ||= {}
-                      ip.configuration['tcode_changes'][Time.current.to_date.to_s] = {
-                        old_code: ip.external_id,
-                        new_code: ten["Id"],
-                        reason: 'postpromotion_match'
-                      }
-                      ip.external_id = ten["Id"] # gotta do this again here, the update_all won't be reflected in the loaded model
-                      unless ip.save
-                        failed = true
-                        next # MOOSE WARNING: whine in the logs?
-                      end
-                    end
-                    next
-                  end
-                end
-                # since the weird situations weren't the case, continue as normal
-                local_failed = false
-                ActiveRecord::Base.transaction(requires_new: true) do
-                  user ||= find_or_create_user(tenant, ten)
-                  if user.nil?
-                    local_failed = true
-                    raise ActiveRecord::Rollback
-                  end
-                  lu = lease.lease_users.find{|lu| lu.user_id == user.id && lu.integration_profiles.where(integration: integration, external_context: "lease_user_for_lease_#{tenant["Id"]}").blank? } || lease.lease_users.create(
-                    user: user,
-                    primary: ten["Id"] == tenant["Id"],
-                    lessee: (ten["Id"] == tenant["Id"] || ten["Lessee"] == "Yes"),
-                    moved_in_at: (Date.parse(ten["MoveIn"]) rescue nil),
-                    moved_out_at: (Date.parse(ten["MoveOut"]) rescue nil)
-                  )
-                  if lu&.id.nil?
-                    local_failed = true
-                    raise ActiveRecord::Rollback # MOOSE WARNING: whine in the logs?
-                  end
-                  luip = IntegrationProfile.create(
-                    integration: integration,
-                    external_context: "lease_user_for_lease_#{tenant["Id"]}",
-                    external_id: ten["Id"],
-                    profileable: lu,
-                    configuration: { 'synced_at' => Time.current.to_s, 'post_fix_em' => true }
-                  )
-                  if luip&.id.nil?
-                    local_failed = true
-                    raise ActiveRecord::Rollback # MOOSE WARNING: whine in the logs?
-                  end
-                end
-                failed ||= local_failed
-                next if local_failed # at end of loop but if we add more stuff we don't want to forget this
-              end # end ten loop
-              if failed
-                # at least one user was uncreatable; stop processing the lease further, since we need to be able to assume all users are present in the below code
-                next
-              end
+              fmr = fix_missing(lease, da_tenants)
+              update_errors[tenant["Id"]] = fmr[:errors] unless fmr[:errors].blank?
+              next unless fmr[:success] # at least one user was uncreatable; stop processing the lease further, since we need to be able to assume all users are present in the below code
               # we can assume all tenants have corresponding users & lease users & appropriate IPs, if we're here
               # remove any lease users that don't correspond to tenants
               doomed_lus = lease.lease_users.select{|lu| lu.moved_out_at.nil? && lu.integration_profiles.where(integration: integration, external_context: "lease_user_for_lease_#{tenant["Id"]}", external_id: da_tenants.map{|t| t["Id"] }).count == 0 }
