@@ -21,7 +21,7 @@ module Integrations
         def tenant_user_match(ten, user)
           firster = (ten["FirstName"].blank? ? "Unknown" : ten["FirstName"]).strip.downcase
           laster = (ten["LastName"].blank? ? "Unknown" : ten["LastName"]).strip.downcase
-          return (user.profile.contact_email || "") == (ten["Email"] || "") && firster == user.profile.first_name.strip.downcase && laster == user.profile.last_name.strip.downcase)
+          return (user.profile.contact_email || "") == (ten["Email"] || "") && firster == user.profile.first_name.strip.downcase && laster == user.profile.last_name.strip.downcase
         end
         
         def find_or_create_user(tenant, ten)
@@ -176,7 +176,7 @@ module Integrations
                 if result.nil?
                   succeeded = true
                 else
-                  errors.push("Failed to merge User models ##{} and ##{} (tenant #{ten["Id"]})! #{result.class.name}: #{(result.message rescue "<no message>")}"
+                  errors.push("Failed to merge User models ##{} and ##{} (tenant #{ten["Id"]})! #{result.class.name}: #{(result.message rescue "<no message>")}")
                   next
                 end
               else
