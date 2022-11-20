@@ -468,7 +468,7 @@ class User < ApplicationRecord
   def set_default_provider
     self.provider = (self.email.blank? ? 'altuid' : 'email')
     self.altuid = Time.current.to_i.to_s + rand.to_s
-    self.uid = (self.proider == 'email' ? self.email : self.altuid)
+    self.uid = (self.provider == 'email' ? self.email : self.altuid)
   end
 
   def ensure_email_based
