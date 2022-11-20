@@ -1,3 +1,7 @@
+
+# MOOSE WARNING: Might want to periodically sync PolicyUser external ids to LeaseUser ones
+
+
 module Integrations
   module Yardi
     module Sync
