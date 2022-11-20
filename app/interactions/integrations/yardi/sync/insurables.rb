@@ -6,7 +6,11 @@ module Integrations
         string :property_list_id, default: nil
         array :property_ids, default: nil
         boolean :insurables_only, default: false # disabled roommate & lease sync (policy sync is never invoked by insurables sync)
-        boolean :efficiency_mode, default: false
+        boolean :efficiency_mode, default: false # skip a bunch of logging and stuff to reduce load on the instance (could be improved even further...)
+        boolean :update_old_leases, default: true # don't skip expired leases when updating leases already in the system based on yardi changes
+        boolean :skip_roommate_sync, default: false # skip roommate sync in particular (shouldn't do this normally, as RS correctly handles tcode changes and LS does not)
+        boolean :skip_lease_sync, default: false # skip lease sync in particular
+        boolean :skip_leases_on_roommate_error, default: false # skips lease sync if roommate sync encounters a problem
         
         def account_id
           integration.integratable_id
@@ -63,6 +67,7 @@ module Integrations
             community_errors: {}, # [community prop id] = error string
             unit_errors: {},      # [community prop id][unit id] = error string
             unit_exclusions: {},  # [community prop id][unit id] = explanation string (errors are not present here, just exclusions)
+            lease_update_errors: {},
             lease_errors: {},
             user_errors: {},
             promotion_errors: {},
@@ -489,23 +494,32 @@ module Integrations
           tenant_array = []
           unless insurables_only
             output_array.each do |comm|
-              result = Integrations::Yardi::Sync::Roommates.run!(integration: integration, property_id: comm[:yardi_id])
-              comm[:last_sync_f] = result[:last_sync_f]
-              to_return[:promotion_errors][comm[:yardi_id]] = result[:errors] unless result[:errors].blank?
+              unless skip_roommate_sync
+                result = Integrations::Yardi::Sync::Roommates.run!(integration: integration, property_id: comm[:yardi_id])
+                comm[:last_sync_f] = result[:last_sync_f]
+                to_return[:promotion_errors][comm[:yardi_id]] = result[:errors] unless result[:errors].blank?
+                next if skip_leases_on_roommate_error && !result[:errors].blank?
+              end
               comm[:buildings].each do |bldg|
                 bldg[:units].each do |unit|
-                  next if unit[:yardi_data]["Resident"].blank?
-                  result = Integrations::Yardi::Sync::Leases.run!(integration: integration, update_old: true, unit: unit[:insurable], resident_data: unit[:yardi_data]["Resident"].class == ::Array ? unit[:yardi_data]["Resident"] : [unit[:yardi_data]["Resident"]])
-                  unless result[:lease_errors].blank?
-                    to_return[:lease_errors][comm[:yardi_id]] ||= {}
-                    to_return[:lease_errors][comm[:yardi_id]][unit[:yardi_id]] = result[:lease_errors]
-                  end
-                  unless result[:user_errors].blank?
-                    to_return[:user_errors][comm[:yardi_id]] ||= {}
-                    to_return[:user_errors][comm[:yardi_id]][unit[:yardi_id]] = result[:user_errors]
-                  end
-                  [:leases_created, :leases_found, :leases_expired, :users_created, :users_found].each do |prop|
-                    unit[prop] = result[prop]
+                  unless skip_lease_sync
+                    next if unit[:yardi_data]["Resident"].blank?
+                    result = Integrations::Yardi::Sync::Leases.run!(integration: integration, update_old: update_old_leases, unit: unit[:insurable], resident_data: unit[:yardi_data]["Resident"].class == ::Array ? unit[:yardi_data]["Resident"] : [unit[:yardi_data]["Resident"]])
+                    =unless result[:lease_update_errors].blank?
+                      to_return[:lease_update_errors][comm[:yardi_id]] ||= {}
+                      to_return[:lease_update_errors][comm[:yardi_id]][unit[:yardi_id]] = result[:lease_update_errors]
+                    end
+                    unless result[:lease_errors].blank?
+                      to_return[:lease_errors][comm[:yardi_id]] ||= {}
+                      to_return[:lease_errors][comm[:yardi_id]][unit[:yardi_id]] = result[:lease_errors]
+                    end
+                    unless result[:user_errors].blank?
+                      to_return[:user_errors][comm[:yardi_id]] ||= {}
+                      to_return[:user_errors][comm[:yardi_id]][unit[:yardi_id]] = result[:user_errors]
+                    end
+                    [:leases_created, :leases_found, :leases_expired, :users_created, :users_found].each do |prop|
+                      unit[prop] = result[prop]
+                    end
                   end
                 end
               end

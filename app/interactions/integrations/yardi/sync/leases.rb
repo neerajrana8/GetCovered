@@ -140,14 +140,15 @@ module Integrations
         
 
         # find folk lacking something
-        def fix_missing(lease, da_tenants)
+        def fix_missing(lease, tenant, da_tenants)
           # get ready boyo
           errors = []
 
           # grab folk with lacks
-          uips = integration.integration_profiles.where(external_context: "resident", external_id: da_tenants.map{|dt| dt["Id"] })
-          luips = integration.integration_profiles.where(profileable: lease.lease_users)
+          uips = integration.integration_profiles.where(external_context: "resident", external_id: da_tenants.map{|dt| dt["Id"] }).to_a
+          luips = integration.integration_profiles.where(profileable: lease.lease_users).to_a
           tenanted_luips = luips.select{|luip| da_tenants.any?{|t| t["Id"] == luip.external_id } }
+          free_lus = lease.lease_users.select{|lu| !tenanted_luips.any?{|luip| luip.profileable_id == lu.id } }.to_a
           lacks_both = da_tenants.map{|dt| dt["Id"] }.select{|i| !uips.any?{|uip| uip.external_id == i } && !luips.any?{|luip| luip.external_id == i } }
           lacks_uip = (da_tenants.map{|dt| dt["Id"] } - lacks_both).select{|i| !uips.any?{|uip| uip.external_id == i } }
           lacks_luip = (da_tenants.map{|dt| dt["Id"] } - lacks_both).select{|i| !luips.any?{|luip| luip.external_id == i } }
@@ -158,7 +159,6 @@ module Integrations
           lacks_luip = da_tenants.select{|dt| lacks_luip.include?(dt["Id"]) }
           lacks_match = da_tenants.select{|dt| lacks_match.include?(dt["Id"]) }
           # set up other useful things
-          free_lus = lease.lease_users.select{|lu| !tenanted_luips.any?{|luip| luip.profileable_id == lu.id } }.to_a
           lacks_both_no_more = []
           lacks_uip_no_more = []
           lacks_luip_no_more = []
@@ -241,7 +241,7 @@ module Integrations
             luip = luips.find{|luip| luip.external_id == ten["Id"] }
             uip = integration.integration_profiles.create(
               profileable_type: "User",
-              profielable_id: luip.profileable.user_id,
+              profileable_id: luip.profileable.user_id,
               external_context: "resident",
               external_id: ten["Id"],
               configuration: {
@@ -462,7 +462,7 @@ module Integrations
             (RESIDENT_STATUSES['nonfuture'] || []).map{|s| (resident_datas[s] || []).select{|td| !td['MoveOut'].blank? && (Date.parse(td['MoveOut']) rescue nil)&.<(Time.current.to_date) } }
           ).flatten
           # grab some variables we shall require in the execution of our noble purpose
-          in_system = IntegrationProfile.where(integration: integration, external_context: 'lease', external_id: resident_data.map{|l| l['Id'] }, profileable_type: "Lease").pluck(:external_id)
+          in_system = IntegrationProfile.where(integration: integration, external_context: 'lease', external_id: resident_data.map{|l| l['Id'] }).pluck(:external_id)
           relevant_tenants = present_tenants + future_tenants
           noncreatable_start = relevant_tenants.count
           relevant_tenants += resident_data.select{|x| !relevant_tenants.include?(x) && in_system.include?(x["Id"]) } if update_old
@@ -473,7 +473,7 @@ module Integrations
           IntegrationProfile.where(integration: integration, external_context: 'lease', profileable: unit.leases.where(defunct: false)).where.not(external_id: in_system).each do |lip|
             lip.profileable.update(defunct: true, status: 'expired') 
           end
-          # update expired old leases
+          # update leases to expired
           in_system_lips = IntegrationProfile.references(:leases).includes(:lease).where(integration: integration, external_context: 'lease', external_id: past_tenants.map{|l| l['Id'] }, profileable_type: "Lease", leases: { status: ['current', 'pending'] })
           in_system_lips.each do |ip|
             rec = past_tenants.find{|l| l['Id'] == ip.external_id }
@@ -502,8 +502,7 @@ module Integrations
               lease.status = 'pending' if (lease.end_date.nil? || lease.end_date > Time.current.to_date) && RESIDENT_STATUSES['future'].include?(tenant["Status"]) || RESIDENT_STATUSES['potential'].include?(tenant["Status"])
               lease.sign_date = Date.parse(tenant["LeaseSign"]) unless tenant["LeaseSign"].blank?
               lease.save if lease.changed?
-              user_profiles = IntegrationProfile.where(integration: integration, profileable: lease.users).to_a
-              fmr = fix_missing(lease, da_tenants)
+              fmr = fix_missing(lease, tenant, da_tenants)
               update_errors[tenant["Id"]] = fmr[:errors] unless fmr[:errors].blank?
               next unless fmr[:success] # at least one user was uncreatable; stop processing the lease further, since we need to be able to assume all users are present in the below code
               # we can assume all tenants have corresponding users & lease users & appropriate IPs, if we're here
@@ -515,7 +514,7 @@ module Integrations
               end
               # now ensure we update the move in/out dates and primary/lessee statuses
               lease.lease_users.reload.each do |lu|
-                ten = da_tenants.find{|t| t["Id"] == lu.integration_profiles.where(integration: integration).take.external_id }
+                ten = da_tenants.find{|t| t["Id"] == lu.integration_profiles.where(integration: integration).take&.external_id }
                 next if ten.nil? # can't happen but just in case
                 moved_in_at = (Date.parse(ten["MoveIn"]) rescue nil)
                 moved_out_at = (Date.parse(ten["MoveOut"]) rescue nil)
@@ -595,6 +594,8 @@ module Integrations
           end # end lease creation & update logic
           # done
           return({
+            lease_update_errors: update_errors,
+          
             lease_errors: lease_errors,
             leases_created: created_leases,
             leases_found: found_leases,
