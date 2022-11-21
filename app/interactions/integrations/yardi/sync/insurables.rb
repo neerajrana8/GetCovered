@@ -236,7 +236,7 @@ module Integrations
                   u[:gc_addr_obj].street_two = u["UnitId"]
                   next u
                 end
-                next u if u["UnitId"] == u[:gc_addr_obj].street_number || u["UnitId"] == "#{u[:gc_addr_obj].street_number}-0" || (u["UnitId"].downcase.end_with?(u[:gc_addr_obj].street_number.downcase) && (u["UnitId"].chomp(u[:gc_addr_obj].street_number).match?(/^([^1-9]*)$/) || u["UnitId"].chomp(u[:gc_addr_obj].street_number) == "01")))  } # last case is for a weird essex community
+                next u if u["UnitId"] == u[:gc_addr_obj].street_number || u["UnitId"] == "#{u[:gc_addr_obj].street_number}-0" || (u["UnitId"].downcase.end_with?(u[:gc_addr_obj].street_number.downcase) && (u["UnitId"].chomp(u[:gc_addr_obj].street_number).match?(/^([^2-9]*)$/)))  } # last case is for a weird essex community
                 to_return[:unit_errors][k][u["UnitId"]] = "Unable to determine line two of address, but UnitId does not seem to conform to line one (UnitId '#{u["UnitId"]}', address '#{u["Address"]}', parsed as '#{u[:gc_addr_obj].full}')"
                 next nil
               end.compact
