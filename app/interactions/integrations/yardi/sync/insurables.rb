@@ -149,7 +149,7 @@ module Integrations
               verboten = uresult[:parsed_response].dig("Envelope", "Body", "GetUnitInformationResponse", "GetUnitInformationResult", "UnitInformation", "Property", "Units", "UnitInfo")
                                                   .select{|u| is_forbidden.call(u["Unit"]) }
                                                   .map{|u| u["UnitID"]["__content__"] }
-              ### format example:
+              ### format example, woohoo woohoo:
               # <UnitInfo>
               #   <UnitID UniqueID="85223">506</UnitID>
               #   <PersonID Type="Current Resident">t0586444</PersonID>
