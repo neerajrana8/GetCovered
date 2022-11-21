@@ -53,9 +53,9 @@ module V2
         # Tcode filtering
         if filter[:tcode].present?
           matched_integrations = IntegrationProfile
-                                   .where('external_id LIKE ? AND profileable_type = ?', "%#{filter[:tcode]}%", 'PolicyUser')
+                                   .where('external_id LIKE ? AND profileable_type = ?', "%#{filter[:tcode]}%", 'User')
           matched_integrations_ids = matched_integrations.pluck(:profileable_id)
-          policy_ids = PolicyUser.where(id: matched_integrations_ids).pluck(:policy_id)
+          policy_ids = PolicyUser.where(user_id: matched_integrations_ids, primary: true).pluck(:policy_id)
           policies = policies.where(id: policy_ids)
         end
 
