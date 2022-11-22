@@ -32,9 +32,11 @@ end
 
 json.users do
   json.array! policy.policy_users do |policy_user|
-    json.primary policy_user.primary
-    json.spouse policy_user.spouse
-    json.partial! "v2/staff_super_admin/users/user_show_full.json.jbuilder", user: policy_user.user
+    if policy_user.user
+      json.primary policy_user.primary
+      json.spouse policy_user.spouse
+      json.partial! "v2/staff_super_admin/users/user_show_full.json.jbuilder", user: policy_user.user
+    end
   end
 end
 
@@ -96,3 +98,7 @@ json.invoices do
 end
 
 json.branding_profile_url policy.branding_profile&.url
+
+if policy.integration_profiles.present?
+  json.tcode policy&.integration_profiles&.first&.external_id
+end

@@ -8,6 +8,7 @@ module Integrations
         string :attachment_type
         string :file_extension # pdf, xls, xlsx, doc, docx
         string :description, default: "GC Verified Policy"
+        object :eventable, class: :Object, default: nil
         
         boolean :debug, default: false
         
@@ -28,6 +29,10 @@ module Integrations
         
         def camelbase_datacase
           true
+        end
+        
+        def get_eventable
+          return eventable
         end
         
       end

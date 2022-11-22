@@ -30,12 +30,16 @@ module Compliance
       @address = @street_address.nil? ? nil : "#{ @street_address.combined_street_address }, #{ @policy&.primary_insurable.title }, #{ @street_address.city }, #{ @street_address.state }, #{ @street_address.zip_code }"
 
       @user = @policy.primary_user()
-      @pm_account = @policy.account
       @community = @policy&.primary_insurable&.parent_community
+      @pm_account = @community.account
+
+      available_lease_date = lease.sign_date.nil? ? lease.start_date : lease.sign_date
 
       @onboarding_url = tokenized_url(@user, @community)
       get_insurable_liability_range(@community)
-      set_master_policy_and_configuration(@community, 2)
+      set_master_policy_and_configuration(@community, 2, available_lease_date)
+
+      @min_liability = @community.coverage_requirements_by_date(date: available_lease_date)&.amount
 
       @placement_cost = @configuration.nil? ? 0 : @configuration.charge_amount(true).to_f / 100
 
@@ -50,9 +54,9 @@ module Compliance
            template_path: 'compliance/policy')
     end
 
-    def enrolled_in_master(user:, community:, force:)
+    def enrolled_in_master(user:, community:, force:, cutoff_date: DateTime.current.to_date)
       get_insurable_liability_range(community)
-      set_master_policy_and_configuration(community, 2)
+      set_master_policy_and_configuration(community, 2, cutoff_date)
 
       @user = user
       @community = community
@@ -73,12 +77,12 @@ module Compliance
       @policy = policy
       @user = @policy.primary_user
 
-      set_locale(@user.profile&.language)
+      set_locale(@user.profile&.language || "en")
 
       @community = @policy.primary_insurable.parent_community
       @pm_account = @community.account
 
-      @onboarding_url = tokenized_url(@user, @community)
+      @onboarding_url = tokenized_url(@user, @community, "upload-coverage-proof")
 
       @from = nil
       unless @pm_account.nil?
@@ -86,6 +90,7 @@ module Compliance
           (!@pm_account&.contact_info["contact_email"].nil? || !@pm_account&.contact_info["contact_email"].blank?)
       end
       @from = "policyverify@getcovered.io" if @from.nil?
+      @final = nil
 
       case @policy.status
       when "EXTERNAL_UNVERIFIED"
@@ -93,7 +98,13 @@ module Compliance
       when "EXTERNAL_VERIFIED"
         subject = t('invitation_to_pm_tenant_portal_mailer.policy_accepted_email.subject')
       when "EXTERNAL_REJECTED"
-        subject = t('invitation_to_pm_tenant_portal_mailer.policy_declined_email.subject')
+        if @policy.status_changed_on <= DateTime.current - 7.days
+          @final = true
+          subject = t('invitation_to_pm_tenant_portal_mailer.policy_declined_email.subject')
+        else
+          @final = false
+          subject = t('invitation_to_pm_tenant_portal_mailer.policy_declined_email.subject')
+        end
       end
 
       sending_condition = @policy.policy_in_system == false &&
@@ -115,9 +126,9 @@ module Compliance
       @GC_ADDRESS = Agency.get_covered.primary_address.nil? ? Address.find(1) : Agency.get_covered.primary_address
     end
 
-    def set_master_policy_and_configuration(community, carrier_id)
+    def set_master_policy_and_configuration(community, carrier_id, cutoff_date = nil)
       @master_policy = community.policies.where(policy_type_id: 2, carrier_id: carrier_id).take
-      @configuration = @master_policy.find_closest_master_policy_configuration(community)
+      @configuration = @master_policy&.find_closest_master_policy_configuration(community, cutoff_date)
     end
 
   end

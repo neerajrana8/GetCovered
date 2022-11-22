@@ -1,3 +1,3 @@
 json.data do
-  json.partial! @user
+  json.partial! '/v2/users/user', user: @user
 end

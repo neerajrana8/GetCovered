@@ -36,7 +36,7 @@ production:
   # Reports
   generate_and_send_cancellation_list_job:
     cron: '30 2 * * *'   # Every day at 2:30 AM
-    class: CarrierQBE::GenerateandSendCancellationListJob
+    class: CarrierQBE::GenerateAndSendCancellationListJob
   confie_report:
     cron: '35 * * * *' # Every hour, thirty-five minutes in
     class: Reports::ConfieReportJob
@@ -90,6 +90,9 @@ production:
   warn_all_charge_invoice_job:
     cron: '0 10 * * *'  # Every day at 10:00 AM
     class: WarnAllChargeInvoiceJob
+  expiring_soon_job:
+    cron: '0 6 * * *' # Every day at 6:00 AM
+    class: Compliance::Policies::ExpiringSoonJob
   # Access Tokens
   remove_expired_access_tokens_job:
     cron: '0 0 * * *' # Every day at midnight

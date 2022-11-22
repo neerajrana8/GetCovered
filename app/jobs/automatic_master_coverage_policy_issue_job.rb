@@ -1,11 +1,12 @@
+#TODO: can be deleted because can't find where it used now
 class AutomaticMasterCoveragePolicyIssueJob < ApplicationJob
   queue_as :default
-  
+
   def perform(policy_id)
     master_policy = Policy.find_by(id: policy_id)
     return if master_policy.nil? || PolicyType::MASTER_IDS.exclude?(master_policy.policy_type_id)
 
-    master_policy.insurables.each do |insurable|      
+    master_policy.insurables.each do |insurable|
       insurable.units_relation&.each do |unit|
         if unit.
           policies.

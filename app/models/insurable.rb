@@ -83,11 +83,18 @@ class Insurable < ApplicationRecord
   has_many :insurable_rate_configurations,
            as: :configurable
 
+  has_many :coverage_requirements
+
   accepts_nested_attributes_for :addresses, allow_destroy: true
 
   enum category: %w[property entity]
 
-  #validates_presence_of :title, :slug MOOSE WARNING: RESTORE ME WHEN YOU CAN! THIS IS DISABLED TO ALLOW TITLELESS NONPREFERRED UNITS!
+  enum special_status: {
+    none: 0,
+    affordable: 1
+  }, _prefix: true
+
+  #validates_presence_of :title, :slug WARNING: THIS IS DISABLED TO ALLOW TITLELESS NONPREFERRED UNITS!
 
   validate :must_belong_to_same_account_if_parent_insurable
   validate :title_uniqueness, on: :create
@@ -661,6 +668,14 @@ class Insurable < ApplicationRecord
     return to_return
   end
 
+  def slug_url
+    "/#{self.insurable_type.title.split(' ')[0].downcase}/#{self.slug}-#{self.id}"
+  end
+
+  def coverage_requirements_by_date(date: DateTime.current.to_date)
+    return self.coverage_requirements.where("start_date < ?", date).order("start_date desc").limit(1).take
+  end
+
   private
 
   def flush_parent_insurable_id
@@ -722,5 +737,4 @@ class Insurable < ApplicationRecord
     def set_confirmed_automatically
       self.confirmed = !self.account_id.nil?
     end
-
 end

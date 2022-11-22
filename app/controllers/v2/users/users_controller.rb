@@ -1,6 +1,8 @@
 module V2
   module Users
     class UsersController < ApiController
+      include ActionController::Caching
+
       before_action :authenticate_staff!
       before_action :check_permissions
 
@@ -47,8 +49,15 @@ module V2
           if params[:filter][:email].present?
             users = users.where("email ILIKE '%#{params[:filter][:email]}%'")
           end
+
+          # Filtering by tcode
+          if params[:filter][:tcode].present?
+            matched_integrations =
+              IntegrationProfile.where('profileable_type = ? AND external_id LIKE ?', 'User', "%#{params[:filter][:tcode]}%")
+            matched_integrations_user_ids = matched_integrations.pluck(:profileable_id)
+            users = users.where(id: matched_integrations_user_ids)
+          end
         end
-        Rails.logger.info "#DEBUG #{users.to_sql}"
 
         # Sorting
         if params[:sort].present?
