@@ -177,7 +177,7 @@ class Address < ApplicationRecord
 
   def self.from_string(dat_strang, validate_properties: true)
     address = Address.new(full: dat_strang)
-    parsed_address = StreetAddress::US.parse(dat_strang)
+    parsed_address = Address.parse_string(dat_strang)
     if parsed_address.nil?
       address.errors.add(:address_string, I18n.t('address_model.is_not_a_valid_state'))
       return address
@@ -222,6 +222,19 @@ class Address < ApplicationRecord
   def set_full
     self.full = full_street_address()
   end
+  
+  def self.parse_string(sum_strang)
+    unused1 = "1"
+    unused1 = unused1.next while sum_strang.include?(unused1)
+    unused2 = unused1
+    unused2 = unused2.next while (sum_strang.gsub('.', unused1) + unused1).include?(unused2)
+    result = StreetAddress::US.parse(sum_strang.gsub(".", unused1).gsub("/", unused2))
+    unless result.nil?
+      result.number = result.number.gsub(unused1, ".").gsub(unused2, "/") unless result.number.blank?
+      result.unit = result.unit.gsub(unused1, ".").gsub(unused2, "/") unless result.unit.blank?
+    end
+    return result
+  end
 
   # Address.from_full
   # Attempts to fill out nil fields in street address by using StreetAddress gem
@@ -238,19 +251,19 @@ class Address < ApplicationRecord
 
     if street_address.values.any?(nil) &&
        !full.nil?
-      parsed_address = StreetAddress::US.parse(full)
+      parsed_address = Address.parse_string(full)
       unless parsed_address.nil?
         # fix hideous bug in parser
         true_street = parsed_address.street
         true_number = parsed_address.number
         true_prefix = parsed_address.prefix
         haspref = !parsed_address.prefix.blank?
-        combino = "#{(parsed_address.number || "").split(" ")[-1]}#{haspref ? parsed_address.prefix.split(" ")[0] : (parsed_address.street || "").split(" ")[0]}"
+        combino = "#{(parsed_address.number || "").split(" ")[-1] || ""}#{(haspref ? parsed_address.prefix.split(" ")[0] : (parsed_address.street || "").split(" ")[0]) || ""}"
         if haspref
           ind1 = full.index(combino)
-          ind2 = full.index((parsed_address.prefix.split(" ").drop(1) + parsed_address.street.split(" ")).join(" "))
+          ind2 = full.index((parsed_address.prefix.split(" ").drop(1) + (parsed_address.street || "").split(" ")).join(" "))
           if ind1 && ind2 && ind1 < ind2
-            true_number = "#{parsed_address.number}#{(parsed_address.prefix || "").split(" ")[0]}"
+            true_number = "#{parsed_address.number}#{(parsed_address.prefix || "").split(" ")[0] || ""}"
             true_prefix = parsed_address.prefix.split(" ").drop(1).join(" ")
           end
         else
@@ -259,7 +272,7 @@ class Address < ApplicationRecord
             ind2 = full.index((parsed_address.street || "").split(" ").drop(1).join(" "))
             if ind1 && ind2 && ind1 < ind2
               true_street = (parsed_address.street || "").split(" ").drop(1).join(" ")
-              true_number = "#{parsed_address.number}#{(parsed_address.street || "").split(" ")[0]}"
+              true_number = "#{parsed_address.number}#{(parsed_address.street || "").split(" ")[0] || ""}"
             end
           end
         end
