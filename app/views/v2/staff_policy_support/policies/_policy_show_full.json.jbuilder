@@ -96,3 +96,7 @@ if policy.integration_profiles.present?
 end
 
 json.lease policy&.primary_insurable&.leases&.last
+json.tenants do
+  json.array! policy&.primary_insurable&.leases&.last&.lease_users,
+              partial: 'v2/staff_policy_support/policies/tenant', as: :tenant
+end
