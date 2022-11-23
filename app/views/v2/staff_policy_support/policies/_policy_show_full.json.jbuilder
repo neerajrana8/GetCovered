@@ -95,4 +95,4 @@ if policy.integration_profiles.present?
   json.tcode policy&.integration_profiles&.first&.external_id
 end
 
-json.lease policy&.primary_user&.leases&.last
+json.lease policy&.primary_insurable&.leases&.last
