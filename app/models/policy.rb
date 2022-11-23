@@ -613,6 +613,15 @@ class Policy < ApplicationRecord
     end
   end
 
+  #TODO: seems that we still can create multiple leases for one insurable for the same dates. need to figure out is it correct ot not
+  def latest_lease
+    self.insurables.extract_associated(:leases)&.first&.order(end_date: :desc)&.first
+  end
+
+  def lease_sign_date
+    latest_lease&.sign_date
+  end
+
   private
 
   def notify_relevant
