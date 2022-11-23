@@ -158,6 +158,38 @@ class User < ApplicationRecord
   validates_confirmation_of :password
   #validates_length_of       :password, within: Devise.password_length
 
+  # absorb another user
+  def absorb!(other)
+    return "Users can only absorb Users, not #{other.class.name.pluralize}!" unless other.class == ::User
+    begin
+      ActiveRecord::Base.transaction(requires_new: true) do
+        other.integration_profiles.update_all(profileable_id: self.id)
+        other.lease_users.update_all(user_id: self.id)
+        other.policy_users.update_all(user_id: self.id)
+        other.account_users.where.not(account_id: self.account_users.select(:account_id)).update_all(user_id: self.id)
+        other.account_users.reload.each{|au| au.delete }
+        other.addresses.update_all(addressable_id: self.id)
+        Claim.where(claimant: other).update_all(claimant_type: "User", claimant_id: self.id)
+        ContactRecord.where(contactable: other).update_all(contactable_type: "User", contactable_id: self.id)
+        NotificationSetting.where(notifyable: other).update_all(notifyable_type: "User", notifyable_id: self.id)
+        PaymentProfile.where(payer: other).update_all(payer_type: "User", payer_id: self.id)
+        PaymentProfile.where(payer: self, default_profile: true).order("updated_at desc").to_a.drop(1).each{|pp| pp.update(default_profile: false) }
+        if self.profile.nil?
+          other.profile.update(profileable_id: self.id)
+        else
+          other.profile.delete
+        end
+        email = other.email
+        other.delete
+        if self.email.blank?
+          self.update(email: email, provider: 'email', uid: email)
+        end
+      end
+    rescue StandardError => e
+      return e
+    end
+    return nil
+  end
 
   # Override payment_method attribute getters and setters to store data
   # as encrypted
@@ -436,7 +468,7 @@ class User < ApplicationRecord
   def set_default_provider
     self.provider = (self.email.blank? ? 'altuid' : 'email')
     self.altuid = Time.current.to_i.to_s + rand.to_s
-    self.uid = self.altuid
+    self.uid = (self.provider == 'email' ? self.email : self.altuid)
   end
 
   def ensure_email_based

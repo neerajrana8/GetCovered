@@ -34,8 +34,12 @@ module Compliance
       @pm_account = @community.account
 
       @onboarding_url = tokenized_url(@user.id, @community)
+      available_lease_date = lease.sign_date.nil? ? lease.start_date : lease.sign_date
+
       get_insurable_liability_range(@community)
-      set_master_policy_and_configuration(@community, 2)
+      set_master_policy_and_configuration(@community, 2, available_lease_date)
+
+      @min_liability = @community.coverage_requirements_by_date(date: available_lease_date)&.amount
 
       @placement_cost = @configuration.nil? ? 0 : @configuration.charge_amount(true).to_f / 100
 
@@ -50,9 +54,9 @@ module Compliance
            template_path: 'compliance/policy')
     end
 
-    def enrolled_in_master(user:, community:, force:)
+    def enrolled_in_master(user:, community:, force:, cutoff_date: DateTime.current.to_date)
       get_insurable_liability_range(community)
-      set_master_policy_and_configuration(community, 2)
+      set_master_policy_and_configuration(community, 2, cutoff_date)
 
       @user = user
       @community = community
@@ -122,9 +126,9 @@ module Compliance
       @GC_ADDRESS = Agency.get_covered.primary_address.nil? ? Address.find(1) : Agency.get_covered.primary_address
     end
 
-    def set_master_policy_and_configuration(community, carrier_id)
+    def set_master_policy_and_configuration(community, carrier_id, cutoff_date = nil)
       @master_policy = community.policies.where(policy_type_id: 2, carrier_id: carrier_id).take
-      @configuration = @master_policy&.find_closest_master_policy_configuration(community)
+      @configuration = @master_policy&.find_closest_master_policy_configuration(community, cutoff_date)
     end
 
   end

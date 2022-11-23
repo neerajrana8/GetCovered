@@ -141,7 +141,7 @@ class Policy < ApplicationRecord
   through: :primary_policy_user,
   source: :user
 
-  has_one :master_policy_configuration, as: :configurable
+  has_many :master_policy_configurations, as: :configurable
 
   has_one :primary_policy_insurable, -> { where(primary: true) }, class_name: 'PolicyInsurable'
   has_one :primary_insurable, class_name: 'Insurable', through: :primary_policy_insurable, source: :insurable
@@ -504,6 +504,7 @@ class Policy < ApplicationRecord
   end
 
   def bulk_decline
+    raise StandardError.new("Outdated broken method")
     update_attribute(:declined, true)
     generate_refund if created_at > 1.month.ago
     subtract_from_future_invoices
@@ -518,6 +519,7 @@ class Policy < ApplicationRecord
   end
 
   def generate_refund
+    raise StandardError.new("Outdated broken method")
     amount = bulk_premium_amount
     charge = policy_group&.policy_group_premium&.policy_group_quote&.invoices&.first&.charges&.first
     return if bulk_premium_amount.zero? || charge.nil?
@@ -526,12 +528,13 @@ class Policy < ApplicationRecord
   end
 
   def recalculate_policy_premium
-    throw "Policy#recalculate_policy_premium is currently broken!" # MOOSE WARNING
+    raise StandardError.new("Outdated broken method")
     policy_premiums&.last&.update(base: 0, taxes: 0, total_fees: 0, total: 0, calculation_base: 0, deposit_fees: 0, amortized_fees: 0, carrier_base: 0, special_premium: 0)
     policy_group&.policy_group_premium&.calculate_total
   end
 
   def subtract_from_future_invoices
+    raise StandardError.new("Outdated broken method")
     amount = bulk_premium_amount
     policy_group&.policy_group_premium&.policy_group_quote&.invoices&.each do |invoice|
       line_item = invoice.line_items.base_premium.take

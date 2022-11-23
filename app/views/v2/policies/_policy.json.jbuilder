@@ -61,8 +61,8 @@ json.cache! policy do
   end
   json.billing_strategy policy.policy_quotes&.last&.policy_application&.billing_strategy&.title
 
-  if policy.integration_profiles.present?
-    json.tcode policy&.integration_profiles&.first&.external_id
+  if policy&.primary_policy_user&.integration_profiles.present?
+    json.tcode policy&.primary_policy_user&.integration_profiles&.first&.external_id
   end
 
 end
