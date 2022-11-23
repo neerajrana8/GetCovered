@@ -24,9 +24,9 @@ module Compliance
       get_insurable_liability_range(@community)
       set_locale(@user&.profile&.language || "en")
 
+      @onboarding_url = tokenized_url(@user.id, @community)
       @min_liability = @community.coverage_requirements_by_date(date: available_lease_date)&.amount
 
-      @onboarding_url = tokenized_url(@user, @community)
       @requirements_date = @configuration.nil? ? lease_start_date : lease_start_date + @configuration.grace_period
       @placement_cost = @configuration.nil? ? 0 : @configuration.charge_amount(true).to_f / 100
       @from = @pm_account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] : "policyverify@getcovered.io"
