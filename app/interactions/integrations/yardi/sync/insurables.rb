@@ -259,6 +259,15 @@ module Integrations
                   next u if u["UnitId"] == u[:gc_addr_obj].street_number || u["UnitId"].downcase.end_with?(u["Address"].strip.last.downcase)
                 end
                 next u if u["UnitId"] == u[:gc_addr_obj].street_number || u["UnitId"] == "#{u[:gc_addr_obj].street_number}-0" || u["UnitId"].downcase.end_with?(u[:gc_addr_obj].street_number.downcase) || (  !u[:gc_addr_obj].street_two.blank? && u["UnitId"].downcase.end_with?(u[:gc_addr_obj].street_two.split(' ').last.gsub("#",""))    )# && (u["UnitId"].chomp(u[:gc_addr_obj].street_number).match?(/^([^2-9]*)$/)))  # last case is for a weird essex community
+                # hacky nonsense for essex san1100
+                if u[:gc_addr_obj].street_number.end_with?("1/2")
+                  cleanuid = u["UnitId"].strip
+                  cleanuid = cleanuid[1...] while cleanuid[0] == '0' # kill leading zeros
+                  cleanuid = cleanuid[0...(cleanuid.length-1)] while cleanuid[cleanuid.length-1]&.match?(/^[a-zA-Z]/) && !cleanuid[0]&.match?(/^a-zA-Z/) # kill trailing letters
+                  cleangomp = u[:gc_addr_obj].street_number.chomp("1/2").chomp("-").strip
+                  cleangomp = cleangomp[1...] while cleangomp[0] == '0'
+                  next u if cleangomp == cleanuid
+                end
                 to_return[:unit_errors][k][u["UnitId"]] = "Unable to determine line two of address, but UnitId does not seem to conform to line one (UnitId '#{u["UnitId"]}', address '#{u["Address"]}', parsed as '#{u[:gc_addr_obj].full}')"
                 next nil
               end.compact
