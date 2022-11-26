@@ -1,12 +1,31 @@
+# == Schema Information
+#
+# Table name: claims
+#
+#  id            :bigint           not null, primary key
+#  subject       :string
+#  description   :text
+#  time_of_loss  :datetime
+#  status        :integer          default("pending")
+#  claimant_type :string
+#  claimant_id   :bigint
+#  insurable_id  :bigint
+#  policy_id     :bigint
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
+#  type_of_loss  :integer          default("OTHER"), not null
+#  staff_notes   :text
+#
 # Claim Model
 # file: +app/models/claim.rb
 
 class Claim < ApplicationRecord
   # Concerns
-  include RecordChange, ElasticsearchSearchable
+  include RecordChange
 
   # Active Record Callbacks
   after_initialize :initialize_claim
+  after_create_commit :notify_support
 
   # Relationships
   belongs_to :claimant,
@@ -38,17 +57,39 @@ class Claim < ApplicationRecord
 
   enum type_of_loss: { OTHER: 0, FIRE: 1, WATER: 2, THEFT: 3 }
 
-  settings index: { number_of_shards: 1 } do
-    mappings dynamic: 'false' do
-      indexes :subject, type: :text, analyzer: 'english'
-      indexes :description, type: :text, analyzer: 'english'
-      indexes :claimant_type, type: :text, analyzer: 'english'
-      indexes :time_of_loss, type: :date
-    end
-  end
+  scope :by_created_at, ->(start_date, end_date) {
+    where(created_at: start_date..end_date)
+  }
 
   def claimant_full_name
     claimant&.profile&.full_name
+  end
+
+  def self.get_stats(date_from, date_to, units)
+    sql =
+      <<~SQL.freeze
+        SELECT type_of_loss,
+        SUM(CASE WHEN status = 0 then 1 else 0 end) AS pending,
+        SUM(CASE WHEN status = 1 then 1 else 0 end) AS approved,
+        SUM(CASE WHEN status = 2 then 1 else 0 end) AS declined
+        FROM claims
+        WHERE created_at BETWEEN '#{date_from}' AND '#{date_to}'
+      SQL
+
+    sql += "AND insurable_id IN (#{units.join(',')})" unless units.count.zero?
+    sql += 'GROUP BY type_of_loss'
+
+    record = ActiveRecord::Base.connection.execute(sql)
+    stats = {}
+    tps = Claim.type_of_losses.invert
+    record.each do |r|
+      stats[tps[r['type_of_loss']]] = [
+        r['pending'],
+        r['approved'],
+        r['declined']
+      ]
+    end
+    stats
   end
 
   private
@@ -89,5 +130,9 @@ class Claim < ApplicationRecord
       policies_ids = claimant.policies.ids
     end
     errors.add(:policy_id, "Policy is not included in claimant's scope") unless policies_ids.include?(policy_id)
+  end
+
+  def notify_support
+    InternalMailer.with(organization: Agency.find(1)).claim_notification(claim: self).deliver_now
   end
 end

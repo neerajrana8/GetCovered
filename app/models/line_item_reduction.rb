@@ -1,3 +1,23 @@
+# == Schema Information
+#
+# Table name: line_item_reductions
+#
+#  id                    :bigint           not null, primary key
+#  reason                :string           not null
+#  refundability         :integer          not null
+#  proration_interaction :integer          default("shared"), not null
+#  amount_interpretation :integer          default("max_amount_to_reduce"), not null
+#  amount                :integer          not null
+#  amount_successful     :integer          default(0), not null
+#  amount_refunded       :integer          default(0), not null
+#  pending               :boolean          default(TRUE), not null
+#  stripe_refund_reason  :integer
+#  created_at            :datetime         not null
+#  updated_at            :datetime         not null
+#  line_item_id          :bigint
+#  dispute_id            :bigint
+#  refund_id             :bigint
+#
 class LineItemReduction < ApplicationRecord
   attr_accessor :callbacks_disabled
 
@@ -12,7 +32,7 @@ class LineItemReduction < ApplicationRecord
   
   before_create :update_associated_models,
     unless: Proc.new{|lir| lir.callbacks_disabled }
-  after_commit :attempt_immediate_processing,
+  after_commit :queue_for_processing,
     unless: Proc.new{|lir| lir.callbacks_disabled }
 
   scope :pending, -> { where(pending: true) }
@@ -55,9 +75,9 @@ class LineItemReduction < ApplicationRecord
     return to_reduce
   end
   
-  def attempt_immediate_processing
-    # if there are pending charges/disputes, this will return without doing anything; if there aren't, it will go ahead and fully process this reduction
-    self.invoice.process_reductions
+  def queue_for_processing
+    # give it a brief delay in case we're creating several LIRs at once (so they get put on the same Refund object)
+    HandleLineItemReductionsJob.set(wait: 30.seconds).perform_later(invoice_id: self.line_item.invoice_id)
   end
 
   private

@@ -15,6 +15,9 @@ post 'qbe/communities/show',
 
 scope module: :public do
 
+  get '/agency-accounts/:agency_id',
+    to: 'accounts#agency_accounts'
+
   resources :addresses,
   	only: [:index]
 
@@ -40,6 +43,13 @@ scope module: :public do
 			resources :insurable_rates,
 				path: 'rates',
 				only: [:index]
+
+      get '/qbe-county',
+        to: 'insurables#get_qbe_county_options',
+        as: :get_qbe_county_options
+      post '/qbe-county',
+        to: 'insurables#set_qbe_county',
+        as: :set_qbe_county_options
 	  end
     collection do
       post '/get-or-create',
@@ -48,13 +58,16 @@ scope module: :public do
     end
   end
 
+  get 'insurable_by_auth_token', to: '/v2/public/insurables#insurable_by_auth_token'
+  get 'additional_interest_name_usage/:community_id', to: '/v2/public/insurables#additional_interest_name_usage'
+
   post '/msi/unit-list',
     to: 'insurables#msi_unit_list',
     as: :msi_unit_list,
     defaults: { format: 'xml' }
 
   resources :lead_events, only: [:create]
-  
+
   resources :policy_applications,
     path: "policy-applications",
     only: [ :create, :update ] do
@@ -88,7 +101,7 @@ scope module: :public do
         as: :external_payment_auth
 		end
 	end
-  
+
   resources :signable_documents,
     path: "signable-documents",
     only: [] do
@@ -102,8 +115,31 @@ scope module: :public do
     end
   end
 
+  resources :policies, only: [ :index, :show ] do
+    collection do
+      post :add_coverage_proof
+      get '/master_policy_unit_coverage/:community_id',
+          to: 'policies#master_policy_unit_coverage',
+          as: :master_policy_unit_coverage
+      #delete :delete_coverage_proof_documents
+    end
+  end
+
+  post 'policies/enroll_master_policy', to: '/v2/public/policies#enroll_master_policy'
+
   post 'users/check_email', to: '/v2/check_email#user'
   post 'staffs/check_email', to: '/v2/check_email#staff'
 
   post 'secret_authentication/:secret_token/authenticate', to: '/v2/public/secret_authentication#authenticate'
+
+  resources :search_contents,
+            only: [:index],
+            path: 'search'
+
+  get 'communities/:id' => 'communities#accounts'
+  get 'communities/by_state/:state' => 'communities#communities'
+  get 'communities/account_states/:branding_profile_id' => 'communities#account_states'
+  get 'units/:id' => 'units#communities'
+  get 'buildings/:id' => 'buildings#community'
+  post '/sendgrid', to: 'contact_records#sendgrid_mails'
 end

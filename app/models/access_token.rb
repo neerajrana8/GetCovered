@@ -1,3 +1,21 @@
+# == Schema Information
+#
+# Table name: access_tokens
+#
+#  id          :bigint           not null, primary key
+#  key         :string
+#  secret      :string
+#  secret_hash :string
+#  secret_salt :string
+#  enabled     :boolean
+#  bearer_type :string
+#  bearer_id   :bigint
+#  created_at  :datetime         not null
+#  updated_at  :datetime         not null
+#  access_type :integer          default("generic"), not null
+#  access_data :jsonb
+#  expires_at  :datetime
+#
 # Access Token Model
 # file: app/models/access_token.rb
 

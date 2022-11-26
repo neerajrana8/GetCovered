@@ -1,3 +1,18 @@
+# == Schema Information
+#
+# Table name: reports
+#
+#  id              :bigint           not null, primary key
+#  duration        :integer
+#  range_start     :datetime
+#  range_end       :datetime
+#  data            :jsonb
+#  reportable_type :string
+#  reportable_id   :bigint
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#  type            :string
+#
 module Reports
   class ActivePolicies < ::Report
     NAME = 'Active policies'.freeze
@@ -48,8 +63,8 @@ module Reports
 
     def headers
       %w[management_company property_name property_city property_state property_phone policy_type
-         policy_number primary_insured_name primary_insured_phone primary_insured_email
-         primary_insurance_location effective_date expiration_date finished_date]
+         policy_number primary_insured_name primary_insured_phone primary_insured_email primary_insurance_location
+         effective_date expiration_date finished_date]
     end
 
     private

@@ -1,3 +1,26 @@
+# == Schema Information
+#
+# Table name: policy_premia
+#
+#  id                         :bigint           not null, primary key
+#  total_premium              :integer          default(0), not null
+#  total_fee                  :integer          default(0), not null
+#  total_tax                  :integer          default(0), not null
+#  total                      :integer          default(0), not null
+#  prorated                   :boolean          default(FALSE), not null
+#  prorated_last_moment       :datetime
+#  prorated_first_moment      :datetime
+#  force_no_refunds           :boolean          default(FALSE), not null
+#  created_at                 :datetime         not null
+#  updated_at                 :datetime         not null
+#  error_info                 :string
+#  policy_quote_id            :bigint
+#  policy_id                  :bigint
+#  commission_strategy_id     :bigint
+#  archived_policy_premium_id :bigint
+#  total_hidden_fee           :integer          default(0), not null
+#  total_hidden_tax           :integer          default(0), not null
+#
 ##
 # =Policy Premium Model
 # file: +app/models/policy_premium.rb+
@@ -21,6 +44,8 @@ class PolicyPremium < ApplicationRecord
   has_many :fees,
     as: :assignable
   def carrier_agency_policy_type; @capt ||= ::CarrierAgencyPolicyType.where(policy_type_id: self.policy_rep.policy_type_id, carrier_agency_id: self.policy_rep.carrier_agency.id).take; end
+  has_many :commission_items,
+    through: :policy_premium_item_commissions
 
   # Callbacks
   before_validation :set_default_commission_strategy,
@@ -64,7 +89,7 @@ class PolicyPremium < ApplicationRecord
   def initialize_all(premium_amount, tax: nil, taxes: nil, term_group: nil, collector: nil, filter_fees: nil, tax_recipient: nil, first_payment_down_payment: false, first_payment_down_payment_override: nil, first_tax_payment_down_payment_override: nil)
     tax = taxes if tax.nil? && !taxes.nil?
     return "Tax must be >= 0" if tax && tax < 0
-    return "Tax recipient must be specified" unless !tax || tax == 0
+    return "Tax recipient must be specified" unless !tax || tax == 0 || !tax_recipient.nil?
     return "PolicyPremium must be persisted to the database before initializing" unless self.id
     result = nil
     ActiveRecord::Base.transaction do
@@ -74,8 +99,10 @@ class PolicyPremium < ApplicationRecord
       result = self.itemize_premium(premium_amount, and_update_totals: false, term_group: term_group, collector: collector, first_payment_down_payment: first_payment_down_payment, first_payment_down_payment_override: first_payment_down_payment_override)
       raise ActiveRecord::Rollback unless result.nil?
       # taxes
-      result = self.itemize_taxes(tax, and_update_totals: false, term_group: term_group, collector: collector, recipient: tax_recipient, first_payment_down_payment: first_payment_down_payment, first_payment_down_payment_override: first_tax_payment_down_payment_override) unless tax.nil? || tax == 0
-      raise ActiveRecord::Rollback unless result.nil?
+      unless tax.nil? || tax == 0
+        result = self.itemize_taxes(tax, and_update_totals: false, term_group: term_group, collector: collector, recipient: tax_recipient, first_payment_down_payment: first_payment_down_payment, first_payment_down_payment_override: first_tax_payment_down_payment_override)
+        raise ActiveRecord::Rollback unless result.nil?
+      end
       # fees
       result = self.itemize_fees(premium_amount, and_update_totals: false, term_group: term_group, collector: collector, filter: filter_fees)
       raise ActiveRecord::Rollback unless result.nil?
@@ -90,27 +117,32 @@ class PolicyPremium < ApplicationRecord
     return "Payment terms for term group '#{term_group || 'nil'}' already exist" unless self.policy_premium_payment_terms.where(term_group: term_group).blank?
     return "The billing strategy terms are interpreted as applying to successive months, but there are more than 12 of them" if billing_strategy_terms.length > 12
     returned_errors = nil
-    last_end = self.policy_rep.effective_date - 1.day
-    extra_months = 0
+    term_start = self.policy_rep.effective_date
+    next_term_start = term_start + 1.month
+    term_weight = billing_strategy_terms.first
+    weight = 0
     ActiveRecord::Base.transaction do
       begin
-        billing_strategy_terms.each.with_index do |weight,index|
-          unless weight > 0
-            extra_months += 1
-            next
+        (1..billing_strategy_terms.length).each do |index|
+          if index == billing_strategy_terms.length || (weight = billing_strategy_terms[index]) > 0
+            ::PolicyPremiumPaymentTerm.create!(
+              policy_premium: self,
+              first_moment: term_start.beginning_of_day,
+              last_moment: (index == billing_strategy_terms.length ? self.policy_rep.expiration_date : next_term_start - 1.day).end_of_day,
+              time_resolution: 'day',
+              default_weight: term_weight,
+              term_group: term_group
+            )
+            term_start = next_term_start
+            next_term_start = next_term_start + 1.month
+            term_weight = weight
+          else
+            next_term_start += 1.month
           end
-          ::PolicyPremiumPaymentTerm.create!(
-            policy_premium: self,
-            first_moment: (last_end + 1.day).beginning_of_day,
-            last_moment: (last_end = (last_end + 1.day + (1 + extra_months).months - 1.day)).end_of_day,
-            time_resolution: 'day',
-            default_weight: weight,
-            term_group: term_group
-          )
         end
       rescue ActiveRecord::RecordInvalid => rie
         # MOOSE WARNING: error! should we really just throw the hash back at the caller?
-        returned_errors = rie.record.errors.to_h
+        returned_errors = rie.record.errors.to_h.to_s
         raise ActiveRecord::Rollback
       end
     end
@@ -125,7 +157,7 @@ class PolicyPremium < ApplicationRecord
       : self.policy_application&.fields&.class == ::Hash ? self.policy_application.fields&.[]("premise")&.[](0)&.[]("address")&.[]("state")
       : nil # MOOSE WARNING what about pensio's hideous hack with no insurables :(?
     regional_availability = ::CarrierPolicyTypeAvailability.where(state: state, carrier_policy_type: carrier_policy_type).take
-    return (regional_availability&.fees || []) + (self.policy_application&.billing_strategy&.fees || []) + self.fees
+    return (carrier_policy_type&.fees || []) + (regional_availability&.fees || []) + (self.policy_application&.billing_strategy&.fees || []) + self.fees
   end
   
   def itemize_fees(percentage_basis, and_update_totals: true, term_group: nil, payment_terms: nil, collector: nil, filter: nil)
@@ -158,18 +190,19 @@ class PolicyPremium < ApplicationRecord
     # add item for fee
     payments_count = payment_terms.count
     payments_total = case fee.amount_type
-      when "FLAT";        fee.amount * (fee.per_payment ? payments_count : 1)
+      when "FLAT";        fee.amount.to_i * (fee.per_payment ? payments_count : 1)
       when "PERCENTAGE";  ((fee.amount.to_d / 100) * percentage_basis).ceil * (fee.per_payment ? payments_count : 1) # MOOSE WARNING: is .ceil acceptable?
     end
     created = ::PolicyPremiumItem.create(
       policy_premium: self,
       title: fee.title || "#{(fee.amortize || fee.per_payment) ? "Amortized " : ""} Fee",
       category: "fee",
-      rounding_error_distribution: "first_payment_simple",
+      rounding_error_distribution: "first_payment_multipass",
       total_due: payments_total,
       proration_calculation: 'payment_term_exclusive',
       proration_refunds_allowed: false,
       # MOOSE WARNING: preprocessed
+      hidden: fee.hidden,
       recipient: recipient || fee.ownerable,
       collector: collector || self.carrier_agency_policy_type&.collector || ::PolicyPremium.default_collector,
       policy_premium_item_payment_terms: (
@@ -264,7 +297,7 @@ class PolicyPremium < ApplicationRecord
         proration_calculation: proratable,
         proration_refunds_allowed: refundable,
         # MOOSE WARNING: preprocessed
-        recipient: self.commission_strategy,
+        recipient: recipient || self.commission_strategy,
         collector: collector || self.carrier_agency_policy_type&.collector || ::PolicyPremium.default_collector,
         policy_premium_item_payment_terms: payment_terms.map.with_index do |pt, index|
           next nil if index == 0 && down_payment_revised_weight == 0

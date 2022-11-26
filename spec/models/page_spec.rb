@@ -1,3 +1,16 @@
+# == Schema Information
+#
+# Table name: pages
+#
+#  id                  :bigint           not null, primary key
+#  content             :text
+#  title               :string
+#  agency_id           :bigint
+#  created_at          :datetime         not null
+#  updated_at          :datetime         not null
+#  branding_profile_id :bigint
+#  styles              :jsonb
+#
 require 'rails_helper'
 
 RSpec.describe Page, :type => :model do

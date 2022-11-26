@@ -1,8 +1,12 @@
 :concurrency: 10
+awsdev:
+  :concurrency: 20
+aws_staging:
+  :concurrency: 20
 staging:
   :concurrency: 20
 production:
-  :concurrency: 30
+  :concurrency: 20
 
 :queues:
   - default
@@ -13,94 +17,44 @@ production:
   - mailers
 
 :schedule:
-  insurables_update_covered_status:
-    cron: '0 0 * * *'   # Every day at 0:00 AM
-    class: Insurables::UpdateCoveredStatusJob
   insurables_refresh_insurable_data:
     cron: '0 */2 * * *'   # Every day at 0:00 AM
     class: Insurables::RefreshInsurableDataJob
-  insurables_master_policy_auto_assign:
-    cron: '0 3 * * *'   # Every day at 3:00 AM
-    class: Insurables::MasterPolicyAutoAssignJob
+  # Compliance
+  configuration_sweep_job:
+    cron: '0 2 * * *'   # Every day at 2:00 AM
+    class: Compliance::Policies::MasterCoverageSweepJob
+  first_contact_job:
+    cron: '0 3 * * *' # Every Day at 3:00 AM
+    class: Compliance::Audit::FirstContactJob
+  follow_up_contact_job:
+    cron: '0 4 * * *' # Every Day at 4:00 AM
+    class: Compliance::Audit::FollowUpContactJob
+  final_contact_job:
+    cron: '0 5 * * *' # Every Day at 5:00 AM
+    class: Compliance::Audit::FinalContactJob
   # Reports
-  daily_sales_reports:
-    cron:  '0 4 * * *'   # Each day at 4:00 AM
-    class: Reports::DailySalesAllJob
-  daily_sales_internal_send_emails:
-    cron:  '0 5 * * *'   # Each day at 5:00 AM
-    class: Reports::DailySalesInternalSendEmailsJob
-  coverage_reports_job:
-    cron: '0 2 * * *'   # Every day at 2:00 AM
-    class: Reports::CoverageReportsJob
-  active_reports_job:
-    cron: '0 2 * * *'   # Every day at 2:00 AM
-    class: Reports::ActivityReportsJob
-  third_party_soon_to_expire_reports_job:
-    cron: '0 0 2 * * *'   # Every day at 2:00 AM
-    class: Reports::ThirdPartySoonToExpireReportsJob
-  detailed_renters_insurance_active_policies_job:
-    cron: '0 2 * * *'   # Every day at 2:00 AM
-    class: Reports::DetailedRentersInsurance::ActivePoliciesReportsJob
-  detailed_renters_insurance_cancelled_policies_job:
-    cron: '0 2 * * *'   # Every day at 2:00 AM
-    class: Reports::DetailedRentersInsurance::CancelledPoliciesReportsJob
-  detailed_renters_insurance_expire_soon_policies_job:
-    cron: '0 2 * * *'   # Every day at 2:00 AM
-    class: Reports::DetailedRentersInsurance::ExpireSoonPoliciesReportsJob
-  detailed_renters_insurance_pending_cancellation_policies_job:
-    cron: '0 2 * * *'   # Every day at 2:00 AM
-    class: Reports::DetailedRentersInsurance::PendingCancellationPoliciesReportsJob
-  detailed_renters_insurance_uncovered_units_job:
-    cron: '0 2 * * *'   # Every day at 2:00 AM
-    class: Reports::DetailedRentersInsurance::UncoveredUnitsReportsJob
-  high_level_activity_report_job:
-    cron: '0 2 * * 0'   # Every Sunday at 2:00 AM
-    class: Reports::HighLevelActivityReportsJob
-  soon_to_expire_reports_job:
-    cron: '0 2 * * *'   # Every day at 2:00 AM
-    class: Reports::SoonToExpireReportsJob
-  active_policies_reports_job:
-    cron: '0 2 * * *'   # Every day at 2:00 AM
-    class: Reports::ActivePoliciesReportsJob
-  participation_reports_job:
-    cron: '0 2 1 * *'   # Every first day of month at 2:00 AM
-    class: Reports::ParticipationReportsJob
-  property_unit_verification_reports_job:
-    cron: '0 2 * * *'   # Every day at 2:00 AM
-    class: Reports::PropertyUnitVerificationReportsJob
-  renewal_policies_create_job:
-    cron: '0 2 * * 0'
-    class: Reports::RenewalPoliciesCreateJob
-  high_level_participation_reports_job:
-    cron: '0 2 1 * *'   # Each first day of month at 2:00 AM
-    class: Reports::HighLevelParticipationReportsJob
-  high_trend_analysis_reports_job:
-    cron: '0 2 1 * *'   # Each first day of month at 2:00 AM
-    class: Reports::HighLevelTrendAnalysisReportsJob
-  daily_purchase_activity_reports_job:
-    cron: '0 1 * * *'   # Every day at 1:00 AM
-    class: Reports::DailyPurchaseActivityJob
-  bordereau_reports:
-    cron: '0 6 1 * *'   # Each first day of month at 6:00 AM
-    class: Reports::BordereauJob
+  generate_and_send_cancellation_list_job:
+    cron: '30 2 * * *'   # Every day at 2:30 AM
+    class: CarrierQBE::GenerateAndSendCancellationListJob
   confie_report:
     cron: '35 * * * *' # Every hour, thirty-five minutes in
     class: Reports::ConfieReportJob
   # Invoices
   bill_due_invoices:
-    cron: '0 2 * * *'   # Every day at 2:00 AM
+    cron: '30 0 * * *'   # Every day at 12:30 AM
     class: BillDueInvoicesJob
-  bill_past_due_invoices: # Every day at 2:00 AM
-    cron: '0 2 * * *'
+  bill_past_due_invoices:
+    cron: '30 0 * * *'   # Every day at 12:30 AM
     class: BillPastDueInvoicesJob
-  make_invoices_missed: # Every day at 3:00 AM
-    cron: '0 3 * * *'
+  make_invoices_missed:
+    cron: '30 1 * * *'   # Every day at 1:30 AM
     class: MakeInvoicesMissedJob
   make_invoices_available:
-    cron: '0 1 * * *'   # Every day at 1:00 AM
+    cron: '0 0 * * *'   # Every day at 12:01 AM
     class: MakeInvoicesAvailableJob
   handle_unresponsive_charges:
-    cron: '0 3 * * *'   # Every day at 3:00 AM
+    cron: '30 1 * * *'   # Every day at 1:30 AM
     class: HandleUnresponsiveChargesJob
   # Policies
   cancel_unpaid_policies:
@@ -113,6 +67,9 @@ production:
   leads_status_update_job:
     cron: '0 6 * * *' # Every day at 6:00 AM
     class: LeadsStatusUpdateJob
+  leads_premium_total_calculate_job:
+    cron: '0 5 * * *' # Every day at 5:00 AM
+    class: LeadsPremiumTotalCalculateJob
   # Leases
   lease_start_check_job:
     cron: '0 6 * * *' # Every day at 6:00 AM
@@ -121,21 +78,43 @@ production:
     cron: '0 6 * * *' # Every day at 6:00 AM
     class: LeaseExpirationCheckJob
   # Emails
+  add_coverage:
+    cron: '0 0 * * *'   # Every day at 0:00 AM
+    class: Policies::AddCoverageJob
+  remove_coverage:
+    cron: '0 0 * * *'   # Every day at 0:00 AM
+    class: Policies::RemoveCoverageJob
   warn_expire_cards_job:
     cron: '0 10 1 * *'  # Each first day of month at 10:00 AM
     class: WarnExpireCardsJob
   warn_all_charge_invoice_job:
     cron: '0 10 * * *'  # Every day at 10:00 AM
     class: WarnAllChargeInvoiceJob
+  expiring_soon_job:
+    cron: '0 6 * * *' # Every day at 6:00 AM
+    class: Compliance::Policies::ExpiringSoonJob
   # Access Tokens
   remove_expired_access_tokens_job:
     cron: '0 0 * * *' # Every day at midnight
     class: RemoveExpiredAccessTokensJob
   # Commissions
+  handle_line_item_reductions_job:
+    cron: '0 2 * * *' # Every day at 2:00 AM
+    class: HandleLineItemReductionsJob
   handle_line_item_changes_job:
     cron: '0 3 * * *' # Every day at 3:00 AM
     class: HandleLineItemChangesJob
   create_commissions_for_policy_premium_item_transactions_job:
     cron: '0 5 * * *' # Every day at 5:00 AM
     class: CreateCommissionsForPolicyPremiumItemTransactionsJob
-
+  gmail_mail_sync_job:
+    cron: '0 1 * * *'   # Every day at 1:00 AM
+    class: GmailMailSyncJob
+  # Yardi Sync
+  yardi_sync_job:
+    cron: '0 1 * * *' # Every day at 1:00 AM
+    class: YardiSyncJob
+  # Generic Actions
+  perform_scheduled_actions_job:
+    cron: '45 * * * *' # every hour, 45 minutes in
+    class: PerformScheduledActionsJob

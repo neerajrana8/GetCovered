@@ -1,3 +1,24 @@
+# == Schema Information
+#
+# Table name: policy_premium_payment_terms
+#
+#  id                              :bigint           not null, primary key
+#  original_first_moment           :datetime         not null
+#  original_last_moment            :datetime         not null
+#  first_moment                    :datetime         not null
+#  last_moment                     :datetime         not null
+#  unprorated_proportion           :decimal(, )      default(1.0), not null
+#  prorated                        :boolean          default(FALSE), not null
+#  time_resolution                 :integer          default("day"), not null
+#  cancelled                       :boolean          default(FALSE), not null
+#  default_weight                  :integer
+#  term_group                      :string
+#  invoice_available_date_override :date
+#  invoice_due_date_override       :date
+#  created_at                      :datetime         not null
+#  updated_at                      :datetime         not null
+#  policy_premium_id               :bigint
+#
 class PolicyPremiumPaymentTerm < ApplicationRecord
 
   # Associations
@@ -126,10 +147,10 @@ class PolicyPremiumPaymentTerm < ApplicationRecord
     end
   
     def validate_term
-      errors.add(:original_last_moment, I18n.t("policy_premium_payment_term.original_last_moment_invalid")) unless self.original_last_moment >= self.original_first_moment
-      errors.add(:last_moment, I18n.t("policy_premium_payment_term.last_moment_invalid")) unless self.last_moment >= self.first_moment
-      errors.add(:first_moment, I18n.t("policy_premium_payment_term.first_moment_too_early")) unless self.first_moment >= self.original_first_moment
-      errors.add(:last_moment, I18n.t("policy_premium_payment_term.last_moment_too_late")) unless self.last_moment <= self.original_last_moment
+      errors.add(:original_last_moment, "Original last moment of coverage cannot occur before original first moment of coverage") unless self.original_last_moment >= self.original_first_moment
+      errors.add(:last_moment, "Last moment of coverage cannot occur before first moment of coverage") unless self.last_moment >= self.first_moment
+      errors.add(:first_moment, "First moment of coverage cannot be set to before the original first moment") unless self.first_moment >= self.original_first_moment
+      errors.add(:last_moment, "Last moment of coverage cannot be set to be after the original last moment") unless self.last_moment <= self.original_last_moment
     end
 end
 

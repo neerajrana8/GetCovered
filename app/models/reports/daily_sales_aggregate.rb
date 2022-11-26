@@ -1,3 +1,18 @@
+# == Schema Information
+#
+# Table name: reports
+#
+#  id              :bigint           not null, primary key
+#  duration        :integer
+#  range_start     :datetime
+#  range_end       :datetime
+#  data            :jsonb
+#  reportable_type :string
+#  reportable_id   :bigint
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#  type            :string
+#
 module Reports
   class DailySalesAggregate < ::Report
     NAME = 'Daily Sales Aggregate Report'.freeze
@@ -110,7 +125,7 @@ module Reports
 
       agencies_reports = agencies_reports.sort_by { |row| [row[:agency_data]['any_activity'] ? 0 : 1] }
 
-      flatten_agency_report(get_covered_report)
+      flatten_agency_report(get_covered_report) if get_covered_report
 
       agencies_reports.each do |agency_report|
         flatten_agency_report(agency_report)
@@ -118,7 +133,7 @@ module Reports
     end
 
     def flatten_agency_report(agency_report)
-      data['rows'] << agency_report[:agency_data]
+      data['rows'] << agency_report.dig(:agency_data)
 
       agency_report[:accounts].each do |account_report|
         data['rows'] << account_report
@@ -173,7 +188,7 @@ module Reports
           end.compact
 
         {
-          subagency_data: item_report(subagency),
+          subagency_data: subagency_report,
           subagency_accounts: subagency_accounts_reports.sort_by { |row| [row['any_activity'] ? 0 : 1] }
         }
       end.compact

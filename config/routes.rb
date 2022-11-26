@@ -1,13 +1,22 @@
 require 'sidekiq/web'
+require 'sidekiq-scheduler/web'
+
+# Configure Sidekiq-specific session middleware to prevent error for Rails 6
+# Error message:
+# Sidekiq::Web needs a valid Rack session for CSRF protection.
+Sidekiq::Web.use ActionDispatch::Cookies
+Sidekiq::Web.use ActionDispatch::Session::CookieStore, key: "_interslice_session"
 
 Rails.application.routes.draw do
 
+  mount Rswag::Api::Engine => '/api-docs'
   Sidekiq::Web.use Rack::Auth::Basic do |username, password|
     username == Rails.application.credentials[:sidekiq_credentials][Rails.env.to_sym][:username] &&
       password == Rails.application.credentials[:sidekiq_credentials][Rails.env.to_sym][:password]
   end
 
   mount Sidekiq::Web, at: '/sidekiq'
+  mount LetterOpenerWeb::Engine, at: "/letter_opener" #if Rails.env.development?
 
   mount_devise_token_auth_for 'User',
     at: 'v2/user/auth',
@@ -70,8 +79,16 @@ Rails.application.routes.draw do
     draw :staff_account
     draw :staff_agency
     draw :staff_super_admin
+    draw :staff_policy_support
     draw :public
     draw :sdk
+    draw :dashboards
+    draw :users
+    draw :agencies
+    draw :insurables
+    draw :leads
+    draw :branding_profiles
+    draw :policies
   end
 
   root to: "application#redirect_home"

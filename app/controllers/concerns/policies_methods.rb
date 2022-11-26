@@ -6,10 +6,15 @@ module PoliciesMethods
       if update_user_params[:users].is_a? Array
         update_user_params[:users].each do |user_param|
           user = ::User.find_by(id: user_param[:id])
-          user.update_attributes(user_param)
+          user.update(user_param)
         end
       end
-      Policies::UpdateDocuments.run!(policy: @policy)
+      # NOTE: Fix race-condition inside Policies::UpdateDocuments
+      Thread.new do
+        # Policies::UpdateDocuments.run!(policy: @policy)
+        @policy.documents.purge
+        @policy.send("#{@policy.carrier.integration_designation}_issue_policy")
+      end.join
       render :show, status: :ok
     else
       render json: @policy.errors, status: :unprocessable_entity
@@ -26,33 +31,70 @@ module PoliciesMethods
   end
 
   def add_coverage_proof
-    @policy                  = Policy.new(coverage_proof_params)
-    @policy.policy_in_system = false
-    @policy.status           = 'BOUND'
-    add_error_master_types(@policy.policy_type_id)
-    if @policy.errors.blank? && @policy.save
-      result = Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes])
-
-      if result.failure?
-        render json: result.failure, status: 422
+    unless Policy.exists?(number: create_params[:number])
+      @policy                  = Policy.new(coverage_proof_params)
+      @policy.policy_in_system = false
+      @policy.status           = 'EXTERNAL_UNVERIFIED' if @policy&.status&.blank?
+      add_error_master_types(@policy.policy_type_id)
+      if @policy.errors.blank? && @policy.save
+        result = Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes])
+        if result.failure?
+          render json: result.failure, status: 422
+        else
+          render :show, status: :created
+        end
       else
-        render :show, status: :created
+        render json: @policy.errors, status: :unprocessable_entity
       end
     else
-      render json: @policy.errors, status: :unprocessable_entity
+      @policy = Policy.find_by_number(create_params[:number])
+      unless @policy.policy_in_system
+        self.update_unverified_proof(@policy, coverage_proof_params)
+      else
+        render json: standard_error(:policy_cannot_be_edited, "Policy ##{ @policy.number } is unavailable for editing.", nil)
+      end
     end
+  end
+
+  def update_unverified_proof(policy, update_coverage_params)
+    if !policy.nil? && policy.policy_in_system == false && self.external_policy_status_check(policy)
+      if policy.update_as(current_staff, update_coverage_params)
+        policy.policy_coverages.where.not(id: policy.policy_coverages.order(id: :asc).last.id).each do |coverage|
+          coverage.destroy
+        end
+        render :show, status: :ok
+      else
+        render json: policy.errors, status: 422
+      end
+    else
+      render json: standard_error(:policy_cannot_be_edited, "Policy ##{ policy.number } is unavailable for editing.", nil)
+    end
+  end
+
+  def primary_user_email
+    user_params[:policy_users_attributes]&.first["user_attributes"]["email"]
   end
 
   def update_coverage_proof
     type_id = update_coverage_params[:policy_type_id]
     add_error_master_types(type_id) if type_id.present?
     if @policy.errors.blank? && @policy.update_as(current_staff, update_coverage_params)
-      result = Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes])
+      ActiveRecord::Base.transaction do
+        result = Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes])
+        selected_insurable = Insurable.find(update_coverage_params[:policy_insurables_attributes].first[:insurable_id])
+        @policy.primary_insurable = selected_insurable
+        @policy.primary_insurable.save!
+        @policy.save!
+        @policy.policy_coverages.delete_all
+        @policy.policy_coverages.create!(update_coverage_params[:policy_coverages_attributes])
+        @policy.send(:create_necessary_policy_coverages_for_external)
+        @policy = Policy.find(params[:id]) # TODO: Not working -> access_model(::Policy, params[:id])
 
-      if result.failure?
-        render json: result.failure, status: 422
-      else
-        render :show, status: :ok
+        if result.failure?
+          render json: result.failure, status: 422
+        else
+          render :show, status: :ok
+        end
       end
     else
       render json: @policy.errors, status: :unprocessable_entity
@@ -109,16 +151,17 @@ module PoliciesMethods
   end
 
   def set_optional_coverages
-    if @policy.carrier_id != MsiService.carrier_id || @policy.primary_insurable.nil? || @policy.primary_insurable.primary_address.nil?
+    if ![::MsiService.carrier_id, ::QbeService.carrier_id].include?(@policy.carrier_id) || @policy.primary_insurable.nil? || @policy.primary_insurable.primary_address.nil?
       @optional_coverages = nil
     else
       results = ::InsurableRateConfiguration.get_coverage_options(
-        @policy.carrier_id,
-        @policy.primary_insurable&.primary_address,
-        [{ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }],
-        nil,
-        0,
-        @policy.policy_premiums.last&.billing_strategy&.carrier_code,
+        ::CarrierPolicyType.where(carrier_id: @policy.carrier_id, policy_type_id: @policy.policy_type_id).take,
+        @policy.primary_insurable,
+        {},
+        #[{ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }],
+        @policy.effective_date,
+        @policy.policy_users.count - 1,
+        @policy.policy_premiums.last&.billing_strategy,
         agency: @policy.agency,
         perform_estimate: false,
         eventable: @policy.primary_insurable,
@@ -167,7 +210,11 @@ module PoliciesMethods
 
     permitted_params =
       params.require(:policy).permit(
+        :account_id, :agency_id, :policy_type_id, :insurable_id,
         :effective_date, :expiration_date, :number, :status, :out_of_system_carrier_title,
+        documents: [],
+        policy_insurables_attributes: [:insurable_id],
+        policy_users_attributes: [:user_id],
         policy_coverages_attributes: %i[id limit title deductible enabled designation]
       )
 
@@ -259,7 +306,14 @@ module PoliciesMethods
           full_name: %i[scalar like]
         }
       },
-      agency_id: %i[scalar array]
+      primary_insurable: {
+          insurable_id: %i[scalar array],
+          parent_community: {
+              id: %i[scalar array],
+          }
+      },
+      agency_id: %i[scalar array],
+      account_id: %i[scalar array]
     }
   end
 
@@ -279,7 +333,23 @@ module PoliciesMethods
     to_return
   end
 
+  def insurable_id_param
+    coverage_proof_params[:policy_insurables_attributes].fetch("0", nil)&.fetch("insurable_id", nil)
+  end
+
   def supported_orders
     supported_filters(true)
+  end
+
+  def external_policy_status_check(policy)
+    to_return = false
+    if ["EXTERNAL_UNVERIFIED", "EXTERNAL_REJECTED"].include?(policy.status)
+      to_return = true
+    elsif policy.status == "EXTERNAL_VERIFIED"
+      if (policy.effective_date .. (policy.expiration_date + 1.year)) === Time.now
+        to_return = true
+      end
+    end
+    return to_return
   end
 end

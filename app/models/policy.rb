@@ -1,3 +1,50 @@
+# == Schema Information
+#
+# Table name: policies
+#
+#  id                           :bigint           not null, primary key
+#  number                       :string
+#  effective_date               :date
+#  expiration_date              :date
+#  auto_renew                   :boolean          default(FALSE), not null
+#  last_renewed_on              :date
+#  renew_count                  :integer
+#  billing_status               :integer
+#  billing_dispute_count        :integer          default(0), not null
+#  billing_behind_since         :date
+#  status                       :integer
+#  status_changed_on            :datetime
+#  billing_dispute_status       :integer          default("UNDISPUTED"), not null
+#  billing_enabled              :boolean          default(FALSE), not null
+#  system_purchased             :boolean          default(FALSE), not null
+#  serviceable                  :boolean          default(FALSE), not null
+#  has_outstanding_refund       :boolean          default(FALSE), not null
+#  system_data                  :jsonb
+#  agency_id                    :bigint
+#  account_id                   :bigint
+#  carrier_id                   :bigint
+#  policy_type_id               :bigint
+#  created_at                   :datetime         not null
+#  updated_at                   :datetime         not null
+#  policy_in_system             :boolean
+#  auto_pay                     :boolean
+#  last_payment_date            :date
+#  next_payment_date            :date
+#  policy_group_id              :bigint
+#  declined                     :boolean
+#  address                      :string
+#  out_of_system_carrier_title  :string
+#  policy_id                    :bigint
+#  cancellation_reason          :integer
+#  branding_profile_id          :integer
+#  marked_for_cancellation      :boolean          default(FALSE), not null
+#  marked_for_cancellation_info :string
+#  marked_cancellation_time     :datetime
+#  marked_cancellation_reason   :string
+#  document_status              :integer          default("absent")
+#  force_placed                 :boolean
+#  cancellation_date            :date
+#
 ##
 # =Policy Model
 # file: +app/models/policy.rb+
@@ -38,18 +85,25 @@
 
 class Policy < ApplicationRecord
   # Concerns
-  include ElasticsearchSearchable
+  include Filterable
   include CarrierPensioPolicy
   include CarrierCrumPolicy
   include CarrierQbePolicy
+  include CarrierQbeMasterPolicy
   include CarrierMsiPolicy
   include CarrierDcPolicy
   include AgencyConfiePolicy
   include RecordChange
 
-  after_create :schedule_coverage_reminders, if: -> { policy_type&.master_coverage }
+  before_save :set_status_changed_on, if: Proc.new { |policy| policy.status_changed? }
 
-  # after_save :start_automatic_master_coverage_policy_issue, if: -> { policy_type&.designation == 'MASTER' }
+  after_create :schedule_coverage_reminders, if: -> { policy_type&.master_coverage }
+  after_create :create_necessary_policy_coverages_for_external, unless: -> { in_system? }
+  after_save :update_users_status
+
+  after_save :update_coverage
+
+  after_commit :notify_users, on: [:create, :update], unless: -> { in_system? }
 
   belongs_to :agency, optional: true
   belongs_to :account, optional: true
@@ -87,6 +141,8 @@ class Policy < ApplicationRecord
   through: :primary_policy_user,
   source: :user
 
+  has_many :master_policy_configurations, as: :configurable
+
   has_one :primary_policy_insurable, -> { where(primary: true) }, class_name: 'PolicyInsurable'
   has_one :primary_insurable, class_name: 'Insurable', through: :primary_policy_insurable, source: :insurable
 
@@ -109,7 +165,7 @@ class Policy < ApplicationRecord
   has_many :change_requests, as: :changeable
 
   has_many :signable_documents, as: :referent
-  
+
   has_many :integration_profiles,
     as: :profileable
 
@@ -133,20 +189,57 @@ class Policy < ApplicationRecord
   scope :master_policy_coverages, -> { where(policy_type_id: PolicyType::MASTER_COVERAGES_IDS) }
   scope :not_master, -> { where.not(policy_type_id: PolicyType::MASTER_IDS) }
 
+  ## Filterable
+
+  scope :filter_by_policy_in_system, ->(state) {
+    where(policy_in_system: state)
+  }
+
+  scope :filter_by_agency_id, ->(agency_id) {
+    where(agency_id: agency_id)
+  }
+
+  scope :filter_by_status, ->(status) {
+    where(status: status)
+  }
+
+  scope :filter_by_account_id, ->(account_id) {
+    where(account_id: account_id)
+  }
+
+  scope :filter_by_policy_type_id, ->(policy_type_id) {
+    where(policy_type_id: policy_type_id)
+  }
+
+  scope :filter_by_number, ->(number) {
+    where('number LIKE ?', "%#{number[:like]}%")
+  }
+
+
+  # TODO: Change after controller structure refactoring
+  scope :filter_by_users, ->(payload) {
+    if payload[:email]
+      return where('users.email LIKE ?', "%#{payload['email']['like']}%")
+    else
+      if payload[:profile].present?
+        return where('profiles.full_name LIKE ?', "%#{payload[:profile][:full_name][:like]}%")
+      end
+      if payload[:id].present?
+        return where(users: { id: payload[:id] })
+      end
+    end
+  }
+
   accepts_nested_attributes_for :policy_premiums,
   :insurables, :policy_users, :policy_insurables, :policy_application
   accepts_nested_attributes_for :policy_coverages, allow_destroy: true
   #  after_save :update_leases, if: :saved_changes_to_status?
 
-  after_create :update_users_status
-  after_commit :update_insurables_coverage,
-             if: Proc.new{ saved_change_to_status? || saved_change_to_effective_date? || saved_change_to_effective_date? }
-  after_destroy_commit :update_insurables_coverage
-
   validate :correct_document_mime_type
   validate :is_allowed_to_update?, on: :update
   validate :status_allowed
   validate :carrier_agency_exists
+  validate :force_placement_for_master_coverage_only
   validate :master_policy, if: -> { policy_type&.master_coverage }
   validates :agency, presence: true, if: :in_system?
   validates :carrier, presence: true, if: :in_system?
@@ -157,9 +250,10 @@ class Policy < ApplicationRecord
   validate :date_order,
   unless: proc { |pol| pol.effective_date.nil? || pol.expiration_date.nil? }
 
+  #TODO:  WITHOUT_STATUS must be deleted after fix under GCVR2-768 ticket
   enum status: { AWAITING_PAYMENT: 0, AWAITING_ACH: 1, PAID: 2, BOUND: 3, BOUND_WITH_WARNING: 4,
     BIND_ERROR: 5, BIND_REJECTED: 6, RENEWING: 7, RENEWED: 8, EXPIRED: 9, CANCELLED: 10,
-    REINSTATED: 11, EXTERNAL_UNVERIFIED: 12, EXTERNAL_VERIFIED: 13 }
+    REINSTATED: 11, EXTERNAL_UNVERIFIED: 12, EXTERNAL_VERIFIED: 13, EXTERNAL_REJECTED: 14, WITHOUT_STATUS: nil }
 
   enum billing_status: { CURRENT: 0, BEHIND: 1, REJECTED: 2, RESCINDED: 3, ERROR: 4, EXTERNAL: 5 }
 
@@ -187,12 +281,40 @@ class Policy < ApplicationRecord
     manual_cancellation_without_refunds:  8    # no qbe code
   }
 
+  def get_liability
+    if self.carrier_id == MsiService.carrier_id
+      self.coverages.find{|cov| cov.designation == "1005" }&.limit
+    elsif self.carrier_id == QbeService.carrier_id
+      self.coverages.find{|cov| cov.designation == "liability" }&.limit
+    else
+      self.coverages.select{|cov| !(["LiabilityAmount", "Liability", "Liability Amount", "Liability Limit", "LiabilityLimit", "liability", "Liability Coverage", "liability_coverage"] & [cov.designation, cov.title]).blank? }.find{|cov| !cov.limit.nil? && cov.limit != 0 }&.limit
+    end || 0
+  end
+
+  enum document_status: {
+    absent: 0,
+    at_hand: 1,
+    sent: 2
+  }
+
+  enum rejection_reason: {
+    liability_not_correct: I18n.t('policy_model.rejection_reasons.liability_not_correct'),
+    pm_not_additional_interest: I18n.t('policy_model.rejection_reasons.pm_not_additional_interest'),
+    policy_not_active: I18n.t('policy_model.rejection_reasons.policy_not_active'),
+    name_not_correct: I18n.t('policy_model.rejection_reasons.name_not_correct'),
+    other: I18n.t('policy_model.rejection_reasons.other')}
+
+  #TODO: need to refactor to enum values for policy-support dashboard too
+  def is_rejection_reason_added?(current_rejection_reason)
+    self.system_data["rejection_reasons"].map(&:downcase).any?(current_rejection_reason&.downcase)
+  end
+
   def current_quote
     self.policy_quotes.accepted.order('created_at desc').first
   end
 
   def self.active_statuses
-    ['BOUND', 'BOUND_WITH_WARNING', 'RENEWING', 'RENEWED', 'REINSTATED']
+    %w[BOUND BOUND_WITH_WARNING RENEWING RENEWED REINSTATED EXTERNAL_VERIFIED]
   end
 
   def is_active?
@@ -210,7 +332,7 @@ class Policy < ApplicationRecord
   SPECIAL_CANCELLATION_REFUND_LOGIC = {
     'insured_request' =>          :early_cancellation,
     'nonpayment'      =>          :no_refund,
-    'test_policy'     =>          :no_refund,
+    'test_policy'     =>          :full_refund,
     'manual_cancellation_with_refunds' => :early_cancellation,
     'manual_cancellation_without_refunds' => :no_refund
   }
@@ -240,13 +362,19 @@ class Policy < ApplicationRecord
     errors.add(:carrier, I18n.t('policy_model.carrier_agency_must_exist')) unless agency&.carriers&.include?(carrier)
   end
 
+  def force_placement_for_master_coverage_only
+    unless self.force_placed.nil?
+      errors.add(:force_placed, "Only applicable to Master Policy Coverages") unless self.policy_type_id == ::PolicyType::MASTER_COVERAGE_ID
+    end
+  end
+
   def master_policy
     errors.add(:policy, I18n.t('policy_model.must_belong_to_coverage')) unless policy&.policy_type&.master_policy? && policy&.BOUND?
   end
 
   def schedule_coverage_reminders
-    CoverageReminderJob.set(wait: policy.system_data['send_first_coverage_reminder_in_days'].to_i.days).perform_later(id, true)
-    CoverageReminderJob.set(wait: policy.system_data['send_second_coverage_reminder_in_days'].to_i.days).perform_later(id, false)
+    # CoverageReminderJob.set(wait: policy.system_data['send_first_coverage_reminder_in_days'].to_i.days).perform_later(id, true)
+    # CoverageReminderJob.set(wait: policy.system_data['send_second_coverage_reminder_in_days'].to_i.days).perform_later(id, false)
   end
 
   def start_automatic_master_coverage_policy_issue
@@ -295,9 +423,13 @@ class Policy < ApplicationRecord
   def issue
     case policy_application&.carrier&.integration_designation
     when 'qbe'
-      qbe_issue_policy
+      CarrierQBE::GenerateAndSendEvidenceOfInsuranceJob.perform_now(self)
     when 'qbe_specialty'
-      { error: I18n.t('policy_model.no_policy_issue_for_qbe') }
+      if self.policy_type_id == 3
+        qbe_specialty_issue_policy()
+      else
+        { error: I18n.t('policy_model.no_policy_issue_for_qbe') }
+      end
     when 'crum'
       crum_issue_policy
     when 'msi'
@@ -308,7 +440,6 @@ class Policy < ApplicationRecord
       { error: I18n.t('policy_model.error_with_policy')  }
     end
   end
-
 
   # Cancels a policy; returns nil if no errors, otherwise a string explaining the error
   def cancel(reason, last_active_moment = Time.current.to_date.end_of_day)
@@ -324,9 +455,21 @@ class Policy < ApplicationRecord
     case special_logic
       when :prorated_refund
        result =  pq.policy_premium.prorate(new_last_moment: last_active_moment)
+      when :full_refund
+        pq.policy_premium.policy_premium_items.each do |ppi|
+          ppi.line_items.each do |li|
+            ::LineItemReduction.create!(
+              reason: "Test Policy Refund",
+              refundability: 'cancel_or_refund',
+              amount_interpretation: 'max_total_after_reduction',
+              amount: 0,
+              line_item: li
+            )
+          end
+        end
       when :early_cancellation
-        max_days_for_full_refund = (CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_id).take&.max_days_for_full_refund || 0).days
-        if last_active_moment < (self.created_at.to_date + max_days_for_full_refund.days).end_of_day
+        max_days_for_full_refund = CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_id).take&.max_days_for_full_refund || 0
+        if max_days_for_full_refund != 0 && last_active_moment < (self.created_at.to_date + max_days_for_full_refund.days).end_of_day
           pq.policy_premium.policy_premium_items.where(category: ['premium', 'tax']).each do |ppi|
             ppi.line_items.each do |li|
               ::LineItemReduction.create!(
@@ -343,8 +486,11 @@ class Policy < ApplicationRecord
       else # :no_refund will end up here; by default we don't refund
         result = pq.policy_premium.prorate(new_last_moment: last_active_moment, force_no_refunds: true)
     end
-    # Handle proration error
-    unless result.nil?
+    # Mark cancelled or handle proration error
+    if result.nil?
+      update_columns(status: 'CANCELLED', cancellation_reason: reason, cancellation_date: last_active_moment.to_date)
+      RentGuaranteeCancellationEmailJob.perform_later(self) if self.policy_type.slug == 'rent-guarantee'
+    else
       update_columns(
         marked_for_cancellation: true,
         marked_for_cancellation_info: result,
@@ -353,14 +499,12 @@ class Policy < ApplicationRecord
       )
       return I18n.t('policy_model.proration_failed')
     end
-    # Mark cancelled
-    update_columns(status: 'CANCELLED', cancellation_reason: reason, cancellation_date: last_active_moment.to_date)
-    RentGuaranteeCancellationEmailJob.perform_later(self) if self.policy_type.slug == 'rent-guarantee'
     # done
     return nil
   end
 
   def bulk_decline
+    raise StandardError.new("Outdated broken method")
     update_attribute(:declined, true)
     generate_refund if created_at > 1.month.ago
     subtract_from_future_invoices
@@ -375,6 +519,7 @@ class Policy < ApplicationRecord
   end
 
   def generate_refund
+    raise StandardError.new("Outdated broken method")
     amount = bulk_premium_amount
     charge = policy_group&.policy_group_premium&.policy_group_quote&.invoices&.first&.charges&.first
     return if bulk_premium_amount.zero? || charge.nil?
@@ -383,12 +528,13 @@ class Policy < ApplicationRecord
   end
 
   def recalculate_policy_premium
-    throw "Policy#recalculate_policy_premium is currently broken!" # MOOSE WARNING
+    raise StandardError.new("Outdated broken method")
     policy_premiums&.last&.update(base: 0, taxes: 0, total_fees: 0, total: 0, calculation_base: 0, deposit_fees: 0, amortized_fees: 0, carrier_base: 0, special_premium: 0)
     policy_group&.policy_group_premium&.calculate_total
   end
 
   def subtract_from_future_invoices
+    raise StandardError.new("Outdated broken method")
     amount = bulk_premium_amount
     policy_group&.policy_group_premium&.policy_group_quote&.invoices&.each do |invoice|
       line_item = invoice.line_items.base_premium.take
@@ -406,12 +552,6 @@ class Policy < ApplicationRecord
     policy_type == PolicyType.rent_garantee
   end
 
-  settings index: { number_of_shards: 1 } do
-    mappings dynamic: 'false' do
-      indexes :number, type: :text
-    end
-  end
-
   def refund_available_days
     max_days_for_full_refund =
       (CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_id).
@@ -424,6 +564,62 @@ class Policy < ApplicationRecord
   def run_postbind_hooks # do not remove this; concerns add functionality to it by overriding it and calling super
     notify_relevant()
     super if defined?(super)
+  end
+
+  def update_coverage
+    time_condition = nil
+    if [1,4,5,6].include?(self.policy_type_id)
+      time_condition = Time.current.to_date.between?(self.effective_date, self.expiration_date)
+    elsif [3,8].include?(self.policy_type_id)
+      time_condition = Time.current.to_date >= self.effective_date
+    end
+
+    action_method = nil
+    if self.persisted?
+      if self.previous_changes.has_key?("id") && self.previous_changes["id"][0].nil?
+        action_method = :create
+      else
+        action_method = :update
+      end
+    elsif self.destroyed?
+      action_method = :destroy
+    end
+
+    if [:create, :update].include?(action_method) &&
+       self.previous_changes.has_key?("status") &&
+       self.previous_changes["status"][0] != self.previous_changes["status"][1]
+
+      if Policy.active_statuses.include?(self.status) &&
+         self.cancellation_date.nil? &&
+         time_condition
+
+        self.insurables.each do |insurable|
+          insurable.add_to_covered(self.policy_type_id, self.id)
+          insurable.leases.where(status: "current").each do |lease|
+            lease.add_to_covered(self.policy_type_id, self.id) if lease.active?
+          end
+        end
+      end
+
+      if ['EXPIRED', 'CANCELLED', 'EXTERNAL_REJECTED'].include?(self.status)
+
+        self.insurables.each do |insurable|
+          insurable.remove_from_covered(self.policy_type_id, self.id)
+          insurable.leases.each do |lease|
+            lease.remove_from_covered(self.policy_type_id, self.id)
+          end
+        end
+      end
+    end
+  end
+
+  #TODO: seems that we still can create multiple leases for one insurable for the same dates. need to figure out is it correct ot not
+  def latest_lease
+    self.insurables.extract_associated(:leases)&.first&.order(end_date: :desc)&.first
+  end
+
+  def lease_sign_date
+    latest_lease&.sign_date
   end
 
   private
@@ -449,13 +645,87 @@ class Policy < ApplicationRecord
     end
   end
 
-  def update_insurables_coverage
-    insurables.each { |insurable| Insurables::UpdateCoveredStatus.run!(insurable: insurable) }
-  end
-
   def update_users_status
     users.each do |user|
-      user.update(has_existing_policies: true)
+      user.update(has_existing_policies: true) if user.policies.present?
     end
+  end
+
+  def create_necessary_policy_coverages_for_external
+    unless self.policy_coverages.where(designation: "liability").count > 0
+      self.policy_coverages.create!(
+        title: "Liability",
+        designation: "liability",
+        limit: 0,
+        enabled: true
+      )
+    end
+  end
+
+  def notify_users
+    # ['EXTERNAL_UNVERIFIED', 'EXTERNAL_VERIFIED', 'EXTERNAL_REJECTED'].include?(self.status)
+    if self.previous_changes.has_key?('status') && ['EXTERNAL_VERIFIED', 'EXTERNAL_REJECTED'].include?(self.status)
+      unless self.integration_profiles.count > 0 || self.agency_id == 416
+
+        if self.account_id == 0 || self.agency_id == 0
+          reload() if inline_fix_external_policy_relationships
+        end
+
+        begin
+          Compliance::PolicyMailer.with(organization: self.account.nil? ? self.agency : self.account)
+                                  .external_policy_status_changed(policy: self)
+                                  .deliver_now() unless self.in_system?
+        rescue Exception => e
+          @error = ModelError.create!(
+            kind: "external_policy_status_change_notification_error",
+            model_type: "Policy",
+            model_id: self.id,
+            information: e.to_json,
+            backtrace: e.backtrace.to_json,
+            description: "Unable to generate external Policy status change email for Policy ID: #{ self.id }<br><br>"
+          )
+        end
+      end
+    end
+  end
+
+  def set_status_changed_on
+    self.status_changed_on = DateTime.current
+  end
+
+  def inline_fix_external_policy_relationships
+    return true
+    # the below is commented out because it was breaking upload
+=begin
+    to_return = false
+    to_save = false
+    account_condition = (self.account_id.nil? || self.account_id == 0)
+    agency_condition = (self.agency_id.nil? || self.agency_id == 0)
+    unless self.policy_in_system
+      if account_condition || agency_condition
+        insurable = policy.primary_insurable
+
+        if account_condition
+          unless insurable.account_id == 0 || insurable.account_id.nil?
+            self.account_id = insurable.account_id
+            to_return = true
+            to_save = true
+          end
+        end
+
+        if agency_condition
+          unless self.account_id.nil? || self.account_id == 0
+            self.agency_id = Account.find(insurable.account_id).agency_id
+            to_return = true
+            to_save = true
+          end
+        end
+
+        self.save! if to_save
+
+      end
+    end
+    return to_return
+=end
   end
 end

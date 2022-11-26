@@ -3,24 +3,13 @@
 
 module Filterable
   extend ActiveSupport::Concern
-
   module ClassMethods
-    def filter(params)
-      to_return = self.all
-      unless params.blank?
-        params.each do |key, value|
-          if value.class == Hash
-            # Handle specially formatted search terms
-            if value.has_key?(:like)
-              to_return = to_return.where("#{key} LIKE ?", "%#{value[:like]}%")
-            end
-          else
-            # Put hash stuff in
-            to_return = to_return.where(Hash[key, value])
-          end
-        end
+    def filter(filtering_params)
+      results = self.where(nil) # create an anonymous scope
+      filtering_params&.each do |key, value|
+        results = results.public_send("filter_by_#{key}", value) unless value.nil?
       end
-      return(to_return)
+      results
     end
   end
 end

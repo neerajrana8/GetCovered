@@ -10,6 +10,108 @@ require 'fileutils'
 
 class QbeService
 
+  FIC_DEFAULT_KEYS = [ # add new entries to policy_application_contr.qbe_application in the locale files when adding to this
+    "year_built",
+    "number_of_units",
+    "gated",
+    "years_professionally_managed",
+    "in_city_limits"
+  ]
+
+  FIC_DEFAULTS = {
+    nil => { # default defaults
+      "year_built" => '1996',
+      "number_of_units" => 40,
+      "gated" => false,
+      "years_professionally_managed" => 0,
+      "in_city_limits" => false
+    },
+    'AZ' => {
+      "year_built" => '1994',
+      "number_of_units" => 150,
+      "gated" => false,
+      "years_professionally_managed" => 2,
+      "in_city_limits" => false
+    },
+    'WA' => {
+      "year_built" => Time.current.year - 25,
+      "number_of_units" => 50,
+      "gated" => false,
+      "years_professionally_managed" => 0,
+      "in_city_limits" => false
+    },
+    'FL' => {
+      "year_built" => Time.current.year - 25,
+      "number_of_units" => 50,
+      "gated" => false,
+      "years_professionally_managed" => 0,
+      "in_city_limits" => false
+    }
+  }.merge(['CO', 'DC', 'GA', 'IL', 'IN', 'LA', 'MA', 'MD', 'MI', 'MO', 'NV', 'OH', 'PA', 'SC', 'TN', 'TX', 'UT', 'VA'].map do |state|
+    [state, {
+      "year_built" => '1996',
+      "number_of_units" => 1,
+      "gated" => false,
+      "years_professionally_managed" => 0,
+      "in_city_limits" => false
+    }]
+  end.to_h)
+  
+  DEDUCTIBLE_CALCULATIONS = { # WARNING: note that this is in dollars for readability
+    'DEFAULT' => {
+      250 => { 'wind' => 1000, 'theft' => 500 },
+      500 => { 'wind' => 1000 }
+    },
+    'AR' => {
+      'wind_absent' => true,
+      250 =>  { 'theft' => 500 },
+      500 =>  {},
+      1000 => {}
+    },
+    'CT' => {
+      'wind_absent' => true,
+      250 => { 'theft' => 500 },
+      500 => {},
+      1000 => {}
+    },
+    'FL' => { 'wind_absent' => true, 'theft_absent' => true }, #MOOSE WARNING: nothing said about theft & wind... 
+    'NC' => {},
+    'NY' => {
+      'wind_absent' => true,
+      250 => { 'theft' => 500 }
+    }
+  }
+  
+  def self.get_applicability(community, traits, cip: nil)
+    # get the CIP
+    cip = community.carrier_profile(1) if cip.nil?
+    if cip.nil?
+      community.create_carrier_profile(1)
+      cip = community.carrier_profile(1)
+    end
+    # filter the traits
+    traits = traits.nil? ? {} : traits.transform_keys{|k| k.to_s }
+    return cip.traits.map do |k,v|
+      [k, traits.has_key?(k) ? traits[k] : v]
+    end.to_h.map do |k,v|
+      [k,
+        if v == 0 || v == 1 && ['city_limit', 'gated', 'professionally_managed', 'alarm_credit'].include?(k)
+          v == 0 ? false : true
+        else
+          v
+        end
+      ]
+    end.to_h
+  end
+
+  def self.carrier_id
+    1
+  end
+  
+  def self.carrier
+    @carrier ||= ::Carrier.find(1)
+  end
+  
   include HTTParty
   include ActiveModel::Validations
   include ActiveModel::Conversion
@@ -133,7 +235,7 @@ class QbeService
         prop_county: 'SAN FRANCISCO',
         prop_state: 'CA',
         prop_zipcode: 94_115,
-        pref_facility: 'MDU',
+        pref_facility: 'FIC',
         occupancy_type: 'OTHER',
         units_on_site: 156,
         age_of_facility: 1991,
@@ -145,7 +247,7 @@ class QbeService
         constr_type: 'M',
         ppc_code: nil,
         bceg_code: nil,
-        effective_date: Time.current.strftime('%m/%d/%Y')
+        effective_date: (Time.current + 1.day).strftime('%m/%d/%Y')
       }.merge!(args)
 
       options[:heading][:program][:ClientName] = args[:agent_code] || Rails.application.credentials.qbe[:agent_code]
@@ -153,24 +255,24 @@ class QbeService
       # / getRates
     elsif action == 'getMinPrem'
 
-      options[:data] = {
+      options[:data] = { # values that reeeally shouldn't be defaulted if not provided are commented out here
         type: 'Quote',
         senderID: Rails.application.credentials.qbe[:un],
         receiverID: 32_917,
         agent_id: Rails.application.credentials.qbe[:agent_code],
         current_system_date: Time.current.strftime('%m/%d/%Y'),
-        prop_city: 'San Francisco',
-        prop_county: 'SAN FRANCISCO',
-        prop_state: 'CA',
-        prop_zipcode: 94_115,
-        city_limit: 0,
-        pref_facility: 'MDU',
+        # prop_city: 'San Francisco',
+        # prop_county: 'SAN FRANCISCO',
+        # prop_state: 'CA',
+        # prop_zipcode: 94_115,
+        pref_facility: 'FIC',
         occupancy_type: 'OTHER',
-        units_on_site: 156,
-        age_of_facility: 1991,
-        gated_community: 0,
-        prof_managed: 1,
-        prof_managed_year: 1991,
+        # city_limit: 0,
+        # units_on_site: 156,
+        # age_of_facility: 1991,
+        # gated_community: 0,
+        # prof_managed: 1,
+        # prof_managed_year: 1991,
         effective_date: Time.current.strftime('%m/%d/%Y'),
         premium: 1.00,
         premium_pif: 0.75,
@@ -190,26 +292,27 @@ class QbeService
         application = obj.policy_application
         premium = obj.policy_premium
         address = application.primary_insurable().primary_address()
-        cov_c = application.insurable_rates.coverage_c.take
+        cip = application.primary_insurable.parent_community.carrier_profile(1)
 
         options[:data] = {
           quote: obj,
           application: application,
           premium: premium,
           billing_strategy: application.billing_strategy,
-          optional_rates: application.insurable_rates.optional,
-          coverage_c: cov_c,
-          coverage_d: address.state == 'CT' ? (cov_c.coverage_limits['coverage_c'] * 0.3) : (cov_c.coverage_limits['coverage_c'] * 0.2),
-          liability: application.insurable_rates.liability.take,
           community: application.primary_insurable().parent_community(),
           carrier_profile: application.primary_insurable().parent_community().carrier_profile(1),
           address: address,
+          city: cip.data&.[]("county_resolution")&.[]("matches")&.find{|m| m["seq"] == cip.data["county_resolution"]["selected"] }&.[]("locality") || address.city,
+          county: cip.data&.[]("county_resolution")&.[]("matches")&.find{|m| m["seq"] == cip.data["county_resolution"]["selected"] }&.[]("county") || address.county, # we use the QBE formatted one in case .titlecase killed dashes etc.
           user: application.policy_users.where(primary: true).take,
           users: application.policy_users.where.not(primary: true),
           unit: application.primary_insurable,
-          account: application.account,
-          agency: application.agency
-        }
+          account: application.primary_insurable.account_id ? application.primary_insurable.account : nil, # PM account is passed as additional interest
+          pm_info: application.extra_settings&.[]('additional_interest'), # if account is nil, will use this instead unless blank
+          agency: application.agency,
+          units_on_site: application.primary_insurable.parent_community.units.confirmed.count,
+          coverage_selections: application.coverage_selections
+        }.merge!(args)
 
         options[:heading][:program][:ClientName] = args[:agent_code] || Rails.application.credentials.qbe[:agent_code]
 
@@ -219,14 +322,24 @@ class QbeService
     elsif action == 'sendCancellationList'
 
       request_time = Time.current
-      policies_list = []
+      range = nil
+      case request_time.wday
+      when 1
+        range = (request_time - 4.days).to_date..(request_time - 2.days).to_date
+      when 2..5
+        range = request_time - 2.days
+      end
 
-      policies_list.concat Policy.current.unpaid.where(billing_behind_since: Time.current.to_date - 1.days)
-      policies_list.concat Policy.current.RESCINDED
+      policies_list = Array.new
+
+      unless range.nil?
+        policies_list.concat Policy.current.where(billing_behind_since: range, billing_status: "BEHIND", carrier_id: 1, policy_type_id: 1)
+        policies_list.concat Policy.current.where(carrier_id: 1, policy_type_id: 1, billing_status: 'RESCINDED')
+      end
 
       options[:data] = {
         client_dt: request_time.strftime('%m/%d/%Y'),
-        version: ENV.fetch('APP_VERSION'),
+        version: "2.4.23",
         rq_uid: "CL#{request_time.strftime('%d%m%Y')}",
         transaction_request_date: request_time.strftime('%m/%d/%Y'),
         policies: policies_list
@@ -281,6 +394,7 @@ class QbeService
 
       begin
         call_data[:response] = HTTParty.post(Rails.application.credentials.qbe[:uri][ENV['RAILS_ENV'].to_sym],
+          timeout: 90, # added to prevent timeout after 15s
           body: compiled_rxml,
           headers: {
             'PreAuthenticate' => 'TRUE',
@@ -577,10 +691,30 @@ class QbeService
   def production_device_codes
     %w[F S B FB SB]
   end
+  
+  
+  def self.validate_qbe_additional_interest(hash)
+    case hash['entity_type']
+      when 'company'
+        return 'msi_service.additional_interest.company_name_required' if hash['company_name'].blank?
+      when 'person'
+        return 'msi_service.additional_interest.first_name_required' if hash['first_name'].blank?
+        return 'msi_service.additional_interest.last_name_required' if hash['last_name'].blank?
+      else
+        return 'msi_service.additional_interest.invalid_entity_type'
+    end
+    return 'qbe_service.additional_interest.address_line_1_required' if hash['addr1'].blank?
+    return 'qbe_service.additional_interest.address_city_required' if hash['city'].blank?
+    return 'qbe_service.additional_interest.address_state_required' if hash['state'].blank?
+    return 'qbe_service.additional_interest.address_state_invalid' if !hash['state'].blank? && !::Address.states.keys.include?(hash['state'].upcase)
+    return 'qbe_service.additional_interest.address_zip_required' if hash['zip'].blank?
+    return 'qbe_service.additional_interest.address_zip_invalid' if !hash['zip'].blank? && (case hash['zip'].size; when 5; !hash['zip'].scan(/\D/).blank?; when 10; hash['zip'][5] != '-' || hash['zip'].scan(/\D/) != '-'; else; true; end)
+    return nil
+  end
 
   private
 
-  def auth_headers
-    Base64.encode64("#{Rails.application.credentials.qbe[:un]}:#{Rails.application.credentials.qbe[:pw][ENV["RAILS_ENV"].to_sym]}")
-  end
+    def auth_headers
+      Base64.encode64("#{Rails.application.credentials.qbe[:un]}:#{Rails.application.credentials.qbe[:pw][ENV["RAILS_ENV"].to_sym]}")
+    end
 end

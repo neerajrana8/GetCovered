@@ -1,3 +1,14 @@
+# == Schema Information
+#
+# Table name: carrier_agencies
+#
+#  id                  :bigint           not null, primary key
+#  external_carrier_id :string
+#  carrier_id          :bigint
+#  agency_id           :bigint
+#  created_at          :datetime         not null
+#  updated_at          :datetime         not null
+#
 ##
 # Carrier Agency Model
 # file: +app/models/carrier_agency.rb+
@@ -15,6 +26,7 @@ class CarrierAgency < ApplicationRecord
     through: :carrier_agency_policy_types
   has_many :carrier_agency_authorizations, dependent: :destroy
   has_many :histories, as: :recordable
+  has_many :carrier_agency_policy_types
   def billing_strategies; ::BillingStrategy.where(carrier_id: self.carrier_id, agency_id: self.agency_id); end
   
   accepts_nested_attributes_for :carrier_agency_policy_types,
@@ -40,6 +52,19 @@ class CarrierAgency < ApplicationRecord
 
   def parent_carrier_agency
     CarrierAgency.find_by(carrier: carrier, agency: agency.agency) if agency.agency.present?
+  end
+  
+  def get_agent_code
+    if self.carrier_id == QbeService.carrier_id
+      return self.external_carrier_id unless self.external_carrier_id.blank?
+      self.agency.agency_hierarchy(include_self: false).each do |ag|
+        val = ::CarrierAgency.where(carrier_id: self.carrier_id, agency: ag).take&.external_carrier_id
+        return val unless val.blank?
+      end
+      return CarrierAgency.includes(:agency).references(:agencies).where(agencies: { master_agency: true }, carrier_id: self.carrier_id).take&.external_carrier_id
+    else
+      return self.external_carrier_id
+    end
   end
   
   private

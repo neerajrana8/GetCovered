@@ -41,7 +41,9 @@ describe 'Agency invitation spec', type: :request do
   def staff_params(agency)
     {
       staff: {
-        email: 'new_test@getcovered.com',
+        email: 'new_test_agency_staff@getcovered.com',
+        uid: 'new_test_agency_staff@getcovered.com',
+        provider: 'emails',
         organizable_id: agency.id,
         organizable_type: 'Agency',
         role: 'agent'
@@ -125,7 +127,7 @@ describe 'Agency api spec', type: :request do
     get_sub_agencies_short
     sub_agencies = JSON.parse(response.body)
     expect(sub_agencies.map { |el| el['agency_id'] }.uniq).to eq([@agency.id])
-    expect(sub_agencies.first.keys).to eq(%w[id title enabled agency_id])
+    expect(sub_agencies.first.keys).to eq(%w[id title agency_id enabled])
   end
 
   it 'should get only agencies in short response', perform_enqueued: true do

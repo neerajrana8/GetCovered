@@ -1,9 +1,28 @@
+# == Schema Information
+#
+# Table name: carriers
+#
+#  id                      :bigint           not null, primary key
+#  title                   :string
+#  slug                    :string
+#  call_sign               :string
+#  integration_designation :string
+#  syncable                :boolean          default(FALSE), not null
+#  rateable                :boolean          default(FALSE), not null
+#  quotable                :boolean          default(FALSE), not null
+#  bindable                :boolean          default(FALSE), not null
+#  verifiable              :boolean          default(FALSE), not null
+#  enabled                 :boolean          default(FALSE), not null
+#  settings                :jsonb            not null
+#  created_at              :datetime         not null
+#  updated_at              :datetime         not null
+#  commission_strategy_id  :bigint
+#
 ##
 # Carrier Model
 # file: +app/models/carrier.rb+
 
 class Carrier < ApplicationRecord
-  include ElasticsearchSearchable
   include SetCallSign
   include SetSlug
   include RecordChange
@@ -52,30 +71,19 @@ class Carrier < ApplicationRecord
   validates_presence_of :slug, :call_sign
 
   accepts_nested_attributes_for :carrier_policy_types, allow_destroy: true
-
-  settings index: { number_of_shards: 1 } do
-    mappings dynamic: 'false' do
-      indexes :title, type: :text, analyzer: 'english'
-      indexes :call_sign, type: :text, analyzer: 'english'
-    end
-  end
   
   def uses_stripe?
     return(![5,6].include?(self.id))
   end
 
   def get_or_create_universal_parent_commission_strategy
-    if commission_strategy.nil?
-      new_commission_strategy = ::CommissionStrategy.create!(
-        title: "#{title} Commission",
-        percentage: 100,
-        recipient: self,
-        commission_strategy: nil
-      )
-
-      update(commission_strategy_id: new_commission_strategy.id)
-    end
-    commission_strategy
+    self.update(commission_strategy: ::CommissionStrategy.create!( 
+      title: "#{self.title} Commission",
+      percentage: 100,
+      recipient: self,
+      commission_strategy: nil
+    )) if self.commission_strategy.nil?
+    return self.commission_strategy
   end
 
   private

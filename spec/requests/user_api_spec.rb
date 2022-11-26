@@ -4,9 +4,6 @@ include ActionController::RespondWith
 describe 'User API spec', type: :request do
   before :all do
     @user = create_user
-    User.__elasticsearch__.client.indices.delete index: User.index_name rescue nil
-    User.__elasticsearch__.create_index!
-    User.import force: true
   end
   
   before :each do
@@ -44,26 +41,26 @@ describe 'User API spec', type: :request do
     expect(result["errors"]).to eq({"current_password"=>["is invalid"]})
   end
   
-  context 'for StaffAccount role' do
-    before :all do
-      User.create(email: "newtest@getcovered.com")
-      @staff = create_account_for FactoryBot.create(:agency)
-    end
-    
-    before :each do
-      login_staff(@staff)
-      @headers = get_auth_headers_from_login_response_headers(response)
-    end
-    
-    it 'should autocomplete search users by email' do
-      user = ::User.create(email: 'newemail@test.com', password: 'foobar')
-      ::User.__elasticsearch__.refresh_index!
-      get search_v2_users_path, params: {"query" => 'newemail'}, headers: @headers
-      result = JSON.parse response.body
-      expect(result).not_to be_empty
-      expect(result.first["id"]).to eq(user.id)
-    end
-  end
+  # context 'for StaffAccount role' do
+  #   before :all do
+  #     User.create(email: "newtest@getcovered.com")
+  #     @staff = create_account_for FactoryBot.create(:agency)
+  #   end
+  #
+  #   before :each do
+  #     login_staff(@staff)
+  #     @headers = get_auth_headers_from_login_response_headers(response)
+  #   end
+  #
+  #   it 'should autocomplete search users by email' do
+  #     user = ::User.create(email: 'newemail@test.com', password: 'foobar')
+  #     ::User.__elasticsearch__.refresh_index!
+  #     get search_v2_users_path, params: {"query" => 'newemail'}, headers: @headers
+  #     result = JSON.parse response.body
+  #     expect(result).not_to be_empty
+  #     expect(result.first["id"]).to eq(user.id)
+  #   end
+  # end
   
   
   def correct_password_params

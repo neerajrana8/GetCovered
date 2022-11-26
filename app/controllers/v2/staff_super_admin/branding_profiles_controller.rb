@@ -5,32 +5,34 @@ module V2
 
       before_action :set_branding_profile,
                     only: %i[update show destroy faqs faq_create faq_update faq_question_create
-                             faq_question_update faq_delete faq_question_delete attach_images export update_from_file]
+                             faq_question_update faq_delete faq_question_delete attach_images export update_from_file
+second_logo_delete second_footer_logo_delete]
 
       before_action :set_agency, only: [:import]
-      
+
       def create
-        profileable = 
+        profileable =
           case branding_profile_params[:profileable_type]
           when 'Account'
             Account.find_by_id(branding_profile_params[:profileable_id])
           when 'Agency'
             Agency.find_by_id(branding_profile_params[:profileable_id])
           end
-          
-        
+
+
         if profileable.present?
-          branding_profile_outcome = 
+          branding_profile_outcome =
             case profileable
             when Agency
-              BrandingProfiles::CreateFromDefault.run(agency: profileable)
+              ::BrandingProfiles::CreateFromDefault.run(agency: profileable)
             when Account
-              BrandingProfiles::CreateFromDefault.run(account: profileable)
+              ::BrandingProfiles::CreateFromDefault.run(account: profileable)
             end
-            
-          
+
           if branding_profile_outcome.valid?
             @branding_profile = branding_profile_outcome.result
+            ::BrandingProfiles::Populate.run!(branding_profile: @branding_profile)
+
             render template: 'v2/shared/branding_profiles/show', status: :created
           else
             render json: standard_error(
@@ -187,7 +189,7 @@ module V2
 
         params.require(:branding_profile).permit(
           :default, :id, :profileable_id, :profileable_type,
-          :url, :footer_logo_url, :logo_url, :subdomain, :subdomain_test, :global_default, :enabled,
+          :url, :footer_logo_url, :second_footer_logo_url, :logo_url, :subdomain, :subdomain_test, :global_default, :enabled,
           images: [], branding_profile_attributes_attributes: %i[id name value attribute_type],
           styles: {}
         )

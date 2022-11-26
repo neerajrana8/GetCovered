@@ -1,6 +1,37 @@
 # Get Covered 
 [![CircleCI](https://circleci.com/gh/getcoveredllc/GetCovered-V2.svg?style=svg&circle-token=0052abe2ebc6773f064fe6582363f1cf58e28dcd)](https://app.circleci.com/pipelines/github/getcoveredllc/GetCovered-V2)
 
+## Setup
+
+### Requirements
+
+* Ruby version according to `.ruby-version` (3.0.1 at the moment)
+* Docker
+* rvm (https://rvm.io) to manage ruby versions
+
+# Install
+
+* Choose required Ruby version `rvm use 3.0.1`
+* Install dependencies `bundle install`
+* `export RAILS_ENV=development` // development by default
+
+* This is **bad practice** step, needs to be removed (mentioned in todos and issues):
+  * Ask for MASTER_KEY and put it inside config/master.key to decrypto credentials.yml.enc
+
+* Installing containers from scratch `rails docker:install`
+* Load seed data `rails docker:development:seed`
+* Open in browser http://localhost:3000/v2/health-check, it should return ```{"ok":true,"node":"It's alive!"}```
+
+
+# Tests
+
+* Run tests in a **test_container**** environment `docker-compose run -e "RAILS_ENV=test_container" web bundle exec rspec`
+
+## TODO's and Issues
+
+* Split environemnt credentials to separate credential files so you don't need to give developers MASTER KEY (rails 6 supports that)
+* Setup Swagger properly
+
 #### API Layer 
 #### Version 2.0.0/development
 
@@ -210,3 +241,13 @@ render(
   status: 401
 )
 ```
+
+##### Using data migrations
+
+Currently we split schema migrations and data migrations to keep track of changes on prod. Please each time when you understand that there is a need to change any field value on prod or dev create data migration and run deploy with steps decribed below. For separating migrations we use gem https://github.com/ilyakatz/data-migrate 
+1) create data migration with command ```  rails g data_migration add_this_to_that ``` 
+2) find your newly created migration in db/data folder
+3) add any data updates which need to be applied (don't forget about up and down methods to make it revertable)
+4) run ``` rake data:migrate ``` and check how it goes. if needed use ``` rake data:rollback  ``` to revert data migration and fix if needed 
+5) after successful migration db/data_schema.rb file will be updated with new version 
+6) commit changes and after deploy it will be automatically applied after successful schema migration (``` rake db:migrate ``` ). if schema migration failed data migration will not be applied. 

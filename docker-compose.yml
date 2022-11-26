@@ -5,6 +5,8 @@ services:
     image: postgres
     volumes:
       - ./tmp/db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: password
   redis:
     container_name: gc_v2_db_redis
     image: redis
@@ -16,14 +18,7 @@ services:
     restart: always    
     privileged: true
     sysctls:
-      net.core.somaxconn: 1024  
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:6.6.0
-    hostname: elasticsearch
-    ports:
-      - "9200:9200"
-    volumes:
-      - ./tmp/elasticsearch/data:/usr/share/elasticsearch/data
+      net.core.somaxconn: 1024
   web:
     build: .
     command: bash -c "rm -f tmp/pids/server.pid && bundle exec rails s -p 3000 -b '0.0.0.0' -e 'development'" 
@@ -34,7 +29,6 @@ services:
     depends_on:
       - db
       - redis
-      - elasticsearch
       - sftp
     env_file:
       - .env
@@ -48,7 +42,6 @@ services:
     depends_on:
       - db
       - redis
-      - elasticsearch
     volumes:
       - .:/getcovered
     env_file:

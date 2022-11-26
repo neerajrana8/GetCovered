@@ -1,3 +1,20 @@
+# == Schema Information
+#
+# Table name: archived_line_items
+#
+#  id                      :bigint           not null, primary key
+#  title                   :string
+#  price                   :integer          default(0)
+#  invoice_id              :bigint
+#  created_at              :datetime         not null
+#  updated_at              :datetime         not null
+#  refundability           :integer          not null
+#  category                :integer          default("uncategorized"), not null
+#  priced_in               :boolean          default(FALSE), not null
+#  collected               :integer          default(0), not null
+#  proration_reduction     :integer          default(0), not null
+#  full_refund_before_date :date
+#
 class ArchivedLineItem < ApplicationRecord
   belongs_to :invoice, class_name: "ArchivedInvoice", foreign_key: "invoice_id"
 

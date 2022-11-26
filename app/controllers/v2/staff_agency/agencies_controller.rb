@@ -44,7 +44,7 @@ module V2
 
       def create
         if create_allowed?
-          outcome = Agencies::Create.run(
+          outcome = ::Agencies::Create.run(
             agency_params: create_params.to_h,
             parent_agency: current_staff.current_role(organizable: 'Agency').organizable,
             creator: current_staff

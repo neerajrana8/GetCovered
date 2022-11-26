@@ -1,3 +1,30 @@
+# == Schema Information
+#
+# Table name: addresses
+#
+#  id               :bigint           not null, primary key
+#  street_number    :string
+#  street_name      :string
+#  street_two       :string
+#  city             :string
+#  state            :integer
+#  county           :string
+#  zip_code         :string
+#  plus_four        :string
+#  country          :string
+#  full             :string
+#  full_searchable  :string
+#  latitude         :float
+#  longitude        :float
+#  timezone         :string
+#  primary          :boolean          default(FALSE), not null
+#  addressable_type :string
+#  addressable_id   :bigint
+#  created_at       :datetime         not null
+#  updated_at       :datetime         not null
+#  searchable       :boolean          default(FALSE)
+#  neighborhood     :string
+#
 # Address model
 # file: +app/models/address.rb+
 
@@ -25,11 +52,97 @@ class Address < ApplicationRecord
                 VI: 58, AE: 59, AP: 60, AA: 61 }
 
   # The great hell list of street abbreviations
-  STREET_ABBREVIATIONS = {"ALLEY"=>"ALY", "ALLEE"=>"ALY", "ALLY"=>"ALY", "ANEX"=>"ANX", "ANNEX"=>"ANX", "ANNX"=>"ANX", "ARCADE"=>"ARC", "AVENUE"=>"AVE", "AV"=>"AVE", "AVEN"=>"AVE", "AVENU"=>"AVE", "AVN"=>"AVE", "AVNUE"=>"AVE", "BAYOU"=>"BYU", "BAYOO"=>"BYU", "BEACH"=>"BCH", "BEND"=>"BND", "BLUFF"=>"BLF", "BLUF"=>"BLF", "BLUFFS"=>"BLFS", "BOTTOM"=>"BTM", "BOT"=>"BTM", "BOTTM"=>"BTM", "BOULEVARD"=>"BLVD", "BOUL"=>"BLVD", "BOULV"=>"BLVD", "BRANCH"=>"BR", "BRNCH"=>"BR", "BRIDGE"=>"BRG", "BRDGE"=>"BRG", "BROOK"=>"BRK", "BROOKS"=>"BRKS", "BURG"=>"BG", "BURGS"=>"BGS", "BYPASS"=>"BYP", "BYPA"=>"BYP", "BYPAS"=>"BYP", "BYPS"=>"BYP", "CAMP"=>"CP", "CMP"=>"CP", "CANYON"=>"CYN", "CANYN"=>"CYN", "CNYN"=>"CYN", "CAPE"=>"CPE", "CAUSEWAY"=>"CSWY", "CAUSWA"=>"CSWY", "CENTER"=>"CTR", "CEN"=>"CTR", "CENT"=>"CTR", "CENTR"=>"CTR", "CENTRE"=>"CTR", "CNTER"=>"CTR", "CNTR"=>"CTR", "CENTERS"=>"CTRS", "CIRCLE"=>"CIR", "CIRC"=>"CIR", "CIRCL"=>"CIR", "CRCL"=>"CIR", "CRCLE"=>"CIR", "CIRCLES"=>"CIRS", "CLIFF"=>"CLF", "CLIFFS"=>"CLFS", "CLUB"=>"CLB", "COMMON"=>"CMN", "COMMONS"=>"CMNS", "CORNER"=>"COR", "CORNERS"=>"CORS", "COURSE"=>"CRSE", "COURT"=>"CT", "COURTS"=>"CTS", "COVE"=>"CV", "COVES"=>"CVS", "CREEK"=>"CRK", "CRESCENT"=>"CRES", "CRSENT"=>"CRES", "CRSNT"=>"CRES", "CREST"=>"CRST", "CROSSING"=>"XING", "CRSSNG"=>"XING", "CROSSROAD"=>"XRD", "CROSSROADS"=>"XRDS", "CURVE"=>"CURV", "DALE"=>"DL", "DAM"=>"DM", "DIVIDE"=>"DV", "DIV"=>"DV", "DVD"=>"DV", "DRIVE"=>"DR", "DRIV"=>"DR", "DRV"=>"DR", "DRIVES"=>"DRS", "ESTATE"=>"EST", "ESTATES"=>"ESTS", "EXPRESSWAY"=>"EXPY", "EXP"=>"EXPY", "EXPR"=>"EXPY", "EXPRESS"=>"EXPY", "EXPW"=>"EXPY", "EXTENSION"=>"EXT", "EXTN"=>"EXT", "EXTNSN"=>"EXT", "EXTENSIONS"=>"EXTS", "FALLS"=>"FLS", "FERRY"=>"FRY", "FRRY"=>"FRY", "FIELD"=>"FLD", "FIELDS"=>"FLDS", "FLAT"=>"FLT", "FLATS"=>"FLTS", "FORD"=>"FRD", "FORDS"=>"FRDS", "FOREST"=>"FRST", "FORESTS"=>"FRST", "FORGE"=>"FRG", "FORG"=>"FRG", "FORGES"=>"FRGS", "FORK"=>"FRK", "FORKS"=>"FRKS", "FORT"=>"FT", "FRT"=>"FT", "FREEWAY"=>"FWY", "FREEWY"=>"FWY", "FRWAY"=>"FWY", "FRWY"=>"FWY", "GARDEN"=>"GDN", "GARDN"=>"GDN", "GRDEN"=>"GDN", "GRDN"=>"GDN", "GARDENS"=>"GDNS", "GRDNS"=>"GDNS", "GATEWAY"=>"GTWY", "GATEWY"=>"GTWY", "GATWAY"=>"GTWY", "GTWAY"=>"GTWY", "GLEN"=>"GLN", "GLENS"=>"GLNS", "GREEN"=>"GRN", "GREENS"=>"GRNS", "GROVE"=>"GRV", "GROV"=>"GRV", "GROVES"=>"GRVS", "HARBOR"=>"HBR", "HARB"=>"HBR", "HARBR"=>"HBR", "HRBOR"=>"HBR", "HARBORS"=>"HBRS", "HAVEN"=>"HVN", "HEIGHTS"=>"HTS", "HT"=>"HTS", "HIGHWAY"=>"HWY", "HIGHWY"=>"HWY", "HIWAY"=>"HWY", "HIWY"=>"HWY", "HWAY"=>"HWY", "HILL"=>"HL", "HILLS"=>"HLS", "HOLLOW"=>"HOLW", "HLLW"=>"HOLW", "HOLLOWS"=>"HOLW", "HOLWS"=>"HOLW", "INLET"=>"INLT", "ISLAND"=>"IS", "ISLND"=>"IS", "ISLANDS"=>"ISS", "ISLNDS"=>"ISS", "ISLES"=>"ISLE", "JUNCTION"=>"JCT", "JCTION"=>"JCT", "JCTN"=>"JCT", "JUNCTN"=>"JCT", "JUNCTON"=>"JCT", "JUNCTIONS"=>"JCTS", "JCTNS"=>"JCTS", "KEY"=>"KY", "KEYS"=>"KYS", "KNOLL"=>"KNL", "KNOL"=>"KNL", "KNOLLS"=>"KNLS", "LAKE"=>"LK", "LAKES"=>"LKS", "LAND"=>"LAND", "LANDING"=>"LNDG", "LNDNG"=>"LNDG", "LANE"=>"LN", "LIGHT"=>"LGT", "LIGHTS"=>"LGTS", "LOAF"=>"LF", "LOCK"=>"LCK", "LOCKS"=>"LCKS", "LODGE"=>"LDG", "LDGE"=>"LDG", "LODG"=>"LDG", "LOOPS"=>"LOOP", "MALL"=>"MALL", "MANOR"=>"MNR", "MANORS"=>"MNRS", "MEADOW"=>"MDW", "MEADOWS"=>"MDWS", "MDW"=>"MDW", "MEDOWS"=>"MDWS", "MEWS"=>"MEWS", "MILL"=>"ML", "MILLS"=>"MLS", "MISSION"=>"MSN", "MISSN"=>"MSN", "MSSN"=>"MSN", "MOTORWAY"=>"MTWY", "MOUNT"=>"MT", "MNT"=>"MT", "MOUNTAIN"=>"MTN", "MNTAIN"=>"MTN", "MNTN"=>"MTN", "MOUNTIN"=>"MTN", "MTIN"=>"MTN", "MOUNTAINS"=>"MTNS", "MNTNS"=>"MTNS", "NECK"=>"NCK", "ORCHARD"=>"ORCH", "ORCHRD"=>"ORCH", "OVL"=>"OVAL", "OVERPASS"=>"OPAS", "PARKS"=>"PARK", "PARKWAY"=>"PKWY", "PARKWY"=>"PKWY", "PKWAY"=>"PKWY", "PKY"=>"PKWY", "PARKWAYS"=>"PKWY", "PKWYS"=>"PKWY", "PASS"=>"PASS", "PASSAGE"=>"PSGE", "PATHS"=>"PATH", "PIKES"=>"PIKE", "PINE"=>"PNE", "PINES"=>"PNES", "PLACE"=>"PL", "PLAIN"=>"PLN", "PLAINS"=>"PLNS", "PLAZA"=>"PLZ", "PLZA"=>"PLZ", "POINT"=>"PT", "POINTS"=>"PTS", "PORT"=>"PRT", "PORTS"=>"PRTS", "PRAIRIE"=>"PR", "PRR"=>"PR", "RADIAL"=>"RADL", "RAD"=>"RADL", "RADIEL"=>"RADL", "RAMP"=>"RAMP", "RANCH"=>"RNCH", "RANCHES"=>"RNCH", "RNCHS"=>"RNCH", "RAPID"=>"RPD", "RAPIDS"=>"RPDS", "REST"=>"RST", "RIDGE"=>"RDG", "RDGE"=>"RDG", "RIDGES"=>"RDGS", "RIVER"=>"RIV", "RVR"=>"RIV", "RIVR"=>"RIV", "ROAD"=>"RD", "ROADS"=>"RDS", "ROUTE"=>"RTE", "ROW"=>"ROW", "RUE"=>"RUE", "RUN"=>"RUN", "SHOAL"=>"SHL", "SHOALS"=>"SHLS", "SHORE"=>"SHR", "SHOAR"=>"SHR", "SHORES"=>"SHRS", "SHOARS"=>"SHRS", "SKYWAY"=>"SKWY", "SPRING"=>"SPG", "SPNG"=>"SPG", "SPRNG"=>"SPG", "SPRINGS"=>"SPGS", "SPNGS"=>"SPGS", "SPRNGS"=>"SPGS", "SPURS"=>"SPUR", "SQUARE"=>"SQ", "SQR"=>"SQ", "SQRE"=>"SQ", "SQU"=>"SQ", "SQUARES"=>"SQS", "SQRS"=>"SQS", "STATION"=>"STA", "STATN"=>"STA", "STN"=>"STA", "STRAVENUE"=>"STRA", "STRAV"=>"STRA", "STRAVEN"=>"STRA", "STRAVN"=>"STRA", "STRVN"=>"STRA", "STRVNUE"=>"STRA", "STREAM"=>"STRM", "STREME"=>"STRM", "STREET"=>"ST", "STRT"=>"ST", "STR"=>"ST", "STREETS"=>"STS", "SUMMIT"=>"SMT", "SUMIT"=>"SMT", "SUMITT"=>"SMT", "TERRACE"=>"TER", "TERR"=>"TER", "THROUGHWAY"=>"TRWY", "TRACE"=>"TRCE", "TRACES"=>"TRCE", "TRACK"=>"TRAK", "TRACKS"=>"TRAK", "TRK"=>"TRAK", "TRKS"=>"TRAK", "TRAFFICWAY"=>"TRFY", "TRAIL"=>"TRL", "TRAILS"=>"TRL", "TRLS"=>"TRL", "TRAILER"=>"TRLR", "TRLRS"=>"TRLR", "TUNNEL"=>"TUNL", "TUNEL"=>"TUNL", "TUNLS"=>"TUNL", "TUNNELS"=>"TUNL", "TUNNL"=>"TUNL", "TURNPIKE"=>"TPKE", "TRNPK"=>"TPKE", "TURNPK"=>"TPKE", "UNDERPASS"=>"UPAS", "UNION"=>"UN", "UNIONS"=>"UNS", "VALLEY"=>"VLY", "VALLY"=>"VLY", "VLLY"=>"VLY", "VALLEYS"=>"VLYS", "VIADUCT"=>"VIA", "VDCT"=>"VIA", "VIADCT"=>"VIA", "VIEW"=>"VW", "VIEWS"=>"VWS", "VILLAGE"=>"VLG", "VILL"=>"VLG", "VILLAG"=>"VLG", "VILLG"=>"VLG", "VILLIAGE"=>"VLG", "VILLAGES"=>"VLGS", "VILLE"=>"VL", "VISTA"=>"VIS", "VIST"=>"VIS", "VST"=>"VIS", "VSTA"=>"VIS", "WALKS"=>"WALK", "WALL"=>"WALL", "WY"=>"WAY", "WAYS"=>"WAYS", "WELL"=>"WL", "WELLS"=>"WLS", "ALY"=>"ALY", "ANX"=>"ANX", "ARC"=>"ARC", "AVE"=>"AVE", "BYU"=>"BYU", "BCH"=>"BCH", "BND"=>"BND", "BLF"=>"BLF", "BLFS"=>"BLFS", "BTM"=>"BTM", "BLVD"=>"BLVD", "BR"=>"BR", "BRG"=>"BRG", "BRK"=>"BRK", "BRKS"=>"BRKS", "BG"=>"BG", "BGS"=>"BGS", "BYP"=>"BYP", "CP"=>"CP", "CYN"=>"CYN", "CPE"=>"CPE", "CSWY"=>"CSWY", "CTR"=>"CTR", "CTRS"=>"CTRS", "CIR"=>"CIR", "CIRS"=>"CIRS", "CLF"=>"CLF", "CLFS"=>"CLFS", "CLB"=>"CLB", "CMN"=>"CMN", "CMNS"=>"CMNS", "COR"=>"COR", "CORS"=>"CORS", "CRSE"=>"CRSE", "CT"=>"CT", "CTS"=>"CTS", "CV"=>"CV", "CVS"=>"CVS", "CRK"=>"CRK", "CRES"=>"CRES", "CRST"=>"CRST", "XING"=>"XING", "XRD"=>"XRD", "XRDS"=>"XRDS", "CURV"=>"CURV", "DL"=>"DL", "DM"=>"DM", "DV"=>"DV", "DR"=>"DR", "DRS"=>"DRS", "EST"=>"EST", "ESTS"=>"ESTS", "EXPY"=>"EXPY", "EXT"=>"EXT", "EXTS"=>"EXTS", "FLS"=>"FLS", "FRY"=>"FRY", "FLD"=>"FLD", "FLDS"=>"FLDS", "FLT"=>"FLT", "FLTS"=>"FLTS", "FRD"=>"FRD", "FRDS"=>"FRDS", "FRST"=>"FRST", "FRG"=>"FRG", "FRGS"=>"FRGS", "FRK"=>"FRK", "FRKS"=>"FRKS", "FT"=>"FT", "FWY"=>"FWY", "GDN"=>"GDN", "GDNS"=>"GDNS", "GTWY"=>"GTWY", "GLN"=>"GLN", "GLNS"=>"GLNS", "GRN"=>"GRN", "GRNS"=>"GRNS", "GRV"=>"GRV", "GRVS"=>"GRVS", "HBR"=>"HBR", "HBRS"=>"HBRS", "HVN"=>"HVN", "HTS"=>"HTS", "HWY"=>"HWY", "HL"=>"HL", "HLS"=>"HLS", "HOLW"=>"HOLW", "INLT"=>"INLT", "IS"=>"IS", "ISS"=>"ISS", "ISLE"=>"ISLE", "JCT"=>"JCT", "JCTS"=>"JCTS", "KY"=>"KY", "KYS"=>"KYS", "KNL"=>"KNL", "KNLS"=>"KNLS", "LK"=>"LK", "LKS"=>"LKS", "LNDG"=>"LNDG", "LN"=>"LN", "LGT"=>"LGT", "LGTS"=>"LGTS", "LF"=>"LF", "LCK"=>"LCK", "LCKS"=>"LCKS", "LDG"=>"LDG", "LOOP"=>"LOOP", "MNR"=>"MNR", "MNRS"=>"MNRS", "MDWS"=>"MDWS", "ML"=>"ML", "MLS"=>"MLS", "MSN"=>"MSN", "MTWY"=>"MTWY", "MT"=>"MT", "MTN"=>"MTN", "MTNS"=>"MTNS", "NCK"=>"NCK", "ORCH"=>"ORCH", "OVAL"=>"OVAL", "OPAS"=>"OPAS", "PARK"=>"PARK", "PKWY"=>"PKWY", "PSGE"=>"PSGE", "PATH"=>"PATH", "PIKE"=>"PIKE", "PNE"=>"PNE", "PNES"=>"PNES", "PL"=>"PL", "PLN"=>"PLN", "PLNS"=>"PLNS", "PLZ"=>"PLZ", "PT"=>"PT", "PTS"=>"PTS", "PRT"=>"PRT", "PRTS"=>"PRTS", "PR"=>"PR", "RADL"=>"RADL", "RNCH"=>"RNCH", "RPD"=>"RPD", "RPDS"=>"RPDS", "RST"=>"RST", "RDG"=>"RDG", "RDGS"=>"RDGS", "RIV"=>"RIV", "RD"=>"RD", "RDS"=>"RDS", "RTE"=>"RTE", "SHL"=>"SHL", "SHLS"=>"SHLS", "SHR"=>"SHR", "SHRS"=>"SHRS", "SKWY"=>"SKWY", "SPG"=>"SPG", "SPGS"=>"SPGS", "SPUR"=>"SPUR", "SQ"=>"SQ", "SQS"=>"SQS", "STA"=>"STA", "STRA"=>"STRA", "STRM"=>"STRM", "ST"=>"ST", "STS"=>"STS", "SMT"=>"SMT", "TER"=>"TER", "TRWY"=>"TRWY", "TRCE"=>"TRCE", "TRAK"=>"TRAK", "TRFY"=>"TRFY", "TRL"=>"TRL", "TRLR"=>"TRLR", "TUNL"=>"TUNL", "TPKE"=>"TPKE", "UPAS"=>"UPAS", "UN"=>"UN", "UNS"=>"UNS", "VLY"=>"VLY", "VLYS"=>"VLYS", "VIA"=>"VIA", "VW"=>"VW", "VWS"=>"VWS", "VLG"=>"VLG", "VLGS"=>"VLGS", "VL"=>"VL", "VIS"=>"VIS", "WALK"=>"WALK", "WAY"=>"WAY", "WL"=>"WL", "WLS"=>"WLS"}
-
-  include ElasticsearchSearchable
+  STREET_ABBREVIATIONS = {"ALLEY"=>"ALY", "ALLEE"=>"ALY", "ALLY"=>"ALY", "ANEX"=>"ANX", "ANNEX"=>"ANX", "ANNX"=>"ANX",
+                          "ARCADE"=>"ARC", "AVENUE"=>"AVE", "AV"=>"AVE", "AVEN"=>"AVE", "AVENU"=>"AVE", "AVN"=>"AVE",
+                          "AVNUE"=>"AVE", "BAYOU"=>"BYU", "BAYOO"=>"BYU", "BEACH"=>"BCH", "BEND"=>"BND", "BLUFF"=>"BLF",
+                          "BLUF"=>"BLF", "BLUFFS"=>"BLFS", "BOTTOM"=>"BTM", "BOT"=>"BTM", "BOTTM"=>"BTM",
+                          "BOULEVARD"=>"BLVD", "BOUL"=>"BLVD", "BOULV"=>"BLVD", "BRANCH"=>"BR", "BRNCH"=>"BR",
+                          "BRIDGE"=>"BRG", "BRDGE"=>"BRG", "BROOK"=>"BRK", "BROOKS"=>"BRKS", "BURG"=>"BG",
+                          "BURGS"=>"BGS", "BYPASS"=>"BYP", "BYPA"=>"BYP", "BYPAS"=>"BYP", "BYPS"=>"BYP", "CAMP"=>"CP",
+                          "CMP"=>"CP", "CANYON"=>"CYN", "CANYN"=>"CYN", "CNYN"=>"CYN", "CAPE"=>"CPE", "CAUSEWAY"=>"CSWY",
+                          "CAUSWA"=>"CSWY", "CENTER"=>"CTR", "CEN"=>"CTR", "CENT"=>"CTR", "CENTR"=>"CTR", "CENTRE"=>"CTR",
+                          "CNTER"=>"CTR", "CNTR"=>"CTR", "CENTERS"=>"CTRS", "CIRCLE"=>"CIR", "CIRC"=>"CIR", "CIRCL"=>"CIR",
+                          "CRCL"=>"CIR", "CRCLE"=>"CIR", "CIRCLES"=>"CIRS", "CLIFF"=>"CLF", "CLIFFS"=>"CLFS", "CLUB"=>"CLB",
+                          "COMMON"=>"CMN", "COMMONS"=>"CMNS", "CORNER"=>"COR", "CORNERS"=>"CORS", "COURSE"=>"CRSE", "COURT"=>"CT",
+                          "COURTS"=>"CTS", "COVE"=>"CV", "COVES"=>"CVS", "CREEK"=>"CRK", "CRESCENT"=>"CRES", "CRSENT"=>"CRES",
+                          "CRSNT"=>"CRES", "CREST"=>"CRST", "CROSSING"=>"XING", "CRSSNG"=>"XING", "CROSSROAD"=>"XRD",
+                          "CROSSROADS"=>"XRDS", "CURVE"=>"CURV", "DALE"=>"DL", "DAM"=>"DM", "DIVIDE"=>"DV", "DIV"=>"DV",
+                          "DVD"=>"DV", "DRIVE"=>"DR", "DRIV"=>"DR", "DRV"=>"DR", "DRIVES"=>"DRS", "ESTATE"=>"EST",
+                          "ESTATES"=>"ESTS", "EXPRESSWAY"=>"EXPY", "EXP"=>"EXPY", "EXPR"=>"EXPY", "EXPRESS"=>"EXPY",
+                          "EXPW"=>"EXPY", "EXTENSION"=>"EXT", "EXTN"=>"EXT", "EXTNSN"=>"EXT", "EXTENSIONS"=>"EXTS",
+                          "FALLS"=>"FLS", "FERRY"=>"FRY", "FRRY"=>"FRY", "FIELD"=>"FLD", "FIELDS"=>"FLDS", "FLAT"=>"FLT",
+                          "FLATS"=>"FLTS", "FORD"=>"FRD", "FORDS"=>"FRDS", "FOREST"=>"FRST", "FORESTS"=>"FRST", "FORGE"=>"FRG",
+                          "FORG"=>"FRG", "FORGES"=>"FRGS", "FORK"=>"FRK", "FORKS"=>"FRKS", "FORT"=>"FT", "FRT"=>"FT", "FREEWAY"=>"FWY",
+                          "FREEWY"=>"FWY", "FRWAY"=>"FWY", "FRWY"=>"FWY", "GARDEN"=>"GDN", "GARDN"=>"GDN", "GRDEN"=>"GDN",
+                          "GRDN"=>"GDN", "GARDENS"=>"GDNS", "GRDNS"=>"GDNS", "GATEWAY"=>"GTWY", "GATEWY"=>"GTWY", "GATWAY"=>"GTWY",
+                          "GTWAY"=>"GTWY", "GLEN"=>"GLN", "GLENS"=>"GLNS", "GREEN"=>"GRN", "GREENS"=>"GRNS", "GROVE"=>"GRV",
+                          "GROV"=>"GRV", "GROVES"=>"GRVS", "HARBOR"=>"HBR", "HARB"=>"HBR", "HARBR"=>"HBR", "HRBOR"=>"HBR",
+                          "HARBORS"=>"HBRS", "HAVEN"=>"HVN", "HEIGHTS"=>"HTS", "HT"=>"HTS", "HIGHWAY"=>"HWY", "HIGHWY"=>"HWY",
+                          "HIWAY"=>"HWY", "HIWY"=>"HWY", "HWAY"=>"HWY", "HILL"=>"HL", "HILLS"=>"HLS", "HOLLOW"=>"HOLW",
+                          "HLLW"=>"HOLW", "HOLLOWS"=>"HOLW", "HOLWS"=>"HOLW", "INLET"=>"INLT", "ISLAND"=>"IS", "ISLND"=>"IS",
+                          "ISLANDS"=>"ISS", "ISLNDS"=>"ISS", "ISLES"=>"ISLE", "JUNCTION"=>"JCT", "JCTION"=>"JCT", "JCTN"=>"JCT",
+                          "JUNCTN"=>"JCT", "JUNCTON"=>"JCT", "JUNCTIONS"=>"JCTS", "JCTNS"=>"JCTS", "KEY"=>"KY", "KEYS"=>"KYS",
+                          "KNOLL"=>"KNL", "KNOL"=>"KNL", "KNOLLS"=>"KNLS", "LAKE"=>"LK", "LAKES"=>"LKS", "LAND"=>"LAND",
+                          "LANDING"=>"LNDG", "LNDNG"=>"LNDG", "LANE"=>"LN", "LIGHT"=>"LGT", "LIGHTS"=>"LGTS", "LOAF"=>"LF",
+                          "LOCK"=>"LCK", "LOCKS"=>"LCKS", "LODGE"=>"LDG", "LDGE"=>"LDG", "LODG"=>"LDG", "LOOPS"=>"LOOP",
+                          "MALL"=>"MALL", "MANOR"=>"MNR", "MANORS"=>"MNRS", "MEADOW"=>"MDW", "MEADOWS"=>"MDWS", "MDW"=>"MDW",
+                          "MEDOWS"=>"MDWS", "MEWS"=>"MEWS", "MILL"=>"ML", "MILLS"=>"MLS", "MISSION"=>"MSN", "MISSN"=>"MSN",
+                          "MSSN"=>"MSN", "MOTORWAY"=>"MTWY", "MOUNT"=>"MT", "MNT"=>"MT", "MOUNTAIN"=>"MTN", "MNTAIN"=>"MTN",
+                          "MNTN"=>"MTN", "MOUNTIN"=>"MTN", "MTIN"=>"MTN", "MOUNTAINS"=>"MTNS", "MNTNS"=>"MTNS", "NECK"=>"NCK",
+                          "ORCHARD"=>"ORCH", "ORCHRD"=>"ORCH", "OVL"=>"OVAL", "OVERPASS"=>"OPAS", "PARKS"=>"PARK", "PARKWAY"=>"PKWY",
+                          "PARKWY"=>"PKWY", "PKWAY"=>"PKWY", "PKY"=>"PKWY", "PARKWAYS"=>"PKWY", "PKWYS"=>"PKWY", "PASS"=>"PASS",
+                          "PASSAGE"=>"PSGE", "PATHS"=>"PATH", "PIKES"=>"PIKE", "PINE"=>"PNE", "PINES"=>"PNES", "PLACE"=>"PL",
+                          "PLAIN"=>"PLN", "PLAINS"=>"PLNS", "PLAZA"=>"PLZ", "PLZA"=>"PLZ", "POINT"=>"PT", "POINTS"=>"PTS",
+                          "PORT"=>"PRT", "PORTS"=>"PRTS", "PRAIRIE"=>"PR", "PRR"=>"PR", "RADIAL"=>"RADL", "RAD"=>"RADL",
+                          "RADIEL"=>"RADL", "RAMP"=>"RAMP", "RANCH"=>"RNCH", "RANCHES"=>"RNCH", "RNCHS"=>"RNCH", "RAPID"=>"RPD",
+                          "RAPIDS"=>"RPDS", "REST"=>"RST", "RIDGE"=>"RDG", "RDGE"=>"RDG", "RIDGES"=>"RDGS", "RIVER"=>"RIV",
+                          "RVR"=>"RIV", "RIVR"=>"RIV", "ROAD"=>"RD", "ROADS"=>"RDS", "ROUTE"=>"RTE", "ROW"=>"ROW", "RUE"=>"RUE",
+                          "RUN"=>"RUN", "SHOAL"=>"SHL", "SHOALS"=>"SHLS", "SHORE"=>"SHR", "SHOAR"=>"SHR", "SHORES"=>"SHRS",
+                          "SHOARS"=>"SHRS", "SKYWAY"=>"SKWY", "SPRING"=>"SPG", "SPNG"=>"SPG", "SPRNG"=>"SPG", "SPRINGS"=>"SPGS",
+                          "SPNGS"=>"SPGS", "SPRNGS"=>"SPGS", "SPURS"=>"SPUR", "SQUARE"=>"SQ", "SQR"=>"SQ", "SQRE"=>"SQ", "SQU"=>"SQ",
+                          "SQUARES"=>"SQS", "SQRS"=>"SQS", "STATION"=>"STA", "STATN"=>"STA", "STN"=>"STA", "STRAVENUE"=>"STRA",
+                          "STRAV"=>"STRA", "STRAVEN"=>"STRA", "STRAVN"=>"STRA", "STRVN"=>"STRA", "STRVNUE"=>"STRA", "STREAM"=>"STRM",
+                          "STREME"=>"STRM", "STREET"=>"ST", "STRT"=>"ST", "STR"=>"ST", "STREETS"=>"STS", "SUMMIT"=>"SMT",
+                          "SUMIT"=>"SMT", "SUMITT"=>"SMT", "TERRACE"=>"TER", "TERR"=>"TER", "THROUGHWAY"=>"TRWY", "TRACE"=>"TRCE",
+                          "TRACES"=>"TRCE", "TRACK"=>"TRAK", "TRACKS"=>"TRAK", "TRK"=>"TRAK", "TRKS"=>"TRAK", "TRAFFICWAY"=>"TRFY",
+                          "TRAIL"=>"TRL", "TRAILS"=>"TRL", "TRLS"=>"TRL", "TRAILER"=>"TRLR", "TRLRS"=>"TRLR", "TUNNEL"=>"TUNL",
+                          "TUNEL"=>"TUNL", "TUNLS"=>"TUNL", "TUNNELS"=>"TUNL", "TUNNL"=>"TUNL", "TURNPIKE"=>"TPKE", "TRNPK"=>"TPKE",
+                          "TURNPK"=>"TPKE", "UNDERPASS"=>"UPAS", "UNION"=>"UN", "UNIONS"=>"UNS", "VALLEY"=>"VLY", "VALLY"=>"VLY",
+                          "VLLY"=>"VLY", "VALLEYS"=>"VLYS", "VIADUCT"=>"VIA", "VDCT"=>"VIA", "VIADCT"=>"VIA", "VIEW"=>"VW",
+                          "VIEWS"=>"VWS", "VILLAGE"=>"VLG", "VILL"=>"VLG", "VILLAG"=>"VLG", "VILLG"=>"VLG", "VILLIAGE"=>"VLG",
+                          "VILLAGES"=>"VLGS", "VILLE"=>"VL", "VISTA"=>"VIS", "VIST"=>"VIS", "VST"=>"VIS", "VSTA"=>"VIS",
+                          "WALKS"=>"WALK", "WALL"=>"WALL", "WY"=>"WAY", "WAYS"=>"WAYS", "WELL"=>"WL", "WELLS"=>"WLS", "ALY"=>"ALY",
+                          "ANX"=>"ANX", "ARC"=>"ARC", "AVE"=>"AVE", "BYU"=>"BYU", "BCH"=>"BCH", "BND"=>"BND", "BLF"=>"BLF",
+                          "BLFS"=>"BLFS", "BTM"=>"BTM", "BLVD"=>"BLVD", "BR"=>"BR", "BRG"=>"BRG", "BRK"=>"BRK", "BRKS"=>"BRKS",
+                          "BG"=>"BG", "BGS"=>"BGS", "BYP"=>"BYP", "CP"=>"CP", "CYN"=>"CYN", "CPE"=>"CPE", "CSWY"=>"CSWY",
+                          "CTR"=>"CTR", "CTRS"=>"CTRS", "CIR"=>"CIR", "CIRS"=>"CIRS", "CLF"=>"CLF", "CLFS"=>"CLFS", "CLB"=>"CLB",
+                          "CMN"=>"CMN", "CMNS"=>"CMNS", "COR"=>"COR", "CORS"=>"CORS", "CRSE"=>"CRSE", "CT"=>"CT",
+                          "CTS"=>"CTS", "CV"=>"CV", "CVS"=>"CVS", "CRK"=>"CRK", "CRES"=>"CRES", "CRST"=>"CRST", "XING"=>"XING",
+                          "XRD"=>"XRD", "XRDS"=>"XRDS", "CURV"=>"CURV", "DL"=>"DL", "DM"=>"DM", "DV"=>"DV", "DR"=>"DR",
+                          "DRS"=>"DRS", "EST"=>"EST", "ESTS"=>"ESTS", "EXPY"=>"EXPY", "EXT"=>"EXT", "EXTS"=>"EXTS", "FLS"=>"FLS",
+                          "FRY"=>"FRY", "FLD"=>"FLD", "FLDS"=>"FLDS", "FLT"=>"FLT", "FLTS"=>"FLTS", "FRD"=>"FRD", "FRDS"=>"FRDS",
+                          "FRST"=>"FRST", "FRG"=>"FRG", "FRGS"=>"FRGS", "FRK"=>"FRK", "FRKS"=>"FRKS", "FT"=>"FT", "FWY"=>"FWY",
+                          "GDN"=>"GDN", "GDNS"=>"GDNS", "GTWY"=>"GTWY", "GLN"=>"GLN", "GLNS"=>"GLNS", "GRN"=>"GRN", "GRNS"=>"GRNS",
+                          "GRV"=>"GRV", "GRVS"=>"GRVS", "HBR"=>"HBR", "HBRS"=>"HBRS", "HVN"=>"HVN", "HTS"=>"HTS", "HWY"=>"HWY",
+                          "HL"=>"HL", "HLS"=>"HLS", "HOLW"=>"HOLW", "INLT"=>"INLT", "IS"=>"IS", "ISS"=>"ISS", "ISLE"=>"ISLE",
+                          "JCT"=>"JCT", "JCTS"=>"JCTS", "KY"=>"KY", "KYS"=>"KYS", "KNL"=>"KNL", "KNLS"=>"KNLS", "LK"=>"LK",
+                          "LKS"=>"LKS", "LNDG"=>"LNDG", "LN"=>"LN", "LGT"=>"LGT", "LGTS"=>"LGTS", "LF"=>"LF", "LCK"=>"LCK",
+                          "LCKS"=>"LCKS", "LDG"=>"LDG", "LOOP"=>"LOOP", "MNR"=>"MNR", "MNRS"=>"MNRS", "MDWS"=>"MDWS", "ML"=>"ML",
+                          "MLS"=>"MLS", "MSN"=>"MSN", "MTWY"=>"MTWY", "MT"=>"MT", "MTN"=>"MTN", "MTNS"=>"MTNS", "NCK"=>"NCK",
+                          "ORCH"=>"ORCH", "OVAL"=>"OVAL", "OPAS"=>"OPAS", "PARK"=>"PARK", "PKWY"=>"PKWY", "PSGE"=>"PSGE",
+                          "PATH"=>"PATH", "PIKE"=>"PIKE", "PNE"=>"PNE", "PNES"=>"PNES", "PL"=>"PL", "PLN"=>"PLN", "PLNS"=>"PLNS",
+                          "PLZ"=>"PLZ", "PT"=>"PT", "PTS"=>"PTS", "PRT"=>"PRT", "PRTS"=>"PRTS", "PR"=>"PR", "RADL"=>"RADL",
+                          "RNCH"=>"RNCH", "RPD"=>"RPD", "RPDS"=>"RPDS", "RST"=>"RST", "RDG"=>"RDG", "RDGS"=>"RDGS", "RIV"=>"RIV",
+                          "RD"=>"RD", "RDS"=>"RDS", "RTE"=>"RTE", "SHL"=>"SHL", "SHLS"=>"SHLS", "SHR"=>"SHR", "SHRS"=>"SHRS",
+                          "SKWY"=>"SKWY", "SPG"=>"SPG", "SPGS"=>"SPGS", "SPUR"=>"SPUR", "SQ"=>"SQ", "SQS"=>"SQS", "STA"=>"STA",
+                          "STRA"=>"STRA", "STRM"=>"STRM", "ST"=>"ST", "STS"=>"STS", "SMT"=>"SMT", "TER"=>"TER", "TRWY"=>"TRWY",
+                          "TRCE"=>"TRCE", "TRAK"=>"TRAK", "TRFY"=>"TRFY", "TRL"=>"TRL", "TRLR"=>"TRLR", "TUNL"=>"TUNL", "TPKE"=>"TPKE",
+                          "UPAS"=>"UPAS", "UN"=>"UN", "UNS"=>"UNS", "VLY"=>"VLY", "VLYS"=>"VLYS", "VIA"=>"VIA", "VW"=>"VW", "VWS"=>"VWS",
+                          "VLG"=>"VLG", "VLGS"=>"VLGS", "VL"=>"VL", "VIS"=>"VIS", "WALK"=>"WALK", "WAY"=>"WAY", "WL"=>"WL", "WLS"=>"WLS"}
 
   geocoded_by :full
+
+  before_save :standardize_case
 
   before_save :set_full,
               :set_full_searchable,
@@ -40,6 +153,9 @@ class Address < ApplicationRecord
   before_create :standardize
 
   after_validation :geocode
+  
+  # qbe concern calls this manually when needed. to avoid spamming the FCC it's currently off here, but can be turned on if really needed.
+  #after_validation :get_county_from_fcc
 
   after_save :refresh_insurable_policy_type_ids,
     if: Proc.new{|addr| addr.addressable_type == "Insurable" }
@@ -55,35 +171,13 @@ class Address < ApplicationRecord
             inclusion: { in: US_STATE_CODES.keys.map(&:to_s), message: "%{value} #{I18n.t('address_model.is_not_a_valid_state')}" },
             unless: -> { [Lead].include?(addressable.class) || country != 'USA' || (country == 'USA' && state.present?) }
 
-  settings index: { number_of_shards: 1 } do
-    mappings dynamic: 'false' do
-      indexes :street_number, type: :text, analyzer: 'english'
-      indexes :street_name, type: :text, analyzer: 'english'
-      indexes :street_two, type: :text, analyzer: 'english'
-      indexes :city, type: :text, analyzer: 'english'
-      indexes :state, type: :text, analyzer: 'english'
-      indexes :county, type: :text, analyzer: 'english'
-      indexes :zip_code, type: :text, analyzer: 'english'
-      indexes :plus_four, type: :text, analyzer: 'english'
-      indexes :full, type: :text, analyzer: 'english'
-      indexes :full_searchable, type: :text, analyzer: 'english'
-      indexes :addressable_type, type: :text, analyzer: 'english'
-#       indexes :location, type: 'geo_point'
-      indexes :timezone, type: :text, analyzer: 'english'
-      indexes :primary, type: :boolean
-      indexes :searchable, type: :boolean
-      indexes :created_at, type: :date
-      indexes :updated_at, type: :date
-    end
-  end
-
   def as_indexed_json(options={})
     as_json(options).merge location: { lat: latitude, lon: longitude }
   end
 
   def self.from_string(dat_strang, validate_properties: true)
     address = Address.new(full: dat_strang)
-    parsed_address = StreetAddress::US.parse(dat_strang)
+    parsed_address = Address.parse_string(dat_strang)
     if parsed_address.nil?
       address.errors.add(:address_string, I18n.t('address_model.is_not_a_valid_state'))
       return address
@@ -107,13 +201,126 @@ class Address < ApplicationRecord
              .gsub(/\s+/, ' ')
              .strip
   end
+  
+  # force pseudo-titlecase everywhere so things are predictable
+  def standardize_case
+    ["street_name", "street_two", "city", "county"].each do |prop|
+      next if self.send(prop).blank?
+      lastchar = ' '
+      (0...self.send(prop).length).each do |chr|
+        if self.send(prop)[chr] == self.send(prop)[chr].upcase && lastchar != ' ' && lastchar != '-'
+          self.send(prop)[chr] = self.send(prop)[chr].downcase
+        end
+        lastchar = self.send(prop)[chr]
+      end unless prop.blank?
+      
+    end
+  end
 
   # Address.set_full
   # Sets full field with the result of full_street_address()
   def set_full
     self.full = full_street_address()
   end
-
+  
+  
+  def self.parse_string(sum_strang)
+    unused = '1'
+    unused_let = 'a'
+    converter = []
+    # combine digits separated by a space for later decombination
+    spaces = []
+    sum_strang = sum_strang.strip.squeeze(" ")
+    splat = (sum_strang.split(" ") || [])
+    (1...splat.length).each do |i|
+      break if i >= splat.length
+      if splat[i][0].match?(/\d/) && splat[i-1][-1].match?(/\d/)
+        # find an unambiguous replacement
+        while true
+          temp = splat.dup
+          unused = unused.next
+          unused = unused.next while sum_strang.include?(unused)
+          temp[i-1] = "#{temp[i-1]}#{unused}#{temp[i]}"
+          ((i+1)...temp.length).each{|j| temp[j-1] = temp[j] }
+          temp.pop
+          temp_strang = temp.join(" ")
+          if temp_strang.gsub(unused, " ") == sum_strang
+            splat = temp
+            sum_strang = temp_strang
+            spaces.push(unused)
+            break
+          end
+        end
+      end
+    end
+    # ensure that the first segment is all digits (because the parser doesn't like things otherwise)
+    unless splat[0].blank?
+      (0...splat[0].length).each do |i|
+        unless splat[0][i].match?(/\d/)
+          while true
+            temp = splat.dup
+            unused = unused.next
+            unused = unused.next while sum_strang.include?(unused)
+            c = temp[0][i].dup
+            temp[0] = temp[0].sub(c, unused)
+            temp_strang = temp.join(" ")
+            if temp_strang.sub(unused, c) == sum_strang
+              splat = temp
+              sum_strang = temp_strang
+              converter.push([unused, c])
+              break
+            end
+          end
+        end
+      end
+    end
+    # remove characters that break the parser for later (and insert them later)
+    ['.', '/', '-'].select{|c| sum_strang.include?(c) }.each do |c|
+      i = sum_strang.index(c)
+      while i && !(c == '-' && sum_strang.index(c) > sum_strang.length - 6) # leave the last-four one
+        if (i > 0 ? sum_strang[i-1] : i < sum_strang.length-1 ? sum_strang[i+1] : "").match?(/\d/)
+          while true
+            unused = unused.next
+            unused = unused.next while sum_strang.include?(unused)
+            if sum_strang.sub(c, unused).sub(unused, c) == sum_strang
+              sum_strang = sum_strang.sub(c, unused)
+              converter.push([unused, c])
+              break
+            end
+          end
+        else
+          while true
+            unused_let = unused_let.next
+            unused_let = unused_let.next while sum_strang.include?(unused_let)
+            if sum_strang.sub(c, unused_let).sub(unused_let, c) == sum_strang
+              sum_strang = sum_strang.sub(c, unused_let)
+              converter.push([unused_let, c])
+              break
+            end
+          end
+        end
+        i = sum_strang.index(c)
+      end
+    end.compact
+    result = StreetAddress::US.parse(sum_strang)
+    unless result.nil?
+      converter.reverse.each do |con|
+        result.number = result.number.gsub(con[0], con[1]) if result.number
+        result.unit = result.unit.gsub(con[0], con[1]) if result.unit
+        result.city = result.city.gsub(con[0], con[1]) if result.city
+        result.street = result.street.gsub(con[0], con[1]) if result.street
+      end
+      spaces.reverse.each do |spc|
+        result.number = result.number.gsub(spc, " ") if result.number
+        result.unit = result.unit.gsub(spc, " ") if result.unit
+        result.city = result.city.gsub(spc, " ") if result.city
+        result.street = result.street.gsub(spc, " ") if result.street
+      end
+    end
+    return result
+  end
+  
+  
   # Address.from_full
   # Attempts to fill out nil fields in street address by using StreetAddress gem
   def from_full
@@ -129,17 +336,41 @@ class Address < ApplicationRecord
 
     if street_address.values.any?(nil) &&
        !full.nil?
-      parsed_address = StreetAddress::US.parse(full)
+      parsed_address = Address.parse_string(full)
       unless parsed_address.nil?
+        # fix hideous bug in parser
+        true_street = parsed_address.street
+        true_number = parsed_address.number
+        true_prefix = parsed_address.prefix
+        haspref = !parsed_address.prefix.blank?
+        combino = "#{(parsed_address.number || "").split(" ")[-1] || ""}#{(haspref ? parsed_address.prefix.split(" ")[0] : (parsed_address.street || "").split(" ")[0]) || ""}"
+        if haspref
+          ind1 = full.index(combino)
+          ind2 = full.index((parsed_address.prefix.split(" ").drop(1) + (parsed_address.street || "").split(" ")).join(" "))
+          if ind1 && ind2 && ind1 < ind2
+            true_number = "#{parsed_address.number}#{(parsed_address.prefix || "").split(" ")[0] || ""}"
+            true_prefix = parsed_address.prefix.split(" ").drop(1).join(" ")
+          end
+        else
+          if (parsed_address.street || "").split(" ")[1]
+            ind1 = full.index(combino)
+            ind2 = full.index((parsed_address.street || "").split(" ").drop(1).join(" "))
+            if ind1 && ind2 && ind1 < ind2
+              true_street = (parsed_address.street || "").split(" ").drop(1).join(" ")
+              true_number = "#{parsed_address.number}#{(parsed_address.street || "").split(" ")[0] || ""}"
+            end
+          end
+        end
+        # go wild
         street_address.keys.each do |key|
           if self.send(key).nil?
             key_string = key.to_s
             case key_string
             when 'street_number'
-              self.street_number = parsed_address.number
-              self.street_name = "#{ parsed_address.prefix } #{ parsed_address.street } #{ parsed_address.suffix } #{ parsed_address.street_type }".gsub(/\s+/, ' ').strip
+              self.street_number = true_number
+              self.street_name = "#{ true_prefix } #{ true_street } #{ parsed_address.suffix } #{ parsed_address.street_type }".gsub(/\s+/, ' ').strip
             when 'street_name'
-              self.street_name = "#{ parsed_address.prefix } #{ parsed_address.street } #{ parsed_address.suffix } #{ parsed_address.street_type }".gsub(/\s+/, ' ').strip
+              self.street_name = "#{ true_prefix } #{ true_street } #{ parsed_address.suffix } #{ parsed_address.street_type }".gsub(/\s+/, ' ').strip
             when 'street_two'
               self.street_two = !parsed_address.unit.nil? || !parsed_address.unit_prefix.nil? ? "#{ parsed_address.unit_prefix } #{ parsed_address.unit }".gsub(/\s+/, ' ').strip : nil
             when 'city'
@@ -154,6 +385,15 @@ class Address < ApplicationRecord
           end
         end
       end
+    end
+    ['street_name', 'city'].each do |prop|
+      lastchar = ' '
+      (0...self.send(prop).length).each do |chr|
+        if self.send(prop)[chr] == self.send(prop)[chr].upcase && lastchar != ' ' && lastchar != '-'
+          self.send(prop)[chr] = self.send(prop)[chr].downcase
+        end
+        lastchar = self.send(prop)[chr]
+      end unless self.send(prop).blank?
     end
   end
 
@@ -243,6 +483,29 @@ class Address < ApplicationRecord
   def refresh_insurable_policy_type_ids
     # update policy type ids (in case a newly created or changed address alters which policy types an insurable supports)
     self.addressable&.refresh_policy_type_ids(and_save: true)
+  end
+  
+  def get_county_from_fcc
+    if self.latitude && self.longitude && self.county.blank?
+      # WARNING: we don't save an event for this because it's so trivial and because the address is generally not yet saved at this point
+      fccs = FccService.new
+      fccs.build_request(:area, lat: self.latitude, lon: self.longitude)
+      result = (fccs.call[:data]["results"].map{|r| r["county_name"] }.uniq rescue [])
+      if result.length == 1
+        self.county = result.first
+      end
+    end
+  end
+  
+  def parent_insurable_geographical_categories
+    temp_igc = ::InsurableGeographicalCategory.new(
+      state: self.state,
+      counties: [self.county].compact,
+      zip_codes: [self.zip_code].compact,
+      cities: [self.city].compact
+    )
+    temp_igc.valid? # ensure before_validation callbacks run
+    return temp_igc.query_for_parents(include_self: false)
   end
 
   def standardize

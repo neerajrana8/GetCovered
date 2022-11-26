@@ -46,6 +46,30 @@ module V2
         end
       end
 
+      def communities
+        if params[:search].presence && params[:account_id].presence
+          account = Account.find(params[:account_id])
+          if current_staff.organizable.accounts.include?(account)
+            @insurables = Insurable.where(account_id: account.id).communities.where(
+              "title ILIKE '%#{ params[:search] }%'"
+            )
+
+            @response = V2::StaffSuperAdmin::Insurables.new(
+              @insurables
+            ).response
+
+            render json: @response.to_json,
+                   status: :ok
+          else
+            render json: { success: false, errors: ['Unauthorized Access'] },
+                   status: :unauthorized
+          end
+        else
+          render json: [].to_json,
+                 status: :ok
+        end
+      end
+
       def show; end
 
       def create
@@ -181,7 +205,39 @@ module V2
         end
       end
 
+      def upload
+        if file_correct?
+          file = insurable_upload_params
+          filename = "#{file.original_filename.split('.').first}-#{DateTime.now.to_i}.csv"
+          file_path = Rails.root.join("tmp", filename)
+          File.open(file_path, 'wb') do |tmp_file|
+            tmp_file << file.read
+          end
+          ::Insurables::UploadJob.perform_later(file: file_path.to_s, email: current_staff.email)
+          render json: {
+              title: "Insurables File Uploaded",
+              message: "File scheduled for import. Insurables will be available soon."
+          }.to_json,
+                 status: :ok
+        else
+          render json: {
+              title: "Insurables File Upload Failed",
+              message: "File could not be scheduled for import"
+          }.to_json,
+                 status: 422
+        end
+      end
+
       private
+
+      #TO DO: better to add validation for headers and amount of rows during parsing in background job to prevent double reading of file
+      def file_correct?
+        true
+      end
+
+      def insurable_upload_params
+        params.require(:file)
+      end
 
       def insurables_titles
         bulk_create_params[:ranges].reduce([]) do |result, range_string|
@@ -193,7 +249,8 @@ module V2
         params.require(:insurables).permit(
           common_attributes: [
             :category, :covered, :enabled, :insurable_id, :occupied,
-            :insurable_type_id, :account_id, addresses_attributes: %i[
+            :insurable_type_id, :account_id, :additional_interest_name, :additional_interest,
+            addresses_attributes: %i[
               city country county id latitude longitude
               plus_four state street_name street_number
               street_two timezone zip_code
@@ -240,7 +297,8 @@ module V2
 
         to_return = params.require(:insurable).permit(
           :account_id, :category, :covered, :enabled, :insurable_id, :occupied,
-          :insurable_type_id, :title, addresses_attributes: %i[
+          :insurable_type_id, :title, :additional_interest_name, :additional_interest,
+          addresses_attributes: %i[
             city country county id latitude longitude
             plus_four state street_name street_number
             street_two timezone zip_code

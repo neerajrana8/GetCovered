@@ -5,9 +5,8 @@ es:
       title: "Petición para reembolso"
       text: "Hemos recibido una solicitud de reembolso por su póliza %{policy_type} de garantía de alquiler %{policy_number} el %{request_date}.
               Nuestro equipo revisará la solicitud tan pronto como podamos. Recibirá una actualización una vez que
-              hayamos procesado su solicitud. Si se aprueba,
-              sus fondos se transferirán nuevamente dentro de 1-3 días hábiles.
-              Si ha realizado esta solicitud por error, comuníquese con nosotros a %{contact_email} lo antes posible."
+              hayamos procesado su solicitud. Si se aprueba, sus fondos se transferirán nuevamente dentro de 1-3 días hábiles.
+              Si ha realizado esta solicitud por error, comuníquese con nosotros en %{contact_phone} o %{contact_email} lo antes posible."
     cancel_request:
       subject: "%{agency_policy_type} Cancelación de su póliza"
       title: "Cancelación de su póliza"
@@ -48,7 +47,19 @@ es:
         thank_you: 'Gracias, por registrarse para una póliza de garantía de alquiler. A continuación se encuentran los detalles de su póliza junto con el acuerdo adjunto y el resumen para sus registros.'
         please_log_in: 'Inicie sesión en nuestro sitio <a class="o_text-light o_underline" href="%{login_url}" style="text-decoration: underline;outline: none;color: #126de5;">esta página</a>  para obtener más información.'
         contact_us: 'Por favor contáctenos en %{contact_email} si tiene alguna pregunta.'
-
+    qbe_proof_of_coverage:
+      subject: "¡Felicidades! ¡Estás cubierto!"
+      thank_you_for_purchase: "Gracias por comprar la póliza de seguro para inquilinos con %{agency_account_name}. ¡Siéntese y relájese sabiendo que ya estás cubierto!"
+      attached: "Adjunto puedes encontrar tu Certificado de Seguro."
+      your_policy_is_written: "Tu póliza está escrita a través de nuestro socio, QBE. Estés atento a una presentación por correo electrónico de QBE. Estés atento a las actualizaciones y novedades por correo electrónico de QBE."
+      need_to_make_changes: "¿Necesitas hacer cambios?"
+      no_worries: "No te preocupes. Tienes control total sobre tu póliza.
+                   Si tienes preguntas específicas sobre tu póliza de seguro para inquilinos, reclamos y actualizaciones, comuníquete con"
+      or_visit: "or visite"
+      we_look_forward: "Esperamos brindarle una cobertura de calidad y un servicio excepcional."
+      thank_you: "Gracias,"
+      team_name: "TEl equipo de Get Covered"
+      email_preview_text: "Documentos de seguro adjuntos"
   payment_made_mailer:
     send_successful_payment_notification:
       subject: "%{agency_title} - %{policy_type} Pago de prima realizado"
@@ -118,3 +129,39 @@ es:
         "Inicie sesión en %{agency_title} en el enlace siguiente para actualizar la información de su tarjeta de crédito a
          evitar la interrupción de la cobertura."
       contact_us: "No dude en contactarnos al %{contact_email} si tiene alguna pregunta."
+  charge_mailer:
+    charge_failed:
+      subject: "%{product_type} Pago de Prima Fallido"
+      body: "Hola %{recipient_name},\n
+             Gracias por elegir una %{product_type} de %{agency_title}.\n
+             Lamentablemente, tuvimos un problema al procesar el pago de la prima de su %{product_type} %{product_identifier}.\n
+             Para evitar una interrupción en su cobertura, es posible que deba actualizar su información de pago.\n
+             Puede hacerlo visitando el siguiente enlace:\n
+                %{url}\n
+             Si esto parece ser un error, contáctenos en %{support_email} y lo investigaremos.\n
+             Gracias,\n
+             El equipo de Get Covered\n
+             %{support_email}"
+  invoice_mailer:
+    invoice_complete:
+      subject: "%{product_type} Factura Premium Pagada"
+      body: "Hola %{recipient_name},\n
+             Gracias por elegir una %{product_type} de %{agency_title}.\n
+             La factura de la prima de su cuenta de $%{invoice_total} se pagó con éxito el %{invoice_date}.\n
+             Para revisar la información de su póliza, visite el siguiente enlace:\n
+                %{url}\n
+             Si tiene alguna pregunta, comuníquese con nosotros a %{support_email}.\n
+             Gracias,\n
+             El equipo de Get Covered\n
+             %{support_email}"
+    invoice_missed:
+      subject: "%{product_type} Factura Perdida"
+      body: "Hola %{recipient_name},\n
+             Gracias por elegir una %{product_type} de %{agency_title}.\n
+             No se realizó el pago de la factura de la prima de %{product_type} %{product_identifier} que vence el %{invoice_date} y su cuenta ahora está vencida.\n
+             Para evitar perder su cobertura, el pago debe hacerse a su cuenta inmediatamente. Puede hacerlo visitando el siguiente enlace:\n
+                %{url}\n
+             Si esto parece ser un error, contáctenos en %{support_email} y lo investigaremos.\n
+             Gracias,\n
+             El equipo de Get Covered\n
+             %{support_email}"

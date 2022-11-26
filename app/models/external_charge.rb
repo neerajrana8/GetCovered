@@ -1,3 +1,19 @@
+# == Schema Information
+#
+# Table name: external_charges
+#
+#  id                 :bigint           not null, primary key
+#  processed          :boolean          default(FALSE), not null
+#  invoice_aware      :boolean          default(FALSE), not null
+#  status             :integer          not null
+#  status_changed_at  :datetime
+#  external_reference :string           not null
+#  amount             :integer          not null
+#  collected_at       :datetime         not null
+#  invoice_id         :bigint
+#  created_at         :datetime         not null
+#  updated_at         :datetime         not null
+#
 class ExternalCharge < ApplicationRecord
   include DirtyTransactionTracker
   

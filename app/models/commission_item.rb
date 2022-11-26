@@ -1,3 +1,22 @@
+# == Schema Information
+#
+# Table name: commission_items
+#
+#  id                   :bigint           not null, primary key
+#  amount               :integer          not null
+#  notes                :text
+#  created_at           :datetime         not null
+#  updated_at           :datetime         not null
+#  commission_id        :bigint
+#  commissionable_type  :string
+#  commissionable_id    :bigint
+#  reason_type          :string
+#  reason_id            :bigint
+#  policy_quote_id      :bigint
+#  policy_id            :bigint
+#  analytics_category   :integer          default("other"), not null
+#  parent_payment_total :integer
+#
 class CommissionItem < ApplicationRecord
   include FinanceAnalyticsCategory # provides analytics_category enum
 
@@ -17,16 +36,11 @@ class CommissionItem < ApplicationRecord
 
   validates_presence_of :amount
 
-
-
-
-
-
   private
 
     def set_analytics_fields
-      self.policy_quote_id ||= self.commissionable.policy_premium_item.policy_quote&.id if self.policy_quote_id.nil? && self.commissionable_type == 'PolicyPremiumItemCommission'
-      self.policy_id ||= (self.commissionable.policy_premium_item.policy_quote&.policy_id || self.commissionable.policy_premium_item.policy_id) if self.policy_id.nil? && self.commissionable_type == 'PolicyPremiumItemCommission'
+      self.policy_quote_id ||= self.commissionable.policy_premium_item&.policy_premium&.policy_quote&.id if self.policy_quote_id.nil? && self.commissionable_type == 'PolicyPremiumItemCommission'
+      self.policy_id ||= (self.commissionable.policy_premium_item.policy_premium&.policy_id || self.commissionable.policy_premium_item.policy_premium&.policy_quote&.policy_id) if self.policy_id.nil? && self.commissionable_type == 'PolicyPremiumItemCommission'
       self.analytics_category ||= (self.reason.respond_to?(:analytics_category) ?
         self.reason.analytics_category
         : self.reason.respond_to?(:reason) && self.reason.reason && self.reason.respond_to?(:analytics_category) ?
@@ -42,10 +56,5 @@ class CommissionItem < ApplicationRecord
       self.commission.lock!
       self.commission.update(total: self.commission.total + self.amount)
     end
-    
-    
-    
-    
-    
     
 end

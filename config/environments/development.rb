@@ -8,6 +8,7 @@ Rails.application.configure do
   # every request. This slows down response time but is perfect for development
   # since you don't have to restart the web server when you make code changes.
   config.cache_classes = false
+  config.force_ssl = false
 
   # Do not eager load code on boot.
   config.eager_load = false
@@ -37,7 +38,7 @@ Rails.application.configure do
   config.action_mailer.perform_deliveries = true
 
   config.action_mailer.default_options  = {
-      from:  "no-reply <hi@til.codes>"
+    from:  "no-reply <hi@til.codes>"
   }
 
   # Don't care if the mailer can't send.
@@ -63,8 +64,19 @@ Rails.application.configure do
   config.file_watcher = ActiveSupport::EventedFileUpdateChecker
 
   config.action_mailer.default_url_options = { host: 'localhost', port: 3001 }
+  config.action_mailer.preview_path ||= defined?(Rails.root) ? "#{Rails.root}/test/mailers/previews" : nil
+  config.autoload_paths += [config.action_mailer.preview_path]
+  config.action_mailer.show_previews = true
+
+  routes.append do
+    get '/rails/mailers'         => "rails/mailers#index"
+    get '/rails/mailers/*path'   => "rails/mailers#preview"
+  end
+
   config.i18n.default_locale = :en
   config.i18n.available_locales = [:en, :es]
+
+  config.action_mailer.preview_path = "#{Rails.root}/test/mailers/previews"
 
   #config.web_console.whitelisted_ips = '172.21.0.1'
 

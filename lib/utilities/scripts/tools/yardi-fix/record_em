@@ -1,0 +1,77 @@
+
+
+
+
+def record_em(policy_numbers)
+  $record = {}
+  policy_numbers.each do |policy_number|
+    policy = Policy.where(number: policy_number).take
+    $record[policy_number] = policy.policy_users.map do |pu|
+      {
+        id: pu.id,
+        user: {
+          id: pu.user.id,
+          email: pu.user.email,
+          profile: {
+            id: pu.user.profile.id,
+            first_name: pu.user.profile.first_name,
+            last_name: pu.user.profile.last_name
+          },
+          integration_profiles: pu.user.integration_profiles.map do |ip|
+            {
+              id: ip.id,
+              integration_id: ip.integration_id,
+              external_context: ip.external_context,
+              external_id: ip.external_id
+            }
+          end,
+          lease_users: pu.user.lease_users.map do |lu|
+            {
+              id: lu.id,
+              lease_id: lu.lease_id,
+              integration_profiles: lu.integration_profiles.map do |ip|
+                {
+                  id: ip.id,
+                  integration_id: ip.integration_id,
+                  external_context: ip.external_context,
+                  external_id: ip.external_id
+                }
+              end
+            }
+          end
+        }
+      }
+    end
+    
+  end
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

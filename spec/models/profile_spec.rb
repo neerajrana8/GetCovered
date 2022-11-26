@@ -1,15 +1,28 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: profiles
+#
+#  id               :bigint           not null, primary key
+#  first_name       :string
+#  last_name        :string
+#  middle_name      :string
+#  title            :string
+#  suffix           :string
+#  job_title        :string
+#  full_name        :string
+#  contact_email    :string
+#  contact_phone    :string
+#  birth_date       :date
+#  profileable_type :string
+#  profileable_id   :bigint
+#  created_at       :datetime         not null
+#  updated_at       :datetime         not null
+#  gender           :integer          default("unspecified")
+#  salutation       :integer          default("unspecified")
+#  language         :integer          default("en")
+#
 RSpec.describe Profile, elasticsearch: true, type: :model do
-  it 'Profile Test should be indexed' do
-    FactoryBot.create(:profile, first_name: 'Test')
-    Profile.__elasticsearch__.refresh_index!
-    expect(Profile.search('Test').records.length).to eq(1)
-  end
-
-  it 'Profile Wrong should not be indexed' do
-    FactoryBot.create(:profile, first_name: 'Test')
-    Profile.__elasticsearch__.refresh_index!
-    expect(Profile.search('Wrong').records.length).to eq(0)
-  end
+  pending "#{__FILE__} Needs to be updated after removing elasticsearch tests"
 end

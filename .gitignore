@@ -41,3 +41,8 @@ dump.rdb
 
 .rakeTasks
 /coverage/*
+
+/.irb_history
+
+/public/pex-rex
+/public/pex-rex/*

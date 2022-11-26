@@ -1,23 +1,83 @@
-  # User model
-# file: app/models/user.rb
 # frozen_string_literal: true
+
+# == Schema Information
+#
+# Table name: users
+#
+#  id                     :bigint           not null, primary key
+#  provider               :string           default("email"), not null
+#  uid                    :string           default(""), not null
+#  encrypted_password     :string           default(""), not null
+#  reset_password_token   :string
+#  reset_password_sent_at :datetime
+#  allow_password_change  :boolean          default(FALSE)
+#  remember_created_at    :datetime
+#  confirmation_token     :string
+#  confirmed_at           :datetime
+#  confirmation_sent_at   :datetime
+#  unconfirmed_email      :string
+#  email                  :citext
+#  enabled                :boolean          default(FALSE), not null
+#  settings               :jsonb
+#  notification_options   :jsonb
+#  owner                  :boolean          default(FALSE), not null
+#  user_in_system         :boolean
+#  tokens                 :json
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
+#  invitation_token       :string
+#  invitation_created_at  :datetime
+#  invitation_sent_at     :datetime
+#  invitation_accepted_at :datetime
+#  invitation_limit       :integer
+#  invited_by_type        :string
+#  invited_by_id          :bigint
+#  invitations_count      :integer          default(0)
+#  sign_in_count          :integer          default(0), not null
+#  current_sign_in_at     :datetime
+#  last_sign_in_at        :datetime
+#  current_sign_in_ip     :string
+#  last_sign_in_ip        :string
+#  stripe_id              :string
+#  payment_methods        :jsonb
+#  current_payment_method :integer
+#  mailchimp_id           :string
+#  mailchimp_category     :integer          default("prospect")
+#  qbe_id                 :string
+#  has_existing_policies  :boolean          default(FALSE)
+#  has_current_leases     :boolean          default(FALSE)
+#  has_leases             :boolean          default(FALSE)
+#  altuid                 :string
+#
+# User model
+# file: app/models/user.rb
 require 'digest'
 
 class User < ApplicationRecord
   # Include default devise modules. Others available are:
   # :confirmable, :lockable, :timeoutable and :omniauthable
   devise :database_authenticatable, :registerable, :recoverable, :rememberable,
-         :trackable, :validatable, :invitable, validate_on_invite: true
+         :trackable, :invitable, validate_on_invite: true
+
   include RecordChange
   include DeviseCustomUser
-  include ElasticsearchSearchable
   include SessionRecordable
 
   # Active Record Callbacks
   after_initialize :initialize_user
 
+  before_validation :set_default_provider,
+    on: :create
+
+  before_validation :set_random_password,
+    on: :create,
+    if: Proc.new{|u| u.email.nil? && u.password.blank? }
+
   after_create_commit :add_to_mailchimp,
                       :set_qbe_id
+
+  before_update :ensure_email_based,
+    if: Proc.new{|u| u.will_save_change_to_attribute?('sign_in_count') && u.attribute_in_database('sign_in_count') == 0 && u.provider != 'email' }
 
 	has_many :invoices, as: :payer
 
@@ -70,11 +130,11 @@ class User < ApplicationRecord
   has_many :agencies, through: :accounts
   has_many :notification_settings, as: :notifyable
   has_many :insurables, through: :policies
+  has_many :contact_records, as: :contactable
 
   accepts_nested_attributes_for :payment_profiles, :address
   accepts_nested_attributes_for :profile, update_only: true
   accepts_nested_attributes_for :address, update_only: true
-
 
   enum current_payment_method: ['none', 'ach_unverified', 'ach_verified', 'card', 'other'],
     _prefix: true
@@ -82,42 +142,77 @@ class User < ApplicationRecord
   enum mailchimp_category: ['prospect', 'customer']
 
   # VALIDATIONS
-  validates :email, uniqueness: true
+  validates_uniqueness_of :email, if: Proc.new{|u| u.email_changed? && !u.email.blank? }
+  validates_format_of     :email, with: Devise.email_regexp, allow_blank: true, if: Proc.new{|u| u.email_changed? && !u.email.blank? }
+
+  #validates_presence_of     :password
+  validates_presence_of :password_confirmation, :if => Proc.new{|u| !u.password.blank? }
+  validates_confirmation_of :password
+  #validates_length_of       :password, within: Devise.password_length
+
+  validates_uniqueness_of :email, if: Proc.new{|u| u.email_changed? && !u.email.blank? }
+  validates_format_of     :email, with: Devise.email_regexp, allow_blank: true, if: Proc.new{|u| u.email_changed? && !u.email.blank? }
+
+  #validates_presence_of     :password
+  validates_presence_of :password_confirmation, :if => Proc.new{|u| !u.password.blank? }
+  validates_confirmation_of :password
+  #validates_length_of       :password, within: Devise.password_length
+
+  # absorb another user
+  def absorb!(other)
+    return "Users can only absorb Users, not #{other.class.name.pluralize}!" unless other.class == ::User
+    begin
+      ActiveRecord::Base.transaction(requires_new: true) do
+        other.integration_profiles.update_all(profileable_id: self.id)
+        other.lease_users.update_all(user_id: self.id)
+        other.policy_users.update_all(user_id: self.id)
+        other.account_users.where.not(account_id: self.account_users.select(:account_id)).update_all(user_id: self.id)
+        other.account_users.reload.each{|au| au.delete }
+        other.addresses.update_all(addressable_id: self.id)
+        Claim.where(claimant: other).update_all(claimant_type: "User", claimant_id: self.id)
+        ContactRecord.where(contactable: other).update_all(contactable_type: "User", contactable_id: self.id)
+        NotificationSetting.where(notifyable: other).update_all(notifyable_type: "User", notifyable_id: self.id)
+        PaymentProfile.where(payer: other).update_all(payer_type: "User", payer_id: self.id)
+        PaymentProfile.where(payer: self, default_profile: true).order("updated_at desc").to_a.drop(1).each{|pp| pp.update(default_profile: false) }
+        if self.profile.nil?
+          other.profile.update(profileable_id: self.id)
+        else
+          other.profile.delete
+        end
+        email = other.email
+        other.delete
+        if self.email.blank?
+          self.update(email: email, provider: 'email', uid: email)
+        end
+      end
+    rescue StandardError => e
+      return e
+    end
+    return nil
+  end
 
   # Override payment_method attribute getters and setters to store data
   # as encrypted
-#   def payment_methods=(methods)
-#     super(EncryptionService.encrypt(methods))
-#   end
-#
-#   def payment_methods
-#     super.nil? ? super : EncryptionService.decrypt(super)
-#   end
-  article_es_settings = {
-    index: {
-      analysis: {
-        filter: {
-          autocomplete_filter: {
-            type: "edge_ngram",
-            min_gram: 1,
-            max_gram: 20
-          }
-        },
-        analyzer:{
-          autocomplete: {
-            type: "custom",
-            tokenizer: "standard",
-            filter: ["lowercase", "autocomplete_filter"]
-          }
-        }
-      }
-    }
-  }
+  #   def payment_methods=(methods)
+  #     super(EncryptionService.encrypt(methods))
+  #   end
+  #
+  #    def payment_methods
+  #     super.nil? ? super : EncryptionService.decrypt(super)
+  #   end
 
-  settings article_es_settings do
-    mapping do
-      indexes :email, type: 'string', analyzer: 'autocomplete'
-    end
+  def self.create_with_random_password(*lins, **keys)
+    u = ::User.new(*lins, **keys)
+    u.send(:set_random_password)
+    u.save
+    return u
+  end
+
+  def self.create_with_random_password!(*lins, **keys)
+    u = ::User.new(*lins, **keys)
+    u.send(:set_random_password)
+    u.save!
+    return u
   end
 
   # Set Stripe ID
@@ -159,12 +254,6 @@ class User < ApplicationRecord
 
   def attach_payment_source(token = nil, make_default = true)
     AttachPaymentSource.run(user: self, token: token, make_default: make_default)
-  end
-
-  settings index: { number_of_shards: 1 } do
-    mappings dynamic: 'false' do
-      indexes :email, type: :text, analyzer: 'english'
-    end
   end
 
   def convert_prospect_to_customer
@@ -247,7 +336,7 @@ class User < ApplicationRecord
           PhoneNumber: (self.profile.contact_phone || '').tr('^0-9', '')
         },
         EmailInfo: {
-          EmailAddr: self.email
+          EmailAddr: self.contact_email
         }
       }
     }
@@ -263,7 +352,7 @@ class User < ApplicationRecord
       },
       Communications: {
         EmailInfo: {
-          EmailAddr: self.email,
+          EmailAddr: self.contact_email,
           DoNotContactInd: 0
         }
       }.merge(self.profile.contact_phone.blank? ? {} : {
@@ -288,6 +377,10 @@ class User < ApplicationRecord
     }.compact
   end
 
+  def contact_email
+    self.email.blank? ? self.profile.contact_email : self.email
+  end
+
   def get_deposit_choice_occupant_hash(primary: false)
     {
       firstName:          self.profile.first_name,
@@ -296,6 +389,36 @@ class User < ApplicationRecord
       principalPhone:     (self.profile.contact_phone || '').tr('^0-9', ''),
       isPrimaryOccupant:  primary
     }
+  end
+
+
+  def get_owners
+    owners_array = Array.new
+    self.accounts.each do |a|
+      owners_array.append(a) unless self.accounts.nil?
+      owners_array.append(a.agency) unless a.agency.nil?
+    end
+  end
+
+  #TODO: need to understand from where get the branding_profile url & community_id
+  def invite_to_pm_tenant_portal(branding_profile_url, community_id)
+    raise ArgumentError.new('community_id & branding_profile_url must be presented') if branding_profile_url.blank? || community_id.blank?
+
+    str_to_encrypt = "user #{self.id} community #{community_id}" #user 1443 community 10035
+    auth_token_for_email = EncryptionService.encrypt(str_to_encrypt)
+    @tenant_onboarding_url = "https://#{branding_profile_url}/pma-tenant-onboarding?token=#{auth_token_for_email}"
+    @community = Insurable.find(community_id)
+
+    #TODO: need to add validations to parameters
+    #TODO: need to send via workers to make possible to have delayed send (or use deliver in)
+
+    PmTenantPortal::InvitationToPmTenantPortalMailer.first_audit_email(user: self, community: @community, tenant_onboarding_url: @tenant_onboarding_url).deliver_now
+    PmTenantPortal::InvitationToPmTenantPortalMailer.second_audit_email(user: self, community: @community, tenant_onboarding_url: @tenant_onboarding_url).deliver_later(wait_until: 72.hours.from_now)
+    PmTenantPortal::InvitationToPmTenantPortalMailer.third_audit_email(user: self, community: @community, tenant_onboarding_url: @tenant_onboarding_url).deliver_later(wait_until: 168.hours.from_now)
+  end
+
+  def full_name
+    profile.first_name + " " + profile.last_name
   end
 
   private
@@ -334,6 +457,25 @@ class User < ApplicationRecord
     update_column(:qbe_id, self.qbe_id) if return_status == true
 
     return return_status
+  end
+
+  def set_random_password
+    secure_tmp_password = SecureRandom.base64(12)
+    self.password = secure_tmp_password
+    self.password_confirmation = secure_tmp_password
+  end
+
+  def set_default_provider
+    self.provider = (self.email.blank? ? 'altuid' : 'email')
+    self.altuid = Time.current.to_i.to_s + rand.to_s
+    self.uid = (self.provider == 'email' ? self.email : self.altuid)
+  end
+
+  def ensure_email_based
+    dat_email = self.email || self.profile.contact_email
+    self.provider = 'email'
+    self.email = dat_email
+    self.uid = dat_email
   end
 
   	def add_to_mailchimp

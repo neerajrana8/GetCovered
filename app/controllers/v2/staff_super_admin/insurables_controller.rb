@@ -5,6 +5,8 @@
 module V2
   module StaffSuperAdmin
     class InsurablesController < StaffSuperAdminController
+      #include Insurables::UploadMethods
+
       alias super_index index
 
       before_action :set_insurable, only: %i[show coverage_report policies related_insurables destroy update]
@@ -37,6 +39,25 @@ module V2
         super_index(:@insurables, query)
       end
 
+      def communities
+        if params[:search].presence && params[:account_id].presence
+          account = Account.find(params[:account_id])
+          @insurables = Insurable.where(account_id: account.id).communities.where(
+            "title ILIKE '%#{ params[:search] }%'"
+          )
+
+          @response = V2::StaffSuperAdmin::Insurables.new(
+            @insurables
+          ).response
+
+          render json: @response.to_json,
+                 status: :ok
+        else
+          render json: [].to_json,
+                 status: :ok
+        end
+      end
+
       def show; end
 
       def create
@@ -53,6 +74,42 @@ module V2
           render json: { success: false, errors: ['Unauthorized Access'] },
                  status: :unauthorized
         end
+      end
+
+      def bulk_create
+        agency = Agency.find_by_id bulk_create_params[:common_attributes][:agency_id]
+        unless agency.present?
+          render json: standard_error(:agency_was_not_found), status: :not_found
+          return
+        end
+
+        account = agency.accounts.find_by_id(bulk_create_params[:common_attributes][:account_id])
+        unless account.present?
+          render json: { success: false, errors: ['account_id should be present and relate to this agency'] },
+                 status: :unprocessable_entity
+          return
+        end
+
+        already_created_insurables =
+          Insurable.where(insurable_id: bulk_create_params[:common_attributes][:insurable_id],
+                          insurable_type_id: bulk_create_params[:common_attributes][:insurable_type_id],
+                          title: insurables_titles).pluck(:title)
+        new_insurables_titles = insurables_titles - already_created_insurables
+        new_insurables_params = new_insurables_titles.reduce([]) do |result, title|
+          result << bulk_create_params[:common_attributes].merge(title: title)
+        end
+
+        @insurables = account.insurables.create(new_insurables_params)
+
+        errors = @insurables.
+          reject(&:valid?).
+          map { |insurable| { title: insurable.title, errors: insurable.errors.full_messages } }
+
+        render json: {
+          created: @insurables.select(&:valid?),
+          already_created: already_created_insurables,
+          errors: errors
+        }
       end
 
       def coverage_report
@@ -111,7 +168,40 @@ module V2
         render json: result.to_json
       end
 
+      def upload
+        if file_correct?
+          file = insurable_upload_params
+          filename = "#{file.original_filename.split('.').first}-#{DateTime.now.to_i}.csv"
+          file_path = Rails.root.join('tmp', filename)
+
+          Rails.logger.info 'Put insurables.csv to aws::s3'
+          obj = s3_bucket.object(filename)
+          obj.put(body: file.read)
+
+          ::Insurables::UploadJob.perform_later(object_name: filename, file: file_path.to_s, email: current_staff.email)
+
+          render json: {
+            title: "Insurables File Uploaded",
+            message: "File scheduled for import. Insurables will be available soon."
+          }.to_json,
+                 status: :ok
+        else
+          render json: {
+            title: "Insurables File Upload Failed",
+            message: "File could not be scheduled for import"
+          }.to_json,
+                 status: 422
+        end
+      end
+
       private
+
+      def s3_bucket
+        env = Rails.env.to_sym
+        aws_bucket_name = Rails.application.credentials.aws[env][:bucket]
+        Aws::S3::Resource.new.bucket(aws_bucket_name)
+      end
+
 
       def view_path
         super + '/insurables'
@@ -122,6 +212,11 @@ module V2
       end
 
       def create_allowed?
+        true
+      end
+
+      #TO DO: better to add validation for headers and amount of rows during parsing in background job to prevent double reading of file
+      def file_correct?
         true
       end
 
@@ -151,10 +246,11 @@ module V2
 
         to_return = params.require(:insurable).permit(
             :category, :covered, :enabled, :insurable_id, :occupied,
-            :insurable_type_id, :title, :agency_id, :account_id, addresses_attributes: %i[
+            :insurable_type_id, :title, :agency_id, :account_id, :additional_interest_name, :additional_interest,
+            addresses_attributes: %i[
               city country county id latitude longitude
               plus_four state street_name street_number
-              street_two timezone zip_code 
+              street_two timezone zip_code
             ]
           )
 
@@ -167,6 +263,21 @@ module V2
           end
         end
         to_return
+      end
+
+      def insurables_titles
+        bulk_create_params[:ranges].reduce([]) do |result, range_string|
+          result | Range.new(*range_string.split('..')).to_a
+        end
+      end
+
+      def bulk_create_params
+        params.require(:insurables).permit(
+          common_attributes: [
+            :category, :account_id, :insurable_type_id, :insurable_id, :enabled, :agency_id, :additional_interest_name, :additional_interest,
+          ],
+          ranges: []
+        )
       end
 
       def update_params
@@ -190,6 +301,10 @@ module V2
           end
         end
         to_return
+      end
+
+      def insurable_upload_params
+        params.require(:file)
       end
 
       def supported_filters(called_from_orders = false)

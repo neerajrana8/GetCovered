@@ -1,3 +1,26 @@
+# == Schema Information
+#
+# Table name: stripe_charges
+#
+#  id                 :bigint           not null, primary key
+#  processed          :boolean          default(FALSE), not null
+#  invoice_aware      :boolean          default(FALSE), not null
+#  status             :integer          default("processing"), not null
+#  status_changed_at  :datetime
+#  amount             :integer          not null
+#  amount_refunded    :integer          default(0), not null
+#  source             :string
+#  customer_stripe_id :string
+#  description        :string
+#  metadata           :jsonb
+#  stripe_id          :string
+#  error_info         :string
+#  client_error       :jsonb
+#  created_at         :datetime         not null
+#  updated_at         :datetime         not null
+#  invoice_id         :bigint           not null
+#  archived_charge_id :bigint
+#
 # StripeCharge model
 # file: app/models/stripe_charge.rb
 
@@ -31,6 +54,10 @@ class StripeCharge < ApplicationRecord
       'linear' => linear_params,
       'keyword' => keyword_params
     }
+  end
+  
+  def balance_transaction
+    Stripe::Charge.retrieve(self.stripe_id).balance_transaction rescue nil
   end
   
   def displayable_error

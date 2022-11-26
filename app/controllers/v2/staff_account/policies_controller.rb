@@ -17,7 +17,7 @@ module V2
       before_action :set_substrate, only: [:index]
 
       def index
-        super(:@policies, @substrate, invoices: :line_items)
+        super(:@policies, @substrate)
       end
 
       def search
@@ -35,7 +35,7 @@ module V2
       def get_leads
         @leads = [@policy.primary_user.lead]
         @site_visits=@leads.last.lead_events.order("DATE(created_at)").group("DATE(created_at)").count.keys.size
-        render 'v2/shared/leads/index'
+        render 'v2/shared/leads/leads_by_policy'
       end
       
       def refund_policy
@@ -61,7 +61,9 @@ module V2
       end
 
       def set_policy
-        @policy = access_model(::Policy, params[:id])
+        # NOTE: Need refactoring, access_model returns nil
+        # @policy = access_model(::Policy, params[:id])
+        @policy = Policy.find(params[:id])
       end
 
       def set_substrate

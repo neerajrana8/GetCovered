@@ -1,5 +1,12 @@
-
-
+# == Schema Information
+#
+# Table name: policy_premium_item_transaction_memberships
+#
+#  id                                 :bigint           not null, primary key
+#  policy_premium_item_transaction_id :bigint
+#  member_type                        :string
+#  member_id                          :bigint
+#
 class PolicyPremiumItemTransactionMembership < ApplicationRecord
 
   # Hey there! I'm a join table! I'm as basic as they come, yo! Except... I've got a polymorphic association.

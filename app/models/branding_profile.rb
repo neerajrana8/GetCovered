@@ -1,3 +1,24 @@
+# == Schema Information
+#
+# Table name: branding_profiles
+#
+#  id                     :bigint           not null, primary key
+#  url                    :string
+#  default                :boolean          default(FALSE), not null
+#  styles                 :jsonb
+#  profileable_type       :string
+#  profileable_id         :bigint
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
+#  logo_url               :string
+#  footer_logo_url        :string
+#  subdomain              :string
+#  global_default         :boolean          default(FALSE), not null
+#  logo_jpeg_url          :string
+#  enabled                :boolean          default(TRUE)
+#  second_logo_url        :string
+#  second_footer_logo_url :string
+#
 ##
 # =Branding Profile Model
 # file: +app/models/branding_profile.rb+
@@ -11,7 +32,7 @@ class BrandingProfile < ApplicationRecord
   before_save :sanitize_branding_url
   after_save :check_default
   after_save :check_global_default
-  after_create :set_up_from_master
+  after_create :set_as_default
 
   validates_presence_of :url
 
@@ -24,6 +45,7 @@ class BrandingProfile < ApplicationRecord
   has_many_attached :images
 
   scope :default, -> { where(default: true) }
+  scope :url_like, ->(url) { where("url ILIKE '%#{url}%'") }
 
   accepts_nested_attributes_for :branding_profile_attributes
   accepts_nested_attributes_for :faqs
@@ -35,6 +57,10 @@ class BrandingProfile < ApplicationRecord
 
   def contact_email
     branding_profile_attributes.find_by_name('contact_email')&.value
+  end
+
+  def contact_phone
+    branding_profile_attributes.find_by_name('contact_phone')&.value
   end
 
   def formatted_url
@@ -93,6 +119,12 @@ class BrandingProfile < ApplicationRecord
     end
 
     uri.to_s
+  end
+
+  def set_as_default
+    unless profileable.branding_profiles.count > 1
+      self.update default: true
+    end
   end
 
   def set_up_from_master

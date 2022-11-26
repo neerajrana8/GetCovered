@@ -73,6 +73,7 @@
         delete :faq_delete, path: '/faqs/:faq_id/faq_delete'
         delete :faq_question_delete, path: '/faqs/:faq_id/faq_question_delete/:faq_question_id'
         post :attach_images, path: '/attach_images'
+        delete :second_logo_delete, path: '/images/second_logo_delete'
       end
 
       collection do
@@ -106,6 +107,8 @@
 
     resources :histories,
       only: [ :index ]
+
+    get 'communities', to: 'insurables#communities'
 
     resources :insurables,
       only: [ :create, :update, :destroy, :index, :show], concerns: :reportable do
@@ -142,8 +145,13 @@
       end
     post :insurables_index, action: :index, controller: :insurables
     post 'insurables/:insurable_id/policies_index', controller: 'policies', action: :index
+    post 'insurables/upload', controller: 'insurables', action: :upload
 
     resources :insurable_types, path: "insurable-types", only: [ :index ]
+
+    get 'integrations/:provider', controller: 'integrations', action: :show
+    post 'integrations/:provider', controller: 'integrations', action: :create
+    put 'integrations/:provider', controller: 'integrations', action: :update
 
     resources :leases,
       only: [ :create, :update, :destroy, :index, :show ] do
@@ -270,7 +278,8 @@
           get "search", to: 'users#search'
         end
       end
-
+    resources :contact_records, only: [:index, :show]
+    post '/contact_records', to: 'contact_records#user_mails'
     resources :notification_settings,
               only: [ :index, :show, :update ]
   end

@@ -34,12 +34,16 @@ module Policies
       @without_request = params[:without_request]
       @user = @policy.primary_user
       @agency = @policy.agency
-      @contact_email = @policy.branding_profile || BrandingProfile.global_default
+      @branding_profile = @policy.branding_profile || BrandingProfile.global_default
+      @contact_email = @branding_profile.contact_email
+      @contact_phone = @branding_profile.contact_phone
 
       I18n.locale = @user&.profile&.language if @user&.profile&.language&.present?
 
       @policy_type_title = I18n.t("policy_type_model.#{@policy.policy_type.title.parameterize.underscore}")
       @agency_policy_type = "#{@agency.title} - #{@policy_type_title}"
     end
+
+
   end
 end

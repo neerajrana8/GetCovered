@@ -1,18 +1,31 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: accounts
+#
+#  id                        :bigint           not null, primary key
+#  title                     :string
+#  slug                      :string
+#  call_sign                 :string
+#  enabled                   :boolean          default(FALSE), not null
+#  whitelabel                :boolean          default(FALSE), not null
+#  tos_accepted              :boolean          default(FALSE), not null
+#  tos_accepted_at           :datetime
+#  tos_acceptance_ip         :string
+#  verified                  :boolean          default(FALSE), not null
+#  stripe_id                 :string
+#  contact_info              :jsonb
+#  settings                  :jsonb
+#  staff_id                  :bigint
+#  agency_id                 :bigint
+#  created_at                :datetime         not null
+#  updated_at                :datetime         not null
+#  payment_profile_stripe_id :string
+#  current_payment_method    :integer
+#  additional_interest       :boolean          default(TRUE)
+#  minimum_liability         :integer
+#
 RSpec.describe Account, elasticsearch: true, type: :model do
-  it 'Account Get Covered should be indexed' do
-    FactoryBot.create(:account)
-    # refresh the index 
-    Account.__elasticsearch__.refresh_index!
-    # verify your model was indexed
-    expect(Account.search('Get Covered').records.length).to eq(1)
-  end
-
-  it 'Account Test should not be indexed' do
-    # refresh the index 
-    Account.__elasticsearch__.refresh_index!
-    # verify your model was indexed
-    expect(Account.search('Test').records.length).to eq(0)
-  end
+  pending "#{__FILE__} Needs to be updated after removing elasticsearch tests"
 end

@@ -15,4 +15,5 @@ class RentGuaranteeCancellationMailer < ApplicationMailer
                 policy_number: policy.number)
     mail(from: @agency_email, to: @user.email, subject: subject)
   end
+
 end

@@ -20,6 +20,6 @@ class LeaseStartCheckJob < ApplicationJob
   private
     
   def set_leases
-    @leases = Lease.where(start_date: Time.current.to_date)
+    @leases = Lease.where(status: "pending").where("start_date <= ?", Time.current.to_date)
   end
 end

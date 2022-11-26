@@ -1,5 +1,46 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: staffs
+#
+#  id                     :bigint           not null, primary key
+#  provider               :string           default("email"), not null
+#  uid                    :string           default(""), not null
+#  encrypted_password     :string           default(""), not null
+#  reset_password_token   :string
+#  reset_password_sent_at :datetime
+#  allow_password_change  :boolean          default(FALSE)
+#  remember_created_at    :datetime
+#  confirmation_token     :string
+#  confirmed_at           :datetime
+#  confirmation_sent_at   :datetime
+#  unconfirmed_email      :string
+#  email                  :string
+#  enabled                :boolean          default(FALSE), not null
+#  settings               :jsonb
+#  notification_options   :jsonb
+#  owner                  :boolean          default(FALSE), not null
+#  organizable_type       :string
+#  organizable_id         :bigint
+#  tokens                 :json
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
+#  invitation_token       :string
+#  invitation_created_at  :datetime
+#  invitation_sent_at     :datetime
+#  invitation_accepted_at :datetime
+#  invitation_limit       :integer
+#  invited_by_type        :string
+#  invited_by_id          :bigint
+#  invitations_count      :integer          default(0)
+#  sign_in_count          :integer          default(0), not null
+#  current_sign_in_at     :datetime
+#  last_sign_in_at        :datetime
+#  current_sign_in_ip     :string
+#  last_sign_in_ip        :string
+#  role                   :integer          default("staff")
+#
 class Staff < ApplicationRecord
   # Include default devise modules. Others available are:
   # :confirmable, :lockable, :timeoutable and :omniauthable
@@ -10,22 +51,23 @@ class Staff < ApplicationRecord
   include SetAsOwner
   include RecordChange
   include DeviseCustomUser
-  include ElasticsearchSearchable
   include SessionRecordable
 
-  enum role: { staff: 0, agent: 1, owner: 2, super_admin: 3 }
+  enum role: { staff: 0, agent: 1, owner: 2, super_admin: 3, policy_support: 4 }
 
   enum current_payment_method: %w[none ach_unverified ach_verified card other],
        _prefix: true
 
 
   # validate :proper_role
-  # validates :organizable, presence: true, unless: -> { super_admin? }
+  # validates :organizable, presence: true, unless: -> { super_admin? || policy_support? }
 
   # Active Record Callbacks
   after_initialize :initialize_staff
   after_create :set_first_as_primary_on_organizable
   after_create :build_notification_settings
+  before_validation :set_default_provider,
+                    on: :create
 
   # belongs_to relationships
   # belongs_to :account, required: true
@@ -48,6 +90,7 @@ class Staff < ApplicationRecord
   has_one :profile, as: :profileable, autosave: true
   has_one :staff_permission
 
+  has_many :contact_records, as: :contactable
   scope :enabled, -> { where(enabled: true) }
 
   accepts_nested_attributes_for :profile, update_only: true
@@ -56,23 +99,6 @@ class Staff < ApplicationRecord
 
   alias available_roles staff_roles
 
-  settings index: { number_of_shards: 1 } do
-    mappings dynamic: 'false' do
-      indexes :email, type: :text
-      indexes :profile do
-        indexes :id,   type: :long
-        indexes :first_name, type: :text
-        indexes :last_name, type: :text
-        indexes :middle_name, type: :text
-        indexes :title, type: :text
-        indexes :suffix, type: :text
-        indexes :full_name, type: :text
-        indexes :contact_email, type: :text
-        indexes :contact_phone, type: :text
-      end
-    end
-  end
-
   def as_indexed_json(options = {})
     as_json(
       options.merge(
@@ -80,28 +106,6 @@ class Staff < ApplicationRecord
         include: :profile
       )
     )
-  end
-
-  def self.update_profile(profile, options = {})
-    options[:index] ||= index_name
-    options[:type]  ||= document_type
-    options[:wait_for_completion] ||= false
-
-    options[:body] = {
-      conflicts: :proceed,
-      query: {
-        match: {
-          'profile.id': profile.id
-        }
-      },
-      script: {
-        lang: :painless,
-        source: 'ctx._source.profile.contact_phone = params.profile.contact_phone; ctx._source.profile.last_name = params.profile.last_name; ctx._source.profile.first_name = params.profile.first_name; ctx._source.profile.full_name = params.profile.full_name; ctx._source.profile.title = params.profile.title; ctx._source.profile.contact_email = params.profile.contact_email;',
-        params: { profile: { contact_phone: profile.contact_phone, last_name: profile.last_name, first_name: profile.first_name, full_name: profile.full_name, title: profile.title, contact_email: profile.contact_email } }
-      }
-    }
-
-    __elasticsearch__.client.update_by_query(options)
   end
 
   # Override as_json to always include profile information
@@ -153,7 +157,7 @@ class Staff < ApplicationRecord
   end
 
   def set_first_as_primary_on_organizable
-    if organizable&.staff&.count&.eql?(1)
+    if organizable&.staff&.count&.eql?(1) || organizable&.staff&.count&.eql?(0)
       organizable.update staff_id: id
       update_attribute(:owner, true)
     end
@@ -164,7 +168,12 @@ class Staff < ApplicationRecord
       self.notification_settings.create(action: opt, enabled: false)
     end
   end
-  
+
+  def set_default_provider
+    self.provider = (self.email.blank? ? '' : 'email')
+    self.uid = self.provider == 'email' ? self.email : ''
+  end
+
   def switch_agency(new_agency_id) # can also pass an Agency instead of an id
     new_agency = new_agency_id.class == ::Agency ? new_agency_id : ::Agency.where(id: new_agency_id).take
     new_agency_id = new_agency.id if new_agency_id.class == ::Agency

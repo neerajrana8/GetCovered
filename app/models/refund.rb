@@ -1,3 +1,17 @@
+# == Schema Information
+#
+# Table name: refunds
+#
+#  id                         :bigint           not null, primary key
+#  refund_reasons             :string           default([]), not null, is an Array
+#  amount                     :integer          default(0), not null
+#  amount_refunded            :integer          default(0), not null
+#  amount_returned_by_dispute :integer          default(0), not null
+#  complete                   :boolean          default(FALSE), not null
+#  created_at                 :datetime         not null
+#  updated_at                 :datetime         not null
+#  invoice_id                 :bigint
+#
 class Refund < ApplicationRecord
 
   belongs_to :invoice
@@ -33,6 +47,7 @@ class Refund < ApplicationRecord
               # ignore
           end
         end
+        self.refund_reasons.uniq!
         self.complete = true
         self.save!
         # stripe refund creation (since refunds are on specific charges, and since we want to keep single stripe_reasons together, we may need to create several StripeRefunds--usually this will be overkill and we will just create one)
@@ -41,7 +56,7 @@ class Refund < ApplicationRecord
         self.line_item_reductions.cancel_or_refund.group_by{|lir| lir.stripe_refund_reason || 'requested_by_customer' }
                                                   .transform_values do |lirs| {
                                                       amount: lirs.inject(0){|sum,lir| sum + lir.amount_refunded },
-                                                      reasons: lirs.map{|lir| lir.reason }
+                                                      reasons: lirs.map{|lir| lir.reason }.uniq
                                                     }
                                                   end.each do |stripe_reason, refund_info|
           amount_left = refund_info[:amount]

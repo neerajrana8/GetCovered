@@ -137,7 +137,8 @@
                           policy_type: @policy_type_title,
                           policy_number: @policy.number,
                           request_date: @request_date.strftime("%m/%d/%Y"),
-                          contact_email: @contact_email) %>
+                          contact_email: @contact_email,
+                          contact_phone: @contact_phone) %>
                   </p>
                   <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><%= t('shared.best') %>,</p>
                   <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><%=@agency.title %></p>

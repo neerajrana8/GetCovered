@@ -1,15 +1,39 @@
+# == Schema Information
+#
+# Table name: accounts
+#
+#  id                        :bigint           not null, primary key
+#  title                     :string
+#  slug                      :string
+#  call_sign                 :string
+#  enabled                   :boolean          default(FALSE), not null
+#  whitelabel                :boolean          default(FALSE), not null
+#  tos_accepted              :boolean          default(FALSE), not null
+#  tos_accepted_at           :datetime
+#  tos_acceptance_ip         :string
+#  verified                  :boolean          default(FALSE), not null
+#  stripe_id                 :string
+#  contact_info              :jsonb
+#  settings                  :jsonb
+#  staff_id                  :bigint
+#  agency_id                 :bigint
+#  created_at                :datetime         not null
+#  updated_at                :datetime         not null
+#  payment_profile_stripe_id :string
+#  current_payment_method    :integer
+#  additional_interest       :boolean          default(TRUE)
+#  minimum_liability         :integer
+#
 # Account model
 # file: app/models/account.rb
 #
 # An account is an entity which owns or lists property and entity's either in need
 # of coverage or to track existing coverage.  Accounts are controlled by staff who 
 # have been assigned the Account in their organizable relationship.
-# export PUBLISHABLE_KEY="pk_test_EfYPHgUKyZYzJjWegJmBr2DR"
-# export SECRET_KEY="sk_test_IBSW1QDuu306wJQCUQkattsa"
 
 class Account < ApplicationRecord
+
   # Concerns
-  include ElasticsearchSearchable
   include SetSlug
   include SetCallSign
   include EarningsReport
@@ -17,7 +41,6 @@ class Account < ApplicationRecord
   include RecordChange
 
   # Active Record Callbacks
-  after_initialize :initialize_agency
   after_create :create_permissions
 
   # belongs_to relationships
@@ -32,7 +55,7 @@ class Account < ApplicationRecord
 
   has_many :branding_profiles, as: :profileable
   has_many :payment_profiles, as: :payer
-  
+  has_many :master_policy_configurations, as: :configurable
   has_many :insurables 
   
   has_many :policies
@@ -56,10 +79,9 @@ class Account < ApplicationRecord
   
   has_many :active_users, through: :active_account_users, source: :user
   
-  has_many :commission_strategies, as: :commissionable
-  
-  has_many :commissions, as: :commissionable
-  has_many :commission_deductions, as: :deductee
+  has_many :commission_strategies, as: :recipient
+  has_many :commissions, as: :recipient
+  has_many :commission_items, through: :commissions
 
   has_many :events, as: :eventable
 
@@ -88,6 +110,10 @@ class Account < ApplicationRecord
   accepts_nested_attributes_for :addresses, allow_destroy: true
   accepts_nested_attributes_for :global_permission, update_only: true
 
+  def self.find_like(str, all = false)
+    Account.where("title ILIKE '%#{str}%'").send(all ? :to_a : :take)
+  end
+
   # Validations
 
   validates_presence_of :title, :slug, :call_sign
@@ -106,27 +132,13 @@ class Account < ApplicationRecord
     json
   end
 
-  def commission_balance
-    commission_deductions.map(&:unearned_balance).reduce(:+) || 0
-  end
-
-
   # Attach Payment Source
   #
   # Attach a stripe source token to a user (Stripe Customer)
-  
   def attach_payment_source(token = nil, make_default = true)
     AttachPaymentSource.run(account: self, token: token, make_default: make_default)
   end
 
-  settings index: { number_of_shards: 1 } do
-    mappings dynamic: 'false' do
-      indexes :title, type: :text, analyzer: 'english'
-      indexes :call_sign, type: :text, analyzer: 'english'
-    end
-  end
-
-  
   # Get Msi General Party Info
   #
   # Get GeneralPartyInfo block for use in MSI requests
@@ -172,9 +184,6 @@ class Account < ApplicationRecord
   end
   
   private
-    def initialize_agency
-      # Blank for now...
-    end
      def create_permissions
       unless self.global_permission
         permissions = self.agency.global_permission&.permissions || {}
@@ -184,10 +193,10 @@ class Account < ApplicationRecord
       end
     end
 
-    # get an array [first, last] presenting self.title as if it were a name;
-    # guarantees nonempty first and last with length at most 50 characters;
-    # will separate along space boundaries with the first name as short as possible when it can
-    def get_pseudoname
+  # get an array [first, last] presenting self.title as if it were a name;
+  # guarantees nonempty first and last with length at most 50 characters;
+  # will separate along space boundaries with the first name as short as possible when it can
+  def get_pseudoname
     pseudoname = ['','']
     the_title = self.title.strip
     space_index = the_title.index(' ')

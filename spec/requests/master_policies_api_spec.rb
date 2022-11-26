@@ -81,23 +81,23 @@ describe 'Master Policies API spec', type: :request do
     end
   end
 
-  context 'for staffs' do
-    before :each do
-      login_staff(staff)
-      @headers = get_auth_headers_from_login_response_headers(response)
-    end
-
-    it 'covers a unit' do
-      request = lambda do
-        post "/v2/staff_account/master-policies/#{master_policy.id}/cover_unit",
-             params: { insurable_id: unit.id }.to_json,
-             headers: @headers.reverse_merge(base_headers)
-      end
-
-      expect { request.call }.to change { unit.policies.current.count }.by(1)
-      expect(response.status).to eq(200)
-    end
-  end
+  # context 'for staffs' do
+  #   before :each do
+  #     login_staff(staff)
+  #     @headers = get_auth_headers_from_login_response_headers(response)
+  #   end
+  #
+  #   it 'covers a unit' do
+  #     request = lambda do
+  #       post "/v2/staff_account/master-policies/#{master_policy.id}/cover_unit",
+  #            params: { insurable_id: unit.id }.to_json,
+  #            headers: @headers.reverse_merge(base_headers)
+  #     end
+  #
+  #     expect { request.call }.to change { unit.policies.current.count }.by(1)
+  #     expect(response.status).to eq(200)
+  #   end
+  # end
 
   private
 

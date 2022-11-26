@@ -1,3 +1,22 @@
+# == Schema Information
+#
+# Table name: carrier_policy_types
+#
+#  id                                :bigint           not null, primary key
+#  policy_defaults                   :jsonb
+#  application_fields                :jsonb
+#  application_questions             :jsonb
+#  application_required              :boolean          default(FALSE), not null
+#  carrier_id                        :bigint
+#  policy_type_id                    :bigint
+#  created_at                        :datetime         not null
+#  updated_at                        :datetime         not null
+#  max_days_for_full_refund          :integer          default(31), not null
+#  days_late_before_cancellation     :integer          default(30), not null
+#  commission_strategy_id            :bigint           not null
+#  premium_proration_calculation     :string           default("per_payment_term"), not null
+#  premium_proration_refunds_allowed :boolean          default(TRUE), not null
+#
 ##
 # =Carrier Policy Type Model
 # file: +app/models/carrier_policy_type.rb+
@@ -9,7 +28,9 @@ class CarrierPolicyType < ApplicationRecord
   belongs_to :policy_type
   belongs_to :commission_strategy
 
+  has_many :fees, as: :assignable
   has_many :carrier_policy_type_availabilities, dependent: :destroy
+  has_many :master_policy_configurations
 
   accepts_nested_attributes_for :commission_strategy
   accepts_nested_attributes_for :carrier_policy_type_availabilities, allow_destroy: true

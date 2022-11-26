@@ -68,7 +68,7 @@
             via: "get",
             defaults: { recordable_type: Agency }
           get 'branding_profile'
-          
+
           get "policy-types",
             to: "agencies#get_policy_types",
             via: "get"
@@ -117,6 +117,7 @@
           delete :faq_delete, path: '/faqs/:faq_id/faq_delete'
           delete :faq_question_delete, path: '/faqs/:faq_id/faq_question_delete/:faq_question_id'
           post :attach_images, path: '/attach_images'
+          delete :second_logo_delete, path: '/images/second_logo_delete'
         end
         post :import, on: :collection
 
@@ -182,6 +183,8 @@
     resources :histories,
       only: [ :index ]
 
+    get 'communities', to: 'insurables#communities'
+
     resources :insurables,
       only: [ :create, :update, :destroy, :index, :show ],
       concerns: :reportable do
@@ -219,6 +222,7 @@
     end
     post :insurables_index, action: :index, controller: :insurables
     post 'insurables/:insurable_id/policies_index', controller: 'policies', action: :index
+    post 'insurables/upload', controller: 'insurables', action: :upload
 
     resources :invoices, only: [ :update, :index, :show ]
 

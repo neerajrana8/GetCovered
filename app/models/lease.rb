@@ -1,10 +1,31 @@
+# == Schema Information
+#
+# Table name: leases
+#
+#  id               :bigint           not null, primary key
+#  reference        :string
+#  start_date       :date
+#  end_date         :date
+#  status           :integer          default("pending")
+#  covered          :boolean          default(FALSE)
+#  lease_type_id    :bigint
+#  insurable_id     :bigint
+#  account_id       :bigint
+#  created_at       :datetime         not null
+#  updated_at       :datetime         not null
+#  expanded_covered :jsonb
+#  defunct          :boolean          default(FALSE), not null
+#
 # Lease model
 # file: app/models/lease.rb
 
 class Lease < ApplicationRecord
   # Concerns
-  include ElasticsearchSearchable
   include RecordChange
+  include ExpandedCovered
+  
+  RESIDENTIAL_ID = 1
+  COMMERCIAL_ID = 2
 
   # Active Record Callbacks
   after_initialize :initialize_lease
@@ -23,6 +44,9 @@ class Lease < ApplicationRecord
 
   belongs_to :insurable
   belongs_to :lease_type
+
+  has_many :policies,
+           through: :insurable
 
   has_many :lease_users, inverse_of: :lease
 
@@ -58,12 +82,6 @@ class Lease < ApplicationRecord
   self.inheritance_column = nil
 
   enum status: %i[pending current expired]
-
-  settings index: { number_of_shards: 1 } do
-    mappings dynamic: 'false' do
-      indexes :reference, type: :text, analyzer: 'english'
-    end
-  end
 
   # Lease.active?
   def active?
@@ -147,8 +165,7 @@ class Lease < ApplicationRecord
   # Lease.primary_insurable
   
   def primary_user
-    lease_user = lease_users.where(primary: true).take
-    lease_user&.user
+    lease_users.where(primary: true).take&.user
   end
   
   private

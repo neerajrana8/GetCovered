@@ -1,3 +1,25 @@
+# == Schema Information
+#
+# Table name: fees
+#
+#  id              :bigint           not null, primary key
+#  title           :string
+#  slug            :string
+#  amount          :decimal(, )      default(0.0), not null
+#  amount_type     :integer          default("FLAT"), not null
+#  type            :integer          default("ORIGINATION"), not null
+#  per_payment     :boolean          default(FALSE), not null
+#  amortize        :boolean          default(FALSE), not null
+#  enabled         :boolean          default(FALSE), not null
+#  locked          :boolean          default(FALSE), not null
+#  assignable_type :string
+#  assignable_id   :bigint
+#  ownerable_type  :string
+#  ownerable_id    :bigint
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#  hidden          :boolean          default(FALSE), not null
+#
 ##
 # =Fee Model
 # file: +app/models/fee.rb+
@@ -19,6 +41,7 @@ class Fee < ApplicationRecord
   
   validate :prevent_amortize_of_per_payment_fees
   validate :ownerable_and_assignable_match_up
+  validate :amount_is_integral_when_flat
   
   enum type: { ORIGINATION: 0, RENEWAL: 1, REINSTATEMENT: 2, MISC: 3 }
   enum amount_type: { FLAT: 0, PERCENTAGE: 1 }
@@ -51,6 +74,12 @@ class Fee < ApplicationRecord
       # WARNING: do nothing for now, but maybe throw an error for an invalid type selection if sure no other combinations are allowed
       # NOTE: fees now can have assignable_type PolicyPremium and ownerable_type Carrier/Agency/CommissionStrategy (i.e. the recipient of the fee);
       #       but there is little point to this validation, so I haven't changed it...
+    end
+  end
+  
+  def amount_is_integral_when_flat
+    if self.amount_type == "FLAT" && self.amount && self.amount.floor != self.amount
+      errors.add(:amount, 'must be an integer number of cents when amount_type is FLAT')
     end
   end
 end

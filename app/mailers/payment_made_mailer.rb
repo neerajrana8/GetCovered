@@ -19,4 +19,5 @@ class PaymentMadeMailer < ApplicationMailer
                      policy_type: @policy_type_title)
     mail(from: @from, to: @user.email, subject: subject)
   end
+
 end

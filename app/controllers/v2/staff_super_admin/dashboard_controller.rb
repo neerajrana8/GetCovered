@@ -8,34 +8,37 @@ module V2
       include DashboardMethods
 
       def total_dashboard
-        @covered = Insurable.where(covered: true).count || 0
-        @uncovered = Insurable.where(covered: false).count || 0
-        @units = @covered + @uncovered
-        community_ids = InsurableType::COMMUNITIES_IDS
-        @communities = Insurable.where(insurable_type_id: community_ids).count
-        @total_policy = ::Policy.current.pluck(:id).count
-        @total_residential_policies = ::Policy.current.where(policy_type_id: 1).count
-        @total_master_policies = ::Policy.current.where(policy_type_id: PolicyType::MASTER_IDS).count
-        @total_master_policy_coverages = ::Policy.current.where(policy_type_id: 3).count
-        @total_commercial_policies = ::Policy.current.where(policy_type_id: 4).count
-        @total_rent_guarantee_policies = ::Policy.current.where(policy_type_id: 5).count
-        policy_ids = ::Policy.pluck(:id)
-        @total_commission = ::Commission.where(recipient_type: 'Agency', recipient_id: 1).pluck(:total).inject(:+) || 0  # this is total GetCovered commissions
-        @total_premium = ::PolicyPremium.where(policy_quote_id: ::PolicyQuote.where(status: 'accepted').pluck(:id)).or(::PolicyPremium.where(policy_id: policy_ids)).pluck(:total_premium).inject(:+) || 0
-
+        # @covered = Insurable.where(covered: true).count || 0
+        # @uncovered = Insurable.where(covered: false).count || 0
+        # @units = @covered + @uncovered
+        # community_ids = InsurableType::COMMUNITIES_IDS
+        # @communities = Insurable.where(insurable_type_id: community_ids).count
+        # @total_policy = ::Policy.current.pluck(:id).count
+        # @total_residential_policies = ::Policy.current.where(policy_type_id: 1).count
+        # @total_master_policies = ::Policy.current.where(policy_type_id: PolicyType::MASTER_IDS).count
+        # @total_master_policy_coverages = ::Policy.current.where(policy_type_id: 3).count
+        # @total_commercial_policies = ::Policy.current.where(policy_type_id: 4).count
+        # @total_rent_guarantee_policies = ::Policy.current.where(policy_type_id: 5).count
+        # policy_ids = ::Policy.pluck(:id)
+        # @total_commission = ::Commission.where(recipient_type: 'Agency', recipient_id: 1).pluck(:total).inject(:+) || 0  # this is total GetCovered commissions
+        # @total_premium = ::PolicyPremium.where(policy_quote_id: ::PolicyQuote.where(status: 'accepted').pluck(:id)).or(::PolicyPremium.where(policy_id: policy_ids)).pluck(:total_premium).inject(:+) || 0
+        #
+        # render json: {
+        #   total_units: @units,
+        #   total_covered_units: @covered,
+        #   total_uncovered_units: @uncovered,
+        #   total_communities: @communities,
+        #   total_policies: @total_policy,
+        #   total_residential_policies: @total_residential_policies,
+        #   total_master_policies: @total_master_policies,
+        #   total_master_policy_coverages: @total_master_policy_coverages,
+        #   total_commercial_policies: @total_commercial_policies,
+        #   total_rent_guarantee_policies: @total_rent_guarantee_policies,
+        #   total_commission: @total_commission,
+        #   total_premium: @total_premium
+        # }, status: :ok
         render json: {
-          total_units: @units,
-          total_covered_units: @covered,
-          total_uncovered_units: @uncovered,
-          total_communities: @communities,
-          total_policies: @total_policy,
-          total_residential_policies: @total_residential_policies,
-          total_master_policies: @total_master_policies,
-          total_master_policy_coverages: @total_master_policy_coverages,
-          total_commercial_policies: @total_commercial_policies,
-          total_rent_guarantee_policies: @total_rent_guarantee_policies,
-          total_commission: @total_commission,
-          total_premium: @total_premium
+          message: "Currently Unavailable: Under Construction"
         }, status: :ok
       end
 
@@ -80,18 +83,21 @@ module V2
       end
 
       def reports
-        min = params[:start]
-        max = params[:end]
-        type = params[:type]
-        report = Report.joins('LEFT JOIN reports r2 ON (date(reports.created_at) = date(r2.created_at) AND reports.id < r2.id)')
-          .where('r2.id IS NULL').where(reportable_type: 'Agency')
-
-        # reports = Agency.where(created_at: min..max).map { |report| report.coverage_report }
-        # report = Report.where(created_at: min..max, reportable_type: 'Agency', type: type).group('created_at', 'id')
-        # reports = report.joins("LEFT JOIN reports r2 ON (date(reports.created_at) = date(r2.created_at) AND reports.id < r2.id)")
-        #                 .where("r2.id IS NULL")
-        reports = report.where(type: type, created_at: min..max).to_a
-        render json: reports, status: :ok
+        # min = params[:start]
+        # max = params[:end]
+        # type = params[:type]
+        # report = Report.joins('LEFT JOIN reports r2 ON (date(reports.created_at) = date(r2.created_at) AND reports.id < r2.id)')
+        #   .where('r2.id IS NULL').where(reportable_type: 'Agency')
+        #
+        # # reports = Agency.where(created_at: min..max).map { |report| report.coverage_report }
+        # # report = Report.where(created_at: min..max, reportable_type: 'Agency', type: type).group('created_at', 'id')
+        # # reports = report.joins("LEFT JOIN reports r2 ON (date(reports.created_at) = date(r2.created_at) AND reports.id < r2.id)")
+        # #                 .where("r2.id IS NULL")
+        # reports = report.where(type: type, created_at: min..max).to_a
+        # render json: reports, status: :ok
+        render json: {
+          message: "Currently Unavailable: Under Construction"
+        }, status: :ok
       end
 
       private

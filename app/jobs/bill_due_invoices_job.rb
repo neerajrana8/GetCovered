@@ -52,8 +52,12 @@ class BillDueInvoicesJob < ApplicationJob
       # fine, then its only purpose is to ensure auto_pay       #
       # and policy_in_system are true.                          #
       #                                                         #
+      # Note pt. 2                                              #
+      # Dylan Gaines has made these changes as of October 17,   #
+      # 2022.  I added the status to the policy query, and      #
+      # re-enabled the missed invoice status                    #
       # ******************************************************* #
-      policy_ids = Policy.select(:id).policy_in_system(true).current.where(auto_pay: true).pluck(:id)
+      policy_ids = Policy.select(:id).policy_in_system(true).current.where(auto_pay: true, status: ["BOUND", "BOUND_WITH_WARNING"]).pluck(:id)
       @invoices = Invoice.where(invoiceable_type: 'PolicyQuote', invoiceable_id: PolicyQuote.select(:id).where(status: 'accepted', policy_id: policy_ids)).or(
                             Invoice.where(invoiceable_type: 'PolicyGroupQuote', invoiceable_id: PolicyGroupQuote.select(:id).where(status: 'accepted', policy_group_id: PolicyGroup.select(:id).policy_in_system(true).current.where(auto_pay: true)))
                          ).or(

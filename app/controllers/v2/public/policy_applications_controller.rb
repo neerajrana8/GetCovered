@@ -7,7 +7,7 @@ module V2
   module Public
     class PolicyApplicationsController < PublicController
 
-      include Leads::CreateMethods
+      include Concerns::Leads::LeadsCreateMethods
       include Devise::Controllers::SignInOut
       include PolicyApplicationMethods
 
@@ -20,14 +20,6 @@ module V2
           render json:   standard_error(:policy_application_not_found, I18n.t('policy_application_contr.show.policy_application_not_found')),
                  status: 404
           return
-        end
-        if @policy_application.carrier_id == MsiService.carrier_id
-          @policy_application.coverage_selections.each do |cs|
-            if (Float(cs['selection']) rescue false)
-              cs['selection'] = { 'data_type' => 'currency', 'value' => (cs['selection'].to_d * 100.to_d).to_i }
-            end
-          end
-          @policy_application.coverage_selections = @policy_application.coverage_selections.select{|cs| cs['uid'] != '1010' && cs['uid'] != 1010 }
         end
       end
 
@@ -120,7 +112,7 @@ module V2
         init_hash = {
           :agency => @access_token.bearer,
           :policy_type => PolicyType.find(policy_type),
-          :carrier => policy_type == 1 ? Carrier.find(5) : Carrier.find(4),
+          :carrier => policy_type == 1 ? Carrier.find(1) : Carrier.find(4),
           :account => nil,
           :effective_date => place_holder_date,
           :expiration_date => place_holder_date + 1.year
@@ -135,9 +127,9 @@ module V2
           end
         end
 
-        # Warning to remember to fix this for agencies that have multiple branding profiles in the future.
-        site = @access_token.bearer.branding_profiles.count > 0 ? "https://#{@access_token.bearer.branding_profiles.first.url}" :
+        site = @access_token.bearer.branding_profiles.count > 0 ? "https://#{@access_token.bearer.branding_profiles.where(default: true).take.url}" :
                                                                   Rails.application.credentials[:uri][Rails.env.to_sym][:client]
+
         program = policy_type == 1 ? "residential" : "rentguarantee"
 
         @application = PolicyApplication.new(init_hash)
@@ -159,8 +151,7 @@ module V2
           when 1 # residential
             unit = ::Insurable.get_or_create(address: address_string, unit: unit_string.blank? ? true : unit_string)
             if unit.class == ::Insurable
-              @application.insurables << unit
-              @application.policy_insurables.first.primary = true
+              @application.policy_insurables_attributes = [{ primary: true, insurable_id: unit.id, policy_id: nil }]
               @application.resolver_info["insurable_id"] = unit.id
               @application.resolver_info["parent_insurable_id"] = unit.insurable_id
               @application.resolver_info["unit_title"] = unit.title
@@ -347,33 +338,39 @@ module V2
 
       def create_residential
         @application = PolicyApplication.new(create_residential_params)
+        @application.policy_insurables.first.primary = true if @application.policy_insurables.length == 1 # ensure that .primary_insurable actually works before save
         @application.expiration_date = @application.effective_date&.send(:+, 1.year)
         @application.agency = @application.account&.agency || Agency.where(master_agency: true).take if @application.agency.nil?
         @application.account = @application.primary_insurable&.account if @application.account.nil?
-
+        # flee if nonsense is passed for additional interest
         if @application.extra_settings && !@application.extra_settings['additional_interest'].blank?
-          error_message = ::MsiService.validate_msi_additional_interest(@application.extra_settings['additional_interest'])
-          unless error_message.nil?
-            render json: standard_error(:policy_application_save_error, I18n.t(error_message)),
-                   status: 400
+          if @application.carrier_id == ::MsiService.carrier_id
+            error_message = ::MsiService.validate_msi_additional_interest(@application.extra_settings['additional_interest'])
+            unless error_message.nil?
+              render json: standard_error(:policy_application_save_error, I18n.t(error_message)),
+                     status: 400
+              return
+            end
+          elsif @application.carrier_id == ::QbeService.carrier_id
+            error_message = ::QbeService.validate_qbe_additional_interest(@application.extra_settings['additional_interest'])
+            unless error_message.nil?
+              render json: standard_error(:policy_application_save_error, I18n.t(error_message)),
+                     status: 400
+              return
+            end
+          end
+        end
+        # scream if we are missing critical community information          
+        if @application.carrier_id == ::QbeService.carrier_id && @application.primary_insurable.account.nil?
+          defaults = ::QbeService::FIC_DEFAULTS[@application.primary_insurable.primary_address.state] || ::QbeService::FIC_DEFAULTS[nil]
+          missing_fic_info = ::QbeService::FIC_DEFAULT_KEYS.select{|k| !@application.extra_settings&.has_key?(k) && !defaults.has_key?(k) }
+          unless missing_fic_info.blank?
+            render json: standard_error(:community_information_missing, I18n.t('policy_application_contr.qbe_application.missing_fic_info', missing_list: missing_fic_info.map{|v| I18n.t("policy_application_contr.qbe_application.#{v}") }.join(", "))),
+              status: 400
             return
           end
         end
-
-        unless @application.coverage_selections.blank?
-          @application.coverage_selections.each do |cs|
-            if [ActionController::Parameters, ActiveSupport::HashWithIndifferentAccess, ::Hash].include?(cs['selection'].class)
-              cs['selection']['value'] = cs['selection']['value'].to_d / 100.to_d if cs['selection']['data_type'] == 'currency'
-              cs['selection'] = cs['selection']['value']
-            elsif [ActionController::Parameters, ::Hash].include?(cs[:selection].class)
-              cs[:selection][:value] = cs[:selection][:value].to_d / 100.to_d if cs[:selection][:data_type] == 'currency'
-              cs[:selection] = cs[:selection][:value]
-            end
-          end
-          @application.coverage_selections.select!{|cs| cs['selection'] || cs[:selection] }
-          @application.coverage_selections.push({ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }) unless @application.coverage_selections.any?{|co| co['uid'] == '1010' }
-        end
-
+        # go wild
         if @application.save
           update_users_result =
             PolicyApplications::UpdateUsers.run!(
@@ -417,6 +414,7 @@ module V2
                    'installment_fee' => @quote.carrier_payment_data['installment_fee'],
                    'installment_total' => @quote.carrier_payment_data['installment_total']
                   } if @application.carrier_id == 5
+                  use_translations_for_application_questions!(@application) # this is from the policy application methods concern... just here in case they switched languages after calling .new
                   render template: 'v2/public/policy_applications/create.json', status: 200
 
                 else
@@ -457,11 +455,20 @@ module V2
           @policy_application.account = @policy_application.primary_insurable&.account if @policy_application.account.nil?
           # flee if nonsense is passed for additional interest
           if @policy_application.extra_settings && !@policy_application.extra_settings['additional_interest'].blank?
-            error_message = ::MsiService.validate_msi_additional_interest(@policy_application.extra_settings['additional_interest'])
-            unless error_message.nil?
-              render json: standard_error(:policy_application_save_error, I18n.t(error_message)),
-                     status: 400
-              return
+            if @policy_application.carrier_id == ::MsiService.carrier_id
+              error_message = ::MsiService.validate_msi_additional_interest(@policy_application.extra_settings['additional_interest'])
+              unless error_message.nil?
+                render json: standard_error(:policy_application_save_error, I18n.t(error_message)),
+                       status: 400
+                return
+              end
+            elsif @policy_application.carrier_id == ::QbeService.carrier_id
+              error_message = ::QbeService.validate_qbe_additional_interest(@policy_application.extra_settings['additional_interest'])
+              unless error_message.nil?
+                render json: standard_error(:policy_application_save_error, I18n.t(error_message)),
+                       status: 400
+                return
+              end
             end
           end
           # remove duplicate pis
@@ -474,19 +481,16 @@ module V2
             unsaved_pis.first.primary = true if unsaved_pis.find{|pi| pi.primary }.nil?
             @replacement_policy_insurables = unsaved_pis
           end
-          # fix coverage options if needed
-          unless @policy_application.coverage_selections.blank?
-            @policy_application.coverage_selections.each do |cs|
-              if [ActionController::Parameters, ActiveSupport::HashWithIndifferentAccess, ::Hash].include?(cs['selection'].class)
-                cs['selection']['value'] = cs['selection']['value'].to_d / 100.to_d if cs['selection']['data_type'] == 'currency'
-                cs['selection'] = cs['selection']['value']
-              elsif [ActionController::Parameters, ::Hash].include?(cs[:selection].class)
-                cs[:selection][:value] = cs[:selection][:value].to_d / 100.to_d if cs[:selection][:data_type] == 'currency'
-                cs[:selection] = cs[:selection][:value]
-              end
+          @policy_application.policy_insurables.first.primary = true if @policy_application.policy_insurables.all?{|pi| !pi.primary }
+          # scream if we are missing critical community information          
+          if @policy_application.carrier_id == ::QbeService.carrier_id && @policy_application.primary_insurable.account.nil?
+            defaults = ::QbeService::FIC_DEFAULTS[@policy_application.primary_insurable.primary_address.state] || ::QbeService::FIC_DEFAULTS[nil]
+            missing_fic_info = ::QbeService::FIC_DEFAULT_KEYS.select{|k| !@policy_application.extra_settings&.has_key?(k) && !defaults.has_key?(k) }
+            unless missing_fic_info.blank?
+              render json: standard_error(:community_information_missing, I18n.t('policy_application_contr.qbe_application.missing_fic_info', missing_list: missing_fic_info.map{|v| I18n.t("policy_application_contr.qbe_application.#{v}") }.join(", "))),
+                status: 400
+              return
             end
-            @policy_application.coverage_selections = @policy_application.coverage_selections.select{|cs| cs['selection'] || cs[:selection] }
-            @policy_application.coverage_selections.push({ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }) unless @policy_application.coverage_selections.any?{|co| co['uid'] == '1010' }
           end
           # woot woot, try to update users and save
           update_users_result = update_policy_users_params.blank? ? true :
@@ -546,6 +550,7 @@ module V2
                      'installment_fee' => @quote.carrier_payment_data['installment_fee'],
                      'installment_total' => @quote.carrier_payment_data['installment_total']
                     } if @application.carrier_id == 5
+                    use_translations_for_application_questions!(@application) # this is from the policy application methods concern... just here in case they switched languages after calling .new
                     render template: 'v2/public/policy_applications/create.json', status: 200
 
                   else
@@ -660,14 +665,16 @@ module V2
                   :auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
                   :carrier_id, :agency_id, fields: [:title, :value, options: []],
                   questions:                       [:title, :value, options: []],
-                  coverage_selections: [:category, :uid, :selection, selection: [ :data_type, :value ]],
+                  coverage_selections: {}, #[:uid, :selection, selection: [ :data_type, :value ]],
                   extra_settings: [
-                    # for MSI
-                    :installment_day, :number_of_units, :years_professionally_managed, :year_built, :gated,
+                    :installment_day, # for MSI
+                    :number_of_units, :years_professionally_managed, :year_built, :gated, :in_city_limits, # for QBE and MSI non-preferred
                     additional_interest: [
                       :entity_type, :email_address, :phone_number,
-                      :company_name, :address,
-                      :first_name, :last_name, :middle_name
+                      :company_name,
+                      :first_name, :last_name, :middle_name,
+                      :address, # for msi; qbe terms are below:
+                      :addr1, :addr2, :city, :state, :zip
                     ]
                   ],
                   policy_rates_attributes:         [:insurable_rate_id],
