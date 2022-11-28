@@ -49,21 +49,22 @@ module V2
 
       def update
         if @policy.update(update_policy_attributes)
-          # TODO: Place to update policy status depended objects
-          active_policy_types = {}
-          insurables = @policy.insurables
-          insurables.each do |insurable|
-            policies = insurable.policies.where(status: %w[BOUND BOUND_WITH_WARNING])
-            policies.each do |policy|
-              active_policy_types[polcy_type_id] = policy
-            end
-          end
 
-          active_policy_types.each do |policy_type, policy|
-            if policy_type == PolicyType::MASTER_COVERAGE_ID
-              policy.update(status: 10)
-            end
-          end
+          # # TODO: Place to update policy status depended objects
+          # active_policy_types = {}
+          # insurables = @policy.insurables
+          # insurables.each do |insurable|
+          #   policies = insurable.policies.where(status: %w[BOUND BOUND_WITH_WARNING])
+          #   policies.each do |policy|
+          #     active_policy_types[polcy_type_id] = policy
+          #   end
+          # end
+
+          # active_policy_types.each do |policy_type, policy|
+          #   if policy_type == PolicyType::MASTER_COVERAGE_ID
+          #     policy.update(status: 10)
+          #   end
+          # end
 
           render json: @policy.to_json,
                  status: 202
