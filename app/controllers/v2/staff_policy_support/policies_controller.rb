@@ -53,7 +53,7 @@ module V2
           active_policy_types = {}
           insurables = @policy.insurables
           insurables.each do |insurable|
-            policies = insurable.policices.where(status: %w[BOUND BOUND_WITH_WARNING])
+            policies = insurable.policies.where(status: %w[BOUND BOUND_WITH_WARNING])
             policies.each do |policy|
               active_policy_types[polcy_type_id] = policy
             end
@@ -61,7 +61,7 @@ module V2
 
           active_policy_types.each do |policy_type, policy|
             if policy_type == PolicyType::MASTER_COVERAGE_ID
-              policy.update(status: 'CANCELLED')
+              policy.update(status: 10)
             end
           end
 
