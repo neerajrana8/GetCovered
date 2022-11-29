@@ -94,3 +94,9 @@ json.branding_profile_url policy.branding_profile&.url
 if policy.integration_profiles.present?
   json.tcode policy&.integration_profiles&.first&.external_id
 end
+
+json.lease policy&.primary_insurable&.leases&.last
+json.tenants do
+  json.array! policy&.primary_insurable&.leases&.last&.lease_users,
+              partial: 'v2/staff_policy_support/policies/tenant', as: :tenant
+end

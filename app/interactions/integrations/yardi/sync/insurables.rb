@@ -27,26 +27,44 @@ module Integrations
         def fixaddr(markname, unitid, addr)
           return addr if addr.blank?
           if !['0','1','2','3','4','5','6','7','8','9'].include?(addr[0])
-            addr = addr.split(markname).join(" ").gsub("  ", " ").strip
+            addr = addr.split(markname).join(" ").strip
           end
-          addr = addr.gsub(" ", "  ")
+          addr = addr.gsub("#", " # ")
+          addr = addr.squeeze(" ")
           return addr if addr.blank?
           uid_parts = unitid.split("-")
           uid_lasto = "#{uid_parts.last}"
           uid_lasto = uid_lasto[1..-1] while uid_lasto[0] && uid_lasto[0] == "0"
           splat = addr.split(" ")
-          if splat[-3] && ["Apt", "Apr", "Apartment", "Unit", "Apt.", "Apr.", "Ste.", "Ste", "Suite", "Room", "Rm", "Rm."].include?(splat[-2])
-            if !splat[-3].end_with?(",")
-              splat[-3] += ","
-              splat[-2] = "Apt" if splat[-2] == "Apr" || splat[-2] == "Apr."
-              addr = splat.join(" ")
-            elsif splat[-2] == "Apr" || splat[-2] == "Apr."
-              splat[-2] = "Apt"
-              addr = splat.join(" ")
+          if splat[-2] && ["Apt", "Apr", "Apartment", "Unit", "Apt.", "Apr.", "Ste.", "Ste", "Suite", "Room", "Rm", "Rm."].include?(splat[-2])
+            if splat[-3]
+              if !splat[-3].end_with?(",")
+                splat[-3] += ","
+                splat[-2] = "Apt" if splat[-2] == "Apr" || splat[-2] == "Apr."
+                addr = splat.join(" ")
+              elsif splat[-2] == "Apr" || splat[-2] == "Apr."
+                splat[-2] = "Apt"
+                addr = splat.join(" ")
+              end
             end
-          elsif splat[-2] && (splat[-1] == unitid || splat[-1] == uid_parts.last || splat[-1] == uid_lasto) && !splat[-2]&.end_with?(',')
+          elsif splat[-2] && !["#", "No", "Num", "Number", "No.", "Num."].any?{|x| splat[-2].downcase.end_with?(x.downcase) } && (splat[-1] == unitid || splat[-1] == uid_parts.last || splat[-1] == uid_lasto) && !splat[-2]&.end_with?(',')
             splat[-2] += ', Apt'
             addr = splat.join(" ")
+          end
+          
+          gombo = addr.split(" ")
+          if !gombo.blank? && (gombo.last == unitid.strip || gombo.last == uid_parts.last || gombo.last == uid_lasto)
+            if gombo[-2] && !["Apt", "Apr", "Apartment", "Unit", "Apt.", "Apr.", "Ste.", "Ste", "Suite", "Room", "Rm", "Rm.", "#", "No", "Num"].any?{|wut| gombo[-2].downcase.end_with?(wut.downcase) }
+              gombo[-1] = "Apt #{gombo.last}"
+              if gombo[-2] && !gombo[gombo.length-2].end_with?(',')
+                gombo[-2] += ','
+              end
+              addr = gombo.join(" ")
+            elsif gombo[-2] && gombo[-2] == "#" && gombo[-3] && !["Apt", "Apr", "Apartment", "Unit", "Apt.", "Apr.", "Ste.", "Ste", "Suite", "Room", "Rm", "Rm."].any?{|x| gombo[-3].downcase == x.downcase }
+              gombo[-2] = "Apt"
+              gombo[-3] += ','
+              addr = gombo.join(" ")
+            end
           end
           
           return addr
@@ -149,7 +167,7 @@ module Integrations
               verboten = uresult[:parsed_response].dig("Envelope", "Body", "GetUnitInformationResponse", "GetUnitInformationResult", "UnitInformation", "Property", "Units", "UnitInfo")
                                                   .select{|u| is_forbidden.call(u["Unit"]) }
                                                   .map{|u| u["UnitID"]["__content__"] }
-              ### format example:
+              ### format example, woohoo woohoo:
               # <UnitInfo>
               #   <UnitID UniqueID="85223">506</UnitID>
               #   <PersonID Type="Current Resident">t0586444</PersonID>
@@ -236,7 +254,20 @@ module Integrations
                   u[:gc_addr_obj].street_two = u["UnitId"]
                   next u
                 end
-                next u if u["UnitId"] == u[:gc_addr_obj].street_number || u["UnitId"] == "#{u[:gc_addr_obj].street_number}-0" || u["UnitId"].chomp(u[:gc_addr_obj].street_number).chars.all?{|c| c == "0" || c == " " || c == "-" }
+                if k == "474"
+                  # hack for particular essex community with odd setup
+                  next u if u["UnitId"] == u[:gc_addr_obj].street_number || u["UnitId"].downcase.end_with?(u["Address"].strip.last.downcase)
+                end
+                next u if u["UnitId"] == u[:gc_addr_obj].street_number || u["UnitId"] == "#{u[:gc_addr_obj].street_number}-0" || u["UnitId"].downcase.end_with?(u[:gc_addr_obj].street_number.downcase) || (  !u[:gc_addr_obj].street_two.blank? && u["UnitId"].downcase.end_with?(u[:gc_addr_obj].street_two.split(' ').last.gsub("#",""))    )# && (u["UnitId"].chomp(u[:gc_addr_obj].street_number).match?(/^([^2-9]*)$/)))  # last case is for a weird essex community
+                # hacky nonsense for essex san1100
+                if u[:gc_addr_obj].street_number.end_with?("1/2")
+                  cleanuid = u["UnitId"].strip
+                  cleanuid = cleanuid[1...] while cleanuid[0] == '0' # kill leading zeros
+                  cleanuid = cleanuid[0...(cleanuid.length-1)] while cleanuid[cleanuid.length-1]&.match?(/^[a-zA-Z]/) && !cleanuid[0]&.match?(/^a-zA-Z/) # kill trailing letters
+                  cleangomp = u[:gc_addr_obj].street_number.chomp("1/2").chomp("-").strip
+                  cleangomp = cleangomp[1...] while cleangomp[0] == '0'
+                  next u if cleangomp == cleanuid
+                end
                 to_return[:unit_errors][k][u["UnitId"]] = "Unable to determine line two of address, but UnitId does not seem to conform to line one (UnitId '#{u["UnitId"]}', address '#{u["Address"]}', parsed as '#{u[:gc_addr_obj].full}')"
                 next nil
               end.compact

@@ -177,7 +177,7 @@ class Address < ApplicationRecord
 
   def self.from_string(dat_strang, validate_properties: true)
     address = Address.new(full: dat_strang)
-    parsed_address = StreetAddress::US.parse(dat_strang)
+    parsed_address = Address.parse_string(dat_strang)
     if parsed_address.nil?
       address.errors.add(:address_string, I18n.t('address_model.is_not_a_valid_state'))
       return address
@@ -222,7 +222,105 @@ class Address < ApplicationRecord
   def set_full
     self.full = full_street_address()
   end
-
+  
+  
+  def self.parse_string(sum_strang)
+    unused = '1'
+    unused_let = 'a'
+    converter = []
+    # combine digits separated by a space for later decombination
+    spaces = []
+    sum_strang = sum_strang.strip.squeeze(" ")
+    splat = (sum_strang.split(" ") || [])
+    (1...splat.length).each do |i|
+      break if i >= splat.length
+      if splat[i][0].match?(/\d/) && splat[i-1][-1].match?(/\d/)
+        # find an unambiguous replacement
+        while true
+          temp = splat.dup
+          unused = unused.next
+          unused = unused.next while sum_strang.include?(unused)
+          temp[i-1] = "#{temp[i-1]}#{unused}#{temp[i]}"
+          ((i+1)...temp.length).each{|j| temp[j-1] = temp[j] }
+          temp.pop
+          temp_strang = temp.join(" ")
+          if temp_strang.gsub(unused, " ") == sum_strang
+            splat = temp
+            sum_strang = temp_strang
+            spaces.push(unused)
+            break
+          end
+        end
+      end
+    end
+    # ensure that the first segment is all digits (because the parser doesn't like things otherwise)
+    unless splat[0].blank?
+      (0...splat[0].length).each do |i|
+        unless splat[0][i].match?(/\d/)
+          while true
+            temp = splat.dup
+            unused = unused.next
+            unused = unused.next while sum_strang.include?(unused)
+            c = temp[0][i].dup
+            temp[0] = temp[0].sub(c, unused)
+            temp_strang = temp.join(" ")
+            if temp_strang.sub(unused, c) == sum_strang
+              splat = temp
+              sum_strang = temp_strang
+              converter.push([unused, c])
+              break
+            end
+          end
+        end
+      end
+    end
+    # remove characters that break the parser for later (and insert them later)
+    ['.', '/', '-'].select{|c| sum_strang.include?(c) }.each do |c|
+      i = sum_strang.index(c)
+      while i && !(c == '-' && sum_strang.index(c) > sum_strang.length - 6) # leave the last-four one
+        if (i > 0 ? sum_strang[i-1] : i < sum_strang.length-1 ? sum_strang[i+1] : "").match?(/\d/)
+          while true
+            unused = unused.next
+            unused = unused.next while sum_strang.include?(unused)
+            if sum_strang.sub(c, unused).sub(unused, c) == sum_strang
+              sum_strang = sum_strang.sub(c, unused)
+              converter.push([unused, c])
+              break
+            end
+          end
+        else
+          while true
+            unused_let = unused_let.next
+            unused_let = unused_let.next while sum_strang.include?(unused_let)
+            if sum_strang.sub(c, unused_let).sub(unused_let, c) == sum_strang
+              sum_strang = sum_strang.sub(c, unused_let)
+              converter.push([unused_let, c])
+              break
+            end
+          end
+        end
+        i = sum_strang.index(c)
+      end
+    end.compact
+    result = StreetAddress::US.parse(sum_strang)
+    unless result.nil?
+      converter.reverse.each do |con|
+        result.number = result.number.gsub(con[0], con[1]) if result.number
+        result.unit = result.unit.gsub(con[0], con[1]) if result.unit
+        result.city = result.city.gsub(con[0], con[1]) if result.city
+        result.street = result.street.gsub(con[0], con[1]) if result.street
+      end
+      spaces.reverse.each do |spc|
+        result.number = result.number.gsub(spc, " ") if result.number
+        result.unit = result.unit.gsub(spc, " ") if result.unit
+        result.city = result.city.gsub(spc, " ") if result.city
+        result.street = result.street.gsub(spc, " ") if result.street
+      end
+    end
+    return result
+  end
+  
+  
   # Address.from_full
   # Attempts to fill out nil fields in street address by using StreetAddress gem
   def from_full
@@ -238,19 +336,19 @@ class Address < ApplicationRecord
 
     if street_address.values.any?(nil) &&
        !full.nil?
-      parsed_address = StreetAddress::US.parse(full)
+      parsed_address = Address.parse_string(full)
       unless parsed_address.nil?
         # fix hideous bug in parser
         true_street = parsed_address.street
         true_number = parsed_address.number
         true_prefix = parsed_address.prefix
         haspref = !parsed_address.prefix.blank?
-        combino = "#{(parsed_address.number || "").split(" ")[-1]}#{haspref ? parsed_address.prefix.split(" ")[0] : (parsed_address.street || "").split(" ")[0]}"
+        combino = "#{(parsed_address.number || "").split(" ")[-1] || ""}#{(haspref ? parsed_address.prefix.split(" ")[0] : (parsed_address.street || "").split(" ")[0]) || ""}"
         if haspref
           ind1 = full.index(combino)
-          ind2 = full.index((parsed_address.prefix.split(" ").drop(1) + parsed_address.street.split(" ")).join(" "))
+          ind2 = full.index((parsed_address.prefix.split(" ").drop(1) + (parsed_address.street || "").split(" ")).join(" "))
           if ind1 && ind2 && ind1 < ind2
-            true_number = "#{parsed_address.number}#{(parsed_address.prefix || "").split(" ")[0]}"
+            true_number = "#{parsed_address.number}#{(parsed_address.prefix || "").split(" ")[0] || ""}"
             true_prefix = parsed_address.prefix.split(" ").drop(1).join(" ")
           end
         else
@@ -259,7 +357,7 @@ class Address < ApplicationRecord
             ind2 = full.index((parsed_address.street || "").split(" ").drop(1).join(" "))
             if ind1 && ind2 && ind1 < ind2
               true_street = (parsed_address.street || "").split(" ").drop(1).join(" ")
-              true_number = "#{parsed_address.number}#{(parsed_address.street || "").split(" ")[0]}"
+              true_number = "#{parsed_address.number}#{(parsed_address.street || "").split(" ")[0] || ""}"
             end
           end
         end
