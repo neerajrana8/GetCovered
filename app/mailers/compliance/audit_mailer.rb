@@ -31,6 +31,8 @@ module Compliance
       @placement_cost = @configuration.nil? ? 0 : @configuration.charge_amount(true).to_f / 100
       @from = @pm_account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] : "policyverify@getcovered.io"
 
+      sending_condition = @configuration.nil? ? false : @configuration.program_start_date.to_date <= available_lease_date ? true : false
+
       case follow_up
       when 0
         subject = t('invitation_to_pm_tenant_portal_mailer.audit_email_1.subject')
@@ -43,12 +45,16 @@ module Compliance
         template = 'intro_second_follow_up'
       end
 
-      mail(from: @from,
-           to: @user.contact_email,
-           bcc: "systememails@getcovered.io",
-           subject: subject,
-           template_path: 'compliance/audit',
-           template_name: template)
+      if sending_condition
+        mail(from: @from,
+             to: @user.contact_email,
+             bcc: "systememails@getcovered.io",
+             subject: subject,
+             template_path: 'compliance/audit',
+             template_name: template)
+      else
+        return false
+      end
     end
 
     private

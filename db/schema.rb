@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_11_19_180326) do
+ActiveRecord::Schema.define(version: 2022_11_28_233819) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -874,6 +874,7 @@ ActiveRecord::Schema.define(version: 2022_11_19_180326) do
     t.boolean "additional_interest", default: false
     t.string "additional_interest_name"
     t.integer "minimum_liability"
+    t.integer "special_status", default: 0, null: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
     t.index ["insurable_id"], name: "index_insurables_on_insurable_id"
@@ -1162,7 +1163,7 @@ ActiveRecord::Schema.define(version: 2022_11_19_180326) do
     t.integer "admin_fee", default: 0
     t.integer "force_admin_fee"
     t.boolean "prorate_admin_fee", default: false
-    t.index ["carrier_policy_type_id", "configurable_type", "configurable_id"], name: "index_cpt_and_conf_on_mpc", unique: true
+    t.index ["carrier_policy_type_id", "configurable_type", "configurable_id"], name: "index_cpt_and_conf_on_mpc"
     t.index ["configurable_type", "configurable_id"], name: "index_master_policy_configurations_on_configurable"
   end
 
