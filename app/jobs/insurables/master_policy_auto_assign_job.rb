@@ -23,7 +23,8 @@ module Insurables
               policy_coverage.attributes.slice('limit', 'deductible', 'enabled', 'designation', 'title')
             end,
             number: policy_number,
-            policy_type_id: policy.policy_type.coverage,
+            # TODO: Must be id of Master policy coverage policy type
+            policy_type_id: PolicyType::MASTER_COVERAGE_ID, # policy.policy_type.coverage,
             policy: policy,
             effective_date: Time.zone.now,
             expiration_date: policy.expiration_date,
