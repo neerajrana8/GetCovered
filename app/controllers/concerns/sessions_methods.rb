@@ -7,7 +7,6 @@ module SessionsMethods
 
     def destroy
       # remove auth instance variables so that after_action does not run
-      binding.pry
       user = remove_instance_variable(:@resource) if @resource
       client = @token.client
       @token.clear!

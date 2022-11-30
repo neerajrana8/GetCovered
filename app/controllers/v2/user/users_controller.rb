@@ -11,7 +11,6 @@ module V2
       def show; end
 
       def change_password
-        binding.pry
         if @user.update_with_password(update_params) #TODO: valid_password? not working :( because of invitable and database authenthicable
           # Sign in the user by passing validation in case their password changed
           bypass_sign_in(@user)
