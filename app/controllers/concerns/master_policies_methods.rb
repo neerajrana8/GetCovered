@@ -74,7 +74,7 @@ module MasterPoliciesMethods
               ppi = premium.policy_premium_items.where(commission_calculation: 'no_payments').take
               ppi.update!(original_total_due: create_policy_premium[:base], total_due: create_policy_premium[:base])
               @master_policy.premium.update_totals(persist: false)
-              @master_policy.premium.premium.save!
+              @master_policy.premium.save!
             end
           rescue ActiveRecord::RecordInvalid => err
             error = err
