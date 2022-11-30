@@ -2,9 +2,9 @@ describe 'Reset password API', type: :request do
   shared_examples 'scenarios' do
     it 'should reset for the registered entity' do
       # Get a link
-      binding.pry
       # /v2/staff/auth/sign_in
       # /v2/user/auth/sign_in
+
       post("/v2/#{entity_type}/auth/password", params: { 'email': entity.email, "redirect_url": '/login' }.to_json, headers: base_headers)
       expect(response.status).to be(200)
 
@@ -34,14 +34,14 @@ describe 'Reset password API', type: :request do
     end
   end
 
-  #describe 'for user' do
-  #  let!(:entity) { FactoryBot.create(:user, :accepted) }
-  #  let(:entity_type) { 'user' }
-  #  let(:client) { :client }
-  #  let(:params) { { password: 'tomato', password_confirmation: 'tomato'} }
+  describe 'for user' do
+    let!(:entity) { FactoryBot.create(:user, :accepted) }
+    let(:entity_type) { 'user' }
+    let(:client) { :client }
+    let(:params) { { password: 'tomato', password_confirmation: 'tomato'} }
 
-  #  include_examples 'scenarios'
-  #end
+    include_examples 'scenarios'
+  end
 
   describe 'for staffs' do
     let!(:entity) { FactoryBot.create(:staff, role: 'staff') }
@@ -54,10 +54,6 @@ describe 'Reset password API', type: :request do
       }
     end
 
-    it 'should return' do
-      binding.pry
-    end
-
-    #include_examples 'scenarios'
+    include_examples 'scenarios'
   end
 end
