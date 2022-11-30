@@ -343,19 +343,24 @@ module Integrations
               # grab more data
               lease_users = LeaseUser.includes(:lease).references(:leases).where(user_id: policy.policy_users.map{|pu| pu.user_id }, leases: { insurable_id: policy.policy_insurables.find{|pi| pi.primary }&.insurable_id })
               next nil if lease_users.blank?
-              lease_user_ips = IntegrationProfile.includes(lease_user: :user).references(:lease_users, :users).where(integration: integration, profileable: lease_users)
+              lease_user_ips = IntegrationProfile.where(integration: integration, profileable: lease_users)
               next nil if lease_user_ips.blank?
-              users_to_export = policy.policy_users.to_a.map do |pu|
-                found = lease_user_ips.find{|lup| lup.lease_user.user_id == pu.user_id }
+              used = []
+              users_to_export = policy.policy_users.to_a.uniq.map do |pu|
+                found = lease_user_ips.find{|lup| !used.include?(lup.external_id) && lup.profileable.user_id == pu.user_id && !lup.external_id.start_with?("was") } || lease_user_ips.find{|lup| !used.include?(lup.external_id) && lup.profileable.user_id == pu.user_id }
                 next nil if found.nil?
-                unless pu.integration_profiles.where(integration: integration).reload.count > 0
+                preexisting = integration.integration_profiles.where(external_context: "policy_user_for_policy_#{policy.number}", external_id: found.external_id).take
+                if preexisting.nil?
                   IntegrationProfile.create(
                     integration: integration,
                     profileable: pu,
                     external_context: "policy_user_for_policy_#{policy.number}",
                     external_id: found.external_id
                   )
+                elsif preexisting.profileable_id != pu.id
+                  preexisting.update(profileable: pu, configuration: (preexisting.configuration || {}).merge({ 'old_profileable' => "#{preexisting.profileable_type}##{preexisting.profileable_id}" }))
                 end
+                used.push(found.external_id)
                 next {
                   policy_user: pu,
                   external_id: found.external_id
@@ -452,6 +457,7 @@ module Integrations
           ##############################################################
           ###################### CLOSING UP SHOP #######################
           ##############################################################
+          integration.set_nested(Time.current.to_date.to_s, 'sync', 'syncable_communities', property_id, 'last_sync_p')
           integration.configuration['sync']['sync_history'] ||= []
           integration.configuration['sync']['sync_history'].push({
             'log_format' => '1.0',
