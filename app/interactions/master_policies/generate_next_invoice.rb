@@ -60,7 +60,7 @@ module MasterPolicies
 
     def coverages
       @coverages ||=
-        master_policy.policies.where(coverages_condition, range_start: range_start, range_end: range_end)
+        master_policy.policies.where(coverages_condition).where(range_start: range_start, range_end: range_end)
     end
 
     def coverages_condition
