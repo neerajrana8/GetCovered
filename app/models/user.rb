@@ -169,9 +169,9 @@ class User < ApplicationRecord
         other.account_users.where.not(account_id: self.account_users.select(:account_id)).update_all(user_id: self.id)
         other.account_users.reload.each{|au| au.delete }
         if self.address.nil?
-          other.address.update(addressable_id: self.id)
+          other.address.&update(addressable_id: self.id)
         else
-          other.address.delete
+          other.address&.delete
         end
         Claim.where(claimant: other).update_all(claimant_type: "User", claimant_id: self.id)
         ContactRecord.where(contactable: other).update_all(contactable_type: "User", contactable_id: self.id)
@@ -179,9 +179,9 @@ class User < ApplicationRecord
         PaymentProfile.where(payer: other).update_all(payer_type: "User", payer_id: self.id, default_profile: self.payment_profiles.where(default_profile: true).blank?)
         PaymentProfile.where(payer: self, default_profile: true).order("updated_at desc").to_a.drop(1).each{|pp| pp.update(default_profile: false) }
         if self.profile.nil?
-          other.profile.update(profileable_id: self.id)
+          other.profile&.update(profileable_id: self.id)
         else
-          other.profile.delete
+          other.profile&.delete
         end
         email = other.email
         other.delete
