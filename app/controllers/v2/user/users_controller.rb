@@ -17,7 +17,7 @@ module V2
           bypass_sign_in(@user)
           render :show, status: :ok
         else
-          render json: { success: false, errors: @user.errors }, status: :unprocessable_entity
+          render json: { success: false, errors: {"current_password"=>["is invalid"]} }, status: :unprocessable_entity
         end
       end
 
