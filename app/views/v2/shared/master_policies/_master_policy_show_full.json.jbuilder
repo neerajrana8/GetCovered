@@ -15,3 +15,5 @@ if PolicyType::MASTER_IDS.include?(master_policy.policy_type_id)
   json.update_available master_policy.policies.blank?
 end
 
+# TODO: Needs to be changed after refactoring
+json.base master_policy&.policy_premiums&.last&.policy_premium_items&.last&.total_due
