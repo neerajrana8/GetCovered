@@ -375,7 +375,7 @@ module Integrations
               luip = integration.integration_profiles.create(
                 external_context: "lease_user_for_lease_#{tenant["Id"]}",
                 external_id: ten["Id"],
-                profileable: saved,
+                profileable: candidate_lu,
                 configuration: { 'synced_at' => Time.current.to_s, 'post_fix_em' => true, 'post_revamp' => true }
               )
               unless luip.id
