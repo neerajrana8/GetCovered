@@ -150,6 +150,7 @@ module Integrations
           luips = integration.integration_profiles.where(profileable: lease.lease_users).to_a
           tenanted_luips = luips.select{|luip| da_tenants.any?{|t| t["Id"] == luip.external_id } }
           free_lus = lease.lease_users.select{|lu| !tenanted_luips.any?{|luip| luip.profileable_id == lu.id } }.to_a
+          ejected_users = []
           lacks_both = da_tenants.map{|dt| dt["Id"] }.select{|i| !uips.any?{|uip| uip.external_id == i } && !luips.any?{|luip| luip.external_id == i } }
           lacks_uip = (da_tenants.map{|dt| dt["Id"] } - lacks_both).select{|i| !uips.any?{|uip| uip.external_id == i } }
           lacks_luip = (da_tenants.map{|dt| dt["Id"] } - lacks_both).select{|i| !luips.any?{|luip| luip.external_id == i } }
@@ -181,24 +182,28 @@ module Integrations
                 if result.nil?
                   succeeded = true
                 else
-                  errors.push("Failed to merge User models ##{} and ##{} (tenant #{ten["Id"]})! #{result.class.name}: #{(result.message rescue "<no message>")}")
+                  errors.push("Failed to merge User ##{doomed.id} into User ##{saved.id} (tenant #{ten["Id"]})! #{result.class.name}: #{(result.message rescue "<no message>")}")
                   next
                 end
               else
                 # only the luip matches ten
                 # WARNING: should we set the user to "was_whatever" to log that this happened?
+                ejected_users.push(uip.profileable)
                 if uip.update(profileable_id: luip.profileable.user_id)
                   succeeded = true 
                 else
+                  ejected_users.pop
                   errors.push("Failed to move UIP##{uip.id} from User##{uip.profileable_id} to User##{luip.profileable.uiser_id} (tenant #{ten["Id"]})! #{uip.errors.to_h}")
                   next
                 end
               end
             elsif tenant_user_match(ten, uip.profileable)
               # only the uip matches ten
+              ejected_users.push(luip.profileable.user)
               if luip.profileable.update(user_id: uip.profileable_id)
                 succeeded = true
               else
+                ejected_users.pop
                 errors.push("Failed to move LUIP##{luip.id}'s LeaseUser##{luip.profileable_id} from User##{luip.profileable.user_id} to User##{uip.profileable_id} (tenant #{ten["Id"]})! #{luip.errors.to_h}")
               end
             else
@@ -254,6 +259,7 @@ module Integrations
             if uip.id.nil?
               errors.push("Failed to create UIP for User##{luip.profileable.user_id} corresponding to LUIP##{luip.id} (tenant #{ten["Id"]})! #{uip.errors.to_h}")
             else
+              uips.push(uip)
               lacks_uip_no_more.push(ten)
             end
           end
@@ -420,6 +426,38 @@ module Integrations
             end
           end
           
+          # handle free_lus and ejected_users
+          ejected_users.select!{|eu| !lease.lease_users.reload.any?{|lu| lu.user_id == eu.id } }
+          ejected_users.uniq!
+          (free_lus + ejected_users).each do |itm| # WARNING: logic changes free_lus/ejected_users inside
+            user = (itm.class == ::LeaseUser ? itm.user : itm)
+            lease_user = (itm.class == ::LeaseUser ? itm : nil)
+            # look for matches
+            tenanted_luips.each do |luip|
+              ten = da_tenants.find{|dt| dt["Id"] == luip.external_id }
+              next unless tenant_user_match(ten, user)
+              # perform absorption
+              saved = [user, luip.profileable.user].max_by{|x| [x.sign_in_count, -x.created_at.to_i] }
+              doomed = [user, luip.profileable.user].find{|x| x.id != saved.id }
+              result = saved.absorb!(doomed)
+              # get rid of the old LU
+              lease_user&.integration_profiles&.delete_all
+              lease_user&.delete
+              # log our magic
+              free_lus.delete(lease_user) unless lease_user.nil?
+              ejected_users.delete(user)
+              break
+            end
+          end
+          
+          # delete lus for which there was no match, if the cleanse_lease_users flag is enabled
+          if cleanse_lease_users
+            free_lus.each do |dl|
+              dl.integration_profiles.each{|ip| ip.delete }
+              dl.delete
+            end
+          end
+          
           # handle results
           lacks_both -= lacks_both_no_more
           lacks_uip -= lacks_uip_no_more
@@ -507,14 +545,6 @@ module Integrations
               update_errors[tenant["Id"]] = fmr[:errors] unless fmr[:errors].blank?
               next unless fmr[:success] # at least one user was uncreatable; stop processing the lease further, since we need to be able to assume all users are present in the below code
               # we can assume all tenants have corresponding users & lease users & appropriate IPs, if we're here
-              # remove any lease users that don't correspond to tenants
-              if cleanse_lease_users
-                doomed_lus = lease.lease_users.select{|lu| lu.moved_out_at.nil? && lu.integration_profiles.where(integration: integration, external_context: "lease_user_for_lease_#{tenant["Id"]}", external_id: da_tenants.map{|t| t["Id"] }).count == 0 }
-                doomed_lus.each do |dl|
-                  dl.integration_profiles.each{|ip| ip.delete }
-                  dl.delete
-                end
-              end
               # now ensure we update the move in/out dates and primary/lessee statuses
               lease.lease_users.reload.each do |lu|
                 ten = da_tenants.find{|t| t["Id"] == lu.integration_profiles.where(integration: integration).take&.external_id }
