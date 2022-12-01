@@ -11,6 +11,11 @@ json.policy_type_title I18n.t("policy_type_model.#{master_policy.policy_type&.ti
 
 json.policy_premium master_policy.policy_premiums.last
 
+# TODO: Needs to be changed after refactoring
+json.policy_premium do
+  json.base master_policy&.policy_premiums&.last&.policy_premium_items&.last&.total_due
+end
+
 if PolicyType::MASTER_IDS.include?(master_policy.policy_type_id)
   json.update_available master_policy.policies.blank?
 end
