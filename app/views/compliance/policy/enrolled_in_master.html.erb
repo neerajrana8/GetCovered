@@ -5,7 +5,7 @@
   <span style="font-size: 16px;">Thank you for being a valued member at <%= @community.title %>. As of today,
     <%= Date.current.strftime('%B %d, %Y') %> we have not received an active insurance policy meeting the requirements
     outlined in your lease. As referenced in your lease agreement, <%= @community.title %> requires a minimum liability
-    coverage amount of <%= number_to_currency(@min_liability.to_f / 100, unit: "$") %> for the length of your lease.
+    coverage amount of <%= number_to_currency(@min_liability.to_f / 100, unit: "$", precision: 0) %> for the length of your lease.
     Due to noncompliance, you will be charged a fee of <%= number_to_currency(@placement_cost, unit: "$") %> each month.
     Please note the Non-Compliance Fee will be assessed until the minimum insurance requirements are met.</span>
 </p>
