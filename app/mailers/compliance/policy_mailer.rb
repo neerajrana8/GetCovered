@@ -118,8 +118,16 @@ module Compliance
       sending_condition = @policy.policy_in_system == false &&
         ['EXTERNAL_UNVERIFIED','EXTERNAL_VERIFIED','EXTERNAL_REJECTED'].include?(@policy.status)
 
+      bcc_emails = [t('system_email')]
+
+      if (@policy.account&.owner&.notification_settings&.find_by_action('send_external_related_emails_to_pms').enabled rescue false)
+        bcc_emails += @policy.account.staffs.map(&:email)
+      end
+
+      bcc_emails = bcc_emails.join("; ")
+      
       mail(to: @user.contact_email,
-           bcc: ([t('system_email')] + @policy.account.staffs.map(&:email)),
+           bcc: bcc_emails,
            from: @from,
            subject: subject,
            template_path: 'compliance/policy') if sending_condition
