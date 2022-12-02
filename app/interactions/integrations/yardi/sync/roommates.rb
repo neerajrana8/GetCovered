@@ -75,11 +75,15 @@ module Integrations
             if new_roommate_code != old_king_code
               eater_ip = integration.integration_profiles.where(external_context: "lease", external_id: new_roommate_code).take
               eaten_ip = integration.integration_profiles.where(external_context: "lease", external_id: old_king_code).take
-              if !eater.nil? && !eaten.nil?
+              if !eater_ip.nil? && !eaten_ip.nil?
                 eater = eater_ip.profileable
                 eaten = eaten_ip.profileable
                 if eater == eaten
-                  # should be impossible, but just in case...
+                  # should be impossible, but just in case... MOOSE WARNING: add logic here?
+                elsif eater.nil?
+                  eater_ip.delete
+                elsif eaten.nil?
+                  eaten_ip.delete
                 else
                   local_failure = false
                   ActiveRecord::Base.transaction(requires_new: true) do
@@ -110,7 +114,6 @@ module Integrations
                     # the only imperatives are for us is to handle the promotion ones & change all the lease_ids and external_contexts
                     eater_luips = integration.integration_profiles.where(profileable: eater_lus).to_a
                     eaten_luips = integration.integration_profiles.where(profileable: eaten_lus).to_a
-                    repeats = eater_luips.map{|luip| luip.external_id } & eaten_luips.map{|luip| luip.external_id }
                     # fix old codes
                     weirdos = (eater_luips + eaten_luips).group_by do |luip|
                       next :old_roommate_code if luip.external_id == old_roommate_code
@@ -120,17 +123,17 @@ module Integrations
                     weirdos.delete(nil)
                     weirdos[:old_king_code]&.each do |luip| # MOOSE WARNING: we really ought to do a bit more here... should encapsulate the logging actions made in the standard flow to call em here too
                       luip.update(external_id: "was_#{Time.current.to_date.to_s}_#{old_king_code}")
-                      luip.profileable.user.integration_profiles.where(integration: integration, external_id: old_king_code).update(external_id: "was_#{Time.current.to_date.to_s}_#{old_king_code}")
+                      luip.profileable.user.integration_profiles.where(integration: integration, external_id: old_king_code).update_all(external_id: "was_#{Time.current.to_date.to_s}_#{old_king_code}")
                     end
                     weirdos[:old_roommate_code]&.each do |luip|
                       # mmm there could be trouble there
                       luip.profileable.user.integration_profiles.where(integration: integration, external_context: "resident", external_id: old_king_code).update_all(external_id: "was_#{Time.current.to_date.to_s}_#{old_king_code}")
                       unless luip.update(external_id: new_roommate_code)
                         if eaten_luips.include?(luip)
-                          # will go through merger as new_roommate_code then be set to the correct context afterwards
+                          # will go through merger as new_roommate_code then be set to the correct context afterwards when they all are
                           luip.update(external_id: new_roommate_code, external_context: "temporary_#{luip.id}")
                         else
-                          # find the eaten one, since it surely exists, and change it instead
+                          # find the eaten one and change it instead
                           caribou = eaten_luips.find{|nluip| nluip.external_id == new_roommate_code }
                           caribou&.update(external_context: "temporary_#{caribou&.id}")
                           # now retry
@@ -139,45 +142,66 @@ module Integrations
                       end
                     end
                     # handle repeated codes
+                    eater_lus = eater.lease_users.reload.to_a
+                    eaten_lus = eaten.lease_users.reload.to_a
+                    eater_luips = integration.integration_profiles.where(profileable: eater_lus).to_a
+                    eaten_luips = integration.integration_profiles.where(profileable: eaten_lus).to_a
+                    repeats = eater_luips.map{|luip| luip.external_id } & eaten_luips.map{|luip| luip.external_id }
                     repeats.each do |code|
-                      folk = (eater_luips.select{|luip| luip.external_id == code } + eaten_luips.select{|luip| luip.external_id == code })
-                      luip = folk.pop
-                      while folk.length > 0
-                        luip2 = folk.pop.reload # in case the same user had two luips in the list that were already merged
-                        next if luip2.user_id == luip1.user_id
-                        saved = [luip, luip2].max_by{|x| [x.profileable.user.sign_in_count, -x.profileable.user.created_at.to_i] }
-                        doomed = [luip, luip2].find{|x| x.id != saved.id }
-                        doomed_id = doomed.id
-                        result = saved.profileable.user.absorb!(doomed.profileable.user)
-                        unless result.nil?
-                          to_return[:errors].push("Failed to merge User ##{doomed.profileable.user_id} into User ##{saved.profileable.user_id}! #{result.class.name}: #{(result.message rescue "<no message>")}")
-                          IntegrationProfile.create(
-                            integration: integration,
-                            profileable: integration,
-                            external_context: "log_roommate_promotion_error",
-                            external_id: "#{property_id}__#{last_sync_f}__#{promotion_index}",
-                            configuration: { property_id: property_id, sync_time: last_sync_f, yardi_data: promotion, error: to_return[:errors].last }
-                          )
-                          local_failure = true
-                          raise ActiveRecord::Rollback
-                        end
-                        if luip.profileable.user.lease_users.any?{|lu| lu.id != luip.profileable_id && [eaten.id, eater.id].include?(lu.lease_id) && lu.integration_profiles.where(integration: integration).any?{|oluip| oluip.external_id == luip.external_id } }
-                          luip.profileable.delete # if this isn't the last repeat, kill it, we don't need multiple
-                          luip.delete
-                        end
-                        luip = saved
+                      rluip = eater_luips.find{|luip| luip.external_id == code }
+                      nluip = eaten_luips.find{|luip| luip.external_id == code }
+                      rlu = rluip.profileable
+                      nlu = nluip.profileable
+                      # do something simple in special situations
+                      if rlu.nil? || nlu.nil?
+                        rluip.delete if rlu.nil?
+                        nluip.delete if nlu.nil?
+                        next
+                      elsif rlu.id == nlu.id
+                        nluip.delete
+                        next
+                      elsif rlu.user_id == nlu.user_id
+                        nlu.delete
+                        nluip.delete
+                        next
                       end
+                      # merge the users
+                      ru = rlu.user
+                      nu = nlu.user
+                      saved = [ru, nu].max_by{|x| [x.sign_in_count, -x.created_at.to_i] }
+                      doomed = [ru, nu].find{|x| x.id != saved.id }
+                      result = saved.absorb!(doomed)
+                      unless result.nil?
+                        to_return[:errors].push("Failed to merge User ##{doomed.id} into User ##{saved.id}! #{result.class.name}: #{(result.message rescue "<no message>")}")
+                        IntegrationProfile.create(
+                          integration: integration,
+                          profileable: integration,
+                          external_context: "log_roommate_promotion_broken",
+                          external_id: "#{property_id}__#{last_sync_f}__#{promotion_index}",
+                          configuration: { property_id: property_id, sync_time: last_sync_f, yardi_data: promotion, error: to_return[:errors].last }
+                        )
+                        local_failure = true
+                        raise ActiveRecord::Rollback
+                      end
+                      (saved.id == ru.id ? [nlu, nluip] : [rlu, rluip]).each{|x| x.delete } # we don't need two copies of the same lease user and lease user IP in the db
                     end
                     # refresh eaten
-                    eaten_luips = integration.integration_profiles.where(profileable: eaten_lus).to_a
-                    eaten_lus.each do |lu|
-                      lu.update!(lease_id: eater)
-                      lu.integration_profiles.update_all(external_context: "lease_user_for_lease_#{new_roommate_code}")
-                    end
+                    eater_lus = eater.lease_users.reload.to_a
+                    eaten_lus = eaten.lease_users.reload.to_a
+                    eaten_luips = integration.integration_profiles.where(profileable: eaten_lus).reload
+                    eaten_luips.each{|luip| luip.profileable.update!(lease: eater) }
+                    eaten_luips.update_all(external_context: "lease_user_for_lease_#{new_roommate_code}")
                     eaten.integration_profiles.delete_all
-                    eaten.delete
+                    eaten.delete                    
+                    IntegrationProfile.create(
+                      integration: integration,
+                      profileable: integration,
+                      external_context: "log_roommate_promotion_unlogged",
+                      external_id: "#{property_id}__#{last_sync_f}__#{promotion_index}",
+                      configuration: { property_id: property_id, sync_time: last_sync_f, yardi_data: promotion, special: "singularized_lease" }
+                    )
                   end # end transaction
-                  next if local_failure
+                  next
                 end
               end
             end
