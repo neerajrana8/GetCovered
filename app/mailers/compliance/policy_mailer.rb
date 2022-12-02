@@ -119,16 +119,16 @@ module Compliance
         ['EXTERNAL_UNVERIFIED','EXTERNAL_VERIFIED','EXTERNAL_REJECTED'].include?(@policy.status)
 
       bcc_emails = [t('system_email')]
+      
+      @policy.account.staffs.each do |staff|
+        add_me = begin
+                   staff.notification_settings.find_by_action('external_policy_emails_copy').enabled
+                 rescue StandardError
+                   false
+                 end
+        bcc_emails << staff.email if add_me
+      end
 
-      send_external_related_emails_to_pms = begin
-                                              @policy.account
-                                                     .owner&.notification_settings
-                                                     .find_by_action('send_external_related_emails_to_pms')
-                                                     .enabled
-                                            rescue StandardError
-                                              false
-                                            end
-      bcc_emails += @policy.account.staffs.map(&:email) if send_external_related_emails_to_pms
       bcc_emails = bcc_emails.join("; ")
 
       mail(to: @user.contact_email,
