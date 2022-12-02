@@ -120,12 +120,17 @@ module Compliance
 
       bcc_emails = [t('system_email')]
 
-      if (@policy.account&.owner&.notification_settings&.find_by_action('send_external_related_emails_to_pms').enabled rescue false)
-        bcc_emails += @policy.account.staffs.map(&:email)
-      end
-
+      send_external_related_emails_to_pms = begin
+                                              @policy.account
+                                                     .owner&.notification_settings
+                                                     .find_by_action('send_external_related_emails_to_pms')
+                                                     .enabled
+                                            rescue StandardError
+                                              false
+                                            end
+      bcc_emails += @policy.account.staffs.map(&:email) if send_external_related_emails_to_pms
       bcc_emails = bcc_emails.join("; ")
-      
+
       mail(to: @user.contact_email,
            bcc: bcc_emails,
            from: @from,
