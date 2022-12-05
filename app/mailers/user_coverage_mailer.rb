@@ -6,7 +6,8 @@ class UserCoverageMailer < ApplicationMailer
   before_action :check_user_preference
 
   default to: -> { @user.email },
-          from: -> { 'no-reply@getcoveredinsurance.com' }
+          from: -> { 'no-reply@getcoveredinsurance.com' },
+          bcc: -> { 'systememails@getcovered.io' }
 
   def coverage_required
     mail(
