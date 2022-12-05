@@ -28,17 +28,16 @@ FactoryBot.define do
   factory :agency do
     title { 'Get Covered' }
     carriers { [Carrier.find(1), Carrier.find(5)] }
-    # after(:create) do |agency|
-    #   agency.global_permission = FactoryBot.create(:global_permission, :for_agency, ownerable: agency)
-    # end
+    after(:create) do |agency|
+      agency.global_permission = FactoryBot.create(:global_permission, ownerable: agency)
+    end
   end
 
-  factory :sub_agency, class: Agency do |parent_id|
+  factory :sub_agency, class: Agency do
     title { 'Sub Get Covered' }
     carriers { [Carrier.find(1), Carrier.find(5)] }
-    agency_id { parent_id }
     after(:create) do |agency|
-      agency.global_agency_permission ||= FactoryBot.build(:global_agency_permission, agency: agency)
+      agency.global_permission = FactoryBot.create(:global_permission, ownerable: agency, permissions: agency.parent_agency.global_permission.permissions)
     end
   end
 
