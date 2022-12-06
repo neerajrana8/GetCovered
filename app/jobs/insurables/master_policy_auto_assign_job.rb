@@ -11,9 +11,14 @@ module Insurables
       policy_insurables.each do |policy_insurable|
         policy = policy_insurable.policy
         policy_insurable.insurable&.units&.each do |unit|
-          next unless unit.policies.current.empty? && !unit.occupied?
+
+          # NOTE: removed check for occupied because when lease is create unit is already occupied
+          # but have no master policy coverage
+          # PREVIOUS: next unless unit.policies.current.empty? && !unit.occupied?
+          next unless unit.policies.current.empty?
 
           policy_number = MasterPolicies::GenerateNextCoverageNumber.run!(master_policy_number: policy.number)
+
           unit.policies.create(
             agency: policy.agency,
             carrier: policy.carrier,

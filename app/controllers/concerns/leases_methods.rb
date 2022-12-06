@@ -76,25 +76,16 @@ module LeasesMethods
 
   private
 
-  #
-  # NOTE: Moved from Insurable model after_create.hook
-  # Changed to get parent_insurable inside Lease
-  #
   def assign_master_policy
     parent_insurable = @lease.insurable&.insurable
+
+    # NOTE: Unecessary check for community passed as insurable but peform it anyway.
     return if InsurableType::COMMUNITIES_IDS.include?(@lease.insurable.insurable_type_id) || parent_insurable.blank?
 
     master_policy = parent_insurable.policies.current.where(policy_type_id: PolicyType::MASTER_IDS).take
-    Rails.logger.info "#DEBUG master_policy=#{master_policy}"
-    if master_policy.present? && parent_insurable.policy_insurables.where(policy: master_policy).take.auto_assign
-      Rails.logger.info "#DEBUG lease.insurable.insurable_type_id=#{@lease.insurable.insurable_type_id}"
-      Rails.logger.info "#DEBUG master_policy.insurables.find_by=#{master_policy.insurables.find_by(insurable_id: @lease.insurable.id)}"
-      # if InsurableType::BUILDINGS_IDS.include?(@lease.insurable.insurable_type_id) &&
-      if master_policy.insurables.find_by(insurable_id: @lease.insurable.id).blank?
-        Rails.logger.info "#DEBUG PolicyInsurable.create policy=#{master_policy.id} insurable=#{@lease.insurable.id}"
-        PolicyInsurable.create(policy: master_policy, insurable: @lease.insurable, auto_assign: true)
-      end
-      Insurables::MasterPolicyAutoAssignJob.perform_later # try to cover if its possible
+    if master_policy.present?
+      # PolicyInsurable.create(policy: master_policy, insurable: @lease.insurable, auto_assign: true)
+      Insurables::MasterPolicyAutoAssignJob.perform_now # try to cover if its possible
     end
   end
 
