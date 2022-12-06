@@ -97,20 +97,12 @@ module LeasesMethods
       policy: master_policy,
       effective_date: Time.zone.now,
       expiration_date: master_policy.expiration_date,
-      system_data: master_policy.system_data
+      system_data: master_policy.system_data,
+      policy_users_attributes: [{ user_id: @lease.primary_user.id }]
     }
 
     unit.policies.create(new_child_policy_params)
     unit.update(covered: true)
-
-    # # NOTE: Unecessary check for community passed as insurable but peform it anyway.
-    # return if InsurableType::COMMUNITIES_IDS.include?(@lease.insurable.insurable_type_id) || parent_insurable.blank?
-
-    # master_policy = parent_insurable.policies.current.where(policy_type_id: PolicyType::MASTER_IDS).take
-    # if master_policy.present?
-    #   # PolicyInsurable.create(policy: master_policy, insurable: @lease.insurable, auto_assign: true)
-    #   Insurables::MasterPolicyAutoAssignJob.perform_now # try to cover if its possible
-    # end
   end
 
   def users_params
