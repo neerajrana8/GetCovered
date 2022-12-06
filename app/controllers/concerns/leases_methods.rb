@@ -79,12 +79,12 @@ module LeasesMethods
   # Changed to get parent_insurable inside Lease
   #
   def assign_master_policy
-    parent_insurable = insurable&.insurable
-    return if InsurableType::COMMUNITIES_IDS.include?(insurable.insurable_type_id) || parent_insurable.blank?
+    parent_insurable = @lease.insurable&.insurable
+    return if InsurableType::COMMUNITIES_IDS.include?(@lease.insurable.insurable_type_id) || parent_insurable.blank?
 
     master_policy = parent_insurable.policies.current.where(policy_type_id: PolicyType::MASTER_IDS).take
     if master_policy.present? && parent_insurable.policy_insurables.where(policy: master_policy).take.auto_assign
-      if InsurableType::BUILDINGS_IDS.include?(insurable.insurable_type_id) && master_policy.insurables.find_by(id: id).blank?
+      if InsurableType::BUILDINGS_IDS.include?(@lease.insurable.insurable_type_id) && master_policy.insurables.find_by(id: id).blank?
         PolicyInsurable.create(policy: master_policy, insurable: self, auto_assign: true)
       end
       Insurables::MasterPolicyAutoAssignJob.perform_later # try to cover if its possible
