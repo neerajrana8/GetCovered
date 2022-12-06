@@ -77,23 +77,47 @@ module LeasesMethods
   private
 
   def assign_master_policy
+    unit = @lease.insurable
     parent_insurable = @lease.insurable&.insurable
-
-    # NOTE: Unecessary check for community passed as insurable but peform it anyway.
-    return if InsurableType::COMMUNITIES_IDS.include?(@lease.insurable.insurable_type_id) || parent_insurable.blank?
-
     master_policy = parent_insurable.policies.current.where(policy_type_id: PolicyType::MASTER_IDS).take
-    if master_policy.present?
-      # PolicyInsurable.create(policy: master_policy, insurable: @lease.insurable, auto_assign: true)
-      Insurables::MasterPolicyAutoAssignJob.perform_now # try to cover if its possible
-    end
+
+    policy_number = MasterPolicies::GenerateNextCoverageNumber.run!(master_policy_number: master_policy.number)
+
+    new_child_policy_params = {
+      agency: master_policy.agency,
+      carrier: master_policy.carrier,
+      account: master_policy.account,
+      status: 'BOUND',
+      policy_coverages_attributes: master_policy.policy_coverages.map do |policy_coverage|
+        policy_coverage.attributes.slice('limit', 'deductible', 'enabled', 'designation', 'title')
+      end,
+      number: policy_number,
+      # TODO: Must be id of Master policy coverage policy type
+      policy_type_id: PolicyType::MASTER_COVERAGE_ID, # policy.policy_type.coverage,
+      policy: master_policy,
+      effective_date: Time.zone.now,
+      expiration_date: master_policy.expiration_date,
+      system_data: master_policy.system_data
+    }
+
+    unit.policies.create(new_child_policy_params)
+    unit.update(covered: true)
+
+    # # NOTE: Unecessary check for community passed as insurable but peform it anyway.
+    # return if InsurableType::COMMUNITIES_IDS.include?(@lease.insurable.insurable_type_id) || parent_insurable.blank?
+
+    # master_policy = parent_insurable.policies.current.where(policy_type_id: PolicyType::MASTER_IDS).take
+    # if master_policy.present?
+    #   # PolicyInsurable.create(policy: master_policy, insurable: @lease.insurable, auto_assign: true)
+    #   Insurables::MasterPolicyAutoAssignJob.perform_now # try to cover if its possible
+    # end
   end
 
   def users_params
     params.permit(users: [:primary, user: [
-                                            :id, :email, :agency_id,
-                                            profile_attributes: %i[birth_date contact_phone first_name gender job_title last_name salutation],
-                                            address_attributes: %i[city country county state street_number street_name street_two zip_code]
-                                          ]])
+                    :id, :email, :agency_id,
+                    profile_attributes: %i[birth_date contact_phone first_name gender job_title last_name salutation],
+                    address_attributes: %i[city country county state street_number street_name street_two zip_code]
+                  ]])
   end
 end
