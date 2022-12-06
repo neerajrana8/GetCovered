@@ -9,6 +9,7 @@ module LeasesMethods
         if user.nil?
           user = ::User.new(user_params[:user])
           user.password = SecureRandom.base64(12)
+          user.password_confirmation = user.password
           user.invite! if user.save
         end
 
@@ -16,6 +17,7 @@ module LeasesMethods
       end
 
       # NOTE: Auto assign master policy if applicable
+      Rails.logger.info "#DEBUG call(assign_master_policy) #{@lease}"
       assign_master_policy
 
       # NOTE: Policy assignment through MasterCoverageSweepJob REF: #GCVR2-768
@@ -83,9 +85,14 @@ module LeasesMethods
     return if InsurableType::COMMUNITIES_IDS.include?(@lease.insurable.insurable_type_id) || parent_insurable.blank?
 
     master_policy = parent_insurable.policies.current.where(policy_type_id: PolicyType::MASTER_IDS).take
+    Rails.logger.info "#DEBUG master_policy=#{master_policy}"
     if master_policy.present? && parent_insurable.policy_insurables.where(policy: master_policy).take.auto_assign
-      if InsurableType::BUILDINGS_IDS.include?(@lease.insurable.insurable_type_id) && master_policy.insurables.find_by(id: id).blank?
-        PolicyInsurable.create(policy: master_policy, insurable: self, auto_assign: true)
+      Rails.logger.info "#DEBUG lease.insurable.insurable_type_id=#{@lease.insurable.insurable_type_id}"
+      Rails.logger.info "#DEBUG master_policy.insurables.find_by=#{master_policy.insurables.find_by(insurable_id: @lease.insurable.id)}"
+      # if InsurableType::BUILDINGS_IDS.include?(@lease.insurable.insurable_type_id) &&
+      if master_policy.insurables.find_by(insurable_id: @lease.insurable.id).blank?
+        Rails.logger.info "#DEBUG PolicyInsurable.create policy=#{master_policy.id} insurable=#{@lease.insurable.id}"
+        PolicyInsurable.create(policy: master_policy, insurable: @lease.insurable, auto_assign: true)
       end
       Insurables::MasterPolicyAutoAssignJob.perform_later # try to cover if its possible
     end
