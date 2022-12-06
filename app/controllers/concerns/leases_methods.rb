@@ -16,7 +16,7 @@ module LeasesMethods
       end
 
       # NOTE: Policy assignment through MasterCoverageSweepJob REF: #GCVR2-768
-      Compliance::Policies::MasterCoverageSweepJob.perform_later
+      Compliance::Policies::MasterCoverageSweepJob.perform_later(@lease.start_date)
 
       render template: 'v2/shared/leases/show', status: :created
     else
