@@ -20,9 +20,6 @@ module LeasesMethods
       Rails.logger.info "#DEBUG call(assign_master_policy) #{@lease}"
       assign_master_policy
 
-      # NOTE: Policy assignment through MasterCoverageSweepJob REF: #GCVR2-768
-      Compliance::Policies::MasterCoverageSweepJob.perform_later(@lease.start_date)
-
       render template: 'v2/shared/leases/show', status: :created
     else
       render json: @lease.errors, status: :unprocessable_entity
