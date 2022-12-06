@@ -231,7 +231,7 @@ module V2
 
                 @quote = @application.policy_quotes.last
                 @premium = @quote.policy_premium
-                
+
                 # generate invoices
                 result = @quote.generate_invoices_for_term
                 unless result.nil?
@@ -331,7 +331,7 @@ module V2
           sign_in_primary_user(@application.primary_user)
 
           render template: 'v2/public/policy_applications/create.json', status: 200
-          
+
           return
         end
       end
@@ -360,7 +360,7 @@ module V2
             end
           end
         end
-        # scream if we are missing critical community information          
+        # scream if we are missing critical community information
         if @application.carrier_id == ::QbeService.carrier_id && @application.primary_insurable.account.nil?
           defaults = ::QbeService::FIC_DEFAULTS[@application.primary_insurable.primary_address.state] || ::QbeService::FIC_DEFAULTS[nil]
           missing_fic_info = ::QbeService::FIC_DEFAULT_KEYS.select{|k| !@application.extra_settings&.has_key?(k) && !defaults.has_key?(k) }
@@ -482,7 +482,7 @@ module V2
             @replacement_policy_insurables = unsaved_pis
           end
           @policy_application.policy_insurables.first.primary = true if @policy_application.policy_insurables.all?{|pi| !pi.primary }
-          # scream if we are missing critical community information          
+          # scream if we are missing critical community information
           if @policy_application.carrier_id == ::QbeService.carrier_id && @policy_application.primary_insurable.account.nil?
             defaults = ::QbeService::FIC_DEFAULTS[@policy_application.primary_insurable.primary_address.state] || ::QbeService::FIC_DEFAULTS[nil]
             missing_fic_info = ::QbeService::FIC_DEFAULT_KEYS.select{|k| !@policy_application.extra_settings&.has_key?(k) && !defaults.has_key?(k) }
@@ -573,7 +573,7 @@ module V2
         @policy_application.expiration_date = @policy_application.effective_date&.send(:+, 1.year)
         @policy_application.agency = @policy_application.account&.agency || Agency.where(master_agency: true).take if @policy_application.agency.nil?
         @policy_application.account = @policy_application.primary_insurable&.account if @policy_application.account.nil?
-        
+
         if @policy_application.save && @policy_application.update(status: 'complete')
           update_users_result =
             PolicyApplications::UpdateUsers.run!(
@@ -590,7 +590,7 @@ module V2
 
               @quote         = @policy_application.policy_quotes.last
               @premium       = @quote.policy_premium
-              
+
               # generate invoices
               result = @quote.generate_invoices_for_term
               unless result.nil?
@@ -713,7 +713,7 @@ module V2
           .permit(policy_users_attributes: [
                                              :primary, :spouse, user_attributes: [
                                                                                    :email, profile_attributes:                        [
-                                                                                                                 :first_name, :last_name, :job_title,
+                                                                                                                 :first_name, :last_name, :middlename, :job_title,
                                                                                                                  :contact_phone, :birth_date, :gender,
                                                                                                                  :salutation
                                                                                                                ], address_attributes: [
