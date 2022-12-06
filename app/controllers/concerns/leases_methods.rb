@@ -100,6 +100,7 @@ module LeasesMethods
 
     unit.policies.create(new_child_policy_params)
     unit.update(covered: true)
+    @lease.update(covered: true)
   end
 
   def users_params
