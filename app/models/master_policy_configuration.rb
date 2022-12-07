@@ -47,6 +47,10 @@ class MasterPolicyConfiguration < ApplicationRecord
     return force ? self.force_admin_fee.nil? ? self.admin_fee : self.force_admin_fee : admin_fee
   end
 
+  def total_placement_amount(force = false)
+    return admin_fee_amount(force) + charge_amount(force)
+  end
+
   def daily_amount(amount: 0, day_count: 0)
     return amount.to_f / day_count
   end

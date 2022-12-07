@@ -1164,7 +1164,7 @@ ActiveRecord::Schema.define(version: 2022_12_06_185614) do
     t.integer "admin_fee", default: 0
     t.integer "force_admin_fee"
     t.boolean "prorate_admin_fee", default: false
-    t.index ["carrier_policy_type_id", "configurable_type", "configurable_id"], name: "index_cpt_and_conf_on_mpc", unique: true
+    t.index ["carrier_policy_type_id", "configurable_type", "configurable_id"], name: "index_cpt_and_conf_on_mpc"
     t.index ["configurable_type", "configurable_id"], name: "index_master_policy_configurations_on_configurable"
   end
 

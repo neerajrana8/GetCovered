@@ -75,3 +75,21 @@ json.user_attributes do
     json.last_name @user.profile.last_name
   end
 end
+
+json.primary_insurable_attributes do
+  if @user.present?
+    json.building do
+      if @user.policies&.take&.primary_insurable&.unit?
+      json.partial! "v2/staff_super_admin/insurables/insurable_show_fields.json.jbuilder",
+                          insurable: @user.policies&.take&.primary_insurable.insurable
+      end
+    end
+
+    json.unit do
+      if @user.policies&.take&.primary_insurable&.unit?
+        json.partial! "v2/staff_super_admin/insurables/insurable_show_fields.json.jbuilder",
+                      insurable: @user.policies&.take&.primary_insurable
+      end
+    end
+  end
+end

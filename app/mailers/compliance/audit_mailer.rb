@@ -24,12 +24,14 @@ module Compliance
       get_insurable_liability_range(@community)
       set_locale(@user&.profile&.language || "en")
 
+      @onboarding_url = tokenized_url(@user.id, @community)
       @min_liability = @community.coverage_requirements_by_date(date: available_lease_date)&.amount
 
-      @onboarding_url = tokenized_url(@user, @community)
       @requirements_date = @configuration.nil? ? lease_start_date : lease_start_date + @configuration.grace_period
-      @placement_cost = @configuration.nil? ? 0 : @configuration.charge_amount(true).to_f / 100
+      @placement_cost = @configuration.nil? ? 0 : @configuration.total_placement_amount(true).to_f / 100
       @from = @pm_account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] : "policyverify@getcovered.io"
+
+      sending_condition = @configuration.nil? ? false : @configuration.program_start_date.to_date <= available_lease_date ? true : false
 
       case follow_up
       when 0
@@ -43,12 +45,16 @@ module Compliance
         template = 'intro_second_follow_up'
       end
 
-      mail(from: @from,
-           to: @user.contact_email,
-           bcc: "systememails@getcovered.io",
-           subject: subject,
-           template_path: 'compliance/audit',
-           template_name: template)
+      if sending_condition
+        mail(from: @from,
+             to: @user.contact_email,
+             bcc: "systememails@getcovered.io",
+             subject: subject,
+             template_path: 'compliance/audit',
+             template_name: template)
+      else
+        return false
+      end
     end
 
     private

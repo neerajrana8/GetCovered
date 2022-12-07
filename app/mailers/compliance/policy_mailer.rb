@@ -33,15 +33,15 @@ module Compliance
       @community = @policy&.primary_insurable&.parent_community
       @pm_account = @community.account
 
+      @onboarding_url = tokenized_url(@user.id, @community)
       available_lease_date = lease.sign_date.nil? ? lease.start_date : lease.sign_date
 
-      @onboarding_url = tokenized_url(@user, @community)
       get_insurable_liability_range(@community)
       set_master_policy_and_configuration(@community, 2, available_lease_date)
 
       @min_liability = @community.coverage_requirements_by_date(date: available_lease_date)&.amount
 
-      @placement_cost = @configuration.nil? ? 0 : @configuration.charge_amount(true).to_f / 100
+      @placement_cost = @configuration.nil? ? 0 : @configuration.total_placement_amount(true).to_f / 100
 
       @from = @pm_account&.contact_info&.has_key?("contact_email") &&
         !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] :
@@ -61,8 +61,8 @@ module Compliance
       @user = user
       @community = community
       @pm_account = @community.account
-      @placement_cost = @configuration.nil? ? 0 : @configuration.charge_amount(force).to_f / 100
-      @onboarding_url = tokenized_url(@user, @community)
+      @placement_cost = @configuration.nil? ? 0 : @configuration.total_placement_amount(force).to_f / 100
+      @onboarding_url = tokenized_url(@user.id, @community)
 
       @from = @pm_account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] : "policyverify@getcovered.io"
 
@@ -82,7 +82,7 @@ module Compliance
       @community = @policy.primary_insurable.parent_community
       @pm_account = @community.account
 
-      @onboarding_url = tokenized_url(@user, @community, "upload-coverage-proof")
+      @onboarding_url = tokenized_url(@user.id, @community, "upload-coverage-proof")
 
       @from = nil
       unless @pm_account.nil?
