@@ -245,6 +245,18 @@ module Integrations
                 to_return[:errors].push("Aborted roommate promotion due to failed IP save: #{loggo.errors.to_h}")
                 update_last_sync_f = false # weird error, make sure we retry these by not updating the last sync date
               end
+              # first do a reverse fix if necessary
+              if !integration.integration_profiles.where(external_context: "lease", external_id: new_roommate_code).blank?
+                lu = integration.integration_profiles.where(external_context: "lease_user_for_lease_#{new_roommate_code}", external_id: new_roommate_code).take&.profileable
+                prof = lu&.user&.profile
+                if !lu.nil? && (
+                  promotion['PriorTenant']['Name'].downcase.strip.start_with?( (prof.first_name == "Unknown" && !promotion['PriorTenant']['Name'].strip.start_with?('Unknown') ? "" : prof.first_name).downcase.strip ) &&
+                  promotion['PriorTenant']['Name'].downcase.strip.end_with?( (prof.last_name == "Unknown" && !promotion['PriorTenant']['Name'].strip.end_with?('Unknown') ? "" : prof.last_name).downcase.strip )
+                )
+                  integration.integration_profiles.where(external_id: new_roommate_code).update_all(external_id: old_king_code)
+                  integration.integration_profiles.where(external_context: "lease_user_for_lease_#{new_roommate_code}").update_all(external_context: "lease_user_for_lease_#{old_king_code}")
+                end
+              end
               # change the user-referring tcode folk NOTE: order matters! the new roommate tcode can be the same as the prior tenant tcode -____-"
               integration.integration_profiles.where(profileable_type: Integration::YARDI_TCODE_CHANGERS, external_id: old_king_code)
                                               .update_all(external_id: tcode_headstone)
@@ -258,23 +270,25 @@ module Integrations
               # update the prior LeaseUser
               prior_lease_user_ip = integration.integration_profiles.where(
                 external_context: "lease_user_for_lease_#{new_roommate_code}",
-                external_id: "was_#{Time.current.to_date.to_s}_#{old_king_code}"
+                external_id: tcode_headstone
               ).take
-              to_update = {
-                moved_out_at: (Date.parse(promotion["MoveOutDate"]) rescue nil),
-                primary: false
-              }.compact
-              prior_lease_user_ip&.profileable&.update(to_update) unless to_update.blank?
-              to_update = prior_lease_user_ip.configuration
-              to_update['tcode_changes'] ||= {}
-              to_update['tcode_changes'][last_sync_f] = {
-                old_code: promotion["PriorTenant"]["Code"],
-                new_code: tcode_headstone,
-                move_out_date: promotion["MoveOutDate"],
-                reason: 'promotion',
-                details: "IntegrationProfile##{loggo.id}"
-              }
-              prior_lease_user_ip.update(configuration: to_update)
+              unless prior_lease_user_ip.nil?
+                to_update = {
+                  moved_out_at: (Date.parse(promotion["MoveOutDate"]) rescue nil),
+                  primary: false
+                }.compact
+                prior_lease_user_ip.profileable&.update(to_update) unless to_update.blank?
+                to_update = prior_lease_user_ip.configuration
+                to_update['tcode_changes'] ||= {}
+                to_update['tcode_changes'][last_sync_f] = {
+                  old_code: promotion["PriorTenant"]["Code"],
+                  new_code: tcode_headstone,
+                  move_out_date: promotion["MoveOutDate"],
+                  reason: 'promotion',
+                  details: "IntegrationProfile##{loggo.id}"
+                }
+                prior_lease_user_ip.update(configuration: to_update)
+              end
               # update the new LeaseUser
               new_lease_user_ip = integration.integration_profiles.where(
                 external_context: "lease_user_for_lease_#{new_roommate_code}",

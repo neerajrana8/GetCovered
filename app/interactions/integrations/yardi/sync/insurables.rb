@@ -583,7 +583,8 @@ module Integrations
           
           to_return[:unit_errors].select!{|k,v| !v.blank? }
           to_return[:unit_exclusions].select!{|k,v| !v.blank? }
-          to_return[:sync_results] = output_array unless efficiency_mode
+          integration.integration_profiles.create(profileable: integration, external_context: "log_sync_insurables", external_id: Time.current.to_i.to_s, configuration: to_return)
+          # commented out because after like a year I've NEVER used the sync_results and always have to delete it to make the output readable: to_return[:sync_results] = output_array unless efficiency_mode
           return to_return
 
         end # end execute

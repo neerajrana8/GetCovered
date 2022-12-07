@@ -163,13 +163,14 @@ class User < ApplicationRecord
     return "Users can only absorb Users, not #{other.class.name.pluralize}!" unless other.class == ::User
     begin
       ActiveRecord::Base.transaction(requires_new: true) do
+        other.invoices.update_all(payer_id: self.id)
         other.integration_profiles.update_all(profileable_id: self.id)
         other.lease_users.update_all(user_id: self.id)
         other.policy_users.update_all(user_id: self.id)
         other.account_users.where.not(account_id: self.account_users.select(:account_id)).update_all(user_id: self.id)
         other.account_users.reload.each{|au| au.delete }
         if self.address.nil?
-          other.address.&update(addressable_id: self.id)
+          other.address&.update(addressable_id: self.id)
         else
           other.address&.delete
         end
