@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_11_19_180326) do
+ActiveRecord::Schema.define(version: 2022_12_06_185614) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -695,6 +695,7 @@ ActiveRecord::Schema.define(version: 2022_11_19_180326) do
     t.bigint "eventable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_events_on_created_at"
     t.index ["eventable_type", "eventable_id"], name: "index_events_on_eventable"
   end
 
@@ -874,6 +875,7 @@ ActiveRecord::Schema.define(version: 2022_11_19_180326) do
     t.boolean "additional_interest", default: false
     t.string "additional_interest_name"
     t.integer "minimum_liability"
+    t.integer "special_status", default: 0, null: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
     t.index ["insurable_id"], name: "index_insurables_on_insurable_id"

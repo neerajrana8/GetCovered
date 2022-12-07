@@ -170,7 +170,7 @@ class User < ApplicationRecord
         other.account_users.where.not(account_id: self.account_users.select(:account_id)).update_all(user_id: self.id)
         other.account_users.reload.each{|au| au.delete }
         if self.address.nil?
-          other.address.&update(addressable_id: self.id)
+          other.address&.update(addressable_id: self.id)
         else
           other.address&.delete
         end

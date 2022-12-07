@@ -438,7 +438,7 @@ module Integrations
                   to_return[:policies_exported][policy.number] = policy
                 end
               end # end if !policy_exported...
-              if !policy_document_exported
+              if !policy_document_exported && integration.configuration.dig('sync', 'policy_push', 'push_document')
                 priu = policy_priu
                 next if priu.nil?
                 # upload document
@@ -467,6 +467,10 @@ module Integrations
             'errors' => to_return.select{|k,v| k.to_s.end_with?("errors") }
           })
           integration.save
+          to_return[:policies_imported] = to_return[:policies_imported]&.keys
+          to_return[:policies_updated] = to_return[:policies_updated]&.keys
+          to_return[:policies_exported] = to_return[:policies_exported]&.keys
+          integration.integration_profiles.create(profileable: integration, external_context: "log_sync_policies", external_id: Time.current.to_i.to_s, configuration: to_return })
           return to_return
           
         end # end method
