@@ -44,7 +44,13 @@ module MasterPoliciesMethods
       end
       
       if error.nil?
-        render json: { message: 'Master Policy and Policy Premium created', payload: { policy: @master_policy.attributes } },
+        # TODO: Move to jbuilder serializer
+        render json: {
+                 message: 'Master Policy and Policy Premium created',
+                 payload: {
+                   policy: @master_policy.attributes,
+                   master_policy_configurations: @master_policy.master_policy_configurations
+                 } },
                status: :created
       else
         render json: standard_error(
