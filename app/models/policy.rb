@@ -231,7 +231,7 @@ class Policy < ApplicationRecord
   }
 
   accepts_nested_attributes_for :policy_premiums,
-  :insurables, :policy_users, :policy_insurables, :policy_application
+  :insurables, :policy_users, :policy_insurables, :policy_application, :master_policy_configurations
   accepts_nested_attributes_for :policy_coverages, allow_destroy: true
   #  after_save :update_leases, if: :saved_changes_to_status?
 
