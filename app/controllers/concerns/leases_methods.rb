@@ -76,31 +76,33 @@ module LeasesMethods
   def assign_master_policy
     unit = @lease.insurable
     parent_insurable = @lease.insurable&.insurable
+
     master_policy = parent_insurable.policies.current.where(policy_type_id: PolicyType::MASTER_IDS).take
+    if master_policy
+      policy_number = MasterPolicies::GenerateNextCoverageNumber.run!(master_policy_number: master_policy.number)
 
-    policy_number = MasterPolicies::GenerateNextCoverageNumber.run!(master_policy_number: master_policy.number)
+      new_child_policy_params = {
+        agency: master_policy.agency,
+        carrier: master_policy.carrier,
+        account: master_policy.account,
+        status: 'BOUND',
+        policy_coverages_attributes: master_policy.policy_coverages.map do |policy_coverage|
+          policy_coverage.attributes.slice('limit', 'deductible', 'enabled', 'designation', 'title')
+        end,
+        number: policy_number,
+        # TODO: Must be id of Master policy coverage policy type
+        policy_type_id: PolicyType::MASTER_COVERAGE_ID, # policy.policy_type.coverage,
+        policy: master_policy,
+        effective_date: Time.zone.now,
+        expiration_date: master_policy.expiration_date,
+        system_data: master_policy.system_data,
+        policy_users_attributes: [{ user_id: @lease.primary_user.id }]
+      }
 
-    new_child_policy_params = {
-      agency: master_policy.agency,
-      carrier: master_policy.carrier,
-      account: master_policy.account,
-      status: 'BOUND',
-      policy_coverages_attributes: master_policy.policy_coverages.map do |policy_coverage|
-        policy_coverage.attributes.slice('limit', 'deductible', 'enabled', 'designation', 'title')
-      end,
-      number: policy_number,
-      # TODO: Must be id of Master policy coverage policy type
-      policy_type_id: PolicyType::MASTER_COVERAGE_ID, # policy.policy_type.coverage,
-      policy: master_policy,
-      effective_date: Time.zone.now,
-      expiration_date: master_policy.expiration_date,
-      system_data: master_policy.system_data,
-      policy_users_attributes: [{ user_id: @lease.primary_user.id }]
-    }
-
-    unit.policies.create(new_child_policy_params)
-    unit.update(covered: true)
-    @lease.update(covered: true)
+      unit.policies.create(new_child_policy_params)
+      unit.update(covered: true)
+      @lease.update(covered: true)
+    end
   end
 
   def users_params
