@@ -283,7 +283,28 @@ module MasterPoliciesMethods
       permitted_params = params.require(:policy).permit(
         :account_id, :agency_id, :auto_renew, :carrier_id, :effective_date, :policy_type_id,
         :expiration_date, :number, system_data: [:landlord_sumplimental],
-        policy_coverages_attributes: %i[policy_application_id title limit deductible enabled designation]
+        policy_coverages_attributes: %i[policy_application_id title limit deductible enabled designation],
+        configurable_attributes: [
+          :program_type,
+          :grace_period,
+          :integration_charge_code,
+          :prorate_charges,
+          :admin_prorate_charges,
+          :auto_post_charges,
+          :consolidate_billing,
+          :program_start_date,
+          :program_delay,
+          :placement_cost,
+          :admin_cost,
+          :force_placement_cost,
+          :force_admin_cost,
+          :carrier_policy_type_id,
+          :configurable_type,
+          :configurable_id,
+          :enabled,
+          :integration_account_number,
+          :lease_violation_only
+        ]
       )
 
       permitted_params
