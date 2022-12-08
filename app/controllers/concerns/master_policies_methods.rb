@@ -88,7 +88,12 @@ module MasterPoliciesMethods
           end
         end
         if error.nil?
-          render json: { message: 'Master Policy updated', payload: { policy: @master_policy.attributes } },
+          # TODO: Move to jbuilder serializer
+          render json: { message: 'Master Policy updated',
+                         payload: {
+                           policy: @master_policy.attributes,
+                           master_policy_configurations: @master_policy.master_policy_configurations
+                         } },
                  status: :created
         else
           render json: standard_error(
@@ -323,7 +328,28 @@ module MasterPoliciesMethods
         :account_id, :agency_id, :auto_renew, :carrier_id, :effective_date,
         :expiration_date, :number, system_data: [:landlord_sumplimental],
         policy_coverages_attributes: %i[id policy_application_id policy_id title
-                                                                   limit deductible enabled designation]
+                                                                   limit deductible enabled designation],
+         master_policy_configurations_attributes: [
+          :program_type,
+          :grace_period,
+          :integration_charge_code,
+          :prorate_charges,
+          :admin_prorate_charges,
+          :auto_post_charges,
+          :consolidate_billing,
+          :program_start_date,
+          :program_delay,
+          :placement_cost,
+          :admin_cost,
+          :force_placement_cost,
+          :force_admin_cost,
+          :carrier_policy_type_id,
+          :configurable_type,
+          :configurable_id,
+          :enabled,
+          :integration_account_number,
+          :lease_violation_only
+        ]
       )
 
       existed_ids = permitted_params[:policy_coverages_attributes]&.map { |policy_coverage| policy_coverage[:id] }
