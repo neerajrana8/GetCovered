@@ -18,10 +18,30 @@ module MasterPoliciesMethods
       error = nil
       ::ActiveRecord::Base.transaction do
         begin
-          @master_policy = Policy.create!(create_params.merge(agency: account.agency,
-                                                    carrier: carrier,
-                                                    account: account,
-                                                    status: 'BOUND'))
+          # create_params.policy.master_policy_configurations_attributes.first.carrier_policy_type_id = 5
+
+          # NOTE: Support only one Carrier for now
+          carrier = Carrier.find_by(call_sign: 'QBSI')
+          raise 'Carrier QBSI not found in the system' if carrier.blank?
+
+          carrier_policy_type = CarrierPolicyType.where(
+            carrier_id: carrier.id,
+            policy_type_id: PolicyType::MASTER_ID
+          ).take
+
+          if carrier_policy_type.blank?
+            raise "CarrierPolicyType(carrier_id: #{carrier.id}, policy_type_id: #{PolicyType::MASTER_ID}) not found"
+          end
+
+          carrier_policy_type_id = carrier_policy_type.id
+          params[:policy][:master_policy_configurations_attributes][0][:carrier_policy_type_id] = carrier_policy_type_id
+
+          new_policy_data = create_params.merge(agency: account.agency,
+                                                carrier: carrier,
+                                                account: account,
+                                                status: 'BOUND')
+
+          @master_policy = Policy.create!(new_policy_data)
           @policy_premium = PolicyPremium.create!(policy: @master_policy)
           @ppi = ::PolicyPremiumItem.create!(
             policy_premium: @policy_premium,
