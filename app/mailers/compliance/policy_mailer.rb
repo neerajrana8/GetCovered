@@ -34,7 +34,7 @@ module Compliance
       @pm_account = @community.account
 
       @onboarding_url = tokenized_url(@user.id, @community)
-      available_lease_date = lease.sign_date.nil? ? lease.start_date : lease.sign_date
+      available_lease_date = @lease.nil? ? DateTime.current.to_date : @lease.sign_date.nil? ? @lease.start_date : @lease.sign_date
 
       get_insurable_liability_range(@community)
       set_master_policy_and_configuration(@community, 2, available_lease_date)
