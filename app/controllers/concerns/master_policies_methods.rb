@@ -34,7 +34,10 @@ module MasterPoliciesMethods
           end
 
           carrier_policy_type_id = carrier_policy_type.id
-          params[:policy][:master_policy_configurations_attributes][0][:carrier_policy_type_id] = carrier_policy_type_id
+
+          if params[:policy][:master_policy_configuratoins_attributes].present?
+            params[:policy][:master_policy_configurations_attributes][0][:carrier_policy_type_id] = carrier_policy_type_id
+          end
 
           new_policy_data = create_params.merge(agency: account.agency,
                                                 carrier: carrier,
