@@ -33,7 +33,6 @@ module V2
           data << attrs
         end
         data
-        data
       end
 
       def show
