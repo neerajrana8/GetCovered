@@ -35,7 +35,7 @@ module MasterPoliciesMethods
 
           carrier_policy_type_id = carrier_policy_type.id
 
-          if params[:policy][:master_policy_configuratoins_attributes].present?
+          if params[:policy][:master_policy_configurations_attributes].present?
             params[:policy][:master_policy_configurations_attributes][0][:carrier_policy_type_id] = carrier_policy_type_id
           end
 
