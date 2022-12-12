@@ -26,7 +26,7 @@ class LeaseExpirationCheckJob < ApplicationJob
       # NOTE: Set lease covered false
       lease.update covered: false
 
-      next if policies.zero?
+      next if policies.count.zero?
 
       # next unless [PolicyType::MASTER_COVERAGE_ID, PolicyType::RESIDENTIAL_ID].include?(policy.policy_type_id)
 
