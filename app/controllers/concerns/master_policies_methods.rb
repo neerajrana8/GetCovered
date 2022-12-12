@@ -337,7 +337,13 @@ module MasterPoliciesMethods
           :configurable_id,
           :enabled,
           :integration_account_number,
-          :lease_violation_only
+          :lease_violation_only,
+          :admin_fee,
+          :force_admin_cost,
+          :force_admin_fee,
+          :prorate_admin_fee,
+          :charge_date,
+          :enabled
         ]
       )
 
@@ -371,7 +377,13 @@ module MasterPoliciesMethods
           :configurable_id,
           :enabled,
           :integration_account_number,
-          :lease_violation_only
+          :lease_violation_only,
+          :admin_fee,
+          :force_admin_cost,
+          :force_admin_fee,
+          :prorate_admin_fee,
+          :charge_date,
+          :enabled
         ]
       )
 
