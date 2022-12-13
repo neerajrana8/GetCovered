@@ -1,3 +1,4 @@
+<% @inline_display_title = @pm_account.id == 46 ? @pm_account&.title : "Get Covered" %>
 <% if @policy.status == "EXTERNAL_UNVERIFIED" %>
   <!--
   ----
@@ -15,7 +16,7 @@
   </p>
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
     <span style="font-size: 16px;">
-      Get Covered is reviewing your policy to ensure that it meets the requirements of <%= @pm_account&.title %>
+      <% @inline_display_title %> is reviewing your policy to ensure that it meets the requirements of <%= @pm_account&.title %>
     </span>
   </p>
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
@@ -37,7 +38,7 @@
   </p>
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
     <span style="font-size: 16px;">
-      If you decide to switch carriers, please make sure to upload your new policy information in the Get Covered portal at
+      If you decide to switch carriers, please make sure to upload your new policy information in the <% @inline_display_title %> portal at
       <a href="<%= @onboarding_url %>" target="_blank"><%= @branding_profile.url %></a>
     </span>
   </p>
@@ -60,16 +61,16 @@
     </p>
   <% else %>
     <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-    <span style="font-size: 16px;">While evaluating your insurance policy submitted to Get Covered, we have found the policy does
+    <span style="font-size: 16px;">While evaluating your insurance policy submitted to <% @inline_display_title %>, we have found the policy does
       not meet the requirements specified by <%= @community.title %>.</span>
     </p>
 
     <% if @policy.system_data.has_key?("rejection_reasons") && @policy.system_data["rejection_reasons"].length >= 1 %>
-    <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-      <span style="font-size: 16px;">Please resolve the following error(s) listed below:</span>
-    </p>
+      <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+        <span style="font-size: 16px;">Please resolve the following error(s) listed below:</span>
+      </p>
 
-    <span style="padding-left: 20px; list-style-type: circle;">
+      <span style="padding-left: 20px; list-style-type: circle;">
       <% @policy.system_data["rejection_reasons"].each do |reason| %>
       <li>
         <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
@@ -106,6 +107,7 @@
   <% end %>
 <% end %>
 <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-  <span style="font-size: 16px;">Thank you,<br> <%= @pm_account.title %> & Get Covered<br>
+  <% @bottom_inline_display = @pm_account.id == 46 ? @pm_account.title : "#{ @pm_account.title } & Get Covered"%>
+  <span style="font-size: 16px;">Thank you,<br> <%= @bottom_inline_display %><br>
     <a href="mailto:<%= @from %>"><%= @from %></a></span>
 </p>
