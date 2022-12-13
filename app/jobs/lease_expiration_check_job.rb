@@ -28,16 +28,13 @@ class LeaseExpirationCheckJob < ApplicationJob
 
       next if policies.count.zero?
 
-      # next unless [PolicyType::MASTER_COVERAGE_ID, PolicyType::RESIDENTIAL_ID].include?(policy.policy_type_id)
-
       policies.each do |policy|
-        next unless [PolicyType::MASTER_COVERAGE_ID, PolicyType::RESIDENTIAL_ID].include?(policy.policy_type_id)
+        # next unless [PolicyType::MASTER_COVERAGE_ID].include?(policy.policy_type_id)
 
-        # NOTE: Set policy status to CANCELLED
-        policy.update status: 'CANCELLED'
-
-        # NOTE: Call QBE for master_coverage update
-        policy.qbe_specialty_evict_master_coverage if policy.policy_type_id == PolicyType::MASTER_COVERAGE_ID
+        if [PolicyType::MASTER_COVERAGE_ID].include?(policy.policy_type_id)
+          # NOTE: Call QBE for master_coverage update
+          policy.qbe_specialty_evict_master_coverage
+        end
       end
     end
   end
