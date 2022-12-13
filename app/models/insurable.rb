@@ -46,7 +46,7 @@ class Insurable < ApplicationRecord
 
   # NOTE: Disable according to #GCVR2-768 Master Policy Fixes
   # NOTE: Master policy assignment moved to MasterCoverageSweepJob
-  # after_create :assign_master_policy
+  after_create :assign_master_policy
 
   belongs_to :account, optional: true
   belongs_to :agency, optional: true
@@ -692,17 +692,18 @@ class Insurable < ApplicationRecord
 
   # NOTE: Commented out according to GCVR2-768: Master Policy Fixes
   # NOTE: Master Policy Assignment moved MasterCoverageSweepJob
-  # def assign_master_policy
-  #   return if InsurableType::COMMUNITIES_IDS.include?(insurable_type_id) || insurable.blank?
+  # NOTE: Recovered
+  def assign_master_policy
+    return if InsurableType::COMMUNITIES_IDS.include?(insurable_type_id) || insurable.blank?
 
-  #   master_policy = insurable.policies.current.where(policy_type_id: PolicyType::MASTER_IDS).take
-  #   if master_policy.present? && insurable.policy_insurables.where(policy: master_policy).take.auto_assign
-  #     if InsurableType::BUILDINGS_IDS.include?(insurable_type_id) && master_policy.insurables.find_by(id: id).blank?
-  #       PolicyInsurable.create(policy: master_policy, insurable: self, auto_assign: true)
-  #     end
-  #     Insurables::MasterPolicyAutoAssignJob.perform_later # try to cover if its possible
-  #   end
-  # end
+    master_policy = insurable.policies.current.where(policy_type_id: PolicyType::MASTER_IDS).take
+    if master_policy.present? && insurable.policy_insurables.where(policy: master_policy).take.auto_assign
+      if InsurableType::BUILDINGS_IDS.include?(insurable_type_id) && master_policy.insurables.find_by(id: id).blank?
+        PolicyInsurable.create(policy: master_policy, insurable: self, auto_assign: true)
+      end
+      Insurables::MasterPolicyAutoAssignJob.perform_later # try to cover if its possible
+    end
+  end
 
     def title_uniqueness
       return if insurable.nil?
