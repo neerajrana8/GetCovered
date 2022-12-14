@@ -77,6 +77,9 @@ module LeasesMethods
     unit = @lease.insurable
     parent_insurable = @lease.insurable&.insurable
 
+    # NOTE: Do not create MPC if start_date in future
+    next if @lease.start_date > Time.current.to_date
+
     master_policy = parent_insurable.policies.current.where(policy_type_id: PolicyType::MASTER_IDS).take
     if master_policy
       policy_number = MasterPolicies::GenerateNextCoverageNumber.run!(master_policy_number: master_policy.number)
