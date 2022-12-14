@@ -211,7 +211,7 @@ module V2
               leases = Lease
                          .where(insurable_id: insurables_ids, status: 'current')
                          .where('end_date > ?', Time.current.to_date)
-                         .where('start_date =< ?', Time.current.to_date)
+                         .where('start_date <= ?', Time.current.to_date)
               leases.each do |lease|
                 policies = lease.policies.where(policy_type_id: PolicyType::MASTER_COVERAGES_IDS)
                 policies.each do |policy|
