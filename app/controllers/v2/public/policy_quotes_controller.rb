@@ -208,7 +208,7 @@ module V2
               # NOTE: Needs Refactoring
               # MasterPolicies::CancelCoverage.run!(policy: @policy_quote.policy)
               insurables_ids = @policy_quote.policy.insurables.where(insurable_type_id: InsurableType::UNITS_IDS).pluck(:id)
-              leases = leases
+              leases = Lease
                          .where(insurable_id: insurables_ids, status: 'current')
                          .where('end_date > ?', Time.current.to_date)
                          .where('start_date =< ?', Time.current.to_date)
