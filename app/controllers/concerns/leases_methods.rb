@@ -82,6 +82,9 @@ module LeasesMethods
 
     master_policy = parent_insurable.policies.current.where(policy_type_id: PolicyType::MASTER_IDS).take
     if master_policy
+
+      return nil if master_policy.effective_date > Time.current.to_date
+
       policy_number = MasterPolicies::GenerateNextCoverageNumber.run!(master_policy_number: master_policy.number)
 
       new_child_policy_params = {
