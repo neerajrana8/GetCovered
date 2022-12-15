@@ -92,6 +92,20 @@
                 </p>
           </p>
       <% end %>
+
+        <% if reason == Policy.rejection_reasons["tenants_not_listed"] %>
+        <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+          <p style="font-size: 16px;">Thank you for submitting your policy! While reviewing your policy we noticed that the additional lease holder(s) is not listed as named insured(s).
+                          Your management company requires that all leaseholders have insurance on either a shared policy or on a policy of their own. Please re-upload an updated policy with all leaseholders listed.</p>
+          </p>
+      <% end %>
+
+        <% if reason == Policy.rejection_reasons["am_requirement_not_met"] %>
+        <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+          <p style="font-size: 16px;"> <%= @policy&.out_of_system_carrier_title %> policies do not meet your Property Managements requirements. Your Property Manager requires residents to obtain and maintain a renters insurance policy from a carrier with an AM Best Rating of A-VII. To ensure your account complies with the insurance requirements,
+                          you may submit an updated policy from an AM Best rated carrier of your choice or purchase a policy through our preferred partner Get Covered.</p>
+          </p>
+      <% end %>
       </li>
       <% end %>
 
