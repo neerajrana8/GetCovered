@@ -44,6 +44,8 @@ class Insurable < ApplicationRecord
   after_commit :create_profile_by_carrier,
     on: :create
 
+  # NOTE: Disable according to #GCVR2-768 Master Policy Fixes
+  # NOTE: Master policy assignment moved to MasterCoverageSweepJob
   after_create :assign_master_policy
 
   belongs_to :account, optional: true
@@ -688,6 +690,9 @@ class Insurable < ApplicationRecord
     end
   end
 
+  # NOTE: Commented out according to GCVR2-768: Master Policy Fixes
+  # NOTE: Master Policy Assignment moved MasterCoverageSweepJob
+  # NOTE: Recovered
   def assign_master_policy
     return if InsurableType::COMMUNITIES_IDS.include?(insurable_type_id) || insurable.blank?
 
