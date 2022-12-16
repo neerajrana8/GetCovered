@@ -100,3 +100,6 @@ json.tenants do
   json.array! policy&.primary_insurable&.leases&.last&.lease_users,
               partial: 'v2/staff_policy_support/policies/tenant', as: :tenant
 end
+
+
+json.master_policy_configurations policy.primary_insurable.master_policy_configurations
