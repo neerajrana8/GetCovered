@@ -40,4 +40,4 @@ json.policies do
   end
 end
 
-json.master_policy_conifgurations lease.insurable.master_policy_configurations
+json.master_policy_configurations lease.insurable.master_policy_configurations
