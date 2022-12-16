@@ -44,6 +44,6 @@ class YardiSyncJob < ApplicationJob
   private
 
     def set_integrations
-      @integration_ids = ::Integration.where(provider: 'yardi', enabled: true).select{|i| (Date.parse(i.configuration['sync']['next_sync']['timestamp']) rescue Time.current.to_date + 10.days) <= Time.current.to_date }.map{|i| i.id }
+      @integration_ids = ::Integration.where(provider: 'yardi', enabled: true).order("updated_at asc").map{|i| i.id }
     end
 end

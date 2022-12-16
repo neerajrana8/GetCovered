@@ -23,6 +23,10 @@ module Integrations
             else;             integration.configuration['sync']['syncable_communities'][property_id]&.[]('enabled') == true
           end
         end
+        
+        def only_sync_insurables(commID)
+          insurables_only || integration.configuration['sync']['syncable_communities'][commID]&.[]('insurables_only')
+        end
 
         def fixaddr(markname, unitid, addr)
           return addr if addr.blank?
@@ -66,6 +70,8 @@ module Integrations
               addr = gombo.join(" ")
             end
           end
+          
+          addr = addr.gsub("Apt.", "Apt").gsub("Apr.", "Apr").gsub("Ste.", "Ste").gsub("Rm.", "Rm").gsub("No.", "No")
           
           return addr
         end
@@ -139,7 +145,7 @@ module Integrations
           
           if efficiency_mode && all_units.keys.count > 1
             all_units.keys.each do |k|
-              Integrations::Yardi::Sync::Insurables.run!(integration: integration.reload, property_ids: [k], insurables_only: insurables_only, efficiency_mode: true)
+              Integrations::Yardi::Sync::Insurables.run!(integration: integration.reload, property_ids: [k], insurables_only: only_sync_insurables(k), efficiency_mode: true)
             end
             return to_return # empty
           end
@@ -526,6 +532,7 @@ module Integrations
           tenant_array = []
           unless insurables_only
             output_array.each do |comm|
+              next if only_sync_insurables(comm[:yardi_id])
               unless skip_roommate_sync
                 result = Integrations::Yardi::Sync::Roommates.run!(integration: integration, property_id: comm[:yardi_id])
                 comm[:last_sync_f] = result[:last_sync_f]
@@ -583,7 +590,7 @@ module Integrations
           
           to_return[:unit_errors].select!{|k,v| !v.blank? }
           to_return[:unit_exclusions].select!{|k,v| !v.blank? }
-          integration.integration_profiles.create(profileable: integration, external_context: "log_sync_insurables", external_id: Time.current.to_i.to_s, configuration: to_return)
+          integration.integration_profiles.create(profileable: integration, external_context: "log_sync_insurables", external_id: Time.current.to_i.to_s + "_" + rand(100000000).to_s, configuration: to_return)
           # commented out because after like a year I've NEVER used the sync_results and always have to delete it to make the output readable: to_return[:sync_results] = output_array unless efficiency_mode
           return to_return
 
