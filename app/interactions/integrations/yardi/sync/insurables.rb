@@ -71,6 +71,8 @@ module Integrations
             end
           end
           
+          addr = addr.gsub("Apt.", "Apt").gsub("Apr.", "Apr").gsub("Ste.", "Ste").gsub("Rm.", "Rm").gsub("No.", "No")
+          
           return addr
         end
 
