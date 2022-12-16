@@ -23,6 +23,10 @@ module Integrations
             else;             integration.configuration['sync']['syncable_communities'][property_id]&.[]('enabled') == true
           end
         end
+        
+        def only_sync_insurables(commID)
+          insurables_only || integration.configuration['sync']['syncable_communities'][commID]&.[]('insurables_only')
+        end
 
         def fixaddr(markname, unitid, addr)
           return addr if addr.blank?
@@ -139,7 +143,7 @@ module Integrations
           
           if efficiency_mode && all_units.keys.count > 1
             all_units.keys.each do |k|
-              Integrations::Yardi::Sync::Insurables.run!(integration: integration.reload, property_ids: [k], insurables_only: insurables_only, efficiency_mode: true)
+              Integrations::Yardi::Sync::Insurables.run!(integration: integration.reload, property_ids: [k], insurables_only: only_sync_insurables(k), efficiency_mode: true)
             end
             return to_return # empty
           end
@@ -526,6 +530,7 @@ module Integrations
           tenant_array = []
           unless insurables_only
             output_array.each do |comm|
+              next if only_sync_insurables(comm[:yardi_id])
               unless skip_roommate_sync
                 result = Integrations::Yardi::Sync::Roommates.run!(integration: integration, property_id: comm[:yardi_id])
                 comm[:last_sync_f] = result[:last_sync_f]
