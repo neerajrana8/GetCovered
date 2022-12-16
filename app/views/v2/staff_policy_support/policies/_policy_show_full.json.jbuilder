@@ -102,4 +102,4 @@ json.tenants do
 end
 
 
-json.master_policy_configurations [policy.find_closest_master_policy_configuration]
+json.master_policy_configurations policy.primary_insurable&.parent_community&.master_policy_configurations
