@@ -36,6 +36,19 @@ module Integrations
           addr = addr.gsub("#", " # ")
           addr = addr.squeeze(" ")
           return addr if addr.blank?
+          # correct "Apt11" and such without a space
+          spaces = (3...addr.length).select{|n| addr[(n-3)...n].downcase == "Apt" && addr[n].match(/\d/) }
+          unless spaces.blank?
+            start = 0
+            spaces.sort.reverse_each do |sindex|
+              addr = addr[start...sindex] + " " + addr[sindex...]
+            end
+          end
+          # special essex property 144 fix
+          if addr.end_with?("Bellevue, WA 98005") && addr.index("NE 12TH ST")
+            addr.gsub(" ST, ", " ST, APT ")
+          end
+          # go on
           uid_parts = unitid.split("-")
           uid_lasto = "#{uid_parts.last}"
           uid_lasto = uid_lasto[1..-1] while uid_lasto[0] && uid_lasto[0] == "0"
@@ -265,6 +278,10 @@ module Integrations
                   next u if u["UnitId"] == u[:gc_addr_obj].street_number || u["UnitId"].downcase.end_with?(u["Address"].strip.last.downcase)
                 end
                 next u if u["UnitId"] == u[:gc_addr_obj].street_number || u["UnitId"] == "#{u[:gc_addr_obj].street_number}-0" || u["UnitId"].downcase.end_with?(u[:gc_addr_obj].street_number.downcase) || (  !u[:gc_addr_obj].street_two.blank? && u["UnitId"].downcase.end_with?(u[:gc_addr_obj].street_two.split(' ').last.gsub("#",""))    )# && (u["UnitId"].chomp(u[:gc_addr_obj].street_number).match?(/^([^2-9]*)$/)))  # last case is for a weird essex community
+                # next if they match other than leading 0s
+                next u if u["UnitId"].gsub(/^0+/, "") == u[:gc_addr_obj].street_number.gsub(/^0+/, "")
+                # for 01234 Moogle Poogle Avenue, accept 1234MP and 01234MP (because of their relationship to 01234MPA)
+                next u if "#{u["UnitId"].tr('^0-9', '').gsub(/^0+/, "")}#{u["Address"].tr('0-9', '').strip.squeeze.split(" ").map{|x| x[0] }.join("").upcase}".start_with?(u[:gc_addr_obj].street_number.gsub(/^0+/, "").upcase)
                 # hacky nonsense for essex san1100
                 if u[:gc_addr_obj].street_number.end_with?("1/2")
                   cleanuid = u["UnitId"].strip
