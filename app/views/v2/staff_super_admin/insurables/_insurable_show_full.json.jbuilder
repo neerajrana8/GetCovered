@@ -97,3 +97,5 @@ json.agency do
     json.title insurable.agency.title
   end
 end
+
+json.master_policy_configurations insurable.master_policy_configurations

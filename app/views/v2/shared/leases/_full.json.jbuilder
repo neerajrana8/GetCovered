@@ -39,3 +39,5 @@ json.policies do
     end
   end
 end
+
+json.master_policy_configurations lease.insurable&.parent_community&.master_policy_configurations

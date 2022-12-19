@@ -302,6 +302,8 @@ class Policy < ApplicationRecord
     pm_not_additional_interest: I18n.t('policy_model.rejection_reasons.pm_not_additional_interest'),
     policy_not_active: I18n.t('policy_model.rejection_reasons.policy_not_active'),
     name_not_correct: I18n.t('policy_model.rejection_reasons.name_not_correct'),
+    tenants_not_listed: I18n.t('policy_model.rejection_reasons.tenants_not_listed'),
+    am_requirement_not_met: I18n.t('policy_model.rejection_reasons.am_requirement_not_met'),
     other: I18n.t('policy_model.rejection_reasons.other')}
 
   #TODO: need to refactor to enum values for policy-support dashboard too
