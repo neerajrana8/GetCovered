@@ -9,13 +9,13 @@ module V2
 
       before_action :set_lease, only: %i[update destroy show]
       before_action :parse_input_file, only: %i[bulk_create]
-            
+
       def index
         super(:@leases, Lease, :account, :insurable, :lease_type)
 
         render template: 'v2/shared/leases/index', status: :ok
       end
-      
+
       def show
         render template: 'v2/shared/leases/show', status: :ok
       end
@@ -67,7 +67,7 @@ module V2
         end
         head :no_content
       end
-      
+
       private
 
       def parse_input_file
@@ -101,15 +101,15 @@ module V2
       def view_path
         super + '/leases'
       end
-        
+
       def destroy_allowed?
         true
       end
-        
+
       def set_lease
-        @lease = Lease.find(params[:id])
+        @lease = Lease.includes(:lease_users).find(params[:id])
       end
-        
+
       def set_substrate
         super
         if @substrate.nil?
@@ -118,28 +118,30 @@ module V2
           @substrate = @substrate.leases
         end
       end
-        
+
       def create_params
         return({}) if params[:lease].blank?
 
         params.require(:lease).permit(
           :account_id, :covered, :start_date, :end_date, :insurable_id,
           :lease_type_id, :status,
-          lease_users_attributes: [:user_id],
-          users_attributes: %i[id email password]
+          lease_users_attributes: [:user_id, :lessee, :moved_out_at, :moved_in_at],
+          users_attributes: [:id, :email, :password,
+                             integration_profiles_attributes: [:integration_id, :external_id]]
         )
       end
-        
+
       def update_params
         return({}) if params[:lease].blank?
 
         params.require(:lease).permit(
           :covered, :end_date, :start_date, :status, :account_id, :insurable_id,
-          lease_users_attributes: [:user_id],
-          users_attributes: %i[id email password]
+          lease_users_attributes: [:user_id, :lessee, :moved_out_at, :moved_in_at],
+          users_attributes: [:id, :email, :password,
+                             integration_profiles_attributes: [:id, :integration_id, :external_id]]
         )
       end
-        
+
       def supported_filters(called_from_orders = false)
         @calling_supported_orders = called_from_orders
         {
@@ -158,7 +160,7 @@ module V2
       def supported_orders
         supported_filters(true)
       end
-        
+
     end
   end # module StaffAgency
 end
