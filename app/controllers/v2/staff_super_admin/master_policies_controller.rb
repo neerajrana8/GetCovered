@@ -11,6 +11,9 @@ module V2
         master_policies_relation = Policy.where(policy_type_id: PolicyType::MASTER_IDS).order(created_at: :desc)
         master_policies_relation = master_policies_relation.where(status: params[:status]) if params[:status].present?
 
+        master_policies_relation = master_policies_relation.where("number LIKE ?", "%#{params[:number]}%") if params[:number].present?
+        master_policies_relation = master_policies_relation.where(account_id: params[:account_id]) if params[:account_id].present?
+
         if params[:insurable_id].present?
           insurable = Insurable.find(params[:insurable_id])
 
