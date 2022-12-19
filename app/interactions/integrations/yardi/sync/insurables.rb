@@ -37,16 +37,13 @@ module Integrations
           addr = addr.squeeze(" ")
           return addr if addr.blank?
           # correct "Apt11" and such without a space
-          spaces = (3...addr.length).select{|n| addr[(n-3)...n].downcase == "Apt" && addr[n].match(/\d/) }
-          unless spaces.blank?
-            start = 0
-            spaces.sort.reverse_each do |sindex|
-              addr = addr[start...sindex] + " " + addr[sindex...]
-            end
-          end
+          addr = addr.gsub(/\s(A|\a)(P|p)(T|t)([\d]+)([^\s^,]+)/, ' \1\2\3 \4\5')
+          # correct comma-separated suffixes
+          addr = addr.gsub(/(\s|\A)(N|S)\.(E|W)\.(,|\s)/, '\1\2\3\4').gsub(/,\s(N|S)(E|W)(,|\s)/, ' \1\2\3')
           # special essex property 144 fix
-          if addr.end_with?("Bellevue, WA 98005") && addr.index("NE 12TH ST")
-            addr.gsub(" ST, ", " ST, APT ")
+          if integration.id == 7 && markname == "Palisades, The" && addr.index("NE 12TH ST")
+            addr = addr.gsub(" ST, ", " ST, APT ")
+            addr = addr.gsub("NE 12TH ST", "12TH ST NE")
           end
           # go on
           uid_parts = unitid.split("-")
@@ -124,15 +121,21 @@ module Integrations
             next unless should_import_community(comm["Code"])
             property_id = comm["Code"]
             units = nil
-            begin
-              units = Integrations::Yardi::RentersInsurance::GetUnitConfiguration.run!(integration: integration, property_id: property_id)
-            rescue
-              gortsnort = nil
-              t = Time.current + 5.seconds
-              while Time.current < t do
-                gortsnort = 2
+            trials = 2
+            while units.nil? && trials > 0
+              trials -= 1
+              begin
+                units = Integrations::Yardi::RentersInsurance::GetUnitConfiguration.run!(integration: integration, property_id: property_id)
+                raise StandardError.new("Got garbage response!") if units[:parsed_response].class == ::String # sometimes the server gets weirdly confused or angry and you get <!DOCTYPE html>...
+              rescue
+                gortsnort = nil
+                t = Time.current + 5.seconds
+                while Time.current < t do
+                  gortsnort = 2
+                end
+                units = (Integrations::Yardi::RentersInsurance::GetUnitConfiguration.run!(integration: integration, property_id: property_id) rescue nil)
+                units = nil if units[:parsed_response].class == ::String
               end
-              units = (Integrations::Yardi::RentersInsurance::GetUnitConfiguration.run!(integration: integration, property_id: property_id) rescue nil)
             end
             if units.nil?
               to_return[:community_errors][property_id] = "Attempt to retrieve unit list from Yardi failed."
@@ -145,6 +148,7 @@ module Integrations
               to_return[:unit_exclusions][property_id] = {}
             end
             addr_str = "#{comm["AddressLine1"]}, #{comm["City"]}, #{comm["State"]} #{comm["PostalCode"]}"
+            addr_str = addr_str.gsub(/(\s|\A)(N|S)\.(E|W)\.(,|\s)/, '\1\2\3\4').gsub(/,\s(N|S)(E|W)(,|\s)/, ' \1\2\3') # correct comma-separated suffixes
             addr = Address.from_string(addr_str)
             if addr.street_name.blank?
               to_return[:community_errors][property_id] = "Unable to parse community address (#{addr_str})"
@@ -235,9 +239,9 @@ module Integrations
                 (to_return[:unit_exclusions][k][u["UnitId"]] = "Field 'Excluded' is not equal to 0."; next nil) if u["Excluded"] != "0" && u["Excluded"] != 0
                 (to_return[:unit_exclusions][k][u["UnitId"]] = "Unit ID is #{u["UnitId"]}."; next nil) if ["NONRESID", "WAIT", "WAIT_AFF", "RETAIL"].include?(u["UnitId"])
                 (to_return[:unit_exclusions][k][u["UnitId"]] = "Field 'Address' is blank."; next nil) if u["Address"].blank?
-                addr = fixaddr(comm["MarketingName"], u["UnitId"], u["Address"])
+                addr = fixaddr(comm["MarketingName"], u["UnitId"], u["Address"]).gsub(/(\s|\A)(N|S)\.(E|W)\.(,|\s)/, '\1\2\3\4').gsub(/,\s(N|S)(E|W)(,|\s)/, ' \1\2\3').gsub(/\s(A|\a)(P|p)(T|t)([\d]+)([^\s^,]+)/, ' \1\2\3 \4\5')
                 (to_return[:unit_errors][k][u["UnitId"]] = "Could not clean up address (Community name #{comm["MarketingName"]}, unit ID #{u["UnitId"]}, unit address #{u["Address"]})."; next nil) if addr.blank?
-                u.merge({
+                next u.merge({
                   gc_addr: addr
                 })
               end.compact
@@ -282,6 +286,10 @@ module Integrations
                 next u if u["UnitId"].gsub(/^0+/, "") == u[:gc_addr_obj].street_number.gsub(/^0+/, "")
                 # for 01234 Moogle Poogle Avenue, accept 1234MP and 01234MP (because of their relationship to 01234MPA)
                 next u if "#{u["UnitId"].tr('^0-9', '').gsub(/^0+/, "")}#{u["Address"].tr('0-9', '').strip.squeeze.split(" ").map{|x| x[0] }.join("").upcase}".start_with?(u[:gc_addr_obj].street_number.gsub(/^0+/, "").upcase)
+                # hackaroo for essex 220                
+                if u[:gc_addr_obj].street_name == "Belleville Way" && u[:gc_addr_obj].city == "Sunnyvale"
+                  next u if u[:gc_addr_obj].street_number == u["UnitId"].gsub(/\A0/, '').gsub(/\A10/, '16')
+                end
                 # hacky nonsense for essex san1100
                 if u[:gc_addr_obj].street_number.end_with?("1/2")
                   cleanuid = u["UnitId"].strip
@@ -322,7 +330,7 @@ module Integrations
             {
               yardi_id: comm["Code"],
               title: comm["MarketingName"],
-              address: "#{comm["AddressLine1"]}, #{comm["City"]}, #{comm["State"]} #{comm["PostalCode"]}",
+              address: "#{comm["AddressLine1"]}, #{comm["City"]}, #{comm["State"]} #{comm["PostalCode"]}".gsub(/(\s|\A)(N|S)\.(E|W)\.(,|\s)/, '\1\2\3\4').gsub(/,\s(N|S)(E|W)(,|\s)/, ' \1\2\3'),
             }.merge({
                 buildings: (by_building[comm["Code"]] || {}).map do |bldg, units|
                   {
