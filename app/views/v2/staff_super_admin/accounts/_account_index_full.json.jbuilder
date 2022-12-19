@@ -9,3 +9,11 @@ json.agency do
   end
 end
 json.primary_address account.primary_address
+json.integration do
+  unless account.integrations.blank?
+    account.integrations do |integration|
+      json.integration_id integration.id
+      json.integration_provider integration.provider
+    end
+  end
+end
