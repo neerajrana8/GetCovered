@@ -31,6 +31,7 @@ json.users do
     json.moved_out_at lease_user.moved_out_at
     if lease_user.user.integration_profiles.present?
       json.t_code lease_user.user&.integration_profiles&.first&.external_id
+      json.integration_profile_id lease_user.user&.integration_profiles&.first&.id
     end
     json.primary lease_user.primary
   end
