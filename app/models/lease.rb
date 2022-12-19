@@ -48,7 +48,8 @@ class Lease < ApplicationRecord
   has_many :policies,
            through: :insurable
 
-  has_many :lease_users, -> { where('moved_in_at <= ?', Time.current).where('moved_out_at >= ?', Time.current) }, inverse_of: :lease
+  #TODO: need to be discussed and updated after GCVR2-1018
+  has_many :lease_users#, -> { where('moved_in_at <= ?', Time.current).where('moved_out_at >= ?', Time.current) }, inverse_of: :lease
 
   has_many :users, through: :lease_users
 

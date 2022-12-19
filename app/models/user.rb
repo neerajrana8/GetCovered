@@ -119,7 +119,8 @@ class User < ApplicationRecord
   	through: :policy_users
   has_many :policy_quotes,
     through: :policies
-  has_many :lease_users, -> { where('moved_in_at <= ?', Time.current).where('moved_out_at >= ?', Time.current) }
+  #TODO: need to be discussed and updated after GCVR2-1018
+  has_many :lease_users#, -> { where('moved_in_at <= ?', Time.current).where('moved_out_at >= ?', Time.current) }
   has_many :leases,
     through: :lease_users
 
