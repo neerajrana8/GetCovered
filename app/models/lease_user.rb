@@ -29,6 +29,8 @@ class LeaseUser < ApplicationRecord
 
   accepts_nested_attributes_for :integration_profiles#, reject_if: proc { |attributes| attributes['id'].blank? }
 
+  scope :lessees, -> { where(lessee: true) }
+
   def related_records_list
     %w[lease user]
   end
