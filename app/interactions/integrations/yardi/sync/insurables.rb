@@ -134,7 +134,7 @@ module Integrations
                   gortsnort = 2
                 end
                 units = (Integrations::Yardi::RentersInsurance::GetUnitConfiguration.run!(integration: integration, property_id: property_id) rescue nil)
-                units = nil if units[:parsed_response].class == ::String
+                units = nil if units&.[](:parsed_response)&.class == ::String
               end
             end
             if units.nil?
@@ -454,7 +454,8 @@ module Integrations
             comm[:buildings].each do |bldg|
               addr = ::Address.new(street_name: bldg[:street_name], street_number: bldg[:street_number], city: bldg[:city], state: bldg[:state], zip_code: bldg[:zip_code])
               addr.standardize_case; addr.set_full; addr.set_full_searchable; addr.from_full; addr.standardize
-              building = (comm[:buildings].length == 1 && bldg[:is_community] ? comm[:insurable] : comm[:insurable].buildings.confirmed.find{|b| b.primary_address.street_name == addr.street_name && b.primary_address.street_number == addr.street_number })
+              building = (comm[:buildings].length == 1 && bldg[:is_community] ? comm[:insurable] : comm[:insurable].buildings.confirmed.find{|b| b.primary_address.street_name.downcase == addr.street_name.downcase && b.primary_address.street_number.downcase == addr.street_number.downcase })
+              building ||= comm[:insurable].buildings.confirmed.find{|b| b.title == "#{bldg[:street_number]} #{bldg[:street_name]}" && b.primary_address.zip_code[0...5] == bldg[:zip_code][0...5] }
               if building.nil?
                 building = Insurable.create(
                   insurable_id: comm[:insurable].id,
