@@ -4,7 +4,7 @@
 
 <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
   <span style="font-size: 16px;">Thank you for being a valued member at <%= @community.title %>. We recently received
-    notification that your insurance policy has lapsed or is cancelled.<% unless @master_policy.nil? %>  You are out of compliance with your lease
+    notification that your insurance policy has lapsed or is cancelled.<% unless @master_policy.nil?  || @placement_cost == 0 %>  You are out of compliance with your lease
     agreement and subject to a non-compliance fee of <%= number_to_currency(@placement_cost, unit: "$") %>.<% end %></span>
 </p>
 
@@ -44,7 +44,9 @@
   <% unless @address.nil? %>
   <li style="font-size: 16px;"><strong>Address:</strong> <%= @address %></li>
   <% end %>
+  <% unless @min_liability.nil? %>
   <li style="font-size: 16px;"><strong>Minimum Liability Coverage:</strong> <%= number_to_currency(@min_liability.to_f / 100, unit: "$", precision: 0) %></li>
+  <% end %>
   <% unless @lease.nil? %><li style="font-size: 16px;"><strong>Policy Start Date:</strong> <%= @lease&.start_date&.strftime('%B %d, %Y') %></li><% end %>
   <% unless @lease.nil? %><li style="font-size: 16px;"><strong>Policy End Date:</strong> <%= @lease&.end_date&.strftime('%B %d, %Y') %></li><% end %>
   <li style="font-size: 16px;">
@@ -55,7 +57,7 @@
   </li>
 </ul>
 
-<% unless @master_policy.nil? %>
+<% unless @master_policy.nil? || @placement_cost == 0 %>
 <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
   <span style="font-size: 16px;">Failure to meet the minimum insurance requirements will result in <%= @community.title %>
     assessing a non-compliance fee of <%= number_to_currency(@placement_cost, unit: "$") %> per month, until said requirements are met.</span>
