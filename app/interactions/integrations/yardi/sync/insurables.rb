@@ -82,6 +82,8 @@ module Integrations
           end
           
           addr = addr.gsub("Apt.", "Apt").gsub("Apr.", "Apr").gsub("Ste.", "Ste").gsub("Rm.", "Rm").gsub("No.", "No")
+          addr = addr.gsub(/\A#/, '').gsub(/\s#\s/, ' Apt ').gsub(/([^,])\sApt\s/, '\1, Apt ').gsub(/Apt\s([a-zA-Z\d]+)\s([a-zA-Z\d]+),/, 'Apt \1\2,')
+          addr = addr.gsub(/\A([\d]+)\s([a-zA-Z])\s/, '\1\2 ') # essex has things like "104 A Windsor St"... -_________-'''
           
           return addr
         end
@@ -134,7 +136,7 @@ module Integrations
                   gortsnort = 2
                 end
                 units = (Integrations::Yardi::RentersInsurance::GetUnitConfiguration.run!(integration: integration, property_id: property_id) rescue nil)
-                units = nil if units[:parsed_response].class == ::String
+                units = nil if units&.[](:parsed_response)&.class == ::String
               end
             end
             if units.nil?
@@ -290,6 +292,8 @@ module Integrations
                 if u[:gc_addr_obj].street_name == "Belleville Way" && u[:gc_addr_obj].city == "Sunnyvale"
                   next u if u[:gc_addr_obj].street_number == u["UnitId"].gsub(/\A0/, '').gsub(/\A10/, '16')
                 end
+                # essex has a bunch of XX113A for things like "113 A Westinghouse..." (which the parser should covert into "113A", hence a perfect match except the XX
+                next u if u[:gc_addr_obj].street_name = u["UnitId"][2...]
                 # hacky nonsense for essex san1100
                 if u[:gc_addr_obj].street_number.end_with?("1/2")
                   cleanuid = u["UnitId"].strip
@@ -454,7 +458,8 @@ module Integrations
             comm[:buildings].each do |bldg|
               addr = ::Address.new(street_name: bldg[:street_name], street_number: bldg[:street_number], city: bldg[:city], state: bldg[:state], zip_code: bldg[:zip_code])
               addr.standardize_case; addr.set_full; addr.set_full_searchable; addr.from_full; addr.standardize
-              building = (comm[:buildings].length == 1 && bldg[:is_community] ? comm[:insurable] : comm[:insurable].buildings.confirmed.find{|b| b.primary_address.street_name == addr.street_name && b.primary_address.street_number == addr.street_number })
+              building = (comm[:buildings].length == 1 && bldg[:is_community] ? comm[:insurable] : comm[:insurable].buildings.confirmed.find{|b| b.primary_address.street_name.downcase == addr.street_name.downcase && b.primary_address.street_number.downcase == addr.street_number.downcase })
+              building ||= comm[:insurable].buildings.confirmed.find{|b| b.title == "#{bldg[:street_number]} #{bldg[:street_name]}" && b.primary_address.zip_code[0...5] == bldg[:zip_code][0...5] }
               if building.nil?
                 building = Insurable.create(
                   insurable_id: comm[:insurable].id,
