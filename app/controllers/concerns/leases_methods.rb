@@ -15,7 +15,8 @@ module LeasesMethods
 
         ::LeaseUser.create(lease: @lease, user: user, primary: user_params[:primary],
                            moved_in_at: user_params[:moved_in_at],
-                           moved_out_at: user_params[:moved_out_at])#,
+                           moved_out_at: user_params[:moved_out_at],
+                           lessee: user_params[:lessee])#,
         #integration_profiles_attributes: user_params[:user][:integration_profiles_attributes])
       end
 
@@ -68,7 +69,8 @@ module LeasesMethods
 
           LeaseUser.create(lease: @lease, user: user, primary: user_params[:primary],
                            moved_in_at: user_params[:moved_in_at],
-                           moved_out_at: user_params[:moved_out_at])#,
+                           moved_out_at: user_params[:moved_out_at],
+                           lessee: user_params[:lessee])#,
           #integration_profiles_attributes: user_params[:user][:integration_profiles_attributes])
         end
       end
@@ -123,8 +125,8 @@ module LeasesMethods
     params.permit(users: [:primary, :moved_in_at, :moved_out_at, :lessee, user: [
                     :id, :email, :agency_id,
                     profile_attributes: %i[birth_date contact_phone first_name gender job_title last_name middle_name salutation],
-                    address_attributes: %i[city country county state street_number street_name street_two zip_code],
-                    integration_profiles_attributes: [:id, :integration_id, :external_id]
+                    address_attributes: %i[city country county state street_number street_name street_two zip_code]#,
+    #integration_profiles_attributes: [:id, :integration_id, :external_id]
                   ]])
   end
 end
