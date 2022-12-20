@@ -223,6 +223,50 @@ module MasterPoliciesMethods
       end
     end
 
+    def cover_unit_with_configuration
+      unit = Insurable.find(params[:insurable_id])
+      mpc = @master_policy.find_closest_master_policy_configuration(unit)
+
+      if mpc.nil?
+        render json: { error: :invalid_master_policy_configuration }, status: 400
+      end
+
+      effective_date = @master_policy.effective_date
+      effective_date = mpc.program_start_date unless mpc.program_start_date.nil?
+
+      if params[:start_date].present?
+        effective_date = params[:start_date]
+      end
+
+      if unit.policies.where(policy_type_id: PolicyType::MASTER_MUTUALLY_EXCLUSIVE[@master_policy.policy_type_id]).current.empty? && unit.occupied?
+        policy_number = MasterPolicies::GenerateNextCoverageNumber.run!(master_policy_number: @master_policy.number)
+        policy = unit.policies.create(
+          agency: @master_policy.agency,
+          carrier: @master_policy.carrier,
+          account: @master_policy.account,
+          policy_coverages_attributes: @master_policy.policy_coverages.map do |policy_coverage|
+            policy_coverage.attributes.slice('limit', 'deductible', 'enabled', 'designation', 'title')
+          end,
+          number: policy_number,
+          policy_type: @master_policy.policy_type.coverage,
+          policy: @master_policy,
+          status: 'BOUND',
+          system_data: @master_policy.system_data,
+          effective_date: effective_date, # @master_policy.effective_date,
+          expiration_date: @master_policy.expiration_date
+        )
+        if policy.errors.blank?
+          unit.update(covered: true)
+          render json: policy.to_json, status: :ok
+        else
+          response = { error: :policy_creation_problem, message: 'Policy was not created', payload: policy.errors }
+          render json: response.to_json, status: :internal_server_error
+        end
+      else
+        render json: { error: :bad_unit, message: 'Unit does not fulfil the requirements' }.to_json, status: :bad_request
+      end
+    end
+
     def master_policy_coverages
       @master_policy_coverages = paginator(@master_policy.policies.master_policy_coverages.current)
       render template: 'v2/shared/master_policies/master_policy_coverages', status: :ok

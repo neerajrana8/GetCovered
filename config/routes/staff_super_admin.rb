@@ -328,6 +328,7 @@
         get :historically_coverage_units
         get :master_policy_coverages
         post :cover_unit
+        post :cover_unit_with_configuration
         post :add_insurable
         put :cancel
         put :cancel_coverage
