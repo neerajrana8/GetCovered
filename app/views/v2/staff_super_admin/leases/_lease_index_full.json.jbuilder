@@ -24,3 +24,4 @@ json.lease_type do
       lease_type: lease.lease_type
   end
 end
+

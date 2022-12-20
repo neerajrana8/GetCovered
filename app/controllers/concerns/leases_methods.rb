@@ -13,7 +13,11 @@ module LeasesMethods
           user.invite! if user.save
         end
 
-        ::LeaseUser.create(lease: @lease, user: user, primary: user_params[:primary])
+        ::LeaseUser.create(lease: @lease, user: user, primary: user_params[:primary],
+                           moved_in_at: user_params[:moved_in_at],
+                           moved_out_at: user_params[:moved_out_at],
+                           lessee: user_params[:lessee])#,
+        #integration_profiles_attributes: user_params[:user][:integration_profiles_attributes])
       end
 
       # NOTE: Auto assign master policy if applicable
@@ -29,15 +33,17 @@ module LeasesMethods
   def update
     if @lease.update_as(current_staff, update_params)
       users_ids = users_params[:users]&.map { |user_params| user_params[:user][:id] }&.compact
-      @lease.lease_users.where.not(user_id: users_ids).destroy_all
+      LeaseUser.where(lease_id: @lease.id).where.not(user_id: users_ids).destroy_all
 
       users_params[:users]&.each do |user_params|
-        lease_user = @lease.lease_users.find_by(user_id: user_params[:user][:id])
+        lease_user = LeaseUser.where(lease_id: @lease.id).find_by(user_id: user_params[:user][:id])
 
         if lease_user.present?
-          lease_user.update(primary: user_params[:primary])
+          lease_user.update(primary: user_params[:primary], lessee: user_params[:lessee],
+                            moved_in_at: user_params[:moved_in_at], moved_out_at: user_params[:moved_out_at])
+          #lease_user.integration_profiles.find(user_params[:user][:integration_profiles_attributes]&.last[:id])&.update(external_id: user_params[:user][:integration_profiles_attributes]&.last[:external_id])
           user = lease_user.user
-          user.update(user_params[:user])
+          user.update(user_params[:user].except(:integration_profiles_attributes))
           if user.errors.any?
             render json: standard_error(:user_update_error, nil, user.errors.full_messages),
                    status: :unprocessable_entity
@@ -52,7 +58,7 @@ module LeasesMethods
             user.password = SecureRandom.base64(12)
             user.invite! if user.save
           else
-            user.update(user_params[:user])
+            user.update(user_params[:user].except(:integration_profiles_attributes))
 
             if user.errors.any?
               render json: standard_error(:user_update_error, nil, user.errors.full_messages),
@@ -61,7 +67,11 @@ module LeasesMethods
             end
           end
 
-          LeaseUser.create(lease: @lease, user: user, primary: user_params[:primary])
+          LeaseUser.create(lease: @lease, user: user, primary: user_params[:primary],
+                           moved_in_at: user_params[:moved_in_at],
+                           moved_out_at: user_params[:moved_out_at],
+                           lessee: user_params[:lessee])#,
+          #integration_profiles_attributes: user_params[:user][:integration_profiles_attributes])
         end
       end
 
@@ -112,10 +122,11 @@ module LeasesMethods
   end
 
   def users_params
-    params.permit(users: [:primary, user: [
+    params.permit(users: [:primary, :moved_in_at, :moved_out_at, :lessee, user: [
                     :id, :email, :agency_id,
-                    profile_attributes: %i[birth_date contact_phone first_name gender job_title last_name salutation],
-                    address_attributes: %i[city country county state street_number street_name street_two zip_code]
+                    profile_attributes: %i[birth_date contact_phone first_name gender job_title last_name middle_name salutation],
+                    address_attributes: %i[city country county state street_number street_name street_two zip_code]#,
+    #integration_profiles_attributes: [:id, :integration_id, :external_id]
                   ]])
   end
 end
