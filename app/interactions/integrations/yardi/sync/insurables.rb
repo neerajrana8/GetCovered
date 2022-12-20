@@ -82,6 +82,8 @@ module Integrations
           end
           
           addr = addr.gsub("Apt.", "Apt").gsub("Apr.", "Apr").gsub("Ste.", "Ste").gsub("Rm.", "Rm").gsub("No.", "No")
+          addr = addr.gsub(/\A#/, '').gsub(/\s#\s/, ' Apt ').gsub(/([^,])\sApt\s/, '\1, Apt ').gsub(/Apt\s([a-zA-Z\d]+)\s([a-zA-Z\d]+),/, 'Apt \1\2,')
+          addr = addr.gsub(/\A([\d]+)\s([a-zA-Z])\s/, '\1\2 ') # essex has things like "104 A Windsor St"... -_________-'''
           
           return addr
         end
@@ -290,6 +292,8 @@ module Integrations
                 if u[:gc_addr_obj].street_name == "Belleville Way" && u[:gc_addr_obj].city == "Sunnyvale"
                   next u if u[:gc_addr_obj].street_number == u["UnitId"].gsub(/\A0/, '').gsub(/\A10/, '16')
                 end
+                # essex has a bunch of XX113A for things like "113 A Westinghouse..." (which the parser should covert into "113A", hence a perfect match except the XX
+                next u if u[:gc_addr_obj].street_name = u["UnitId"][2...]
                 # hacky nonsense for essex san1100
                 if u[:gc_addr_obj].street_number.end_with?("1/2")
                   cleanuid = u["UnitId"].strip
