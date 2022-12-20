@@ -26,32 +26,34 @@ module Compliance
     def policy_lapsed(policy:, lease:)
       @policy = policy
       @lease = lease
-      @street_address = @policy&.primary_insurable&.primary_address()
-      @address = @street_address.nil? ? nil : "#{ @street_address.combined_street_address }, #{ @policy&.primary_insurable.title }, #{ @street_address.city }, #{ @street_address.state }, #{ @street_address.zip_code }"
+      unless @policy.users.blank?
+        @street_address = @policy&.primary_insurable&.primary_address()
+        @address = @street_address.nil? ? nil : "#{ @street_address.combined_street_address }, #{ @policy&.primary_insurable.title }, #{ @street_address.city }, #{ @street_address.state }, #{ @street_address.zip_code }"
 
-      @user = @policy.primary_user()
-      @community = @policy&.primary_insurable&.parent_community
-      @pm_account = @community.account
+        @user = @policy.primary_user()
+        @community = @policy&.primary_insurable&.parent_community
+        @pm_account = @community.account
 
-      @onboarding_url = tokenized_url(@user.id, @community)
-      available_lease_date = @lease.nil? ? DateTime.current.to_date : @lease.sign_date.nil? ? @lease.start_date : @lease.sign_date
+        @onboarding_url = tokenized_url(@user.id, @community)
+        available_lease_date = @lease.nil? ? DateTime.current.to_date : @lease.sign_date.nil? ? @lease.start_date : @lease.sign_date
 
-      get_insurable_liability_range(@community)
-      set_master_policy_and_configuration(@community, 2, available_lease_date)
+        get_insurable_liability_range(@community)
+        set_master_policy_and_configuration(@community, 2, available_lease_date)
 
-      @min_liability = @community.coverage_requirements_by_date(date: available_lease_date)&.amount
+        @min_liability = @community.coverage_requirements_by_date(date: available_lease_date)&.amount
 
-      @placement_cost = @configuration.nil? ? 0 : @configuration.total_placement_amount(true).to_f / 100
+        @placement_cost = @configuration.nil? ? 0 : @configuration.total_placement_amount(true).to_f / 100
 
-      @from = @pm_account&.contact_info&.has_key?("contact_email") &&
-        !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] :
-                "policyverify@getcovered.io"
+        @from = @pm_account&.contact_info&.has_key?("contact_email") &&
+          !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] :
+                  "policyverify@getcovered.io"
 
-      mail(to: @user.contact_email,
-           bcc: "systememails@getcovered.io",
-           from: @from,
-           subject: "You are out of compliance",
-           template_path: 'compliance/policy')
+        mail(to: @user.contact_email,
+             bcc: "systememails@getcovered.io",
+             from: @from,
+             subject: "You are out of compliance",
+             template_path: 'compliance/policy')
+      end
     end
 
     def enrolled_in_master(user:, community:, force:, cutoff_date: DateTime.current.to_date)
