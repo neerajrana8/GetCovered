@@ -139,7 +139,8 @@ module MasterPoliciesMethods
             @master_policy.insurables << building
           end
 
-          @master_policy.start_automatic_master_coverage_policy_issue
+          # NOTE: Disable master policy coverage issueing
+          # @master_policy.start_automatic_master_coverage_policy_issue
 
           unless params[:auto_assign].nil?
             @master_policy.
