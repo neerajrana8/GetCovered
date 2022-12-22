@@ -81,6 +81,15 @@ module V2
         render 'v2/policies/show'
       end
 
+      def calculate_cost
+        resp = {}
+        policy = Policy.find(params[:id])
+        insurable = Insurable.find(params[:insurable_id])
+        mpc = policy.find_closest_master_policy_configuration(insurable, params[:start_date])
+        resp = mpc unless mpc.nil?
+        render json: resp
+      end
+
       private
 
       def check_permissions
