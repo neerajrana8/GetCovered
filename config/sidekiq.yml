@@ -93,6 +93,9 @@ production:
   expiring_soon_job:
     cron: '0 6 * * *' # Every day at 6:00 AM
     class: Compliance::Policies::ExpiringSoonJob
+  lapsed_job:
+    cron: '0 5 * * *' # Every day at 5:00 AM
+    class: Compliance::Policies::LapsedJob
   # Access Tokens
   remove_expired_access_tokens_job:
     cron: '0 0 * * *' # Every day at midnight
