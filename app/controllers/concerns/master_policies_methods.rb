@@ -86,36 +86,30 @@ module MasterPoliciesMethods
     end
 
     def update
-      if @master_policy.policies.any?
-        render json: standard_error(
-                       :master_policy_update_error,
-                       'Master policy has created policies'
-                     ),
-               status: :unprocessable_entity
-      else
-        error = nil
-        ::ActiveRecord::Base.transaction do
-          begin
-            # NOTE: Support only one Carrier for now
-            carrier = Carrier.find_by(call_sign: 'QBSI')
-            raise 'Carrier QBSI not found in the system' if carrier.blank?
+      # NOTE: Support only one Carrier for now
+      carrier = Carrier.find_by(call_sign: 'QBSI')
+      raise 'Carrier QBSI not found in the system' if carrier.blank?
 
-            carrier_policy_type = CarrierPolicyType.where(
-              carrier_id: carrier.id,
-              policy_type_id: PolicyType::MASTER_ID
-            ).take
+      carrier_policy_type = CarrierPolicyType.where(
+        carrier_id: carrier.id,
+        policy_type_id: PolicyType::MASTER_ID
+      ).take
 
-            if carrier_policy_type.blank?
-              raise "CarrierPolicyType(carrier_id: #{carrier.id}, policy_type_id: #{PolicyType::MASTER_ID}) not found"
-            end
+      if carrier_policy_type.blank?
+        raise "CarrierPolicyType(carrier_id: #{carrier.id}, policy_type_id: #{PolicyType::MASTER_ID}) not found"
+      end
 
-            carrier_policy_type_id = carrier_policy_type.id
+      carrier_policy_type_id = carrier_policy_type.id
 
-            if params[:policy][:master_policy_configurations_attributes].present?
-              params[:policy][:master_policy_configurations_attributes][0][:carrier_policy_type_id] = carrier_policy_type_id
-            end
+      if params[:policy][:master_policy_configurations_attributes].present?
+        params[:policy][:master_policy_configurations_attributes][0][:carrier_policy_type_id] = carrier_policy_type_id
+      end
 
-            @master_policy.update!(update_params)
+      error = nil
+      ::ActiveRecord::Base.transaction do
+        begin
+          @master_policy.update!(update_params)
+          unless @master_policy.policies.any?
             if create_policy_premium && create_policy_premium[:base] && create_policy_premium[:base] != @master_policy.policy_premiums.take.total_premium
               premium = @master_policy.policy_premiums.take
               ppi = premium.policy_premium_items.where(commission_calculation: 'no_payments').take
@@ -123,27 +117,28 @@ module MasterPoliciesMethods
               @master_policy.premium.update_totals(persist: false)
               @master_policy.premium.save!
             end
-          rescue ActiveRecord::RecordInvalid => err
-            error = err
-            raise ActiveRecord::Rollback
           end
+        rescue ActiveRecord::RecordInvalid => err
+          error = err
+          raise ActiveRecord::Rollback
         end
-        if error.nil?
-          # TODO: Move to jbuilder serializer
-          render json: { message: 'Master Policy updated',
-                         payload: {
-                           policy: @master_policy.attributes,
-                           master_policy_configurations: @master_policy.master_policy_configurations
-                         } },
-                 status: :created
-        else
-          render json: standard_error(
-                         :master_policy_update_error,
-                         'Master policy was not updated',
-                         error.record.errors
-                       ),
-                 status: :unprocessable_entity
-        end
+      end
+
+      if error.nil?
+        # TODO: Move to jbuilder serializer
+        render json: { message: 'Master Policy updated',
+                       payload: {
+                         policy: @master_policy.attributes,
+                         master_policy_configurations: @master_policy.master_policy_configurations
+                       } },
+               status: :created
+      else
+        render json: standard_error(
+                 :master_policy_update_error,
+                 'Master policy was not updated',
+                 error.record.errors
+               ),
+               status: :unprocessable_entity
       end
     end
 
