@@ -89,8 +89,7 @@ module MasterPoliciesMethods
       if @master_policy.policies.any?
         render json: standard_error(
                        :master_policy_update_error,
-                       'Master policy has created policies',
-                       @master_policy.errors.merge!(@policy_premium.errors)
+                       'Master policy has created policies'
                      ),
                status: :unprocessable_entity
       else
