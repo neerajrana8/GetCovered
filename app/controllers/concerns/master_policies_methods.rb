@@ -141,6 +141,47 @@ module MasterPoliciesMethods
 
           # NOTE: Disable master policy coverage issueing
           # @master_policy.start_automatic_master_coverage_policy_issue
+          #
+          #   master_policy_configurations_attributes: [
+          #   :id,
+          #   :program_type,
+          #   :grace_period,
+          #   :integration_charge_code,
+          #   :prorate_charges,
+          #   :admin_prorate_charges,
+          #   :auto_post_charges,
+          #   :consolidate_billing,
+          #   :program_start_date,
+          #   :program_delay,
+          #   :placement_cost,
+          #   :admin_cost,
+          #   :force_placement_cost,
+          #   :force_admin_cost,
+          #   :carrier_policy_type_id,
+          #   :configurable_type,
+          #   :configurable_id,
+          #   :enabled,
+          #   :integration_account_number,
+          #   :lease_violation_only,
+          #   :admin_fee,
+          #   :force_admin_cost,
+          #   :force_admin_fee,
+          #   :prorate_admin_fee,
+          #   :charge_date,
+          #   :enabled
+          # ]
+
+          if params[:master_policy_confguration].present?
+            unless params[:master_policy_configuration][:id].nil?
+              mpc = MasterPolicyConfiguration.find(params[:master_policy_configuration][:id])
+              mpc.update(params[:master_policy_configuration])
+            else
+              mpc_params = params[:master_policy_confguration]
+              mpc_params[:configurable_id] = insurable.id
+              mpc_params[:configurable_type] = 'Insurable'
+              MasterPolicyConfiguration.create! mpc
+            end
+          end
 
           unless params[:auto_assign].nil?
             @master_policy.
