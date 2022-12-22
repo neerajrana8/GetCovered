@@ -14,6 +14,13 @@ module V2
         master_policies_relation = master_policies_relation.where("number LIKE ?", "%#{params[:number]}%") if params[:number].present?
         master_policies_relation = master_policies_relation.where(account_id: params[:account_id]) if params[:account_id].present?
 
+        if params[:account_title].present?
+          accounts = Account.where("title LIKE ?", "%#{params[:account_title]}%")
+          unless accounts.count.zero?
+            master_policies_relation = master_policies_relation.where(account_id: accounts.pluck(:id))
+          end
+        end
+
         if params[:insurable_id].present?
           insurable = Insurable.find(params[:insurable_id])
 
@@ -21,7 +28,8 @@ module V2
           master_policies_relation = master_policies_relation.where.not(policy_type_id: current_types_ids)
         end
 
-        super(:@master_policies, master_policies_relation)
+        # super(:@master_policies, master_policies_relation)
+        @master_policies = master_policies_relation
         render template: 'v2/shared/master_policies/index', status: :ok
       end
 
