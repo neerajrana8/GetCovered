@@ -24,4 +24,3 @@ end
 # TODO: Needs to be changed after refactoring
 json.base master_policy&.policy_premiums&.last&.policy_premium_items&.last&.total_due
 json.master_policy_configurations master_policy&.master_policy_configurations
-json.total_cost_value master_policy&.find_closest_master_policy_configuration&.total_placement_amount
