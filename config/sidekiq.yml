@@ -63,6 +63,9 @@ production:
   bill_master_policies:
     cron: '0 4 1 * *'   # Each first day of month at 6:00 AM
     class: BillMasterPoliciesJob
+  expire:
+    cron: '0 23 * * *' # Each day at 11:00 PM
+    class: Policies::ExpireJob
   # Leads
   leads_status_update_job:
     cron: '0 6 * * *' # Every day at 6:00 AM
