@@ -86,7 +86,7 @@ module V2
         policy = Policy.find(params[:id])
         insurable = Insurable.find(params[:insurable_id])
         mpc = policy.find_closest_master_policy_configuration(insurable, params[:start_date])
-        resp = mpc unless mpc.nil?
+        resp = { total_placement_amount: mpc.total_placement_amount } unless mpc.nil?
         render json: resp
       end
 
