@@ -1,8 +1,19 @@
 class YardiSyncJob < ApplicationJob
   queue_as :default
 
-  def perform(*args)
-    ::Integration.where(provider: 'yardi', enabled: true).order("updated_at asc").map{|i| i.id }.each do |integration_id|
+  def perform(account_or_integration = nil)
+    ids = case account_or_integration
+      when nil
+        ::Integration.where(provider: 'yardi', enabled: true).order("updated_at asc").map{|i| i.id }
+      when ::Account
+        inty = account_or_integration.integrations.where(provider: 'yardi', enabled: true).take
+        inty.nil? ? nil : [inty.id]
+      when ::Integration
+        [account_or_integration.id]
+      else
+        nil
+    end
+    ids&.each do |integration_id|
       integration = Integration.where(id: integration_id).take
       next if integration.nil?
       begin
