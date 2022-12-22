@@ -15,7 +15,7 @@ module V2
         master_policies_relation = master_policies_relation.where(account_id: params[:account_id]) if params[:account_id].present?
 
         if params[:account_title].present?
-          accounts = Account.where("title LIKE ?", "%#{params[:account_title]}%")
+          accounts = Account.where("title ILIKE ?", "%#{params[:account_title]}%")
           unless accounts.count.zero?
             master_policies_relation = master_policies_relation.where(account_id: accounts.pluck(:id))
           end
