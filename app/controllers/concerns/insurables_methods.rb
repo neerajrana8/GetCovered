@@ -43,7 +43,7 @@ module InsurablesMethods
     @insurable = @insurable.parent_community unless ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS.include?(@insurable.insurable_type_id)
     cip = @insurable.carrier_profile(1)
     if cip.nil?
-      unless insurable.account_id.nil? # really, this error  means "this guy is registered under an account but has no carrier profile for QBE"
+      unless @insurable.account_id.nil? # really, this error  means "this guy is registered under an account but has no carrier profile for QBE"
         render json: standard_error("Carrier Error", I18n.t('insurables_controller.qbe.no_cip')),
                status: 422
         return

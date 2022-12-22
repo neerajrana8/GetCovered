@@ -119,7 +119,8 @@ class User < ApplicationRecord
   	through: :policy_users
   has_many :policy_quotes,
     through: :policies
-  has_many :lease_users
+  #TODO: need to be discussed and updated after GCVR2-1018
+  has_many :lease_users#, -> { where('moved_in_at <= ?', Time.current).where('moved_out_at >= ?', Time.current) }
   has_many :leases,
     through: :lease_users
 
@@ -133,6 +134,7 @@ class User < ApplicationRecord
   has_many :contact_records, as: :contactable
 
   accepts_nested_attributes_for :payment_profiles, :address
+  accepts_nested_attributes_for :integration_profiles#, reject_if: proc { |attributes| attributes['id'].blank? }
   accepts_nested_attributes_for :profile, update_only: true
   accepts_nested_attributes_for :address, update_only: true
 
@@ -163,13 +165,14 @@ class User < ApplicationRecord
     return "Users can only absorb Users, not #{other.class.name.pluralize}!" unless other.class == ::User
     begin
       ActiveRecord::Base.transaction(requires_new: true) do
+        other.invoices.update_all(payer_id: self.id)
         other.integration_profiles.update_all(profileable_id: self.id)
         other.lease_users.update_all(user_id: self.id)
         other.policy_users.update_all(user_id: self.id)
         other.account_users.where.not(account_id: self.account_users.select(:account_id)).update_all(user_id: self.id)
         other.account_users.reload.each{|au| au.delete }
         if self.address.nil?
-          other.address.&update(addressable_id: self.id)
+          other.address&.update(addressable_id: self.id)
         else
           other.address&.delete
         end

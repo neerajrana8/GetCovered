@@ -518,7 +518,7 @@ module Integrations
             rec = past_tenants.find{|l| l['Id'] == ip.external_id }
             l = ip.lease
             found_leases[ip.external_id] = l
-            if l.update({ insurable_id: unit.id, end_date: rec["LeaseTo"].blank? ? Time.current.to_date : Date.parse(rec["LeaseTo"]), status: 'expired' }.compact)
+            if l.update({ insurable_id: unit.id, start_date: rec["LeaseFrom"].blank? ? nil : Date.parse(rec["LeaseFrom"]), end_date: rec["LeaseTo"].blank? ? Time.current.to_date : Date.parse(rec["LeaseTo"]), status: 'expired' }.compact)
               expired_leases[ip.external_id] = l
             else
               lease_errors[ip.external_id] = "Failed to mark lease (GC id #{l.id}) expired: #{l.errors.to_h}"

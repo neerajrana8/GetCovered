@@ -61,7 +61,7 @@ module Integrations
             policy_documents_exported: []
           }
           
-          true_property_ids = property_ids.nil? ? integration.configuration['sync']['syncable_communities'].map{|k,v| v['enabled'] && v['gc_id'] ? k : nil }.compact : property_ids
+          true_property_ids = property_ids.nil? ? integration.configuration['sync']['syncable_communities'].map{|k,v| v['enabled'] && v['gc_id'] && !v['insurables_only'] ? k : nil }.compact : property_ids
         
           if true_property_ids.nil?
             # get em all
@@ -401,8 +401,10 @@ module Integrations
               }
               #export
               if !policy_exported || policy_hash != policy_ip&.configuration&.[]('exported_hash')
+                policy_updated = nil
                 result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: policy_exported)
                 if result[:request].response&.body&.index("Policy already exists in database")
+                  policy_updated = true
                   result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: true)
                 end
                 if result[:request].response&.body&.index("could not locate insurance policy based on policy number and tenant identifier")
@@ -423,7 +425,7 @@ module Integrations
                         'history' => 'exported_to_yardi',
                         'synced_at' => Time.current.to_s,
                         'exported_hash' => policy_hash
-                      }
+                      }.merge({ policy_updatd: policy_updated }.compact)
                     )
                     if(policy_ip.id.nil?)
                       to_return[:policy_export_errors][policy.number] = "Failed to create IntegrationProfile: #{policy_ip.errors.to_h}"
@@ -438,7 +440,7 @@ module Integrations
                   to_return[:policies_exported][policy.number] = policy
                 end
               end # end if !policy_exported...
-              if !policy_document_exported
+              if !policy_document_exported && integration.configuration.dig('sync', 'policy_push', 'push_document')
                 priu = policy_priu
                 next if priu.nil?
                 # upload document
@@ -467,6 +469,10 @@ module Integrations
             'errors' => to_return.select{|k,v| k.to_s.end_with?("errors") }
           })
           integration.save
+          to_return[:policies_imported] = to_return[:policies_imported]&.keys
+          to_return[:policies_updated] = to_return[:policies_updated]&.keys
+          to_return[:policies_exported] = to_return[:policies_exported]&.keys
+          integration.integration_profiles.create(profileable: integration, external_context: "log_sync_policies", external_id: Time.current.to_i.to_s + "_" + rand(100000000).to_s, configuration: to_return)
           return to_return
           
         end # end method

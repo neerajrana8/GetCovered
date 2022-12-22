@@ -129,6 +129,7 @@ module Integrations
               'name' => c["MarketingName"],
               'gc_id' => (integration.configuration['sync']['syncable_communities'] || {})[c["Code"]]&.[]('gc_id'), # WARNING: insurables sync fills this out
               'enabled' => (integration.configuration['sync']['syncable_communities'] || {})[c["Code"]]&.[]('enabled') ? true : false,
+              'insurables_only' => (integration.configuration['sync']['syncable_communities'] || {})[c["Code"]]&.[]('insurables_only') ? true : false,
               'last_sync_i' =>  integration.configuration['sync']['syncable_communities'][c["Code"]]&.[]('last_sync_i'),
               'last_sync_f' => integration.configuration['sync']['syncable_communities'][c["Code"]]&.[]('last_sync_f'),
               'last_sync_p' => integration.configuration['sync']['syncable_communities'][c["Code"]]&.[]('last_sync_p')
