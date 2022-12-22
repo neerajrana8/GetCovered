@@ -2,7 +2,7 @@ module Compliance
   module Policies
     class ExpiringSoonJob < ApplicationJob
       queue_as :default
-      # before_perform :find_policies
+      before_perform :find_policies
 
       def perform(*args)
         @policies.each do |policy|
