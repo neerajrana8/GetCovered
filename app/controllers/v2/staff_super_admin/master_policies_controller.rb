@@ -28,12 +28,13 @@ module V2
           end
         end
 
-        if params[:insurable_id].present?
-          insurable = Insurable.find(params[:insurable_id])
+        # NOTE: WTF ? Possible outdated logic legacy
+        # if params[:insurable_id].present?
+        #   insurable = Insurable.find(params[:insurable_id])
 
-          current_types_ids = insurable.policies.current.pluck(:policy_type_id)
-          master_policies_relation = master_policies_relation.where.not(policy_type_id: current_types_ids)
-        end
+        #   current_types_ids = insurable.policies.current.pluck(:policy_type_id)
+        #   master_policies_relation = master_policies_relation.where.not(policy_type_id: current_types_ids)
+        # end
 
         # super(:@master_policies, master_policies_relation)
         @master_policies = master_policies_relation
