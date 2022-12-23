@@ -186,7 +186,49 @@ module MasterPoliciesMethods
             @master_policy.insurables << building
           end
 
-          @master_policy.start_automatic_master_coverage_policy_issue
+          # NOTE: Disable master policy coverage issueing
+          # @master_policy.start_automatic_master_coverage_policy_issue
+          #
+          #   master_policy_configurations_attributes: [
+          #   :id,
+          #   :program_type,
+          #   :grace_period,
+          #   :integration_charge_code,
+          #   :prorate_charges,
+          #   :admin_prorate_charges,
+          #   :auto_post_charges,
+          #   :consolidate_billing,
+          #   :program_start_date,
+          #   :program_delay,
+          #   :placement_cost,
+          #   :admin_cost,
+          #   :force_placement_cost,
+          #   :force_admin_cost,
+          #   :carrier_policy_type_id,
+          #   :configurable_type,
+          #   :configurable_id,
+          #   :enabled,
+          #   :integration_account_number,
+          #   :lease_violation_only,
+          #   :admin_fee,
+          #   :force_admin_cost,
+          #   :force_admin_fee,
+          #   :prorate_admin_fee,
+          #   :charge_date,
+          #   :enabled
+          # ]
+
+          if params[:master_policy_confguration].present?
+            unless params[:master_policy_configuration][:id].nil?
+              mpc = MasterPolicyConfiguration.find(params[:master_policy_configuration][:id])
+              mpc.update(params[:master_policy_configuration])
+            else
+              mpc_params = params[:master_policy_confguration]
+              mpc_params[:configurable_id] = insurable.id
+              mpc_params[:configurable_type] = 'Insurable'
+              MasterPolicyConfiguration.create! mpc
+            end
+          end
 
           unless params[:auto_assign].nil?
             @master_policy.
@@ -256,6 +298,50 @@ module MasterPoliciesMethods
           status: 'BOUND',
           system_data: @master_policy.system_data,
           effective_date: @master_policy.effective_date,
+          expiration_date: @master_policy.expiration_date
+        )
+        if policy.errors.blank?
+          unit.update(covered: true)
+          render json: policy.to_json, status: :ok
+        else
+          response = { error: :policy_creation_problem, message: 'Policy was not created', payload: policy.errors }
+          render json: response.to_json, status: :internal_server_error
+        end
+      else
+        render json: { error: :bad_unit, message: 'Unit does not fulfil the requirements' }.to_json, status: :bad_request
+      end
+    end
+
+    def cover_unit_with_configuration
+      unit = Insurable.find(params[:insurable_id])
+      mpc = @master_policy.find_closest_master_policy_configuration(unit)
+
+      if mpc.nil?
+        render json: { error: :invalid_master_policy_configuration }, status: 400
+      end
+
+      effective_date = @master_policy.effective_date
+      effective_date = mpc.program_start_date unless mpc.program_start_date.nil?
+
+      if params[:start_date].present?
+        effective_date = params[:start_date]
+      end
+
+      if unit.policies.where(policy_type_id: PolicyType::MASTER_MUTUALLY_EXCLUSIVE[@master_policy.policy_type_id]).current.empty? && unit.occupied?
+        policy_number = MasterPolicies::GenerateNextCoverageNumber.run!(master_policy_number: @master_policy.number)
+        policy = unit.policies.create(
+          agency: @master_policy.agency,
+          carrier: @master_policy.carrier,
+          account: @master_policy.account,
+          policy_coverages_attributes: @master_policy.policy_coverages.map do |policy_coverage|
+            policy_coverage.attributes.slice('limit', 'deductible', 'enabled', 'designation', 'title')
+          end,
+          number: policy_number,
+          policy_type: @master_policy.policy_type.coverage,
+          policy: @master_policy,
+          status: 'BOUND',
+          system_data: @master_policy.system_data,
+          effective_date: effective_date, # @master_policy.effective_date,
           expiration_date: @master_policy.expiration_date
         )
         if policy.errors.blank?
