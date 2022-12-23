@@ -227,7 +227,7 @@ module V2
             end
           end
         end
-        
+
         if @application.carrier_id == ::QbeService.carrier_id && @application.primary_insurable.account.nil?
           defaults = ::QbeService::FIC_DEFAULTS[@application.primary_insurable.primary_address.state] || ::QbeService::FIC_DEFAULTS[nil]
           missing_fic_info = ::QbeService::FIC_DEFAULT_KEYS.select{|k| !@application.extra_settings&.has_key?(k) && !defaults.has_key?(k) }
@@ -259,7 +259,7 @@ module V2
                 if @quote.status == 'quoted'
                   ::ConfieService.create_confie_lead(@application) if @application.agency_id == ::ConfieService.agency_id
                   @application.primary_user.set_stripe_id
-  
+
                   @extra_fields = {
                    'policy_fee' => @quote.carrier_payment_data['policy_fee'],
                    'installment_fee' => @quote.carrier_payment_data['installment_fee'],
@@ -342,7 +342,7 @@ module V2
             @replacement_policy_insurables = unsaved_pis
           end
           @policy_application.policy_insurables.first.primary = true if @policy_application.policy_insurables.all?{|pi| !pi.primary }
-          # scream if we are missing critical community information          
+          # scream if we are missing critical community information
           if @policy_application.carrier_id == ::QbeService.carrier_id && @policy_application.primary_insurable.account.nil?
             defaults = ::QbeService::FIC_DEFAULTS[@policy_application.primary_insurable.primary_address.state] || ::QbeService::FIC_DEFAULTS[nil]
             missing_fic_info = ::QbeService::FIC_DEFAULT_KEYS.select{|k| !@policy_application.extra_settings&.has_key?(k) && !defaults.has_key?(k) }
@@ -384,7 +384,7 @@ module V2
             render json: standard_error(:policy_application_save_error, nil, @policy_application.errors),
                    status: 422
             return
-      
+
           elsif @policy_application.primary_insurable.nil?
             render json: standard_error(:invalid_address, I18n.t('policy_application_contr.update_residential.invalid_address')),
                    status: 400
@@ -401,7 +401,7 @@ module V2
             render json: { error: I18n.t('user_policy_application_controller.application_unavailable') + " #{@policy_application.error_message}", message: I18n.t('policy_application_contr.create_security_deposit_replacement.policy_application_unavailable') },
                    status: 400
             return
-          elsif @policy_application.status == "quoted"          
+          elsif @policy_application.status == "quoted"
             render json: { error: I18n.t('user_policy_application_controller.application_unavailable'), message: I18n.t('policy_application_contr.create_security_deposit_replacement.policy_application_unavailable') },
                    status: 400
             return
@@ -546,7 +546,7 @@ module V2
           .permit(policy_users_attributes: [
                     :spouse, :primary, user_attributes: [
                       :email, profile_attributes: %i[
-                        first_name last_name job_title
+                        first_name last_name middle_name job_title
                         contact_phone birth_date gender salutation
                       ], address_attributes: %i[
                         city country county id latitude longitude
@@ -556,7 +556,7 @@ module V2
                     ]
                   ])
       end
-      
+
       def update_policy_users_params
         return create_policy_users_params
       end
