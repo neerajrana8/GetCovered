@@ -713,7 +713,7 @@ module V2
           .permit(policy_users_attributes: [
                                              :primary, :spouse, user_attributes: [
                                                                                    :email, profile_attributes:                        [
-                                                                                                                 :first_name, :last_name, :middlename, :job_title,
+                                                                                                                 :first_name, :last_name, :middle_name, :job_title,
                                                                                                                  :contact_phone, :birth_date, :gender,
                                                                                                                  :salutation
                                                                                                                ], address_attributes: [
