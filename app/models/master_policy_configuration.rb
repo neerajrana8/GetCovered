@@ -37,7 +37,7 @@ class MasterPolicyConfiguration < ApplicationRecord
   validates :force_placement_cost, numericality: { greater_than: :placement_cost },
                                   unless: Proc.new { self.force_placement_cost.nil? }
 
-  enum program_type: { auto: 0, choice: 1 }
+  enum program_type: { auto: 0, opt_in: 1, opt_out: 2 }
 
   def charge_amount(force = false)
     return force ? self.force_placement_cost.nil? ? self.placement_cost : self.force_placement_cost : self.placement_cost

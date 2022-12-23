@@ -119,7 +119,8 @@ class User < ApplicationRecord
   	through: :policy_users
   has_many :policy_quotes,
     through: :policies
-  has_many :lease_users
+  #TODO: need to be discussed and updated after GCVR2-1018
+  has_many :lease_users#, -> { where('moved_in_at <= ?', Time.current).where('moved_out_at >= ?', Time.current) }
   has_many :leases,
     through: :lease_users
 
@@ -133,6 +134,7 @@ class User < ApplicationRecord
   has_many :contact_records, as: :contactable
 
   accepts_nested_attributes_for :payment_profiles, :address
+  accepts_nested_attributes_for :integration_profiles#, reject_if: proc { |attributes| attributes['id'].blank? }
   accepts_nested_attributes_for :profile, update_only: true
   accepts_nested_attributes_for :address, update_only: true
 
