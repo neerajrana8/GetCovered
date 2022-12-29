@@ -84,6 +84,10 @@ module Integrations
           addr = addr.gsub("Apt.", "Apt").gsub("Apr.", "Apr").gsub("Ste.", "Ste").gsub("Rm.", "Rm").gsub("No.", "No")
           addr = addr.gsub(/\A#/, '').gsub(/\s#\s/, ' Apt ').gsub(/([^,])\sApt\s/, '\1, Apt ').gsub(/Apt\s([a-zA-Z\d]+)\s([a-zA-Z\d]+),/, 'Apt \1\2,')
           addr = addr.gsub(/\A([\d]+)\s([a-zA-Z])\s/, '\1\2 ') # essex has things like "104 A Windsor St"... -_________-'''
+          addr = addr.gsub(/(,\s|\s)(Apt|APT|Apt\.|APT\.), (Apt|APT|Apt\.|APT\.)/, ', Apt')
+          addr = addr.gsub(/\A#/, '').gsub(/\s#\s/, ' Apt ').gsub(/([^,])\sApt\s/, '\1, Apt ').gsub(/Apt\s([a-zA-Z\d]+)\s([a-zA-Z\d]+),/, 'Apt \1\2,') # do it again lol
+          addr = addr.gsub(/Red\sHawk\sCircle,(F|G|H)/, 'Red Hawk Circle, Apt \1')
+          addr = addr.gsub(/(,\s|\s)(Apt|APT|Apt.|APT.)\s([A-Z])\s(\d)/, '\1\2 \3\4')
           
           return addr
         end
