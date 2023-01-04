@@ -219,6 +219,8 @@ module V2
                 end
               end
 
+              Insurables::UpdateCoveredStatus.run!(insurable: @policy_quote&.policy&.primary_insurable)
+
               render json: {
                 error: ("#{@policy_type_identifier} #{I18n.t('policy_quote_controller.could_not_be_accepted')}" unless @quote_attempt[:success]),
                 message: ("#{@policy_type_identifier} #{I18n.t('policy_quote_controller.accepted')} " if @quote_attempt[:success]).to_s + @quote_attempt[:message],
