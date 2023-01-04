@@ -6,7 +6,9 @@ FactoryBot.define do
     enabled { true }
     password { 'test1234' }
     password_confirmation { 'test1234' }
-    role { 'super_admin' }
     profile
+    after(:create) do |admin|
+      FactoryBot.create(:super_admin_role, staff: admin, role: 'super_admin')
+    end
   end
 end

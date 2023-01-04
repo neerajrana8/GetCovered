@@ -25,7 +25,7 @@ class StaffRole < ApplicationRecord
   def set_global_permissions
     self.global_permission_attributes = {
       permissions: organizable.global_permission.permissions
-    }
+    } unless super_admin? || policy_support?
   end
 
   def proper_role

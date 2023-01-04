@@ -79,7 +79,7 @@ describe 'Leads API spec', type: :request do
 
   context 'for StaffAgency roles' do
     before(:all) do
-      @staff = FactoryBot.create(:staff, role: :super_admin)
+      @staff = create_super_admin
       login_staff(@staff)
       @headers = get_auth_headers_from_login_response_headers(response)
       @test_email1 = Faker::Internet.email
