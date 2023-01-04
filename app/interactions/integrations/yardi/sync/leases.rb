@@ -564,6 +564,10 @@ module Integrations
             end
             ################### CREATE MODE ######################
             next if tenant_index >= noncreatable_start
+            if tenant["LeaseFrom"].blank?
+              lease_errors[tenant["Id"]] = "Failed to create Lease: LeaseFrom is blank!"
+              next
+            end
             # create the lease
             ActiveRecord::Base.transaction(requires_new: true) do
               lease = unit.leases.create(
