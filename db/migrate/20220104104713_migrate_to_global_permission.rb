@@ -26,7 +26,7 @@ class MigrateToGlobalPermission < ActiveRecord::Migration[6.1]
       next unless staff.organizable.present?
       permissions = staff.organizable.global_permission&.permissions
 
-      StaffRole.create(role: staff.role, global_permission_attributes: {permissions: permissions}, staff: staff, organizable: staff.organizable)
+      StaffRole.create(role: staff.role, global_permission_attributes: {permissions: permissions}, staff: staff, organizable: staff.organizable) if permissions
     end
   end
 

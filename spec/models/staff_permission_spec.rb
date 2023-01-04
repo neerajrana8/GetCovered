@@ -19,6 +19,6 @@ describe 'Staff Permission spec', type: :request do
     staff =  create_agent_for agency, profile: FactoryBot.create(:profile)
 
     expect(staff).to be_valid
-    expect(staff.staff_permission.permissions).to eq(agency.global_agency_permission.permissions)
+    expect(staff.staff_roles.where(organizable: agency).take.global_permission.permissions).to eq(agency.global_permission.permissions)
   end
 end

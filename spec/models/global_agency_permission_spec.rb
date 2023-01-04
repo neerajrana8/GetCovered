@@ -12,6 +12,7 @@ require 'rails_helper'
 
 RSpec.describe GlobalAgencyPermission, type: :model do
   it 'updates permissions in subagencies' do
+    pending('Moved to GlobalPermission. Can remove this test')
     agency = FactoryBot.create(:agency)
     sub_agency = FactoryBot.create(:agency, agency: agency)
 

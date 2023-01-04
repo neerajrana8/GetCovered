@@ -45,7 +45,7 @@ FactoryBot.define do
     title { Faker::Name.name }
     carriers { [Carrier.last] }
     after(:create) do |agency|
-      agency.global_agency_permission ||= FactoryBot.build(:global_agency_permission, agency: agency)
+      agency.global_permission ||= FactoryBot.build(:global_agency_permission, agency: agency)
     end
   end
 end
