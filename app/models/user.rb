@@ -428,11 +428,6 @@ class User < ApplicationRecord
     profile.first_name + " " + profile.last_name
   end
 
-  #TODO: seems that we still can create multiple leases for one insurable for the same dates. need to figure out is it correct ot not
-  def latest_lease
-    leases&.order(end_date: :desc)&.first
-  end
-
   private
 
   def history_blacklist
