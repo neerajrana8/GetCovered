@@ -16,7 +16,23 @@ module V2
         @users = access_model(::User).where(email: enrollment_params[:user_attributes].map{|el| el[:email]})
 
         if @users.blank?
-          return render json: { message: 'Users not found' }, status: :ok if @users.blank?
+          # return render json: { message: 'Users not found' }, status: :ok if @users.blank?
+
+          @users = []
+          enrollment_params[:user_attributes].each do |user|
+            secure_tmp_password = SecureRandom.base64(12)
+            new_user = User.create(
+                           email: user[:email],
+                           password: secure_tmp_password,
+                           password_confirmation: secure_tmp_password,
+                           profile_attributes: {
+                             first_name: user[:first_name],
+                             last_name: user[:last_name]
+                           }
+                         )
+            @users << new_user
+          end
+
         end
 
         if master_policy.present?
