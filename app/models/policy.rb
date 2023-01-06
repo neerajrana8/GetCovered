@@ -712,7 +712,7 @@ class Policy < ApplicationRecord
   end
   
   def sanitize_policy_number
-    self.policy_number = self.policy_number&.strip
+    self.number = self.number&.strip
   end
 
   def set_status_changed_on
