@@ -626,7 +626,9 @@ class Insurable < ApplicationRecord
   end
 
   def refresh_insurable_data
-    InsurablesData::Refresh.run!(insurable: self)
+    # Todo: Remove before 2023-02-01, left in place to make sure no errors would pop up
+    # InsurablesData::Refresh.run!(insurable: self)
+    nil
   end
   
   def get_qbe_traits(
