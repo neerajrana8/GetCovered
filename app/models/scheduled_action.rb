@@ -16,7 +16,7 @@
 #  parent_id       :bigint
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
-#  prerequisite_ids :bigint          default([]), not null, is an Array
+#  #prerequisite_ids :bigint          default([]), not null, is an Array
 
 class ScheduledAction < ApplicationRecord
   include ScheduledActionUserConsolidation
@@ -47,14 +47,14 @@ class ScheduledAction < ApplicationRecord
   }
   
   def prerequisites
-    ScheduledAction.where(id: self.prerequisite_ids)
+    #ScheduledAction.where(id: self.prerequisite_ids)
   end
   
   def perform!
     # set to executing
     self.with_lock do
       return "Status is '#{self.status}', but must be 'pending' or 'errored' to perform!" unless self.status == 'pending' || self.status == 'errored'
-      return "Some prerequisites have not yet been completed!" unless self.prerequisites.where.not(status: 'complete').blank?
+      #return "Some prerequisites have not yet been completed!" unless self.prerequisites.where.not(status: 'complete').blank?
       self.update(status: 'executing')
     end
     # perform the action
