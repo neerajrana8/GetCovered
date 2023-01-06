@@ -91,6 +91,15 @@ module Integrations
           addr = addr.gsub(/Red\sHawk\sCircle,(F|G|H)/, 'Red Hawk Circle, Apt \1')
           addr = addr.gsub(/(,\s|\s)(Apt|APT|Apt.|APT.)\s([A-Z])\s(\d)/, '\1\2 \3\4')
           
+          case addr
+            when "5200 Wilshire Blvd, Apt 612, Apt 612"
+              addr = "5200 Wilshire Blvd, Apt 612"
+            when "105 SHORELINE CIRCLE, ATP, Apt 412"
+              addr = "105 SHORELINE CIRCLE, APT 412"
+            when "817 N. 10th, Apt 161 St."
+              addr = "817 N 10th St, Apt 161"
+          end
+          
           return addr
         end
 
