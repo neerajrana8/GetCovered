@@ -70,7 +70,7 @@ end
 
 json.user_attributes do
   if @user.present?
-    json.email @user.email
+    json.email @user.contact_email
     json.first_name @user.profile.first_name
     json.last_name @user.profile.last_name
   end

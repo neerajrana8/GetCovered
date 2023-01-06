@@ -36,6 +36,7 @@
 </p>
 <% end %>
 
+<% unless @pm_account.additional_interest.nil? %>
 <h5 style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 0em;">
   <span style="font-size: 16px; font-weight: bold;"><u>Insurance minimum requirements:</u></span>
 </h5>
@@ -56,6 +57,7 @@
     <%= @pm_account.primary_address().city %>, <%= @pm_account.primary_address().state %> <%= @pm_account.primary_address().combined_zip_code %>
   </li>
 </ul>
+<% end %>
 
 <% unless @master_policy.nil? || @placement_cost == 0 %>
 <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
