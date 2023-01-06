@@ -81,8 +81,10 @@ module Integrations
             end
           end
           
-          addr = addr.gsub("Apt.", "Apt").gsub("Apr.", "Apr").gsub("Ste.", "Ste").gsub("Rm.", "Rm").gsub("No.", "No")
-          addr = addr.gsub(/\A#/, '').gsub(/\s#\s/, ' Apt ').gsub(/([^,])\sApt\s/, '\1, Apt ').gsub(/Apt\s([a-zA-Z\d]+)\s([a-zA-Z\d]+),/, 'Apt \1\2,')
+          uabbrevs = ['Apt', 'Apr', 'Apartment', 'Unit', 'Ste', 'Suite', 'Room', 'Rm']
+          addr = addr.gsub(/(#{uabbrevs.join('|')})\./, '\1')           # get rid of periods after abbrevs
+                     .gsub(/(#{uabbrevs.join('|')}) #([\s]*)/, '\1 ')   # get rid of # after abbrevs
+                     .gsub(/\A#/, '').gsub(/\s#\s/, ' Apt ').gsub(/([^,])\sApt\s/, '\1, Apt ').gsub(/Apt\s([a-zA-Z\d]+)\s([a-zA-Z\d]+),/, 'Apt \1\2,') # do nice magic
           addr = addr.gsub(/\A([\d]+)\s([a-zA-Z])\s/, '\1\2 ') # essex has things like "104 A Windsor St"... -_________-'''
           addr = addr.gsub(/(,\s|\s)(Apt|APT|Apt\.|APT\.), (Apt|APT|Apt\.|APT\.)/, ', Apt')
           addr = addr.gsub(/\A#/, '').gsub(/\s#\s/, ' Apt ').gsub(/([^,])\sApt\s/, '\1, Apt ').gsub(/Apt\s([a-zA-Z\d]+)\s([a-zA-Z\d]+),/, 'Apt \1\2,') # do it again lol
