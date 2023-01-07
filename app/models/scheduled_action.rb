@@ -19,7 +19,7 @@
 #  #prerequisite_ids :bigint          default([]), not null, is an Array
 
 class ScheduledAction < ApplicationRecord
-  include ScheduledActionUserConsolidation
+  #include ScheduledActionUserConsolidation
   
   belongs_to :actionable,
     polymorphic: true,
