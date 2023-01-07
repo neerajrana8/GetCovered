@@ -95,6 +95,7 @@ class Policy < ApplicationRecord
   include AgencyConfiePolicy
   include RecordChange
 
+  before_save :sanitize_policy_number
   before_save :set_status_changed_on, if: Proc.new { |policy| policy.status_changed? }
 
   after_create :schedule_coverage_reminders, if: -> { policy_type&.master_coverage }
@@ -614,10 +615,29 @@ class Policy < ApplicationRecord
       end
     end
   end
-
-  #TODO: seems that we still can create multiple leases for one insurable for the same dates. need to figure out is it correct ot not
-  def latest_lease
-    self.insurables.extract_associated(:leases)&.first&.order(end_date: :desc)&.first
+  
+  def latest_lease(lease_status: 'current', user_matches: [:all, :primary, :any], prefer_more_users: true)
+    return nil if policy.primary_insurable.blank?
+    found = self.primary_insurable.leases.where(status: lease_status).order(start_date: :desc).group_by do |lease|
+      case lease.users.count{|u| self.users.include?(u) }
+        when self.users.count
+          :all
+        when 0
+          :none
+        else
+          lease.users.include?(self.primary_user) ? :primary : :any
+      end
+    end
+    (user_matches.class == ::Array ? user_matches : [user_matches]).each do |match_type|
+      unless found[match_type].blank?
+        return(
+          (prefer_more_users && [:any, :primary].include?(match_type)) ?
+            found[match_type].sort_by{|lease| -lease.users.count{|u| self.users.include?(u) } }.first
+            : found[match_type].first
+        )
+      end
+    end
+    return nil
   end
 
   def lease_sign_date
@@ -689,6 +709,10 @@ class Policy < ApplicationRecord
         end
       end
     end
+  end
+  
+  def sanitize_policy_number
+    self.number = self.number&.strip
   end
 
   def set_status_changed_on
