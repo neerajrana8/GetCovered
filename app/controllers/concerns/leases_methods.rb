@@ -16,7 +16,7 @@ module LeasesMethods
         ::LeaseUser.create(lease: @lease, user: user, primary: user_params[:primary],
                            moved_in_at: user_params[:moved_in_at],
                            moved_out_at: user_params[:moved_out_at],
-                           lessee: user_params[:lessee])#,
+                           lessee: user_params[:lessee] || true)#,
         #integration_profiles_attributes: user_params[:user][:integration_profiles_attributes])
       end
 
@@ -70,7 +70,7 @@ module LeasesMethods
           LeaseUser.create(lease: @lease, user: user, primary: user_params[:primary],
                            moved_in_at: user_params[:moved_in_at],
                            moved_out_at: user_params[:moved_out_at],
-                           lessee: user_params[:lessee])#,
+                           lessee: user_params[:lessee] || true)#,
           #integration_profiles_attributes: user_params[:user][:integration_profiles_attributes])
         end
       end
