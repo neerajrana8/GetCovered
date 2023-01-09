@@ -78,9 +78,11 @@ end
 
 json.primary_insurable_attributes do
   if @user.present?
-    json.building do
-      json.partial! "v2/staff_super_admin/insurables/insurable_show_fields.json.jbuilder",
+    if @user.latest_lease.insurable.parent_building.present?
+      json.building do
+        json.partial! "v2/staff_super_admin/insurables/insurable_show_fields.json.jbuilder",
                           insurable: @user.latest_lease.insurable.parent_building
+      end
     end
 
     json.unit do
