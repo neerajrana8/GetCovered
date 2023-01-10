@@ -26,7 +26,7 @@ module V2
       def create
         required = [:insurable_id, :account_id, :start_date]
 
-        if required.all? { |k| params.key? k }
+        if required.all? { |k| params.has_key? k }
           insurable = Insurable.find(params[:insurable_id]) if params[:insurable_id].present?
           account = Account.find(params[:account_id]) if params[:account_id].present?
 
@@ -37,7 +37,7 @@ module V2
             designation: params[:designation],
             amount: params[:amount]
           )
-          render json: { data: coverage_requirements }, status: :ok
+          render json: { data: [ coverage_requirements ] }, status: :ok
         else
           render json: {errors: [:not_enough_params] }, status: 400
         end
@@ -54,7 +54,19 @@ module V2
             r.save
             data << r
           else
-            data << CoverageRequirement.create!(item)
+            cr = CoverageRequirement.find_by(
+              {
+                designation: item[:designation],
+                start_date: item[:start_date]
+              }
+            )
+            if cr
+              cr.amount = item[:amount]
+              cr.save
+            else
+              cr = CoverageRequirement.create(item)
+            end
+            data << cr
           end
         end
         render json: { data: data }
@@ -68,7 +80,7 @@ module V2
       private
 
       def configuration_params
-        params.permit(:data => [:id, :account_id, :insurable_id, :designation, :amount, :start_date])
+        params.permit(:data => [:id, :designation, :amount, :insurable_id, :account_id, :start_date])
       end
 
     end
