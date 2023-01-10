@@ -84,6 +84,8 @@ class Lease < ApplicationRecord
 
   enum status: %i[pending current expired]
 
+  scope :current, -> { where(status: 'current') }
+
   # Lease.active?
   def active?
     range = start_date..end_date
