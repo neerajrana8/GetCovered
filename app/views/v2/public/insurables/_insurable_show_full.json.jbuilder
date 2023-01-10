@@ -87,7 +87,7 @@ json.primary_insurable_attributes do
 
     json.unit do
         json.partial! "v2/staff_super_admin/insurables/insurable_show_fields.json.jbuilder",
-                      insurable: @user.latest_lease.insurable.parent_community
+                      insurable: @user.latest_lease.insurable
     end
   end
 end
