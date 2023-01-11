@@ -2,6 +2,8 @@ module V2
   module CoverageRequirements
     class ConfigurationController < ApiController
 
+      before_action :check_permissions
+
       def index
 
       end
@@ -81,6 +83,15 @@ module V2
 
       def configuration_params
         params.permit(:data => [:id, :designation, :amount, :insurable_id, :account_id, :start_date])
+      end
+
+
+      def check_permissions
+        if current_staff && %(super_admin, staff, agent).include?(current_staff.role)
+          true
+        else
+          render json: { error: 'Permission denied' }, status: 403
+        end
       end
 
     end
