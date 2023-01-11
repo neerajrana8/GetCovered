@@ -105,7 +105,10 @@ class Account < ApplicationRecord
            
   has_many :insurable_rate_configurations,
            as: :configurer
-  
+
+
+  has_many :coverage_requirements
+
   scope :enabled, -> { where(enabled: true) }
 
   accepts_nested_attributes_for :addresses, allow_destroy: true

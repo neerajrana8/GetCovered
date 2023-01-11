@@ -13,8 +13,8 @@ module V2
           insurable = Insurable.find(params[:insurable_id]) if params[:insurable_id].present?
           account = Account.find(params[:account_id]) if params[:account_id].present?
 
-          coverage_requirements = CoverageRequirement.where(insurable_id: params[:insurable_id])
-                                    .or(CoverageRequirement.where(account_id: params[:account_id]))
+          coverage_requirements = CoverageRequirement.where(insurable_id: params[:insurable_id]) if params[:insurable_id].present?
+          coverage_requirements = CoverageRequirement.where(account_id: params[:account_id]) if params[:account_id].present?
 
           render json: { data: coverage_requirements }
         else

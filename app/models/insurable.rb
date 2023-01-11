@@ -677,7 +677,26 @@ class Insurable < ApplicationRecord
   end
 
   def coverage_requirements_by_date(date: DateTime.current.to_date)
-    return self.coverage_requirements.where("start_date < ?", date).order("start_date desc").limit(1).take
+    # return self.coverage_requirements.where("start_date < ?", date).order('start_date desc').limit(1).take
+    found_requirements = []
+    max_date = CoverageRequirement.where('start_date <= ?', date).maximum('start_date')
+    if max_date
+      account_requirements = self.account.coverage_requirements.where('start_date = ?', max_date)
+      insurable_requirements = self.coverage_requirements.where('start_date = ?', max_date)
+
+      fr = {}
+
+      insurable_requirements.each do |ir|
+        fr[ir.designation] = ir.id
+      end
+
+      account_requirements.each do |ar|
+        fr[ar.designation] = ar.id
+      end
+
+      found_requirements = CoverageRequirement.where(id: fr.values)
+    end
+    found_requirements
   end
 
   private
