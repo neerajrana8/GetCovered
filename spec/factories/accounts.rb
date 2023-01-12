@@ -28,5 +28,9 @@ FactoryBot.define do
   factory :account do
     title { "Get Covered account" }
     agency
+
+    after(:create) do |account|
+      account.global_permission = FactoryBot.create(:global_permission, ownerable: account, permissions: account.agency.global_permission.permissions)
+    end
   end
 end

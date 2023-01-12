@@ -64,7 +64,7 @@ class Staff < ApplicationRecord
 
   # Active Record Callbacks
   after_initialize :initialize_staff
-  after_create :set_first_as_primary_on_organizable
+  after_commit :set_first_as_primary_on_organizable, on: :create
   after_create :build_notification_settings
   before_validation :set_default_provider,
                     on: :create
@@ -158,7 +158,11 @@ class Staff < ApplicationRecord
 
   def set_first_as_primary_on_organizable
     if organizable&.staff&.count&.eql?(1) || organizable&.staff&.count&.eql?(0)
-      organizable.update staff_id: id
+      if organizable_type === Agency.name
+        Agency.find(organizable_id).update(staff_id: id)
+      elsif organizable_type === Account.name
+        Account.find(organizable_id).update(staff_id: id)
+      end
       update_attribute(:owner, true)
     end
   end
