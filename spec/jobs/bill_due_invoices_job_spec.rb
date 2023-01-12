@@ -10,7 +10,7 @@ describe 'Bill due invoice spec', type: :request do
     account = FactoryBot.create(:account, agency: agency)
     carrier = Carrier.first
     carrier.agencies << [agency]
-    policy = FactoryBot.build(:policy)
+    policy = FactoryBot.build(:policy, agency: agency)
     policy.policy_in_system = true
     policy.policy_type = policy_type
     policy.billing_enabled = true
