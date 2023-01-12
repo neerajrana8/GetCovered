@@ -16,7 +16,15 @@ describe 'Staff invitation spec', type: :request do
       provider: 'email',
       organizable_id: @agency.id,
       organizable_type: "Agency",
-      role: "agent"}
+      role: "agent",
+      staff_roles_attributes: [
+        {
+          role: 'agent',
+          organizable_id: @agency.id,
+          organizable_type: "Agency",
+        }
+      ]
+      }
     }
   end
 
@@ -35,7 +43,7 @@ describe 'Staff invitation spec', type: :request do
 
     result = JSON.parse response.body
     expect(new_staff.reload.enabled).to eq(true)
-    expect(new_staff.owner?).to eq(false)
+    expect(new_staff.owner).to eq(false)
     expect(result["success"]).to eq(true)
   end
 end
