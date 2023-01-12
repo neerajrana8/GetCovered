@@ -14,8 +14,11 @@ module Helpers
   end
 
   def create_agent_for(agency = nil, attributes = {})
-    staff = FactoryBot.create(:staff, attributes)
-    staff.staff_roles << FactoryBot.create(:staff_role, :for_agency, staff: staff, organizable: agency, role: 'agent')
+    staff = FactoryBot.create(:staff, attributes.merge(role: 'agent', organizable: agency).symbolize_keys!)
+    # staff.role = 'agent'
+    # staff.organizable = agency
+    # staff.save
+    # staff.staff_roles << FactoryBot.create(:staff_role, :for_agency, staff: staff, organizable: agency, role: 'agent')
 
     staff
   end
