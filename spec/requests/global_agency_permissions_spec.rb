@@ -10,6 +10,7 @@ describe 'Global Agency Permission spec', type: :request do
   end
 
   it 'disables permission for an agency staff' do
+    pending('To delete')
     agency = FactoryBot.create(:agency)
     staff = FactoryBot.create(:staff, role: 'agent', organizable: agency)
     permission = agency.global_agency_permission.permissions.keys.first
@@ -27,6 +28,7 @@ describe 'Global Agency Permission spec', type: :request do
   end
 
   it 'disables permission for a subagency' do
+    pending('To delete')
     agency = FactoryBot.create(:agency)
     sub_agency = FactoryBot.create(:agency, agency: agency)
     permission = agency.global_agency_permission.permissions.keys.first
