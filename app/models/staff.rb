@@ -163,7 +163,6 @@ class Staff < ApplicationRecord
       elsif organizable_type === Account.name
         Account.find(organizable_id).update(staff_id: id)
       end
-      update_attribute(:owner, true)
     end
   end
 

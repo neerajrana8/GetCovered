@@ -17,10 +17,17 @@ class StaffRole < ApplicationRecord
   # callbacks
   before_create :set_global_permissions
   after_create :set_first_as_primary_on_staff
+  after_commit :set_first_as_owner, on: :create
 
   accepts_nested_attributes_for :global_permission, update_only: true
 
   private
+
+  def set_first_as_owner
+    if role != 'super_admin' and organizable.staff.count === 1
+      staff.update(owner: true)
+    end
+  end
 
   def set_global_permissions
     self.global_permission_attributes = {
