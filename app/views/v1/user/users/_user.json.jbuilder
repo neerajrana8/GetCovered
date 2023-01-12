@@ -1,7 +1,7 @@
 json.extract! user, :id, :email
 
 json.profile_attributes do
-  json.partial! "v1/user/profiles/profile", 
+  json.partial! "v2/staff_super_admin/profiles/profile_show_fields.json.jbuilder",
     profile: user.profile unless user.profile.nil?
 end
 

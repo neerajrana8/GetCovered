@@ -232,7 +232,7 @@ module PoliciesMethods
 
   def update_user_params
     params.require(:policy).permit(users: [:id, :email,
-                                           profile_attributes: %i[birth_date contact_phone first_name gender job_title last_name salutation],
+                                           profile_attributes: %i[birth_date contact_phone first_name gender job_title last_name middle_name salutation],
                                            address_attributes: %i[city county street_number state street_name street_two zip_code]])
   end
 
@@ -246,7 +246,7 @@ module PoliciesMethods
         :spouse, :primary,
         user_attributes: [
           :email,
-          profile_attributes: %i[birth_date contact_phone first_name gender job_title last_name salutation],
+          profile_attributes: %i[birth_date contact_phone first_name gender job_title last_name middle_name salutation],
           address_attributes: %i[city county street_number state street_name street_two zip_code]
         ]
       ]
