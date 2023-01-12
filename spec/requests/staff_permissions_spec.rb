@@ -12,12 +12,12 @@ describe 'Staff Permission spec', type: :request do
   it 'raise error permission for an agency staff' do
     agency = FactoryBot.create(:agency, staff_id: agency_owner.id)
     staff = FactoryBot.create(:staff, role: 'agent', organizable: agency)
-    permission = agency.global_agency_permission.permissions.keys.first
+    permission = agency.global_permission.permissions.keys.first
 
-    all_enabled_permissions = agency.global_agency_permission.permissions.clone
-    new_agency_permissions = agency.global_agency_permission.permissions
+    all_enabled_permissions = agency.global_permission.permissions.clone
+    new_agency_permissions = agency.global_permission.permissions
     new_agency_permissions[permission] = false
-    agency.global_agency_permission.update(permissions: new_agency_permissions)
+    agency.global_permission.update(permissions: new_agency_permissions)
 
     put "/v2/staff_agency/staffs/#{staff.id}", params: { staff: params(all_enabled_permissions) }, headers: @headers
 
