@@ -3,6 +3,7 @@ FactoryBot.define do
     staff
     add_attribute('role')
     primary { true }
+    active { true }
 
     trait :for_agency do
       association :organizable, factory: :agency
@@ -17,6 +18,7 @@ FactoryBot.define do
     after(:create) do |staff_role|
       ids = staff_role.staff.staff_roles.pluck(:id) - [staff_role.id]
       staff_role.staff.staff_roles.where(id: ids).update(primary: false)
+      staff_role.staff.staff_roles.where(id: ids).update(active: false)
 
       if staff_role.global_permission.nil?
         FactoryBot.create(:global_permission, permissions: staff_role.organizable.global_permission.permissions, ownerable: staff_role)

@@ -93,7 +93,7 @@ describe 'Admin Policy spec', type: :request do
   context 'for StaffAgency roles' do
     before :all do
       @staff = create_agent_for @agency
-      @staff.staff_permission.update!(permissions: @staff.staff_permission.permissions.merge({ 'policies.policies' => true }))
+      @staff.staff_roles.where(organizable: @agency).take.global_permission.update!(permissions: @staff.staff_roles.where(organizable: @agency).take.global_permission.permissions.merge({ 'policies.policies' => true }))
     end
     before :each do
       login_staff(@staff)
