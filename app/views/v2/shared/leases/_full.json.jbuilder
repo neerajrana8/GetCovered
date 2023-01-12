@@ -24,7 +24,7 @@ json.lease_type do
 end
 
 json.users do
-  json.array! lease.lease_users.lessees.each do |lease_user|
+  json.array! lease.lease_users.each do |lease_user|
     json.partial! 'v2/staff_super_admin/users/user_show_full.json.jbuilder', user: lease_user.user if lease_user.present?
     json.lessee lease_user.lessee
     json.moved_in_at lease_user.moved_in_at

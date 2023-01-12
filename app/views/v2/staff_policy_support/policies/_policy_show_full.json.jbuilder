@@ -97,7 +97,7 @@ end
 
 json.lease policy&.primary_insurable&.leases&.last
 json.tenants do
-  json.array! policy&.primary_insurable&.leases&.current&.last&.lease_users&.lessees,
+  json.array! policy&.primary_insurable&.leases&.current&.last&.lease_users,
               partial: 'v2/staff_policy_support/policies/tenant', as: :tenant
 end
 
