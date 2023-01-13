@@ -21,7 +21,7 @@ module V2
           @users = []
           enrollment_params[:user_attributes].each do |user|
             secure_tmp_password = SecureRandom.base64(12)
-            new_user = User.create(
+            new_user = ::User.create(
                            email: user[:email],
                            password: secure_tmp_password,
                            password_confirmation: secure_tmp_password,
