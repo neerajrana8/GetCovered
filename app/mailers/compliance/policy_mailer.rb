@@ -80,6 +80,11 @@ module Compliance
 
       set_locale(@user.profile&.language || "en")
 
+      @second_nature_condition = false
+      @second_nature_condition = true if @organization.is_a?(Agency) && @organization.id == 416
+      @second_nature_condition = true if @organization.is_a?(Account) && @organization.agency_id == 416
+      puts @second_nature_condition
+
       @community = @policy.primary_insurable.parent_community
       @pm_account = @community.account
 
