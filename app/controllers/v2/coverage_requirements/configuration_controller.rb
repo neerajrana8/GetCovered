@@ -109,6 +109,14 @@ module V2
       end
 
       def delete
+        r = CoverageRequirement.find(params[:id])
+        if r[:account_id]
+          CoverageRequirement.where(
+            designation: r[:designation],
+            start_date: r[:start_date],
+            insurable_id: r.account.insurables.pluck(:id)
+          ).delete_all
+        end
         CoverageRequirement.destroy(params[:id])
         render json: {message: "Record #{params[:id]} deleted" }, status: :ok
       end
