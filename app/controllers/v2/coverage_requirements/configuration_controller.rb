@@ -12,9 +12,22 @@ module V2
         if (params[:insurable_id].present? or params[:account_id].present?)
           insurable = Insurable.find(params[:insurable_id]) if params[:insurable_id].present?
           account = Account.find(params[:account_id]) if params[:account_id].present?
+          account = insurable.account unless params[:account_id].present?
+          account_requirements = account.coverage_requirements
+          fr = {}
 
-          coverage_requirements = CoverageRequirement.where(account_id: params[:account_id], insurable_id: nil) if params[:account_id].present?
-          coverage_requirements = CoverageRequirement.where(insurable_id: params[:insurable_id], account_id: nil) if params[:insurable_id].present?
+          account_requirements.each do |ar|
+            fr[ar.designation] = ar.id
+          end
+
+          if params[:insurable_id].present?
+            insurable_requirements = insurable.coverage_requirements
+            insurable_requirements.each do |ir|
+              fr[ir.designation] = ir.id
+            end
+          end
+
+          coverage_requirements = CoverageRequirement.where(id: fr.values)
 
           resp = { data: coverage_requirements }
           status = 200
@@ -47,6 +60,7 @@ module V2
 
       def update
         data = []
+
         configuration_params[:data].each do |item|
           if item[:id]
             r = CoverageRequirement.find(item[:id])
@@ -65,11 +79,21 @@ module V2
             end
 
             unless item[:account_id].nil?
+              account = Account.find(item[:account_id])
               cr = CoverageRequirement.find_by(
                   designation: item[:designation],
                   start_date: item[:start_date],
                   account_id: item[:account_id]
               )
+
+              # Remove all settled requirements for insurable for this designation
+              # when editing it for account_id
+
+              CoverageRequirement.where(
+                designation: item[:designation],
+                start_date: item[:start_date],
+                insurable_id: account.insurables.pluck(:id)
+              ).update_all(amount: item[:amount])
             end
 
             if cr
