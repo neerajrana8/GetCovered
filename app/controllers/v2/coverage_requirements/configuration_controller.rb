@@ -2,7 +2,7 @@ module V2
   module CoverageRequirements
     # Coverage Requirements Configuration Endpoint
     class ConfigurationController < ApiController
-      before_action :check_permissions
+      before_action :check_permissions, only: [:update, :delete]
 
       def index
 
