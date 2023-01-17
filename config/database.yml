@@ -1,25 +1,10 @@
-# PostgreSQL. Versions 9.1 and up are supported.
-#
-# Install the pg driver:
-#   gem install pg
-# On OS X with Homebrew:
-#   gem install pg -- --with-pg-config=/usr/local/bin/pg_config
-# On OS X with MacPorts:
-#   gem install pg -- --with-pg-config=/opt/local/lib/postgresql84/bin/pg_config
-# On Windows:
-#   gem install pg
-#       Choose the win32 build.
-#       Install PostgreSQL and put its /bin directory on your path.
-#
-# Configure Using Gemfile
-# gem 'pg'
-#
 default: &default
   adapter: postgresql
   encoding: unicode
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 10 } %>
-  password: password
-  
+  password: postgres
+  port: 5455
+
 production_default: &production_default
   adapter: postgresql
   encoding: utf8
@@ -30,7 +15,6 @@ local:
 
 development:
   <<: *default
-  host: db
   database: gc_v2_development
   username: postgres
 
@@ -39,37 +23,9 @@ test:
   database:  gc_v2_test
   username: <%= ENV.fetch("PGUSER", 'postgres') %>
   password: <%= ENV.fetch("PGPASSWORD", 'password') %>
-  host: <%= ENV.fetch("PGHOST", 'db') %>
 
 test_container:
   <<: *default
   host: db
   database: gc_v2_test
   username: postgres
-
-awsdev:
-  <<: *production_default
-  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 150 } %>
-  database: <%= Rails.application.credentials.postgres[:awsdev][:database] %>
-  username: <%= Rails.application.credentials.postgres[:awsdev][:username] %>
-  password: <%= Rails.application.credentials.postgres[:awsdev][:password] %>
-  host: <%= Rails.application.credentials.postgres[:awsdev][:host] %>
-  port: <%= Rails.application.credentials.postgres[:awsdev][:port] %>
-  
-aws_staging:
-  <<: *production_default
-  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 150 } %>
-  database: <%= Rails.application.credentials.postgres[:aws_staging][:database] %>
-  username: <%= Rails.application.credentials.postgres[:aws_staging][:username] %>
-  password: <%= Rails.application.credentials.postgres[:aws_staging][:password] %>
-  host: <%= Rails.application.credentials.postgres[:aws_staging][:host] %>
-  port: <%= Rails.application.credentials.postgres[:aws_staging][:port] %>
-  
-production:
-  <<: *default
-  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 400 } %>
-  database: <%= Rails.application.credentials.postgres[:production][:database] %>
-  username: <%= Rails.application.credentials.postgres[:production][:username] %>
-  password: <%= Rails.application.credentials.postgres[:production][:password] %>
-  host: <%= Rails.application.credentials.postgres[:production][:host] %>
-  port: <%= Rails.application.credentials.postgres[:production][:port] %>
