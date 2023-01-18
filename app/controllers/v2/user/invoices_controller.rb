@@ -9,30 +9,8 @@ module V2
       before_action :set_substrate, only: [:index]
 
       def index
-        @invoices = invoices_data
+        super(:@invoices, current_user.invoices.order(created_at: :desc))
         render json: @invoices, status: :ok
-      end
-
-      def invoices_data
-        limit = params.dig('pagination', 'per').to_i
-        offset = params.dig('pagination', 'page').to_i * limit
-        total_records = current_user.invoices.order(created_at: :desc).count
-        response.headers['total-pages'] = (total_records.to_f / limit.to_f).ceil
-        response.headers['total-entries'] = total_records.to_s
-        response.headers['current-page'] = params.dig('pagination', 'page')
-
-        invoices = current_user.invoices.order(created_at: :desc)
-                               .includes(:invoiceable)
-                               .limit(limit)
-                               .offset(offset)
-        data = []
-        invoices.each do |invoice|
-          attrs = invoice.attributes
-          attrs['policy_number'] = invoice.invoiceable.policy.number
-          attrs['policy_type'] = invoice.invoiceable.policy.policy_type.title
-          data << attrs
-        end
-        data
       end
 
       def show
