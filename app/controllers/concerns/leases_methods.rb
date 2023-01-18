@@ -16,7 +16,7 @@ module LeasesMethods
         ::LeaseUser.create(lease: @lease, user: user, primary: user_params[:primary],
                            moved_in_at: user_params[:moved_in_at],
                            moved_out_at: user_params[:moved_out_at],
-                           lessee: user_params[:lessee])#,
+                           lessee: user_params[:lessee] || true)#,
         #integration_profiles_attributes: user_params[:user][:integration_profiles_attributes])
       end
 
@@ -39,7 +39,7 @@ module LeasesMethods
         lease_user = LeaseUser.where(lease_id: @lease.id).find_by(user_id: user_params[:user][:id])
 
         if lease_user.present?
-          lease_user.update(primary: user_params[:primary], lessee: user_params[:lessee],
+          lease_user.update(primary: user_params[:primary], lessee: user_params[:lessee] || true,
                             moved_in_at: user_params[:moved_in_at], moved_out_at: user_params[:moved_out_at])
           #lease_user.integration_profiles.find(user_params[:user][:integration_profiles_attributes]&.last[:id])&.update(external_id: user_params[:user][:integration_profiles_attributes]&.last[:external_id])
           user = lease_user.user
@@ -70,7 +70,7 @@ module LeasesMethods
           LeaseUser.create(lease: @lease, user: user, primary: user_params[:primary],
                            moved_in_at: user_params[:moved_in_at],
                            moved_out_at: user_params[:moved_out_at],
-                           lessee: user_params[:lessee])#,
+                           lessee: user_params[:lessee] || true)#,
           #integration_profiles_attributes: user_params[:user][:integration_profiles_attributes])
         end
       end

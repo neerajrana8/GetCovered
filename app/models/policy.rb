@@ -616,8 +616,8 @@ class Policy < ApplicationRecord
     end
   end
   
-  def latest_lease(lease_status: 'current', user_matches: [:all, :primary, :any], prefer_more_users: true)
-    return nil if policy.primary_insurable.blank?
+  def latest_lease(lease_status: 'current', user_matches: [:all, :primary, :any, :none], prefer_more_users: true)
+    return nil if self.primary_insurable.blank?
     found = self.primary_insurable.leases.where(status: lease_status).order(start_date: :desc).group_by do |lease|
       case lease.users.count{|u| self.users.include?(u) }
         when self.users.count
@@ -687,7 +687,7 @@ class Policy < ApplicationRecord
   def notify_users
     # ['EXTERNAL_UNVERIFIED', 'EXTERNAL_VERIFIED', 'EXTERNAL_REJECTED'].include?(self.status)
     if self.previous_changes.has_key?('status') && ['EXTERNAL_VERIFIED', 'EXTERNAL_REJECTED'].include?(self.status)
-      unless self.integration_profiles.count > 0 || self.agency_id == 416
+      unless self.integration_profiles.count > 0
 
         if self.account_id == 0 || self.agency_id == 0
           reload() if inline_fix_external_policy_relationships

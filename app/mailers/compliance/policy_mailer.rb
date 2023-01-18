@@ -24,35 +24,36 @@ module Compliance
     end
 
     def policy_lapsed(policy:, lease:)
-      @policy = policy
-      @lease = lease
-      unless @policy.users.blank?
-        @street_address = @policy&.primary_insurable&.primary_address()
-        @address = @street_address.nil? ? nil : "#{ @street_address.combined_street_address }, #{ @policy&.primary_insurable.title }, #{ @street_address.city }, #{ @street_address.state }, #{ @street_address.zip_code }"
-
-        @user = @policy.primary_user()
-        @community = @policy&.primary_insurable&.parent_community
-        @pm_account = @community.account
-
-        @onboarding_url = tokenized_url(@user.id, @community)
-        available_lease_date = @lease.nil? ? DateTime.current.to_date : @lease.sign_date.nil? ? @lease.start_date : @lease.sign_date
-
-        set_master_policy_and_configuration(@community, 2, available_lease_date)
-
-        @min_liability = @community.coverage_requirements_by_date(date: available_lease_date).where(designation: 'liability')&.take&.amount
-
-        @placement_cost = @configuration.nil? ? 0 : @configuration.total_placement_amount(true).to_f / 100
-
-        @from = @pm_account&.contact_info&.has_key?("contact_email") &&
-          !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] :
-                  "policyverify@getcovered.io"
-
-        mail(to: @user.contact_email,
-             bcc: "systememails@getcovered.io",
-             from: @from,
-             subject: "You are out of compliance",
-             template_path: 'compliance/policy')
-      end
+      # Todo: Fix this pile of awful as soon as we understand why this mailer is going out 40+ times per user
+      # @policy = policy
+      # @lease = lease
+      # unless @policy.users.blank?
+      #   @street_address = @policy&.primary_insurable&.primary_address()
+      #   @address = @street_address.nil? ? nil : "#{ @street_address.combined_street_address }, #{ @policy&.primary_insurable.title }, #{ @street_address.city }, #{ @street_address.state }, #{ @street_address.zip_code }"
+      #
+      #   @user = @policy.primary_user()
+      #   @community = @policy&.primary_insurable&.parent_community
+      #   @pm_account = @community.account
+      #
+      #   @onboarding_url = tokenized_url(@user.id, @community)
+      #   available_lease_date = @lease.nil? ? DateTime.current.to_date : @lease.sign_date.nil? ? @lease.start_date : @lease.sign_date
+      #
+      #   set_master_policy_and_configuration(@community, 2, available_lease_date)
+      #
+      #   @min_liability = @community.coverage_requirements_by_date(date: available_lease_date)&.amount
+      #
+      #   @placement_cost = @configuration.nil? ? 0 : @configuration.total_placement_amount(true).to_f / 100
+      #
+      #   @from = @pm_account&.contact_info&.has_key?("contact_email") &&
+      #     !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] :
+      #             "policyverify@getcovered.io"
+      #
+      #   mail(to: @user.contact_email,
+      #        bcc: "systememails@getcovered.io",
+      #        from: @from,
+      #        subject: "You are out of compliance",
+      #        template_path: 'compliance/policy')
+      # end
     end
 
     def enrolled_in_master(user:, community:, force:, cutoff_date: DateTime.current.to_date)
@@ -79,6 +80,11 @@ module Compliance
       @user = @policy.primary_user
 
       set_locale(@user.profile&.language || "en")
+
+      @second_nature_condition = false
+      @second_nature_condition = true if @organization.is_a?(Agency) && @organization.id == 416
+      @second_nature_condition = true if @organization.is_a?(Account) && @organization.agency_id == 416
+      puts @second_nature_condition
 
       @community = @policy.primary_insurable.parent_community
       @pm_account = @community.account
