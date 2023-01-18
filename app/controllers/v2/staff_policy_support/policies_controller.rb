@@ -17,6 +17,7 @@ module V2
         super(:@policies, @substrate, :agency, :account, :primary_user)
       end
 
+      # TODO: Needs refactoring
       def show
         if @policy.primary_insurable.nil?
           @min_liability = 1000000
@@ -45,6 +46,13 @@ module V2
         if @max_liability.nil? || @max_liability == 0 || @max_liability == "null"
           @max_liability = 30000000
         end
+
+        @lease = @policy.latest_lease
+        available_lease_date = @lease.nil? ? DateTime.current.to_date : @lease.sign_date.nil? ? @lease.start_date : @lease.sign_date
+        @coverage_requirements = @policy.primary_insurable&.parent_community&.coverage_requirements_by_date(date: available_lease_date)
+
+        # NOTE: Make it array to comply with frontend code
+        @master_policy_configurations = [@policy.find_closest_master_policy_configuration(available_lease_date)]
       end
 
       def update

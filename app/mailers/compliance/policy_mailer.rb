@@ -39,7 +39,7 @@ module Compliance
 
         set_master_policy_and_configuration(@community, 2, available_lease_date)
 
-        @min_liability = @community.coverage_requirements_by_date(date: available_lease_date)&.amount
+        @min_liability = @community.coverage_requirements_by_date(date: available_lease_date).where(designation: 'liability')&.take&.amount
 
         @placement_cost = @configuration.nil? ? 0 : @configuration.total_placement_amount(true).to_f / 100
 
