@@ -47,7 +47,7 @@ module V2
           @max_liability = 30000000
         end
 
-        @lease = @policy.latest_lease(['pending', 'current'])
+        @lease = @policy.latest_lease(lease_status: ['pending', 'current'])
         available_lease_date = @lease.nil? ? DateTime.current.to_date : @lease.sign_date.nil? ? @lease.start_date : @lease.sign_date
         @coverage_requirements = @policy.primary_insurable&.parent_community&.coverage_requirements_by_date(date: available_lease_date)
 
