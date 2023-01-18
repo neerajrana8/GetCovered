@@ -70,7 +70,7 @@ end
 
 json.user_attributes do
   if @user.present?
-    json.email @user.email
+    json.email @user.contact_email
     json.first_name @user.profile.first_name
     json.last_name @user.profile.last_name
   end
@@ -78,18 +78,16 @@ end
 
 json.primary_insurable_attributes do
   if @user.present?
-    json.building do
-      if @user.policies&.take&.primary_insurable&.unit?
-      json.partial! "v2/staff_super_admin/insurables/insurable_show_fields.json.jbuilder",
-                          insurable: @user.policies&.take&.primary_insurable.insurable
+    if @user.latest_lease.insurable.parent_building.present?
+      json.building do
+        json.partial! "v2/staff_super_admin/insurables/insurable_show_fields.json.jbuilder",
+                          insurable: @user.latest_lease.insurable.parent_building
       end
     end
 
     json.unit do
-      if @user.policies&.take&.primary_insurable&.unit?
         json.partial! "v2/staff_super_admin/insurables/insurable_show_fields.json.jbuilder",
-                      insurable: @user.policies&.take&.primary_insurable
-      end
+                      insurable: @user.latest_lease.insurable
     end
   end
 end

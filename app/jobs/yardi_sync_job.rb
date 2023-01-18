@@ -1,5 +1,5 @@
 class YardiSyncJob < ApplicationJob
-  queue_as :default
+  queue_as :default # call it gordo
 
   def perform(account_or_integration = nil)
     ids = case account_or_integration
