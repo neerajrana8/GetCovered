@@ -241,7 +241,8 @@
             <div class="o_col o_col-4" style="display: inline-block;vertical-align: top;width: 100%;max-width: 400px;">
               <div style="font-size: 32px; line-height: 32px; height: 32px;">&nbsp; </div>
               <div class="o_px-xs o_sans o_text-xs o_text-light o_left o_xs-center" style="font-family: Helvetica, Arial, sans-serif;margin-top: 0px;margin-bottom: 0px;font-size: 14px;line-height: 21px;color: #82899a;text-align: left;padding-left: 8px;padding-right: 8px;">
-                <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;">Get Covered LLC, 270 Lafayette St, New York, NY 10012</p>
+                <% @inline_diplay_name = @policy.account.nil? ? "Get Covered" : @policy.account.id == 46 ? "Second Nature" : "Get Covered"  %>
+                <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><%= @inline_diplay_name %>, 270 Lafayette St, New York, NY 10012</p>
                 <p style="margin-top: 0px;margin-bottom: 0px;">
                   <a class="o_text-light o_underline" href="https://www.getcoveredinsurance.com/faq" style="text-decoration: underline;outline: none;color: #82899a;"><%= I18n.t('devise.mailer.shared.help_center') %></a>
                 </p>

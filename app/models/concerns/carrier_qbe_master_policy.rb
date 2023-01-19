@@ -124,7 +124,8 @@ module CarrierQbeMasterPolicy
       return unit_ids.blank? ? nil : unit_ids
     end
 
-    def find_closest_master_policy_configuration(insurable = nil)
+    def find_closest_master_policy_configuration(insurable = nil, cutoff_date = nil)
+      cutoff_date = DateTime.current.to_date if cutoff_date.nil?
       master_policy_configuration = nil
 
       unless insurable.nil?
@@ -139,13 +140,21 @@ module CarrierQbeMasterPolicy
           carrier_policy_type = CarrierPolicyType.where(carrier_id: self.carrier_id, policy_type: self.policy_type_id).take
           closest_link = nil
           if community.master_policy_configurations.where(carrier_policy_type: carrier_policy_type).count > 0
-            master_policy_configuration = community.master_policy_configurations.where(carrier_policy_type: carrier_policy_type).take
+            master_policy_configuration = community.master_policy_configurations
+                                                   .where(carrier_policy_type: carrier_policy_type)
+                                                   .where("program_start_date < ?", cutoff_date)
+                                                   .order("program_start_date desc").limit(1).take
             closest_link = "community"
-          elsif !self.master_policy_configuration.nil? && closest_link.nil?
-            master_policy_configuration = self.master_policy_configuration
+          elsif !self.master_policy_configurations.nil? && closest_link.nil?
+            master_policy_configuration = self.master_policy_configurations
+                                              .where("program_start_date < ?", cutoff_date)
+                                              .order("program_start_date desc").limit(1).take
             closest_link = "master_policy"
           elsif self.account.master_policy_configurations.where(carrier_policy_type: carrier_policy_type).count > 0 && closest_link.nil?
-            master_policy_configuration = self.account.master_policy_configurations.where(carrier_policy_type: carrier_policy_type).take
+            master_policy_configuration = self.account.master_policy_configurations
+                                                      .where(carrier_policy_type: carrier_policy_type)
+                                                      .where("program_start_date < ?", cutoff_date)
+                                                      .order("program_start_date desc").limit(1).take
           end
         end
       end

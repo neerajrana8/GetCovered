@@ -95,6 +95,9 @@ class Policy < ApplicationRecord
   include AgencyConfiePolicy
   include RecordChange
 
+  before_save :sanitize_policy_number
+  before_save :set_status_changed_on, if: Proc.new { |policy| policy.status_changed? }
+
   after_create :schedule_coverage_reminders, if: -> { policy_type&.master_coverage }
   after_create :create_necessary_policy_coverages_for_external, unless: -> { in_system? }
   after_save :update_users_status
@@ -139,7 +142,7 @@ class Policy < ApplicationRecord
   through: :primary_policy_user,
   source: :user
 
-  has_one :master_policy_configuration, as: :configurable
+  has_many :master_policy_configurations, as: :configurable
 
   has_one :primary_policy_insurable, -> { where(primary: true) }, class_name: 'PolicyInsurable'
   has_one :primary_insurable, class_name: 'Insurable', through: :primary_policy_insurable, source: :insurable
@@ -229,7 +232,7 @@ class Policy < ApplicationRecord
   }
 
   accepts_nested_attributes_for :policy_premiums,
-  :insurables, :policy_users, :policy_insurables, :policy_application
+  :insurables, :policy_users, :policy_insurables, :policy_application, :master_policy_configurations
   accepts_nested_attributes_for :policy_coverages, allow_destroy: true
   #  after_save :update_leases, if: :saved_changes_to_status?
 
@@ -248,9 +251,10 @@ class Policy < ApplicationRecord
   validate :date_order,
   unless: proc { |pol| pol.effective_date.nil? || pol.expiration_date.nil? }
 
+  #TODO:  WITHOUT_STATUS must be deleted after fix under GCVR2-768 ticket
   enum status: { AWAITING_PAYMENT: 0, AWAITING_ACH: 1, PAID: 2, BOUND: 3, BOUND_WITH_WARNING: 4,
     BIND_ERROR: 5, BIND_REJECTED: 6, RENEWING: 7, RENEWED: 8, EXPIRED: 9, CANCELLED: 10,
-    REINSTATED: 11, EXTERNAL_UNVERIFIED: 12, EXTERNAL_VERIFIED: 13, EXTERNAL_REJECTED: 14 }
+    REINSTATED: 11, EXTERNAL_UNVERIFIED: 12, EXTERNAL_VERIFIED: 13, EXTERNAL_REJECTED: 14, WITHOUT_STATUS: nil }
 
   enum billing_status: { CURRENT: 0, BEHIND: 1, REJECTED: 2, RESCINDED: 3, ERROR: 4, EXTERNAL: 5 }
 
@@ -299,6 +303,8 @@ class Policy < ApplicationRecord
     pm_not_additional_interest: I18n.t('policy_model.rejection_reasons.pm_not_additional_interest'),
     policy_not_active: I18n.t('policy_model.rejection_reasons.policy_not_active'),
     name_not_correct: I18n.t('policy_model.rejection_reasons.name_not_correct'),
+    tenants_not_listed: I18n.t('policy_model.rejection_reasons.tenants_not_listed'),
+    am_requirement_not_met: I18n.t('policy_model.rejection_reasons.am_requirement_not_met'),
     other: I18n.t('policy_model.rejection_reasons.other')}
 
   #TODO: need to refactor to enum values for policy-support dashboard too
@@ -501,6 +507,7 @@ class Policy < ApplicationRecord
   end
 
   def bulk_decline
+    raise StandardError.new("Outdated broken method")
     update_attribute(:declined, true)
     generate_refund if created_at > 1.month.ago
     subtract_from_future_invoices
@@ -515,6 +522,7 @@ class Policy < ApplicationRecord
   end
 
   def generate_refund
+    raise StandardError.new("Outdated broken method")
     amount = bulk_premium_amount
     charge = policy_group&.policy_group_premium&.policy_group_quote&.invoices&.first&.charges&.first
     return if bulk_premium_amount.zero? || charge.nil?
@@ -523,12 +531,13 @@ class Policy < ApplicationRecord
   end
 
   def recalculate_policy_premium
-    throw "Policy#recalculate_policy_premium is currently broken!" # MOOSE WARNING
+    raise StandardError.new("Outdated broken method")
     policy_premiums&.last&.update(base: 0, taxes: 0, total_fees: 0, total: 0, calculation_base: 0, deposit_fees: 0, amortized_fees: 0, carrier_base: 0, special_premium: 0)
     policy_group&.policy_group_premium&.calculate_total
   end
 
   def subtract_from_future_invoices
+    raise StandardError.new("Outdated broken method")
     amount = bulk_premium_amount
     policy_group&.policy_group_premium&.policy_group_quote&.invoices&.each do |invoice|
       line_item = invoice.line_items.base_premium.take
@@ -606,6 +615,34 @@ class Policy < ApplicationRecord
       end
     end
   end
+  
+  def latest_lease(lease_status: 'current', user_matches: [:all, :primary, :any, :none], prefer_more_users: true)
+    return nil if self.primary_insurable.blank?
+    found = self.primary_insurable.leases.where(status: lease_status).order(start_date: :desc).group_by do |lease|
+      case lease.users.count{|u| self.users.include?(u) }
+        when self.users.count
+          :all
+        when 0
+          :none
+        else
+          lease.users.include?(self.primary_user) ? :primary : :any
+      end
+    end
+    (user_matches.class == ::Array ? user_matches : [user_matches]).each do |match_type|
+      unless found[match_type].blank?
+        return(
+          (prefer_more_users && [:any, :primary].include?(match_type)) ?
+            found[match_type].sort_by{|lease| -lease.users.count{|u| self.users.include?(u) } }.first
+            : found[match_type].first
+        )
+      end
+    end
+    return nil
+  end
+
+  def lease_sign_date
+    latest_lease&.sign_date
+  end
 
   private
 
@@ -650,7 +687,7 @@ class Policy < ApplicationRecord
   def notify_users
     # ['EXTERNAL_UNVERIFIED', 'EXTERNAL_VERIFIED', 'EXTERNAL_REJECTED'].include?(self.status)
     if self.previous_changes.has_key?('status') && ['EXTERNAL_VERIFIED', 'EXTERNAL_REJECTED'].include?(self.status)
-      unless self.integration_profiles.count > 0 || self.agency_id == 416
+      unless self.integration_profiles.count > 0
 
         if self.account_id == 0 || self.agency_id == 0
           reload() if inline_fix_external_policy_relationships
@@ -672,6 +709,14 @@ class Policy < ApplicationRecord
         end
       end
     end
+  end
+  
+  def sanitize_policy_number
+    self.number = self.number&.strip
+  end
+
+  def set_status_changed_on
+    self.status_changed_on = DateTime.current
   end
 
   def inline_fix_external_policy_relationships

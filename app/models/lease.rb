@@ -23,7 +23,7 @@ class Lease < ApplicationRecord
   # Concerns
   include RecordChange
   include ExpandedCovered
-  
+
   RESIDENTIAL_ID = 1
   COMMERCIAL_ID = 2
 
@@ -48,7 +48,8 @@ class Lease < ApplicationRecord
   has_many :policies,
            through: :insurable
 
-  has_many :lease_users, inverse_of: :lease
+  #TODO: need to be discussed and updated after GCVR2-1018
+  has_many :lease_users#, -> { where('moved_in_at <= ?', Time.current).where('moved_out_at >= ?', Time.current) }, inverse_of: :lease
 
   has_many :users, through: :lease_users
 
@@ -82,6 +83,8 @@ class Lease < ApplicationRecord
   self.inheritance_column = nil
 
   enum status: %i[pending current expired]
+
+  scope :current, -> { where(status: 'current') }
 
   # Lease.active?
   def active?
@@ -161,13 +164,13 @@ class Lease < ApplicationRecord
   def related_records_list
     %w[insurable account]
   end
-  
+
   # Lease.primary_insurable
-  
+
   def primary_user
     lease_users.where(primary: true).take&.user
   end
-  
+
   private
 
   ## Initialize Lease

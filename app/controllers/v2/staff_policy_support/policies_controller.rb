@@ -8,7 +8,7 @@ module V2
       include PoliciesMethods
 
       before_action :set_policy,
-                    only: %i[update show]
+                    only: %i[update show update_coverage_proof delete_policy_document]
       before_action :set_optional_coverages, only: [:show]
 
       before_action :set_substrate, only: [:index]
@@ -49,6 +49,23 @@ module V2
 
       def update
         if @policy.update(update_policy_attributes)
+
+          # # TODO: Place to update policy status depended objects
+          active_policy_types = {}
+          insurables = @policy.insurables
+          insurables.each do |insurable|
+            policies = insurable.policies.where(status: %w[BOUND BOUND_WITH_WARNING])
+            policies.each do |policy|
+              active_policy_types[policy.policy_type_id] = policy
+            end
+          end
+
+          active_policy_types.each do |policy_type, policy|
+            if policy_type == PolicyType::MASTER_COVERAGE_ID
+              policy.update(status: 10) # Cancel MASTER_COVERAGE child policy
+            end
+          end
+
           render json: @policy.to_json,
                  status: 202
         else
@@ -64,7 +81,8 @@ module V2
       end
 
       def set_policy
-        @policy = access_model(::Policy, params[:id])
+        # @policy = access_model(::Policy, params[:id])
+        @policy = Policy.find(params[:id])
         unless @policy.policy_in_system == false && ["EXTERNAL_UNVERIFIED", "EXTERNAL_VERIFIED", "EXTERNAL_REJECTED"].include?(@policy.status)
           render json: standard_error(error: "Invalid Selection", message: "This policy does not meet the criteria for review")
         end

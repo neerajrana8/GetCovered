@@ -78,7 +78,7 @@ module Integrations
         # prepare the event
         request_body = self.request_template(**(universal_param_prefix.nil? ? params : params.transform_keys{|k| "#{universal_param_prefix}#{k.to_s}" }))
         event = Event.new(
-          eventable: self.get_eventable,
+          eventable: self.get_eventable || integration,
           verb: 'post',
           format: 'xml',
           interface: 'SOAP',

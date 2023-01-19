@@ -17,10 +17,6 @@ production:
   - mailers
 
 :schedule:
-  insurables_refresh_insurable_data:
-    cron: '0 */2 * * *'   # Every day at 0:00 AM
-    class: Insurables::RefreshInsurableDataJob
-  # Compliance
   configuration_sweep_job:
     cron: '0 2 * * *'   # Every day at 2:00 AM
     class: Compliance::Policies::MasterCoverageSweepJob
@@ -36,7 +32,7 @@ production:
   # Reports
   generate_and_send_cancellation_list_job:
     cron: '30 2 * * *'   # Every day at 2:30 AM
-    class: CarrierQBE::GenerateandSendCancellationListJob
+    class: CarrierQBE::GenerateAndSendCancellationListJob
   confie_report:
     cron: '35 * * * *' # Every hour, thirty-five minutes in
     class: Reports::ConfieReportJob
@@ -63,6 +59,9 @@ production:
   bill_master_policies:
     cron: '0 4 1 * *'   # Each first day of month at 6:00 AM
     class: BillMasterPoliciesJob
+  expire:
+    cron: '0 23 * * *' # Each day at 11:00 PM
+    class: Policies::ExpireJob
   # Leads
   leads_status_update_job:
     cron: '0 6 * * *' # Every day at 6:00 AM
@@ -90,6 +89,12 @@ production:
   warn_all_charge_invoice_job:
     cron: '0 10 * * *'  # Every day at 10:00 AM
     class: WarnAllChargeInvoiceJob
+  expiring_soon_job:
+    cron: '0 6 * * *' # Every day at 6:00 AM
+    class: Compliance::Policies::ExpiringSoonJob
+  lapsed_job:
+    cron: '0 5 * * *' # Every day at 5:00 AM
+    class: Compliance::Policies::LapsedJob
   # Access Tokens
   remove_expired_access_tokens_job:
     cron: '0 0 * * *' # Every day at midnight

@@ -10,7 +10,13 @@ module ExpandedCovered
       if policy_type_id.present? && policy_id.present?
         self.expanded_covered[policy_type_id.to_s] = [] unless self.expanded_covered.has_key?(policy_type_id.to_s)
         self.expanded_covered[policy_type_id.to_s] << policy_id unless self.expanded_covered[policy_type_id.to_s].include?(policy_id)
+
+        # NOTE: https://getcoveredllc.atlassian.net/browse/GCVR2-768
+        return coverage_action_error(policy_type_id, policy_id) if expanded_covered[policy_type_id.to_s].length > 1
+
         self.covered = true
+
+        Rails.logger.info "#DEBUG expanded_covered=#{expanded_covered}"
 
         if policy_type_id == 1
           if self.expanded_covered.has_key?("3") && self.expanded_covered["3"].length > 0
@@ -24,8 +30,7 @@ module ExpandedCovered
         end
 
         save()
-
-        self.coverage_action_error(policy_type_id, policy_id) if self.expanded_covered[policy_type_id.to_s].length > 1
+        # self.coverage_action_error(policy_type_id, policy_id) if self.expanded_covered[policy_type_id.to_s].length > 1
       end
     end
 

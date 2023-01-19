@@ -202,7 +202,25 @@ module V2
                   }.compact, status: 500
                 return
               end
-              
+
+              # NOTE: MPA
+              # NOTE: Cancel MPC if exists
+              # NOTE: Needs Refactoring
+              # MasterPolicies::CancelCoverage.run!(policy: @policy_quote.policy)
+              insurables_ids = @policy_quote.policy.insurables.where(insurable_type_id: InsurableType::UNITS_IDS).pluck(:id)
+              leases = Lease
+                         .where(insurable_id: insurables_ids, status: 'current')
+                         .where('end_date > ?', Time.current.to_date)
+                         .where('start_date <= ?', Time.current.to_date)
+              leases.each do |lease|
+                policies = lease.policies.where(policy_type_id: PolicyType::MASTER_COVERAGES_IDS)
+                policies.each do |policy|
+                  policy.update status: 'CANCELLED'
+                end
+              end
+
+              ::Insurables::UpdateCoveredStatus.run!(insurable: @policy_quote&.policy&.primary_insurable)
+
               render json: {
                 error: ("#{@policy_type_identifier} #{I18n.t('policy_quote_controller.could_not_be_accepted')}" unless @quote_attempt[:success]),
                 message: ("#{@policy_type_identifier} #{I18n.t('policy_quote_controller.accepted')} " if @quote_attempt[:success]).to_s + @quote_attempt[:message],

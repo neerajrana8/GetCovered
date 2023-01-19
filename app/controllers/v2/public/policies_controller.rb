@@ -9,14 +9,19 @@ module V2
 
       before_action :set_community, only: [:enroll_master_policy]
 
+      # NOTE: Needs refactoring
       def enroll_master_policy
         master_policy = @community.policies.where(policy_type_id: 2).take
 
         @users = access_model(::User).where(email: enrollment_params[:user_attributes].map{|el| el[:email]})
 
+        if @users.blank?
+          return render json: { message: 'Users not found' }, status: :ok if @users.blank?
+        end
+
         if master_policy.present?
           start_coverage =  master_policy.effective_date
-          render json: { message: 'Users not found' }, status: :ok if @users.blank?
+          # render json: { message: 'Users not found' }, status: :ok if @users.blank?
 
           #TODO: need to add invitation uesr.invite! but how to determine to which user? primary?
           if master_policy.qbe_specialty_issue_coverage(@community, @users, start_coverage)
@@ -87,7 +92,7 @@ module V2
         @policy.status           = 'EXTERNAL_UNVERIFIED' if params[:status].blank?
         add_error_master_types(@policy.policy_type_id)
         if @policy.errors.blank? && @policy.save
-          result = Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes]&.values)
+          result = ::Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes]&.values)
           if result.failure?
             render json: result.failure, status: 422
           else

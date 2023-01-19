@@ -1,6 +1,7 @@
 module V2
   # API Controller
   class ApiController < ApplicationController
+    include DeviseTokenAuth::Concerns::SetUserByToken
     respond_to :json
     rescue_from ActiveRecord::RecordNotFound, with: :not_found
 
@@ -16,6 +17,15 @@ module V2
 
     def not_found
       render json: { errors: [ :record_not_found ] }, status: 404
+    end
+
+
+    def not_found_error(message)
+      render json: { message: message, errors: [ :record_not_found ] }, status: 404
+    end
+
+    def params_error(message = nil)
+      render json: { message: message, errors: [ :not_enough_params ] }, status: 400
     end
   end
 end
