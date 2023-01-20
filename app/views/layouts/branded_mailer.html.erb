@@ -317,7 +317,11 @@
                                         <% if defined?(@second_nature_condition).nil? %>
                                           Get Covered is emailing you on behalf of <%= @organization.title %> to provide certificate of insurance (COI) verification services.
                                         <% else %>
-                                          Second Nature is emailing you on behalf of <%= @organization.title %> to provide certificate of insurance (COI) verification services.
+                                          <% if @second_nature_condition %>
+                                            Second Nature is emailing you on behalf of <%= @organization.title %> to provide certificate of insurance (COI) verification services.
+                                          <% else %>
+                                            Get Covered is emailing you on behalf of <%= @organization.title %> to provide certificate of insurance (COI) verification services.
+                                          <% end %>
                                         <% end %>
                                       <% elsif defined?(@internal_mailer) == "instance-variable" %>
                                       Get Covered <%= Rails.env.gsub("_", " ").titlecase %>: <%= @subject %>
