@@ -10,13 +10,11 @@ module V2
 
       def show
         if (params[:insurable_id].present? or params[:account_id].present?)
-          insurable = Insurable.find(params[:insurable_id]) if params[:insurable_id].present?
-          account = Account.find(params[:account_id]) if params[:account_id].present?
-          account = insurable.account unless params[:account_id].present?
 
           fr = {}
 
-          if account
+          if params[:account_id].present?
+            account = Account.find(params[:account_id]) if params[:account_id].present?
             account_requirements = account.coverage_requirements
 
             account_requirements.each do |ar|
@@ -25,6 +23,7 @@ module V2
           end
 
           if params[:insurable_id].present?
+            insurable = Insurable.find(params[:insurable_id]) if params[:insurable_id].present?
             insurable_requirements = insurable.coverage_requirements
             insurable_requirements.each do |ir|
               fr[ir.designation] = ir.id
@@ -82,7 +81,7 @@ module V2
               )
             end
 
-            unless item[:account_id].nil?
+            if item[:account_id].present?
               account = Account.find(item[:account_id])
               cr = CoverageRequirement.find_by(
                   designation: item[:designation],
