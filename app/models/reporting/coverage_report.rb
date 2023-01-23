@@ -83,7 +83,7 @@ module Reporting
       # generate account reports
       ::Account.where(reporting_coverage_reports_generate: true).order(id: :asc).pluck(:id).each do |account_id|
         account = Account.find(account_id)
-        cd = (account.reporting_coverage_report_settings || {})['coverage_determinant'] || 'any'
+        cd = (account.reporting_coverage_reports_settings || {})['coverage_determinant'] || 'any'
         found = reports.find{|r| r[0] == account_id && r[1] == cd }
         case found&.[](2)
           when 'ready'
