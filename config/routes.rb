@@ -78,6 +78,7 @@ Rails.application.routes.draw do
     draw :staff_agency
     draw :staff_super_admin
     draw :staff_policy_support
+    draw :staff_reporting
     draw :public
     draw :sdk
     draw :dashboards

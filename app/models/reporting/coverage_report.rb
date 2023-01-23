@@ -1,0 +1,312 @@
+
+=begin
+      EXAMPLE MANIFEST FORMAT:
+      {
+        title: string,
+        subreports: [{ # array instead of hash to preserve order when send to javascript frontend
+         title: string (unique),
+         endpoint: string,
+         fixed_filters: hash,
+         columns: [
+           {
+             title: string,
+             sortable: boolean,
+             apiIndex: integer or string (controller returns array of fellas, each fella is an array or a hash, this is the integer or string key to get this column out of each fella),
+             format: [boolean, percent, number, dollars, cents, string],
+             [invisible: true/false (default false; use true to provide frontend with properties for filtering etc that don't actually need to be displayed)]
+           }
+         ],
+         [sort]: optional default sort hash,
+         [filter]: optional default filter hash,
+         [pagination]: optional default pagination hash
+        }],
+        subreport_links: [{
+          title: string,
+          origin: subreport title,
+          destination: subreport title,
+          fixed_filters: {
+            <subreport column title>: string (can use ${prop} where prop is a subreport column title from origin)
+          },
+          copied_columns: [<subreport column title from origin>]
+        }]
+      }
+=end
+
+module Reporting
+  class CoverageReport < ApplicationRecord
+    self.table_name = "reporting_coverage_reports"
+    include Reporting::CoverageDetermining # provides COVERAGE_DETERMINANTS enum setup
+    
+    belongs_to :owner,
+      polymorphic: true,
+      optional: true
+    
+    has_many :coverage_entries,
+      class_name: "Reporting::CoverageEntry",
+      inverse_of: :coverage_report,
+      foreign_key: :coverage_report_id
+      
+    has_many :unit_coverage_entries,
+      class_name: "Reporting::UnitCoverageEntry",
+      through: :coverage_entries,
+      source: :unit_coverage_entries
+    
+    before_create :set_coverage_determinant
+    
+    before_destroy :destroy_children
+    
+    enum status: {
+      preparing: 0,
+      ready: 1,
+      errored: 2
+    }
+
+    enum coverage_determinant: COVERAGE_DETERMINANTS,
+      _prefix: false, _suffix: false
+    
+    def self.generate_all!(report_time)
+      reports = Reporting::CoverageReport.where(report_time: report_time, owner_type: [nil, "Account"]).pluck(:owner_id, :coverage_determinant, :status, :id)
+      # generate root reports
+      Reporting::CoverageReport.coverage_determinants.keys.each do |cd|
+        found = reports.find{|r| r[0].nil? && r[1] == cd }
+        case found&.[](2)
+          when 'ready'
+            # do nothing
+          when 'preparing', 'errored'
+            # try to regenerate
+            Reporting::CoverageReport.find(found[3]).generate!
+          when nil
+            # try to create
+            Reporting::CoverageReport.create!(owner: nil, report_time: report_time, coverage_determinant: cd).generate!
+        end
+      end
+      # generate account reports
+      ::Account.where(reporting_coverage_reports_generate: true).order(id: :asc).pluck(:id).each do |account_id|
+        account = Account.find(account_id)
+        cd = (account.reporting_coverage_report_settings || {})['coverage_determinant'] || 'any'
+        found = reports.find{|r| r[0] == account_id && r[1] == cd }
+        case found&.[](2)
+          when 'ready'
+            # do nothing
+          when 'preparing', 'errored'
+            # try to regenerate
+            Reporting::CoverageReport.find(found[3]).generate!
+          when nil
+            # try to create
+            Reporting::CoverageReport.create!(owner: account, report_time: report_time, coverage_determinant: cd).generate!
+        end
+      end
+      return true
+    end
+    
+    def generate!
+      self.generate(bang: true)
+    end
+    
+    def generate(bang: false)
+      return { class: "AlreadyRunError", message: "CoverageReport ##{self.id} has already been generated!" } if status == 'ready'
+      to_return = nil
+      begin
+        self.update!(status: 'preparing', report_time: self.report_time || Time.current)
+        ActiveRecord::Base.transaction(requires_new: false) do
+          created = if self.owner_id.nil?
+            Reporting::CoverageEntry.create!(reportable_category: "Universe", coverage_report: self, reportable: nil, parent_id: nil)
+          elsif self.owner_type == "Account"
+            Reporting::CoverageEntry.create!(reportable_category: "PM Account", coverage_report: self, reportable_type: "Account", reportable_id: self.owner_id, parent_id: nil)
+          else
+            raise StandardError.new("Owner must be an Account or the EMPEROR (i.e. nil)!")
+          end
+          created.generate!
+          self.update!(status: 'ready', completed_at: Time.current)
+        end # end transaction
+      rescue StandardError => e
+        self.update!(status: 'errored', error_data: (self.error_data || {}).merge({
+          self.report_time.to_s => (to_return = {
+            class: e.class.name,
+            message: (e.message rescue nil),
+            backtrace: (e.backtrace rescue nil)
+          })
+        }))
+        raise if bang
+      end # end try-catch
+      return to_return
+    end
+    
+    def expand_ho4?
+      self.owner_type.nil? # only expand for superadmin right now
+    end
+    
+    def destroy_children
+      Reporting::CoverageEntryLink.where(parent: self.coverage_entries).delete_all
+      self.coverage_entries.delete_all
+    end
+    
+    def manifest
+      # determine what aspects of the manifest to make visible
+      show_yardi = self.owner_type == "Account" && !self.owner.integrations.where(provider: 'yardi').blank? ? true : false
+      show_insurables = !show_yardi
+      show_accounts = true
+      show_universe = false
+      hide_internal_vs_external = true
+      if self.owner_type.nil? # superadmin view
+        show_insurables = true
+        show_yardi = true
+        show_universe = true
+        hide_internal_vs_external = false
+      end
+      visible_enum_values = !self.expand_ho4? ? ['none', 'master', 'ho4'] : self.owner_type.nil? ? ['none', 'master', 'external', 'internal', 'internal_and_external', 'internal_or_external'] : ['none', 'master', 'external', 'internal']
+      # build the manifest
+      standard_columns = [ # we reuse these a lot so centralizing them here
+        { title: "id", apiIndex: "id", invisible: true },
+        { title: "# Units", sortable: true, apiIndex: "total_units", data_type: "integer" },
+        { title: "# Master Policy Units", sortable: true, apiIndex: "total_units_with_master_policy", data_type: "integer" },
+        { title: "# HO4 Policy Units", sortable: true, apiIndex: "total_units_with_ho4_policy", data_type: "integer" },
+        hide_internal_vs_external ? nil : { title: "# GC Policy Units", sortable: true, apiIndex: "total_units_with_internal_policy", data_type: "integer" },
+        hide_internal_vs_external ? nil : { title: "# Uploaded Policy Units", sortable: true, apiIndex: "total_units_with_external_policy", data_type: "integer" },
+        { title: "# No Policy Units", sortable: true, apiIndex: "total_units_with_no_policy", data_type: "integer" },
+        { title: "% Master Policy Units", sortable: true, apiIndex: "percent_units_with_master_policy", data_type: "number", format: "percent" },
+        { title: "% HO4 Policy Units", sortable: true, apiIndex: "percent_units_with_ho4_policy", data_type: "number", format: "percent" },
+        hide_internal_vs_external ? nil : { title: "% GC Policy Units", sortable: true, apiIndex: "percent_units_with_internal_policy", data_type: "number", format: "percent" },
+        hide_internal_vs_external ? nil : { title: "% Uploaded Policy Units", sortable: true, apiIndex: "percent_units_with_external_policy", data_type: "number", format: "percent" },
+        { title: "% No Policy Units", sortable: true, apiIndex: "percent_units_with_no_policy", data_type: "number", format: "percent" }
+      ].compact
+      dat_manifest = {
+        title: "Coverage Report",
+        subreports: [
+          !show_insurables ? nil : {
+            title: "Units",
+            endpoint: "/v2/reporting/coverage-reports/#{self.id}/unit-entries",
+            fixed_filters: {},
+            columns: [
+              { title: "Address", sortable: true, apiIndex: "street_address" },
+              { title: "Unit", sortable: true, apiIndex: "unit_number" },
+              { title: "Coverage", sortable: true, apiIndex: "coverage_status", data_type: "enum",
+                enum_values: visible_enum_values,
+                format: visible_enum_values.map{|vev| [vev, vev.titlecase] }
+              },
+              { title: "# Lessees", sortable: true, apiIndex: "lessee_count", data_type: "integer" }
+            ].compact
+          },
+          !show_insurables ? nil : {
+            title: "Communities",
+            endpoint: "/v2/reporting/coverage-reports/#{self.id}/entries",
+            fixed_filters: {
+              reportable_category: "Community"
+            },
+            columns: [
+              { title: "Address", sortable: true, apiIndex: "street_address" },
+              { title: "Community", sortable: true, apiIndex: "reportable_title" }
+            ].compact + standard_columns
+          },
+          !show_yardi ? nil : {
+            title: "Yardi Units",
+            endpoint: "/v2/reporting/coverage-reports/#{self.id}/unit-entries",
+            fixed_filters: {},
+            columns: [
+              { title: "Address", sortable: true, apiIndex: "street_address" },
+              { title: "Unit", sortable: true, apiIndex: "yardi_id" },
+              { title: "Coverage", sortable: true, apiIndex: "coverage_status", data_type: "enum",
+                enum_values: visible_enum_values,
+                format: visible_enum_values.map{|vev| [vev, vev.titlecase] }
+              },
+              { title: "# Lessees", sortable: true, apiIndex: "lessee_count", data_type: "integer" }
+            ].compact
+          },
+          !show_yardi ? nil : {
+            title: "Yardi Properties",
+            endpoint: "/v2/reporting/coverage-reports/#{self.id}/entries",
+            fixed_filters: {
+              reportable_category: "Yardi Property"
+            },
+            columns: [
+              { title: "Title", sortable: true, apiIndex: "reportable_description" },
+              { title: "Property Code", sortable: true, apiIndex: "reportable_title" }
+            ].compact + standard_columns
+          },
+          !show_accounts ? nil : {
+            title: "PM Accounts",
+            endpoint: "/v2/reporting/coverage-reports/#{self.id}/entries",
+            fixed_filters: {
+              reportable_category: "PM Account"
+            },
+            columns: [
+              { title: "PM Account", sortable: true, apiIndex: "reportable_title" }
+            ].compact + standard_columns
+          },
+          !show_universe ? nil : {
+            title: "Universe",
+            endpoint: "/v2/reporting/coverage-reports/#{self.id}/entries",
+            fixed_filters: {
+              reportable_category: "Universe"
+            },
+            columns: standard_columns
+          }
+        ].compact,
+        subreport_links: [
+          {
+            title: "Units",
+            origin: "Communities",
+            destination: "Units",
+            fixed_filters: {
+              parent_id: "${id}"
+            },
+            copied_columns: [
+              "Community"
+            ]
+          },
+          {
+            title: "Buildings",
+            origin: "Communities",
+            destination: "Buildings",
+            fixed_filters: {
+              parent_id: "${id}"
+            },
+            copied_columns: [
+              "Community"
+            ]
+          },
+          {
+            title: "Units",
+            origin: "Yardi Properties",
+            destination: "Yardi Units",
+            fixed_filters: {
+              parent_id: "${id}"
+            },
+            copied_columns: [
+              "Property Code"
+            ]
+          },
+          {
+            title: "Communities",
+            origin: "PM Accounts",
+            destination: "Communities",
+            fixed_filters: {
+              parent_id: "${id}"
+            },
+            copied_columns: []
+          },
+          {
+            title: "PM Accounts",
+            origin: "Universe",
+            destination: "PM Accounts",
+            fixed_filters: {
+              parent_id: "${id}"
+            },
+            copied_columns: []
+          }
+        ]
+      }
+      dat_manifest[:subreport_links].select!{|link| dat_manifest[:subreports].any?{|sr| sr[:title] == link[:origin] } && dat_manifest[:subreports].any?{|sr| sr[:title] == link[:destination] } }
+      return(dat_manifest)
+    end
+
+
+
+    private
+
+      def set_coverage_determinant
+        self.coverage_determinant ||= (self.owner.reporting_coverage_reports_settings || {})['coverage_determinant'] || 'any' if self.owner_type == "Account"
+      end
+        
+  end # end class
+end
