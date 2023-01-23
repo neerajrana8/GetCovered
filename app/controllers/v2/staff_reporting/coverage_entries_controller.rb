@@ -4,8 +4,6 @@
 module V2
   module StaffReporting
     class CoverageEntriesController < StaffReportingController
-    
-      include Concerns::Reporting::CoverageEntriesMethods
       
       before_action :set_coverage_report, only: %i[index]
     
