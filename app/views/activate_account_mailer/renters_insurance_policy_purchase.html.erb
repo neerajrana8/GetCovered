@@ -405,10 +405,14 @@
 
                                     <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em; text-align: center">
                                                   <button class="accept_invitation">
-                                                     <a href="<%= @accept_link %>" style="color: #69acdd">
+                                                     <a href="<%= "#{@accept_link}" %>" target="_blank" style="color: #69acdd">
                                                         <%= t('activate_account_mailer.third_party_insurance.activate_your_account') %>
                                                      </a>
                                                   </button>
+                                    </p>
+
+                                    <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+                                      <span style="font-size: 16px;"><%= t('user_coverage_mailer.qbe_proof_of_coverage.let_us_know') %> </span>
                                     </p>
 
                                     <p>

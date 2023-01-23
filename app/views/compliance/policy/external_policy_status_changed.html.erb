@@ -1,4 +1,4 @@
-<% @inline_display_title = @pm_account.id == 46 ? @pm_account&.title : "Get Covered" %>
+<% @inline_display_title = @second_nature_condition == true ? "Second Nature" : "Get Covered" %>
 <% if @policy.status == "EXTERNAL_UNVERIFIED" %>
   <!--
   ----
@@ -16,7 +16,7 @@
   </p>
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
     <span style="font-size: 16px;">
-      <% @inline_display_title %> is reviewing your policy to ensure that it meets the requirements of <%= @pm_account&.title %>
+      <%= @inline_display_title %> is reviewing your policy to ensure that it meets the requirements of <%= @pm_account&.title %>
     </span>
   </p>
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
@@ -38,7 +38,7 @@
   </p>
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
     <span style="font-size: 16px;">
-      If you decide to switch carriers, please make sure to upload your new policy information in the <% @inline_display_title %> portal at
+      If you decide to switch carriers, please make sure to upload your new policy information in the <%= @inline_display_title %> portal at
       <a href="<%= @onboarding_url %>" target="_blank"><%= @branding_profile.url %></a>
     </span>
   </p>
@@ -61,7 +61,7 @@
     </p>
   <% else %>
     <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-    <span style="font-size: 16px;">While evaluating your insurance policy submitted to <% @inline_display_title %>, we have found the policy does
+    <span style="font-size: 16px;">While evaluating your insurance policy submitted to <%= @inline_display_title %>, we have found the policy does
       not meet the requirements specified by <%= @community.title %>.</span>
     </p>
 
@@ -103,7 +103,7 @@
         <% if reason == Policy.rejection_reasons["am_requirement_not_met"] %>
         <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
           <p style="font-size: 16px;"> <%= @policy&.out_of_system_carrier_title %> policies do not meet your Property Managements requirements. Your Property Manager requires residents to obtain and maintain a renters insurance policy from a carrier with an AM Best Rating of A-VII. To ensure your account complies with the insurance requirements,
-                          you may submit an updated policy from an AM Best rated carrier of your choice or purchase a policy through our preferred partner Get Covered.</p>
+                          you may submit an updated policy from an AM Best rated carrier of your choice or purchase a policy through our preferred partner <%= @inline_display_title %>.</p>
           </p>
       <% end %>
       </li>
@@ -121,7 +121,7 @@
   <% end %>
 <% end %>
 <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-  <% @bottom_inline_display = @pm_account.id == 46 ? @pm_account.title : "#{ @pm_account.title } & Get Covered"%>
-  <span style="font-size: 16px;">Thank you,<br> <%= @bottom_inline_display %><br>
-    <a href="mailto:<%= @from %>"><%= @from %></a></span>
+  <% @bottom_inline_display = @second_nature_condition == true ? "Second Nature" : "#{ @pm_account.title } & Get Covered"%>
+  <span style="font-size: 16px;">Thank you,<br> <%= @bottom_inline_display %><% unless @second_nature_condition %><br>
+    <a href="mailto:<%= @from %>"><%= @from %></a></span><% end %>
 </p>
