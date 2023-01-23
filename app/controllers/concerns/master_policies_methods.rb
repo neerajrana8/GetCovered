@@ -218,12 +218,12 @@ module MasterPoliciesMethods
           #   :enabled
           # ]
 
-          if params[:master_policy_confguration].present?
-            if params[:master_policy_configuration][:id].present?
-              mpc = MasterPolicyConfiguration.find(params[:master_policy_configuration][:id])
-              mpc.update(params[:master_policy_configuration])
+          if params[:master_policy_confgurations].present?
+            if params[:master_policy_configurations][:id].present?
+              mpc = MasterPolicyConfiguration.find(params[:master_policy_configurations][:id])
+              mpc.update(params[:master_policy_configurations])
             else
-              mpc_params = params[:master_policy_confguration]
+              mpc_params = params[:master_policy_confgurations]
               mpc_params[:configurable_id] = insurable.id
               mpc_params[:configurable_type] = 'Insurable'
               MasterPolicyConfiguration.create! mpc_params
