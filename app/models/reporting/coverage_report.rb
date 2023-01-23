@@ -67,35 +67,45 @@ module Reporting
     def self.generate_all!(report_time)
       reports = Reporting::CoverageReport.where(report_time: report_time, owner_type: [nil, "Account"]).pluck(:owner_id, :coverage_determinant, :status, :id)
       # generate root reports
-      Reporting::CoverageReport.coverage_determinants.keys.each do |cd|
+      puts "[Reporting::CoverageReport.generate_all!] Generating #{Reporting::CoverageReport.coverage_determinants.count} root reports..."
+      Reporting::CoverageReport.coverage_determinants.keys.each.with_index do |cd, ind|
         found = reports.find{|r| r[0].nil? && r[1] == cd }
         case found&.[](2)
           when 'ready'
             # do nothing
+            puts "[Reporting::CoverageReport.generate_all!]   (#{ind+1} / #{Reporting::CoverageReport.coverage_determinants.count}) Root '#{cd}' report already generated."
           when 'preparing', 'errored'
             # try to regenerate
+            puts "[Reporting::CoverageReport.generate_all!]   (#{ind+1} / #{Reporting::CoverageReport.coverage_determinants.count}) Root '#{cd}' report exists but has not been fully generated; attempting generation."
             Reporting::CoverageReport.find(found[3]).generate!
           when nil
             # try to create
+            puts "[Reporting::CoverageReport.generate_all!]   (#{ind+1} / #{Reporting::CoverageReport.coverage_determinants.count}) Generating root '#{cd}' report."
             Reporting::CoverageReport.create!(owner: nil, report_time: report_time, coverage_determinant: cd).generate!
         end
       end
       # generate account reports
-      ::Account.where(reporting_coverage_reports_generate: true).order(id: :asc).pluck(:id).each do |account_id|
+      account_ids = ::Account.where(reporting_coverage_reports_generate: true).order(id: :asc).pluck(:id)
+      puts "[Reporting::CoverageReport.generate_all!] Generating #{account_id.count} PM account reports..."
+      account_ids.each.with_index do |account_id, ind|
         account = Account.find(account_id)
         cd = (account.reporting_coverage_reports_settings || {})['coverage_determinant'] || 'any'
         found = reports.find{|r| r[0] == account_id && r[1] == cd }
         case found&.[](2)
           when 'ready'
             # do nothing
+            puts "[Reporting::CoverageReport.generate_all!]   (#{ind+1}/#{account_id.count}) Report for PM '#{account.title}' already generated."
           when 'preparing', 'errored'
             # try to regenerate
+            puts "[Reporting::CoverageReport.generate_all!]   (#{ind+1}/#{account_id.count}) Report for PM '#{account.title}' exists but has not been fully generated; attempting generation."
             Reporting::CoverageReport.find(found[3]).generate!
           when nil
             # try to create
+            puts "[Reporting::CoverageReport.generate_all!]   (#{ind+1}/#{account_id.count}) Generating report for PM '#{account.title}'."
             Reporting::CoverageReport.create!(owner: account, report_time: report_time, coverage_determinant: cd).generate!
         end
       end
+      puts "[Reporting::CoverageReport.generate_all!] Report generation complete."
       return true
     end
     
@@ -145,7 +155,6 @@ module Reporting
       # determine what aspects of the manifest to make visible
       show_yardi = self.owner_type == "Account" && !self.owner.integrations.where(provider: 'yardi').blank? ? true : false
       show_insurables = !show_yardi
-      show_accounts = true
       show_universe = false
       hide_internal_vs_external = true
       if self.owner_type.nil? # superadmin view
@@ -223,7 +232,17 @@ module Reporting
               { title: "Property Code", sortable: true, apiIndex: "reportable_title" }
             ].compact + standard_columns
           },
-          !show_accounts ? nil : {
+          {
+            title: "States",
+            endpoint: "/v2/reporting/coverage-reports/#{self.id}/entries",
+            fixed_filters: {
+              reportable_category: "State"
+            },
+            columns: [
+              { title: "State", sortable: true, apiIndex: "reportable_title" }
+            ].compact + standard_columns
+          },
+          {
             title: "PM Accounts",
             endpoint: "/v2/reporting/coverage-reports/#{self.id}/entries",
             fixed_filters: {
@@ -231,7 +250,8 @@ module Reporting
             },
             columns: [
               { title: "PM Account", sortable: true, apiIndex: "reportable_title" }
-            ].compact + standard_columns
+            ].compact + standard_columns,
+            direct_access: show_universe ? false : true
           },
           !show_universe ? nil : {
             title: "Universe",
@@ -239,7 +259,8 @@ module Reporting
             fixed_filters: {
               reportable_category: "Universe"
             },
-            columns: standard_columns
+            columns: standard_columns,
+            direct_access: true
           }
         ].compact,
         subreport_links: [
@@ -283,7 +304,25 @@ module Reporting
             fixed_filters: {
               parent_id: "${id}"
             },
-            copied_columns: []
+            copied_columns: self.owner_type == "Account" ? [] : ["PM Account"]
+          },
+          {
+            title: "Yardi Properties",
+            origin: "PM Accounts",
+            destination: "Yardi Properties",
+            fixed_filters: {
+              parent_id: "${id}"
+            },
+            copied_columns: self.owner_type == "Account" ? [] : ["PM Account"]
+          },
+          {
+            title: "States",
+            origin: "PM Accounts",
+            destination: "States",
+            fixed_filters: {
+              parent_id: "${id}"
+            },
+            copied_columns: self.owner_type == "Account" ? [] : ["PM Account"]
           },
           {
             title: "PM Accounts",

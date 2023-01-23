@@ -80,6 +80,13 @@ module Reporting
         else
           raise StandardError.new("Only community integration profiles are supported!")
         end
+      elsif self.reportable_type == 'InsurableGeographicalCategory'
+        self.reportable_category = "State"
+        self.reportable_title = self.reportable.state
+        self.reportable_description = nil
+        if self.reportable.state.nil? || !state.counties.blank?
+          raise StandardError.new("Only InsurableGeographicalCategories for entire states are supported!")
+        end
       elsif self.reportable_type == 'Account'
         self.reportable_category = "PM Account"
         self.reportable_title = self.reportable.title
@@ -186,6 +193,13 @@ module Reporting
             else
               raise StandardError.new("Only community integration profiles are supported!")
             end
+          elsif self.reportable_type == 'InsurableGeographicalCategory'
+            # states WARNING: assumes community entries are already generated
+            if self.parent.reportable_category == "PM Account"
+              accumulate_children(parent_override: self.parent, category: "Community", filter: Proc.new{|ce| ce.reportable&.primary_address&.state == self.reportable.state })
+            else
+              raise StandardError.new("")
+            end
           elsif self.reportable_type == 'Account'
             # pm accounts
             # generate community entries
@@ -217,6 +231,23 @@ module Reporting
               created&.generate!
             end
             ids.clear
+            # generate state entries
+            Address.where(
+              primary: true,
+              addressable_type: "Insurable",
+              addressable_id: Insurable.confirmed.where(account_id: self.reportable_id, insurable_type_id: InsurableType::RESIDENTIAL_COMMUNITIES_IDS)
+                                       .send(*self.ownership_constraint)
+                                       .pluck(:id)
+            ).pluck(:state).uniq.each do |state|
+              found = ::InsurableGeographicalCategory.get_for(state: state)
+              created = begin
+                Reporting::CoverageEntry.create!(parent: self, reportable_category: "State", coverage_report: self.coverage_report, reportable: found)
+              rescue ActiveRecord::RecordInvalid => e
+                raise unless (e.record.errors.to_hash.all?{|k,v| v == "has already been taken" } rescue false)
+                nil # we just ignore this error, we're apparently in what would with locks be a race condition and someone else created it first, but so what?
+              end
+              created&.generate!
+            end
             # accumulate
             self.accumulate_children(category: "Community")
           elsif self.reportable_type.nil?
@@ -283,8 +314,9 @@ module Reporting
     end
     
     # accumulate values from child CoverageEntry objects
-    def accumulate_children(category: nil)
-      self.children.send(*(category.nil? ? [:itself] : [:where, { reportable_category: category }])).reload.each do |child|
+    def accumulate_children(category: nil, parent_override: self, filter: nil)
+      parent_override.children.send(*(category.nil? ? [:itself] : [:where, { reportable_category: category }])).reload.each do |child|
+        next unless filter.nil? || filter.call(child)
         self.total_units += child.total_units
         self.total_units_unoccupied += child.total_units_unoccupied
         self.total_units_with_master_policy += child.total_units_with_master_policy
