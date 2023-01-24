@@ -12,7 +12,7 @@ module IntegrationsMethods
     render json: standard_error(:does_not_exist, "No integration index functionality exists yet."),
       status: 404
   end
-  
+
   def show
     # render a blank integration inside of here, no need to bother returning
     if @integration.nil?
@@ -115,8 +115,8 @@ module IntegrationsMethods
     end
     return
   end
-  
-  
+
+
   def create
     if @integration
       render json: standard_error(:integration_already_exists, "An integration already exists for #{@provider.titleize}."),
@@ -151,8 +151,8 @@ module IntegrationsMethods
     end
     return
   end
-  
-  
+
+
   def update
     if @integration.nil?
       render json: standard_error(:integration_not_found, "No #{@provider.titleize} integration could be found for your account."),
@@ -196,15 +196,15 @@ module IntegrationsMethods
         render json: standard_error(:integration_not_found, "This interface has not yet been updated with support for #{@provider.titleize} integrations."),
           status: 422
     end
-    return 
+    return
   end
-      
+
   private
-  
+
     def set_provider
       @provider = params[:provider].to_s
     end
-    
+
     def set_integration
       @integration = ::Integration.where(integratable: @account, provider: params[:provider].to_s).take # WARNING: does not throw error via .find() like some controllers
     end
@@ -249,13 +249,13 @@ module IntegrationsMethods
     def update_allowed?
       true
     end
-    
+
     def set_namespace_and_account
       @account = nil
       @namespace = nil
-      
+
       if current_staff&.respond_to?(:staff_roles)
-        if request.original_fullpath.include?("staff_super_admin") && current_staff.staff_roles.exists?(role: 'super_admin', enabled: true) 
+        if request.original_fullpath.include?("staff_super_admin") && current_staff.staff_roles.exists?(role: 'super_admin', enabled: true)
           @namespace = 'staff_super_admin'
           @account = Account.find(params[:account_id].to_i)
         else
@@ -264,17 +264,17 @@ module IntegrationsMethods
         end
       else
         if request.original_fullpath.include?("staff_super_admin")
-          @account = Account.where(params[:account_id].to_i).take
+          @account = Account.where(id: params[:account_id]).take
           @namespace = "staff_super_admin"
         elsif request.original_fullpath.include?("staff_account")
           @account = current_staff&.organizable
           @namespace = "staff_account"
         end
       end
-      
+
       if @account.nil? || @namespace.nil?
         render json: {}, status: 404 # apparently rendering in a before_action aborts the rest of the handling, woohoo
       end
-      
+
     end
 end

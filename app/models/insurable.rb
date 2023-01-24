@@ -44,6 +44,8 @@ class Insurable < ApplicationRecord
   after_commit :create_profile_by_carrier,
     on: :create
 
+  # NOTE: Disable according to #GCVR2-768 Master Policy Fixes
+  # NOTE: Master policy assignment moved to MasterCoverageSweepJob
   after_create :assign_master_policy
 
   belongs_to :account, optional: true
@@ -624,7 +626,9 @@ class Insurable < ApplicationRecord
   end
 
   def refresh_insurable_data
-    InsurablesData::Refresh.run!(insurable: self)
+    # Todo: Remove before 2023-02-01, left in place to make sure no errors would pop up
+    # InsurablesData::Refresh.run!(insurable: self)
+    nil
   end
   
   def get_qbe_traits(
@@ -688,6 +692,9 @@ class Insurable < ApplicationRecord
     end
   end
 
+  # NOTE: Commented out according to GCVR2-768: Master Policy Fixes
+  # NOTE: Master Policy Assignment moved MasterCoverageSweepJob
+  # NOTE: Recovered
   def assign_master_policy
     return if InsurableType::COMMUNITIES_IDS.include?(insurable_type_id) || insurable.blank?
 

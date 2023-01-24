@@ -196,7 +196,7 @@ class Address < ApplicationRecord
   # Returns full street address of Address from available variables
   def full_street_address(disable_plus4: false)
     [combined_street_address(), street_two,
-     combined_locality_region(), disable_plus4 ? zip_code : combined_zip_code()].compact
+     combined_locality_region(), disable_plus4 ? zip_code : combined_zip_code()].select{|x| !x.blank? }
              .join(', ')
              .gsub(/\s+/, ' ')
              .strip
@@ -302,7 +302,9 @@ class Address < ApplicationRecord
         i = sum_strang.index(c)
       end
     end.compact
+    # parse the cleaned screen
     result = StreetAddress::US.parse(sum_strang)
+    # unparse it
     unless result.nil?
       converter.reverse.each do |con|
         result.number = result.number.gsub(con[0], con[1]) if result.number
@@ -360,6 +362,12 @@ class Address < ApplicationRecord
               true_number = "#{parsed_address.number}#{(parsed_address.street || "").split(" ")[0] || ""}"
             end
           end
+        end
+        # fix problem with "101 38th Goose St" becoming # "101 38th" on "Goose St"
+        if true_number&.strip&.split(" ").count > 1
+          splat = true_number.strip.split(" ")
+          true_number = "#{splat[0].strip}"
+          true_street = "#{splat.drop(1).join(" ")} #{true_street}"
         end
         # go wild
         street_address.keys.each do |key|

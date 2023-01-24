@@ -95,6 +95,7 @@ class Policy < ApplicationRecord
   include AgencyConfiePolicy
   include RecordChange
 
+  before_save :sanitize_policy_number
   before_save :set_status_changed_on, if: Proc.new { |policy| policy.status_changed? }
 
   after_create :schedule_coverage_reminders, if: -> { policy_type&.master_coverage }
@@ -231,7 +232,7 @@ class Policy < ApplicationRecord
   }
 
   accepts_nested_attributes_for :policy_premiums,
-  :insurables, :policy_users, :policy_insurables, :policy_application
+  :insurables, :policy_users, :policy_insurables, :policy_application, :master_policy_configurations
   accepts_nested_attributes_for :policy_coverages, allow_destroy: true
   #  after_save :update_leases, if: :saved_changes_to_status?
 
@@ -302,6 +303,8 @@ class Policy < ApplicationRecord
     pm_not_additional_interest: I18n.t('policy_model.rejection_reasons.pm_not_additional_interest'),
     policy_not_active: I18n.t('policy_model.rejection_reasons.policy_not_active'),
     name_not_correct: I18n.t('policy_model.rejection_reasons.name_not_correct'),
+    tenants_not_listed: I18n.t('policy_model.rejection_reasons.tenants_not_listed'),
+    am_requirement_not_met: I18n.t('policy_model.rejection_reasons.am_requirement_not_met'),
     other: I18n.t('policy_model.rejection_reasons.other')}
 
   #TODO: need to refactor to enum values for policy-support dashboard too
@@ -612,10 +615,29 @@ class Policy < ApplicationRecord
       end
     end
   end
-
-  #TODO: seems that we still can create multiple leases for one insurable for the same dates. need to figure out is it correct ot not
-  def latest_lease
-    self.insurables.extract_associated(:leases)&.first&.order(end_date: :desc)&.first
+  
+  def latest_lease(lease_status: 'current', user_matches: [:all, :primary, :any, :none], prefer_more_users: true)
+    return nil if self.primary_insurable.blank?
+    found = self.primary_insurable.leases.where(status: lease_status).order(start_date: :desc).group_by do |lease|
+      case lease.users.count{|u| self.users.include?(u) }
+        when self.users.count
+          :all
+        when 0
+          :none
+        else
+          lease.users.include?(self.primary_user) ? :primary : :any
+      end
+    end
+    (user_matches.class == ::Array ? user_matches : [user_matches]).each do |match_type|
+      unless found[match_type].blank?
+        return(
+          (prefer_more_users && [:any, :primary].include?(match_type)) ?
+            found[match_type].sort_by{|lease| -lease.users.count{|u| self.users.include?(u) } }.first
+            : found[match_type].first
+        )
+      end
+    end
+    return nil
   end
 
   def lease_sign_date
@@ -665,7 +687,7 @@ class Policy < ApplicationRecord
   def notify_users
     # ['EXTERNAL_UNVERIFIED', 'EXTERNAL_VERIFIED', 'EXTERNAL_REJECTED'].include?(self.status)
     if self.previous_changes.has_key?('status') && ['EXTERNAL_VERIFIED', 'EXTERNAL_REJECTED'].include?(self.status)
-      unless self.integration_profiles.count > 0 || self.agency_id == 416
+      unless self.integration_profiles.count > 0
 
         if self.account_id == 0 || self.agency_id == 0
           reload() if inline_fix_external_policy_relationships
@@ -687,6 +709,10 @@ class Policy < ApplicationRecord
         end
       end
     end
+  end
+  
+  def sanitize_policy_number
+    self.number = self.number&.strip
   end
 
   def set_status_changed_on

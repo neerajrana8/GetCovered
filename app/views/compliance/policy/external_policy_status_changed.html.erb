@@ -1,3 +1,4 @@
+<% @inline_display_title = @second_nature_condition == true ? "Second Nature" : "Get Covered" %>
 <% if @policy.status == "EXTERNAL_UNVERIFIED" %>
   <!--
   ----
@@ -15,7 +16,7 @@
   </p>
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
     <span style="font-size: 16px;">
-      Get Covered is reviewing your policy to ensure that it meets the requirements of <%= @pm_account&.title %>
+      <%= @inline_display_title %> is reviewing your policy to ensure that it meets the requirements of <%= @pm_account&.title %>
     </span>
   </p>
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
@@ -37,7 +38,7 @@
   </p>
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
     <span style="font-size: 16px;">
-      If you decide to switch carriers, please make sure to upload your new policy information in the Get Covered portal at
+      If you decide to switch carriers, please make sure to upload your new policy information in the <%= @inline_display_title %> portal at
       <a href="<%= @onboarding_url %>" target="_blank"><%= @branding_profile.url %></a>
     </span>
   </p>
@@ -60,16 +61,16 @@
     </p>
   <% else %>
     <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-    <span style="font-size: 16px;">While evaluating your insurance policy submitted to Get Covered, we have found the policy does
+    <span style="font-size: 16px;">While evaluating your insurance policy submitted to <%= @inline_display_title %>, we have found the policy does
       not meet the requirements specified by <%= @community.title %>.</span>
     </p>
 
     <% if @policy.system_data.has_key?("rejection_reasons") && @policy.system_data["rejection_reasons"].length >= 1 %>
-    <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-      <span style="font-size: 16px;">Please resolve the following error(s) listed below:</span>
-    </p>
+      <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+        <span style="font-size: 16px;">Please resolve the following error(s) listed below:</span>
+      </p>
 
-    <span style="padding-left: 20px; list-style-type: circle;">
+      <span style="padding-left: 20px; list-style-type: circle;">
       <% @policy.system_data["rejection_reasons"].each do |reason| %>
       <li>
         <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
@@ -91,6 +92,20 @@
                 </p>
           </p>
       <% end %>
+
+        <% if reason == Policy.rejection_reasons["tenants_not_listed"] %>
+        <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+          <p style="font-size: 16px;">Thank you for submitting your policy! While reviewing your policy we noticed that the additional lease holder(s) is not listed as named insured(s).
+                          Your management company requires that all leaseholders have insurance on either a shared policy or on a policy of their own. Please re-upload an updated policy with all leaseholders listed.</p>
+          </p>
+      <% end %>
+
+        <% if reason == Policy.rejection_reasons["am_requirement_not_met"] %>
+        <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+          <p style="font-size: 16px;"> <%= @policy&.out_of_system_carrier_title %> policies do not meet your Property Managements requirements. Your Property Manager requires residents to obtain and maintain a renters insurance policy from a carrier with an AM Best Rating of A-VII. To ensure your account complies with the insurance requirements,
+                          you may submit an updated policy from an AM Best rated carrier of your choice or purchase a policy through our preferred partner <%= @inline_display_title %>.</p>
+          </p>
+      <% end %>
       </li>
       <% end %>
 
@@ -106,6 +121,7 @@
   <% end %>
 <% end %>
 <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-  <span style="font-size: 16px;">Thank you,<br> <%= @pm_account.title %> & Get Covered<br>
-    <a href="mailto:<%= @from %>"><%= @from %></a></span>
+  <% @bottom_inline_display = @second_nature_condition == true ? "Second Nature" : "#{ @pm_account.title } & Get Covered"%>
+  <span style="font-size: 16px;">Thank you,<br> <%= @bottom_inline_display %><% unless @second_nature_condition %><br>
+    <a href="mailto:<%= @from %>"><%= @from %></a></span><% end %>
 </p>

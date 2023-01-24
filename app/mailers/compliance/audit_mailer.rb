@@ -14,8 +14,10 @@ module Compliance
       @community = @unit.parent_community()
       @pm_account = @community.account
 
+      get_address = get_mailing_address(unit: @unit)
       @street_address = @community&.primary_address()
-      @address = @street_address.nil? ? nil : "#{ @street_address.combined_street_address }, #{ @unit.title }, #{ @street_address.city }, #{ @street_address.state }, #{ @street_address.zip_code }"
+      @mailing_address = get_address[:status] == false ? get_address[:addtl_address] : @street_address
+      @address = @mailing_address.nil? ? nil : "#{ @mailing_address.combined_street_address }, #{ @unit.title }, #{ @mailing_address.city }, #{ @mailing_address.state }, #{ @mailing_address.zip_code }"
 
       available_lease_date = lease_sign_date.nil? ? lease_start_date : lease_sign_date
 
@@ -28,7 +30,7 @@ module Compliance
       @min_liability = @community.coverage_requirements_by_date(date: available_lease_date)&.amount
 
       @requirements_date = @configuration.nil? ? lease_start_date : lease_start_date + @configuration.grace_period
-      @placement_cost = @configuration.nil? ? 0 : @configuration.charge_amount(true).to_f / 100
+      @placement_cost = @configuration.nil? ? 0 : @configuration.total_placement_amount(true).to_f / 100
       @from = @pm_account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] : "policyverify@getcovered.io"
 
       sending_condition = @configuration.nil? ? false : @configuration.program_start_date.to_date <= available_lease_date ? true : false
@@ -69,6 +71,21 @@ module Compliance
     def set_master_policy_and_configuration(community, carrier_id, cutoff_date = nil)
       @master_policy = community.policies.where(policy_type_id: 2, carrier_id: carrier_id).take
       @configuration = @master_policy&.find_closest_master_policy_configuration(community, cutoff_date)
+    end
+
+    def get_mailing_address(unit: )
+      use_community = {
+        :status => true,
+        :addtl_address => nil
+      }
+
+      possible_building = unit.insurable
+      if possible_building.insurable_type_id == 7
+        use_community[:status] = false
+        use_community[:addtl_address] = possible_building.primary_address()
+      end
+
+      return use_community
     end
   end
 end

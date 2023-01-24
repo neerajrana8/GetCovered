@@ -2,46 +2,49 @@ class Devise::Users::InvitationsController < Devise::InvitationsController
   before_action :resource_from_invitation_token, only: [:edit, :update]
   after_action :save_token_for_password_reset, only: [:update]
 
+  #def create
+  #  ::User.invite!(invite_params)
+  #  render json: { success: true },
+  #         status: :created
+  #end
+
+  #def edit
+  #  # redirect_to "#{client_api_url}?invitation_token=#{params[:invitation_token]}"
+  #end
+
   def update
     @raw_invitation_token = accept_invitation_params[:invitation_token]
-
-    if self.resource.invitation_accepted_at.nil?
-      self.resource = accept_resource
-      self.resource.update!(password: accept_invitation_params[:password],
+    self.resource = accept_resource
+    self.resource.update!(password: accept_invitation_params[:password],
                           password_confirmation: accept_invitation_params[:password_confirmation])
 
-      yield resource if block_given?
+    yield resource if block_given?
 
-      if resource.errors.empty?
-        if resource.class.allow_insecure_sign_in_after_accept
-          resource.after_database_authentication
-          update_auth_header
-          resource.create_token
+    if resource.errors.empty?
+      if resource.class.allow_insecure_sign_in_after_accept
+        resource.after_database_authentication
+        update_auth_header
+        resource.create_token
 
-          sign_out(resource) if accept_invitation_params[:password_confirmation].present?
-          #sign_in(resource_name, resource)
+        sign_out(resource) if accept_invitation_params[:password_confirmation].present?
+        #sign_in(resource_name, resource)
 
-          create_acct_user
+        create_acct_user
 
-          resource.update(invitation_token: generate_invitation_token_secret)
-
-          render json: { success: ['User updated.'] },
-               status: :accepted
-        else
-          render json: { success: ['User not updated.'] },
-               status: :not_modified
-        end
-      else
         resource.update(invitation_token: generate_invitation_token_secret)
-        render json: { errors: resource.errors.full_messages },
-             status: :unprocessable_entity
+
+        render json: { success: ['User updated.'] },
+               status: :accepted
+      else
+        render json: { success: ['User not updated.'] },
+               status: :updated_not_active #:not_modified
       end
     else
-      render json: { errors: ['Token already been used'] },
+      resource.update(invitation_token: generate_invitation_token_secret)
+      render json: { errors: resource.errors.full_messages },
              status: :unprocessable_entity
     end
   end
-
 
   def update_old
     @user.update(password: accept_invitation_params[:password], password_confirmation: accept_invitation_params[:password_confirmation])
@@ -60,6 +63,8 @@ class Devise::Users::InvitationsController < Devise::InvitationsController
              status: :unprocessable_entity
     end
   end
+
+  private
 
   private
 
@@ -101,7 +106,9 @@ class Devise::Users::InvitationsController < Devise::InvitationsController
 
   def resource_from_invitation_token_old
     #raw_token = Devise.token_generator.digest(resource_class, :invitation_token, params[:invitation_token])
-    @user = ::User.find_by_invitation_token(params[:invitation_token])#, true)
+
+    @user = ::User.find_by_invitation_token(params[:invitation_token], true)
+
     return if params[:invitation_token] && @user
     render json: { errors: ['Invalid token.'] }, status: :not_acceptable
   end
