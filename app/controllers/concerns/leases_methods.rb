@@ -95,7 +95,11 @@ module LeasesMethods
     master_policy = parent_insurable.policies.current.where(policy_type_id: PolicyType::MASTER_IDS).take
     if master_policy
 
-      return nil if master_policy.effective_date > Time.current.to_date
+      mpc = master_policy.find_closes_master_policy_configuration(parent_insurable)
+      checking_date = master_policy.effective_date
+      checking_date = mpc.program_start_date unless mpc.nil?
+
+      return nil if checking_date > Time.current.to_date
 
       policy_number = MasterPolicies::GenerateNextCoverageNumber.run!(master_policy_number: master_policy.number)
 
