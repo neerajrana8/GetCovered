@@ -99,6 +99,8 @@ module LeasesMethods
       checking_date = master_policy.effective_date
       checking_date = mpc.program_start_date unless mpc.nil?
 
+      return nil if mpc.program_type == 1
+
       return nil if checking_date > Time.current.to_date
 
       policy_number = MasterPolicies::GenerateNextCoverageNumber.run!(master_policy_number: master_policy.number)
