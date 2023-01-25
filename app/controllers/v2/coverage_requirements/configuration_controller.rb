@@ -5,7 +5,22 @@ module V2
       before_action :check_permissions, only: [:update, :delete]
 
       def index
+        # N/A
+      end
 
+      def community
+        resp = { error: :not_enough_params }
+        status = 400
+        check_date = DateTime.now
+        if params[:insurable_id].present? && params[:start_date].present?
+
+          insurable = Insurable.find(params[:insurable_id])
+          coverage_requirements = insurable.coverage_requirements_by_date(date: params[:start_date])
+
+          resp = { data: coverage_requirements }
+          status = 200
+        end
+        render json: resp, status: status
       end
 
       def show
