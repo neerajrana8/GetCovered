@@ -10,7 +10,8 @@ module Compliance
           master_policies.each do |master|
             master.insurables.communities.each do |community|
               #TODO: not the best option because seems that we do not update covered flags anymore for Lease & Insurable properly
-              excluded_leases = Lease.joins(insurable: :policies).where(insurable_id: community.units.pluck(:id),
+              excluded_leases = Lease.joins(insurable: :policies).where(status: %w[current pending],
+                                                                        insurable_id: community.units.pluck(:id),
                                                                         created_at: created_at_search_range,
                                                                         policies: {
                                                                           policy_type_id: [PolicyType::RESIDENTIAL_ID, PolicyType::MASTER_COVERAGE_ID],

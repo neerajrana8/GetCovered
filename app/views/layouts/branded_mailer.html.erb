@@ -314,10 +314,14 @@
                                       "
                                     >
                                       <% if defined?(@internal_mailer).nil? %>
-                                        <% unless defined?(@second_nature_condition).nil? %>
+                                        <% if defined?(@second_nature_condition).nil? %>
                                           Get Covered is emailing you on behalf of <%= @organization.title %> to provide certificate of insurance (COI) verification services.
                                         <% else %>
-                                          <%= @organization.title %> requires you to provide a certificate of insurance (COI) for verification
+                                          <% if @second_nature_condition %>
+                                            Second Nature is emailing you on behalf of <%= @organization.title %> to provide certificate of insurance (COI) verification services.
+                                          <% else %>
+                                            Get Covered is emailing you on behalf of <%= @organization.title %> to provide certificate of insurance (COI) verification services.
+                                          <% end %>
                                         <% end %>
                                       <% elsif defined?(@internal_mailer) == "instance-variable" %>
                                       Get Covered <%= Rails.env.gsub("_", " ").titlecase %>: <%= @subject %>
@@ -427,10 +431,14 @@
                                   >
                                     <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-top: 2em; padding-bottom: 2em;">
                                       <span style="font-size: 12px;">
-                                        <% unless defined?(@second_nature_condition).nil? %>
+                                        <% if defined?(@second_nature_condition).nil? %>
                                           <%= @from %> - ©<%=  Date.current.strftime('%Y') %> Get Covered, All Rights Reserved
                                         <% else %>
-                                          <%= @from %> - ©<%=  Date.current.strftime('%Y') %> <%= @organization.title %>, All Rights Reserved
+                                          <% if @second_nature_condition %>
+                                            <%= @from %> - ©<%=  Date.current.strftime('%Y') %> Second Nature, All Rights Reserved
+                                          <% else %>
+                                            <%= @from %> - ©<%=  Date.current.strftime('%Y') %> Get Covered, All Rights Reserved
+                                          <% end %>
                                         <% end %>
                                       </span>
                                     </p>
