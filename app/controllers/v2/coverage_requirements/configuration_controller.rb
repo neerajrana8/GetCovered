@@ -71,6 +71,23 @@ module V2
             r.amount = item[:amount]
             r.start_date = item[:start_date]
             r.save
+
+            # Hack for fast fix
+            if item[:account_id].present?
+              account = Account.find(item[:account_id])
+              cr = CoverageRequirement.find_by(
+                designation: item[:designation],
+                start_date: item[:start_date],
+                account_id: item[:account_id]
+              )
+
+              CoverageRequirement.where(
+                designation: item[:designation],
+                start_date: item[:start_date],
+                insurable_id: account.insurables.pluck(:id)
+              ).update_all(amount: item[:amount])
+            end
+
             data << r
           else
             if item[:insurable_id].present?
