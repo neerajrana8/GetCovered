@@ -88,7 +88,7 @@ module V2
       end
 
       def apply_proof(params)
-        @policy                  = Policy.new(paramsp)
+        @policy                  = Policy.new(params)
         @policy.policy_in_system = false
         @policy.status           = 'EXTERNAL_UNVERIFIED' if params[:status].blank?
         add_error_master_types(@policy.policy_type_id)
