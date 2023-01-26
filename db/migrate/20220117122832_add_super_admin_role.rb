@@ -4,7 +4,8 @@ class AddSuperAdminRole < ActiveRecord::Migration[6.1]
     staffs.each do |staff|
       if staff.staff_roles.where(role: 'super_admin').count === 0
         staff.staff_roles.update(primary: false)
-        StaffRole.create(staff: staff, role: 'super_admin', primary: true)
+        staff_role = StaffRole.create(staff: staff, role: 'super_admin', primary: true)
+        GlobalPermission.create(ownerable: staff_role, permissions: GlobalPermission::AVAILABLE_PERMISSIONS)
       end
     end
   end
