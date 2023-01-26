@@ -9,10 +9,13 @@ class CustomDeviseMailer < Devise::Mailer
       @accept_link = "#{client_host}/auth/accept-invitation/#{token}"
       @policy_type_title = I18n.t("policy_type_model.#{@policy_application.policy_type.title.parameterize.underscore}")
 
-      opts[:subject] = t('devise.mailer.product_invitation_instruction.subject',
-                         agency_title: @policy_application.agency&.title,
-                         policy_type_title: @policy_type_title)
-      opts[:template_name] = 'product_invitation_instructions'
+      #opts[:subject] = t('devise.mailer.product_invitation_instruction.subject',
+      #                   agency_title: @policy_application.agency&.title,
+      #                   policy_type_title: @policy_type_title)
+
+      #opts[:template_name] = 'product_invitation_instructions'
+      opts[:subject] = t('activate_account_mailer.renters_insurance_policy_purchase.subject')
+      opts[:template_name] = 'invitation_instructions'
     end
 
     super

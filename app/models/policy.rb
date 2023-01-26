@@ -687,7 +687,7 @@ class Policy < ApplicationRecord
   def notify_users
     # ['EXTERNAL_UNVERIFIED', 'EXTERNAL_VERIFIED', 'EXTERNAL_REJECTED'].include?(self.status)
     if self.previous_changes.has_key?('status') && ['EXTERNAL_VERIFIED', 'EXTERNAL_REJECTED'].include?(self.status)
-      unless self.integration_profiles.count > 0 || self.agency_id == 416
+      unless self.integration_profiles.count > 0
 
         if self.account_id == 0 || self.agency_id == 0
           reload() if inline_fix_external_policy_relationships

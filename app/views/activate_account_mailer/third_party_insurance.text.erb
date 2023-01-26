@@ -186,19 +186,6 @@
               padding-left: 4px !important;
               padding-right: 4px !important;
           }
-          button.accept_invitation {
-              border-radius: 10px;
-              padding: 16px 32px;
-              text-align: center;
-              text-decoration: none;
-              display: inline-block;
-              font-size: 16px;
-              margin: 4px 2px;
-              transition-duration: 0.4s;
-              cursor: pointer;
-              border: 2px solid blanchedalmond;
-              background-color: blanchedalmond;
-          }
       }
   </style>
   <!--[if mso]>
@@ -215,7 +202,6 @@
     .templateContainerInner {
       padding: 0px;
     }
-
   </style>
   <![endif]-->
   <style>
@@ -400,15 +386,19 @@
                                       padding-right: 50px;
                                   ">
                                     <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-                                      <span style="font-size: 16px;"><%= t('activate_account_mailer.renters_insurance_policy_purchase.thank_you_for_registering') %> <b><%= t('activate_account_mailer.renters_insurance_policy_purchase.please_click') %></b> <%= t('activate_account_mailer.renters_insurance_policy_purchase.the_gc_portal_will_allow') %> </span>
+                                      <span style="font-size: 16px;"><%= t('activate_account_mailer.third_party_insurance.thank_you_for_registering') %> <b><%= t('activate_account_mailer.third_party_insurance.please_click') %></b> <%= t('activate_account_mailer.third_party_insurance.the_gc_portal_will_allow') %> </span>
                                     </p>
 
                                     <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em; text-align: center">
-                                                  <button class="accept_invitation">
-                                                     <a href="<%= @accept_link %>" style="color: #69acdd">
-                                                        <%= t('activate_account_mailer.third_party_insurance.activate_your_account') %>
-                                                     </a>
-                                                  </button>
+                                                  <span style="font-size: 16px; background-color: darkkhaki ">
+                                                    <%= t('activate_account_mailer.third_party_insurance.activate_your_account')%>
+                                                  </span>
+                                    </p>
+
+                                    <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+                                                  <span style="font-size: 16px;">
+                                                    <%= t('activate_account_mailer.third_party_insurance.let_us_know')%>
+                                                  </span>
                                     </p>
 
                                     <p>
