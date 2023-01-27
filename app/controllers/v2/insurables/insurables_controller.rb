@@ -83,7 +83,8 @@ module V2
           insurables_query = insurables_query.where('title LIKE ?', "%#{filter[:title][:like]}%") if filter[:title][:like].present?
         end
 
-        insurables = insurables_query.page(page).per(per)
+        ids = insurables_query.pluck(:id).uniq
+        insurables = Insurable.where(id: ids).page(page).per(per)
 
         @insurables = insurables
         @meta = {
