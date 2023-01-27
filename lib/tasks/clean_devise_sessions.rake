@@ -1,7 +1,14 @@
 # Tasks for managing leads data
 namespace :device do
-  desc 'Clean device sessions for staff users'
+  desc 'Clean device sessions for staff & users'
   task :clean_sessions => :environment do
-    Staff.where('JSONB_ARRAY_LENGTH(tokens) > 5').update_all(tokens: {})
+
+    Staff.in_batches do |staff_batch|
+      staff_batch.update_all(tokens: {})
+    end
+
+    User.in_batches do |user_batch|
+      user_batch.update_all(tokens: {})
+    end
   end
 end
