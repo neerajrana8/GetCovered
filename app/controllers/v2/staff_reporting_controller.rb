@@ -29,10 +29,11 @@ module V2
       elsif @organizable == :EMPEROR
         @organizable = nil
       end
+      return(@organizable)
     end
     
     def access_model(model_class, model_id = nil)
-      return (@organizable.nil? ? model_class : @organizable.send(model_class.name.split("::").map{|x| x.underscore.pluralize }.join("_"))).send(*(model_id.nil? ? [:itself] : [:find, model_id])) rescue nil
+      return (@organizable.nil? ? model_class : @organizable.send(model_class.name.pluralize.split("::").map{|x| x.underscore }.join("_"))).send(*(model_id.nil? ? [:itself] : [:find, model_id])) rescue nil
     end
 
     private
