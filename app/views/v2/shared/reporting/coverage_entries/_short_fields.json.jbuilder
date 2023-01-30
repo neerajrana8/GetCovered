@@ -4,7 +4,7 @@ json.extract! coverage_entry,
   
   :total_units,
 
-  :total_units_with_master_policy
+  :total_units_with_master_policy,
   :total_units_with_ho4_policy,
   :total_units_with_gc_policy,
   :total_units_with_external_policy,

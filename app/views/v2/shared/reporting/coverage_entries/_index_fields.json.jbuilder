@@ -8,7 +8,7 @@ json.extract!(coverage_entry,
   
   :total_units,
 
-  :total_units_with_master_policy
+  :total_units_with_master_policy,
   :total_units_with_ho4_policy,
   :total_units_with_internal_policy,
   :total_units_with_external_policy,
@@ -18,10 +18,11 @@ json.extract!(coverage_entry,
   :percent_units_with_ho4_policy,
   :percent_units_with_internal_policy,
   :percent_units_with_external_policy,
-  :percent_units_with_no_policy
+  :percent_units_with_no_policy,
 
-,*(@show_more_fields.nil? ? [] : [
+  *(@show_more_fields.nil? ? [] : [
 
-  :status
+    :status
 
-]))
+  ])
+)
