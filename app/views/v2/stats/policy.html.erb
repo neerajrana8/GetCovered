@@ -1,9 +1,13 @@
 <div class="row">
     <div class="col">
         <h2>Find Policy</h2>
-        <form action="/v2/stats/policy" method=POST>
-            <input type="text" name="policy_id" />
-            <input type="submit" value="Find">
+        <form action="/v2/stats/policy" method=POST >
+            <div class="mb-3">
+                <label for="policy_id" class="form-label">Policy ID</label>
+
+                <input type="text" name="policy_id" class="form-control"/>
+            </div>
+            <input type="submit" value="Find" class="btn btn-primary mb-3">
         </form>
 
         <% if @policy %>

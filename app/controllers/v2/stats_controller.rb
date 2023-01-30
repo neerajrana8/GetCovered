@@ -6,9 +6,25 @@ module V2
 
     layout 'gc_tool'
 
-
     def show
+      @stats = {
 
+        insurables_total: all_insurables.count,
+        units_total: all_units.count,
+        units_covered: all_covered_units.count,
+        units_uncovered: all_uncovered_units.count,
+        units_with_valid_lease: all_units_with_valid_lease.count,
+        units_with_expired_lease: all_units_with_expired_lease.count,
+        units_without_any_lease: all_units_without_any_lease.count,
+        leases_total: all_leases.count,
+        all_covered_leases_with_valid_date: all_covered_leases_with_valid_date.count,
+        all_uncovered_leases_with_valid_date: all_uncovered_leases_with_valid_date.count,
+        policies_total: all_policices.count,
+        policies_valid_by_date: all_valid_by_date_policies.count,
+        policies_valid_by_status: active_policies.count,
+        policies_valid_by_status_and_date: policies_valid_by_status_and_date.count
+
+      }
       render :show, formats: :html
     end
 
@@ -53,26 +69,26 @@ module V2
         end
 
 
-       unit = insurable
-       unit_policies(unit).each do |policy|
-         # next unless tenant_matched?(lease, policy)
+        unit = insurable
+        unit_policies(unit).each do |policy|
+          # next unless tenant_matched?(lease, policy)
 
-         if policy_shouldbe_expired?(policy, check_date)
-           uncover_unit(unit)
-           make_policy_expired_status(policy)
-         end
+          if policy_shouldbe_expired?(policy, check_date)
+            uncover_unit(unit)
+            make_policy_expired_status(policy)
+          end
 
-         lease = active_lease(unit)
-         if unit_shouldbe_covered?(lease, policy, check_date)
-           cover_unit(unit)
-         end
+          lease = active_lease(unit)
+          if unit_shouldbe_covered?(lease, policy, check_date)
+            cover_unit(unit)
+          end
 
-         if policy_expired_status?(policy)
-           uncover_unit(unit)
-         else
-           cover_unit(unit)
-         end
-       end
+          if policy_expired_status?(policy)
+            uncover_unit(unit)
+          else
+            cover_unit(unit)
+          end
+        end
 
 
 

@@ -4,8 +4,12 @@
             <small class="text-muted">Update covered statuses for all related objects to given policy</small>
         </h2>
         <form action="/v2/stats/update" method=POST>
-            <input type="text" name="policy_id" />
-            <input type="submit" value="Update status">
+            <div class="mb-3">
+
+                <label for="policy_id" class="form-label">Policy ID</label>
+                <input type="text" name="policy_id" class="form-control"/>
+            </div>
+            <input type="submit" value="Update status" class="btn btn-primary mb-3">
         </form>
 
 
