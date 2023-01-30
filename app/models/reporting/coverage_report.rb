@@ -180,18 +180,20 @@ module Reporting
         { title: "% No Policy Units", sortable: true, apiIndex: "percent_units_with_no_policy", data_type: "number", format: "percent" }
       ].compact
       dat_manifest = {
-        title: "Coverage Report",
+        title: "Coverage",
+        root_subreport: show_universe ? "Universe" : "PM Accounts",
         subreports: [
           !show_insurables ? nil : {
             title: "Units",
             endpoint: "/v2/reporting/coverage-reports/#{self.id}/unit-entries",
             fixed_filters: {},
+            unique: ["id"],
             columns: [
               { title: "Address", sortable: true, apiIndex: "street_address" },
               { title: "Unit", sortable: true, apiIndex: "unit_number" },
               { title: "Coverage", sortable: true, apiIndex: "coverage_status", data_type: "enum",
                 enum_values: visible_enum_values,
-                format: visible_enum_values.map{|vev| [vev, vev.titlecase] }
+                format: visible_enum_values.map{|vev| vev.titlecase }
               },
               { title: "# Lessees", sortable: true, apiIndex: "lessee_count", data_type: "integer" }
             ].compact
@@ -202,6 +204,7 @@ module Reporting
             fixed_filters: {
               reportable_category: "Community"
             },
+            unique: ["id"],
             columns: [
               { title: "Address", sortable: true, apiIndex: "street_address" },
               { title: "Community", sortable: true, apiIndex: "reportable_title" }
@@ -211,6 +214,7 @@ module Reporting
             title: "Yardi Units",
             endpoint: "/v2/reporting/coverage-reports/#{self.id}/unit-entries",
             fixed_filters: {},
+            unique: ["id"],
             columns: [
               { title: "Address", sortable: true, apiIndex: "street_address" },
               { title: "Unit", sortable: true, apiIndex: "yardi_id" },
@@ -227,6 +231,7 @@ module Reporting
             fixed_filters: {
               reportable_category: "Yardi Property"
             },
+            unique: ["id"],
             columns: [
               { title: "Title", sortable: true, apiIndex: "reportable_description" },
               { title: "Property Code", sortable: true, apiIndex: "reportable_title" }
@@ -238,6 +243,7 @@ module Reporting
             fixed_filters: {
               reportable_category: "State"
             },
+            unique: ["id"],
             columns: [
               { title: "State", sortable: true, apiIndex: "reportable_title" }
             ].compact + standard_columns
@@ -248,6 +254,7 @@ module Reporting
             fixed_filters: {
               reportable_category: "PM Account"
             },
+            unique: ["id"],
             columns: [
               { title: "PM Account", sortable: true, apiIndex: "reportable_title" }
             ].compact + standard_columns,
@@ -259,6 +266,7 @@ module Reporting
             fixed_filters: {
               reportable_category: "Universe"
             },
+            unique: ["id"],
             columns: standard_columns,
             direct_access: true
           }
@@ -269,7 +277,7 @@ module Reporting
             origin: "Communities",
             destination: "Units",
             fixed_filters: {
-              parent_id: "${id}"
+              parent_id: "id"
             },
             copied_columns: [
               "Community"
@@ -280,7 +288,7 @@ module Reporting
             origin: "Communities",
             destination: "Buildings",
             fixed_filters: {
-              parent_id: "${id}"
+              parent_id: "id"
             },
             copied_columns: [
               "Community"
@@ -291,7 +299,7 @@ module Reporting
             origin: "Yardi Properties",
             destination: "Yardi Units",
             fixed_filters: {
-              parent_id: "${id}"
+              parent_id: "id"
             },
             copied_columns: [
               "Property Code"
@@ -302,7 +310,7 @@ module Reporting
             origin: "PM Accounts",
             destination: "Communities",
             fixed_filters: {
-              parent_id: "${id}"
+              parent_id: "id"
             },
             copied_columns: self.owner_type == "Account" ? [] : ["PM Account"]
           },
@@ -311,7 +319,7 @@ module Reporting
             origin: "PM Accounts",
             destination: "Yardi Properties",
             fixed_filters: {
-              parent_id: "${id}"
+              parent_id: "id"
             },
             copied_columns: self.owner_type == "Account" ? [] : ["PM Account"]
           },
@@ -320,7 +328,7 @@ module Reporting
             origin: "PM Accounts",
             destination: "States",
             fixed_filters: {
-              parent_id: "${id}"
+              parent_id: "id"
             },
             copied_columns: self.owner_type == "Account" ? [] : ["PM Account"]
           },
@@ -329,7 +337,7 @@ module Reporting
             origin: "Universe",
             destination: "PM Accounts",
             fixed_filters: {
-              parent_id: "${id}"
+              parent_id: "id"
             },
             copied_columns: []
           }
