@@ -14,7 +14,7 @@ scope module: :staff_reporting, path: "reporting" do
     via: "get",
     path: "coverage-reports/:coverage_report_id/entries"
   
-  get :latest_coverage_report,
+  post :latest_coverage_report,
     to: "coverage_reports#latest",
     via: "get",
     path: "latest/coverage-report"
