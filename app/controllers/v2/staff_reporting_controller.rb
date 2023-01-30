@@ -32,7 +32,7 @@ module V2
     end
     
     def access_model(model_class, model_id = nil)
-      return (@organizable.nil? ? model_class : @organizable.send(model_class.name.split("::").last.underscore.pluralize)).send(*(model_id.nil? ? [:itself] : [:find, model_id])) rescue nil
+      return (@organizable.nil? ? model_class : @organizable.send(model_class.name.split("::").map{|x| x.underscore.pluralize }.join("_"))).send(*(model_id.nil? ? [:itself] : [:find, model_id])) rescue nil
     end
 
     private
