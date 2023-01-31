@@ -417,7 +417,8 @@ module MasterPoliciesMethods
         :account_id, :agency_id, :auto_renew, :carrier_id, :effective_date, :policy_type_id,
         :expiration_date, :number, system_data: [:landlord_sumplimental],
         policy_coverages_attributes: %i[policy_application_id title limit deductible enabled designation],
-        master_policy_configurations_attributes: [
+        master_policy_configurations_attributes:
+          :id,
           :program_type,
           :grace_period,
           :integration_charge_code,
