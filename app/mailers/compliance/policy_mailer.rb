@@ -81,6 +81,7 @@ module Compliance
 
       set_locale(@user.profile&.language || "en")
 
+      #TODO: need to move hardcoded id to env dependant logic
       @second_nature_condition = false
       @second_nature_condition = true if @organization.is_a?(Agency) && @organization.id == 416
       @second_nature_condition = true if @organization.is_a?(Account) && @organization.agency_id == 416

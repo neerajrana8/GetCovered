@@ -81,7 +81,7 @@ class Insurable < ApplicationRecord
 
   has_many :integration_profiles,
            as: :profileable
-  
+
   has_many :insurable_rate_configurations,
            as: :configurable
 
@@ -131,7 +131,7 @@ class Insurable < ApplicationRecord
   #    indexes :title, type: :text, analyzer: 'english'
   #  end
   #end
-  
+
   # returns carrier status, which may differ by carrier; for MSI and QBE, it returns :preferred or :nonpreferred
   def get_carrier_status(carrier, refresh: nil)
     carrier = case carrier
@@ -149,7 +149,7 @@ class Insurable < ApplicationRecord
     end
     self.respond_to?("#{carrier}_get_carrier_status") ? self.send("#{carrier}_get_carrier_status", **{ refresh: refresh }.compact) : nil
   end
-  
+
   # Insurable.primary_address
   #
   def primary_address
@@ -188,15 +188,15 @@ class Insurable < ApplicationRecord
     return if insurable.nil?
     errors.add(:account, I18n.t('insurable_model.must_belong_to_same_account')) if insurable.account && account && insurable.account != account
   end
-  
+
   def residential_units
     units(unit_type_ids: [4])
   end
-  
+
   def commercial_units
     units(unit_type_ids: [5])
   end
-  
+
   def units(unit_type_ids: [4,5])
     # special logic in case we haven't been saved yet
     if self.id.nil?
@@ -219,7 +219,7 @@ class Insurable < ApplicationRecord
     # return the units
     return ::Insurable.where(insurable_type_id: unit_type_ids, insurable_id: nonunit_parent_ids) # WARNING: some code (msi insurable concern) expects query rather than array output here (uses scopes on this call)
   end
-  
+
   def query_for_full_hierarchy(exclude_self: false)
     # WARNING: at some point, we can use an activerecord callback to store all nonunit child insurable ids in a field and thus skip the loop
     # loopy schloopy
@@ -280,7 +280,7 @@ class Insurable < ApplicationRecord
 
     return to_return
   end
-  
+
   def authorized_to_provide_for_address?(carrier_id, policy_type_id, agency: nil)
     addresses.each do |address|
       return true if authorized == true
@@ -303,8 +303,8 @@ class Insurable < ApplicationRecord
 
   def refresh_policy_type_ids(and_save: false)
     self.policy_type_ids = self.carrier_insurable_profiles.any?{|cip| cip.carrier_id == DepositChoiceService.carrier_id && cip.external_carrier_id } ? [DepositChoiceService.policy_type_id] : []
-    
-    
+
+
     # THIS IS TURNED OFF FOR NOW, IT'S GOTTEN INSANELY MORE COMPLICATED SO WE'RE RESTRICTING TO DEPOSIT CHOICE:
     #my_own_little_agency = (self.agency_id ? ::Agency.where(id: self.agency_id).take : nil) || self.account&.agency || nil
     #if my_own_little_agency.nil? || self.primary_address.nil?
@@ -630,7 +630,7 @@ class Insurable < ApplicationRecord
     # InsurablesData::Refresh.run!(insurable: self)
     nil
   end
-  
+
   def get_qbe_traits(
     force_defaults: false,  # pass true here to force defaults even if the property's state does not support QBE defaults for final bind
     extra_settings: nil,    # pass policy_application.extra_settings if you have any
@@ -740,7 +740,7 @@ class Insurable < ApplicationRecord
                         end
       return(splat.size == 1 ? splat[0] : nil)
     end
-    
+
     def set_confirmed_automatically
       self.confirmed = !self.account_id.nil?
     end
