@@ -682,7 +682,7 @@ class Insurable < ApplicationRecord
     fr = {}
     max_date = CoverageRequirement.where('start_date <= ?', date)
     max_date = max_date.where(insurable_id: id)
-    max_date = max_date.or(max_date.where(account_id: account.id)) if account
+    max_date = max_date.or(CoverageRequirement.where(account_id: account.id)) if account
     max_date = max_date.maximum('start_date')
 
     if max_date
