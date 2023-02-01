@@ -24,7 +24,7 @@ class V2Controller < ApplicationController
     prequery = build_prequery(data_source, includes, transform_filters((default_filters.deep_merge(params[:filter].nil? ? {} : params[:filter].to_unsafe_h)).deep_merge(fixed_filters)), transform_orders(params[:sort].nil? ? nil : params[:sort].to_unsafe_h))
     query = build_query(data_source, prequery)
     last_id = nil
-    show_short = v2_default_to_short ? (params[:short] != false) : params[:short]
+    show_short =  params[:short]
     if show_short
       instance_variable_set(instance_symbol, pseudodistinct ? query.select{|m| if m.id == last_id then next(false) else last_id = m.id end; next(true) } : query)
       render template: (view_path + '/short.json.jbuilder') if v2_should_render[:short]
@@ -42,7 +42,7 @@ class V2Controller < ApplicationController
       response.headers['total-pages'] = page_count.to_s
       response.headers['total-entries'] = count.to_s
       instance_variable_set(instance_symbol, pseudodistinct ? query.page(page + 1).per(per).select{|m| if m.id == last_id then next(false) else last_id = m.id end; next(true) } : query.page(page + 1).per(per)) # pagination starts at page 1 with kaminary -____-
-      render template: (view_path + '/index.json.jbuilder') if v2_should_render[:index]
+      render template: (view_path + (v2_default_to_short ? 'short.json.jbuilder' : '/index.json.jbuilder')) if v2_should_render[:index]
     end
   end
 
