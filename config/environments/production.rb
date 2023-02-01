@@ -54,7 +54,7 @@ Rails.application.configure do
   redis_host = Rails.application.credentials.redis[ENV["RAILS_ENV"].to_sym][:host]
   redis_port = Rails.application.credentials.redis[ENV["RAILS_ENV"].to_sym][:port]
   redis_cache_url = "redis://#{redis_host}:#{redis_port}"
-  config.cache_store = :redis_cache_store, { url: redis_cache_url }
+  config.cache_store = :redis_cache_store, { url: redis_cache_url, expires_in: 1.day }
 
   # Use a real queuing backend for Active Job (and separate queues per environment)
   # config.active_job.queue_adapter     = :resque
