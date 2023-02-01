@@ -21,9 +21,10 @@ module LeasesMethods
         #integration_profiles_attributes: user_params[:user][:integration_profiles_attributes])
       end
 
+      # NOTE: Moved to MasterPolicySweepJob
       # NOTE: Auto assign master policy if applicable
-      Rails.logger.info "#DEBUG call(assign_master_policy) #{@lease}"
-      assign_master_policy
+      # Rails.logger.info "#DEBUG call(assign_master_policy) #{@lease}"
+      # assign_master_policy
 
       render template: 'v2/shared/leases/show', status: :created
     else
