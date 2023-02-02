@@ -70,29 +70,27 @@ module V2
 
 
         unit = insurable
-        unit_policies(unit).each do |policy|
+        unit_policies(unit).each do |po|
           # next unless tenant_matched?(lease, policy)
 
-          if policy_shouldbe_expired?(policy, check_date)
+          if policy_shouldbe_expired?(po, check_date)
             uncover_unit(unit)
-            make_policy_expired_status(policy)
+            make_policy_expired_status([p])
           end
 
           lease = active_lease(unit)
-          if unit_shouldbe_covered?(lease, policy, check_date)
+          if unit_shouldbe_covered?(lease, po, check_date)
             cover_unit(unit)
           else
             uncover_unit(unit)
           end
 
-          if policy_expired_status?(policy)
+          if policy_expired_status?(po)
             uncover_unit(unit)
           else
             cover_unit(unit)
           end
         end
-
-
 
 
         @policy = policy.reload
