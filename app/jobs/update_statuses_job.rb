@@ -70,6 +70,8 @@ class UpdateStatusesJob < ApplicationJob
           lease = active_lease(unit)
           if unit_shouldbe_covered?(lease, policy, check_date)
             cover_unit(unit)
+          else
+            uncover_unit(unit)
           end
 
           if policy_expired_status?(policy)
