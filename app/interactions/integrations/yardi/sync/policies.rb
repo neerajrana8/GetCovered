@@ -363,6 +363,7 @@ module Integrations
                 used.push(found.external_id)
                 next {
                   policy_user: pu,
+                  lease_user: found.profileable,
                   external_id: found.external_id
                 }
               end.compact.uniq
@@ -372,6 +373,12 @@ module Integrations
               next if policy_priu.blank? # MOOSE WARNING: we are rejecting policies whose primary user is not on the lease...
               # set up export stuff
               priu = policy_priu
+              if !priu[:lease_user].primary
+                next if integration.configuration['sync']['policy_push']['push_roommate_policies'] == false
+                if integration.configuration['sync']['policy_push']['roommates_to_primary']
+                  priu = lease_priu
+                end
+              end
               # export the policy
               roommate_index = 0
               policy_hash = {
@@ -379,9 +386,9 @@ module Integrations
                   #Identification: users_to_export.map{|u| { "IDValue" => u[:external_id], "IDType" => !u[:external_id].downcase.start_with?("r") ? "Resident ID" : "Roomate#{roommate_index += 1} ID" } },
                   Identification: users_to_export.map{|u| { "IDValue" => u[:external_id], "IDType" => u[:policy_user].primary ? "Resident ID" : "Roomate#{roommate_index += 1} ID" } },
                   Name: {
-                      "FirstName" => priu[:policy_user].user.profile.first_name,
-                      "MiddleName" => priu[:policy_user].user.profile.middle_name.blank? ? nil : priu[:policy_user].user.profile.middle_name,
-                      "LastName" => priu[:policy_user].user.profile.last_name#,
+                      "FirstName" => policy_priu[:policy_user].user.profile.first_name,
+                      "MiddleName" => policy_priu[:policy_user].user.profile.middle_name.blank? ? nil : priu[:policy_user].user.profile.middle_name,
+                      "LastName" => policy_priu[:policy_user].user.profile.last_name#,
                       #"Relationship"=> priu[:policy_user].primary ? nil : priu[:policy_user].spouse ? "Spouse" : "Roommate"
                   }.compact
                 },
