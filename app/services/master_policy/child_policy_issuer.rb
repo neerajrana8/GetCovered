@@ -17,24 +17,29 @@ module MasterPolicy
       @parent_insurable = @lease.insurable&.insurable
 
       # NOTE: Do not create MPC if start_date in future
-      return nil unless lease_valid?
-      return nil unless master_policy_matched?
+      raise 'Invalid lease' unless lease_valid?
+      raise 'Master policy not matched' unless master_policy_matched?
 
-      @mpc = master_policy_confiuration
+      @mpc = master_policy_configuration
 
-      return nil unless program_type_valid?
-      return nil unless  checking_date_valid?
+      raise 'Invalid program type' unless program_type_valid?
+      raise 'Date invalid' unless  checking_date_valid?
 
-      new_child_policy = create_child_policy
-      cover_unit
-      cover_lease
-
-      new_child_policy
+      enroll
     end
 
     private
 
-    def master_policy_confiuration
+    def enroll
+      ActiveRecord::Base.transaction do
+        new_child_policy = create_child_policy
+        cover_unit
+        cover_lease
+        new_child_policy
+      end
+    end
+
+    def master_policy_configuration
       ::MasterPolicy::ConfigurationFinder.call(@master_policy, @parent_insurable)
     end
 
@@ -75,6 +80,18 @@ module MasterPolicy
       MasterPolicies::GenerateNextCoverageNumber.run!(master_policy_number: @master_policy.number)
     end
 
+    def policy_users
+      users = []
+      @lease.users.each do |u|
+        users << { user_id: u.id }
+      end
+      users
+    end
+
+    def effective_date
+      @lease.start_date
+    end
+
     def create_child_policy
       new_child_policy_params = {
         agency: @master_policy.agency,
@@ -85,18 +102,23 @@ module MasterPolicy
         number: new_child_policy_number,
         policy_type_id: PolicyType::MASTER_COVERAGE_ID,
         policy: @master_policy,
-        effective_date: Time.zone.now,
+        effective_date: effective_date,
         expiration_date: @master_policy.expiration_date,
         system_data: @master_policy.system_data,
-        policy_users_attributes: [{ user_id: @lease.primary_user.id }]
+        policy_users_attributes: policy_users
       }
       @unit.policies.create(new_child_policy_params)
+    end
+
+    def assign_lease_users_to_policy(policy)
+      @lease.users do |u|
+        policy.users << u
+      end
+      policy.save
     end
 
     def lease_valid?
       @lease.start_date < Time.current.to_date
     end
-
   end
-
 end
