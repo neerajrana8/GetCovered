@@ -686,10 +686,10 @@ class Insurable < ApplicationRecord
     max_date = max_date.maximum('start_date')
 
     if max_date
-      insurable_requirements = coverage_requirements.where('start_date <= ?', max_date)
+      insurable_requirements = coverage_requirements.where('start_date <= ?', max_date).order(start_date: :asc)
 
       if account
-        account_requirements = account.coverage_requirements.where('start_date <= ?', max_date)
+        account_requirements = account.coverage_requirements.where('start_date <= ?', max_date).order(start_date: :asc)
         account_requirements.each do |ar|
           fr[ar.designation] = ar.id
         end
