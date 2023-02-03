@@ -29,7 +29,7 @@ class UpdateStatusesJob < ApplicationJob
 
     tenants_mismatched_cx = 0
 
-    skip = true
+    skip = false
     unless skip
       active_policies.each do |policy|
 
@@ -56,7 +56,7 @@ class UpdateStatusesJob < ApplicationJob
       end
     end
 
-    skip = true
+    skip = false
     unless skip
 
       all_units.each do |unit|

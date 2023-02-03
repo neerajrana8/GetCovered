@@ -75,7 +75,7 @@ module V2
 
           if policy_shouldbe_expired?(po, check_date)
             uncover_unit(unit)
-            make_policy_expired_status([p])
+            make_policy_expired_status(po)
           end
 
           lease = active_lease(unit)
