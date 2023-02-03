@@ -79,16 +79,11 @@ module V2
           end
 
           lease = active_lease(unit)
+
           if unit_shouldbe_covered?(lease, po, check_date)
             cover_unit(unit)
           else
             uncover_unit(unit)
-          end
-
-          if policy_expired_status?(po)
-            uncover_unit(unit)
-          else
-            cover_unit(unit)
           end
         end
 
