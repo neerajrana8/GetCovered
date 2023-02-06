@@ -52,7 +52,7 @@ class Devise::Users::RegistrationsController < DeviseTokenAuth::RegistrationsCon
         sign_up_params[:email]
       end
 
-    @resource.invitation_accepted_at = Time.zone.now
+    @resource.invitation_accepted_at = nil
     @resource.profile.language = I18n.locale if @resource&.profile&.present?
   end
 
