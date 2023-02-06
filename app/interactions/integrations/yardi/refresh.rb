@@ -110,6 +110,8 @@ module Integrations
         integration.configuration['sync']['push_policies'] = false if integration.configuration['sync']['push_policies'].nil?
         integration.configuration['sync']['push_master_policy_invoices'] = false if integration.configuration['sync']['push_master_policy_invoices'].nil?
         integration.configuration['sync']['policy_push'] ||= {}
+        integration.configuration['sync']['policy_push']['push_roommate_policies'] = true if integration.configuration['sync']['policy_push']['push_roommate_policies'].nil?
+        integration.configuration['sync']['policy_push']['roommates_to_primary'] = false if integration.configuration['sync']['policy_push']['roommates_to_primary'].nil?
         integration.configuration['sync']['policy_push']['push_document'] = false if integration.configuration['sync']['policy_push']['push_document'].nil?
         integration.configuration['sync']['policy_push']['attachment_type_options'] ||= []
         integration.configuration['sync']['policy_push']['attachment_type'] ||= nil
