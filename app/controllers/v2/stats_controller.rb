@@ -40,6 +40,14 @@ module V2
       render :policy, formats: :html
     end
 
+    def insurable
+      @insurable = Insurable.find(params[:insurable_id]) if params[:insurable_id]
+      if @insurable
+        @coverage_requirements = @insurable.coverage_requirements_by_date
+      end
+      render :insurable, formats: :html
+    end
+
     def update
       if params[:policy_id]
 
