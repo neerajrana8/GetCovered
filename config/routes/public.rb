@@ -16,7 +16,7 @@ post 'qbe/communities/show',
 scope module: :public do
 
 
-  get :version_test
+  get :version_test,
     to: "super_duper_admin_controller#version_test"
 
   get '/agency-accounts/:agency_id',
