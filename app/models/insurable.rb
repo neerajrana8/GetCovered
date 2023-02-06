@@ -679,8 +679,14 @@ class Insurable < ApplicationRecord
   def coverage_requirements_by_date(date: DateTime.current.to_date)
     # return self.coverage_requirements.where("start_date < ?", date).order('start_date desc').limit(1).take
 
-    tokens = [account.id, id, date]
-    requirements = CoverageRequirement.where('(account_id = ? OR insurable_id = ?) AND start_date <= ?', *tokens)
+    if account
+      tokens = [account.id, id, date]
+      requirements = CoverageRequirement.where('(account_id = ? OR insurable_id = ?) AND start_date <= ?', *tokens)
+    else
+      tokens = [id, date]
+      requirements = CoverageRequirement.where('insurable_id = ? AND start_date <= ?', *tokens)
+    end
+
     sorted_requirements = requirements.sort_by(&:start_date).reverse
     reqs = {}
     sorted_requirements.each do |r|
