@@ -1,7 +1,7 @@
 json.extract! user, :id, :email, :created_at, :has_leases, :has_existing_policies, :has_current_leases
 
 # TODO: Remove Legacy format "_attributes"
-json.profile_attributes user.profile
+json.profile_attributes user.profile if user.profile
 json.accounts(user.accounts.collect { |a| { title: a.title, id: a.id } })
 json.address do
   if user.address.present?
