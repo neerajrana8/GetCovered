@@ -3,7 +3,7 @@ scope module: :staff_reporting, path: "reporting" do
 
   post :coverage_reports,
     to: "coverage_reports#show",
-    path: "coverage-reports/:coverage_report_id"
+    path: "coverage-reports/:coverage_report_id/show"
   post :coverage_entries,
     to: "coverage_entries#index",
     path: "coverage-reports/:coverage_report_id/entries"

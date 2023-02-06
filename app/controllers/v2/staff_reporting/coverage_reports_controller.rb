@@ -10,7 +10,7 @@ module V2
       end
       
       def show
-        @coverage_report = access_model(Reporting::CoverageReport, params[:coverage_report_id].to_i)
+        @coverage_report = access_model(Reporting::CoverageReport).where(fixed_filters).where(id: params[:coverage_report_id].to_i).take
       end
       
       def latest
