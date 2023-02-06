@@ -93,6 +93,7 @@ module V2
         add_error_master_types(@policy.policy_type_id)
         if @policy.errors.blank? && @policy.save
           result = ::Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes]&.values)
+          @policy.reload
           if result.failure?
             render json: result.failure, status: 422
           else
