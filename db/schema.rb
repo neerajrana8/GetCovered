@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_10_05_071609) do
+ActiveRecord::Schema.define(version: 2022_12_12_155608) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -122,6 +122,7 @@ ActiveRecord::Schema.define(version: 2022_10_05_071609) do
     t.datetime "updated_at", null: false
     t.boolean "searchable", default: false
     t.string "neighborhood"
+    t.string "verified"
     t.index ["addressable_type", "addressable_id"], name: "index_addresses_on_addressable"
   end
 
@@ -146,6 +147,7 @@ ActiveRecord::Schema.define(version: 2022_10_05_071609) do
     t.string "integration_designation"
     t.string "producer_code"
     t.jsonb "carrier_preferences", default: {"by_policy_type"=>{}}, null: false
+    t.boolean "passthrough", default: false
     t.index ["agency_id"], name: "index_agencies_on_agency_id"
     t.index ["call_sign"], name: "index_agencies_on_call_sign", unique: true
     t.index ["integration_designation"], name: "index_agencies_on_integration_designation", unique: true
@@ -661,6 +663,32 @@ ActiveRecord::Schema.define(version: 2022_10_05_071609) do
     t.index ["contactable_id"], name: "index_contact_records_on_contactable_id"
   end
 
+  create_table "coverage_requirements", force: :cascade do |t|
+    t.string "designation"
+    t.integer "amount"
+    t.date "start_date"
+    t.bigint "insurable_id", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["insurable_id"], name: "index_coverage_requirements_on_insurable_id"
+  end
+
+  create_table "daily_reports", force: :cascade do |t|
+    t.bigint "account_id"
+    t.json "report"
+    t.string "report_type"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.string "reportable_type", null: false
+    t.bigint "reportable_id", null: false
+    t.integer "resolution"
+    t.index ["account_id"], name: "index_daily_reports_on_account_id"
+    t.index ["reportable_type", "reportable_id"], name: "index_daily_reports_on_reportable"
+  end
+
+  create_table "data_migrations", primary_key: "version", id: :string, force: :cascade do |t|
+  end
+
   create_table "disputes", force: :cascade do |t|
     t.string "stripe_id", null: false
     t.integer "amount", null: false
@@ -688,6 +716,7 @@ ActiveRecord::Schema.define(version: 2022_10_05_071609) do
     t.bigint "eventable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_events_on_created_at"
     t.index ["eventable_type", "eventable_id"], name: "index_events_on_eventable"
   end
 
@@ -752,6 +781,14 @@ ActiveRecord::Schema.define(version: 2022_10_05_071609) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["agency_id"], name: "index_global_agency_permissions_on_agency_id"
+  end
+
+  create_table "global_permissions", force: :cascade do |t|
+    t.jsonb "permissions"
+    t.bigint "ownerable_id"
+    t.string "ownerable_type"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "histories", force: :cascade do |t|
@@ -867,6 +904,7 @@ ActiveRecord::Schema.define(version: 2022_10_05_071609) do
     t.boolean "additional_interest", default: false
     t.string "additional_interest_name"
     t.integer "minimum_liability"
+    t.integer "special_status", default: 0, null: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
     t.index ["insurable_id"], name: "index_insurables_on_insurable_id"
@@ -878,7 +916,7 @@ ActiveRecord::Schema.define(version: 2022_10_05_071609) do
   create_table "integration_profiles", force: :cascade do |t|
     t.string "external_id"
     t.jsonb "configuration", default: {}
-    t.boolean "enabled", default: false
+    t.boolean "enabled", default: true
     t.bigint "integration_id"
     t.string "profileable_type"
     t.bigint "profileable_id"
@@ -952,6 +990,7 @@ ActiveRecord::Schema.define(version: 2022_10_05_071609) do
     t.bigint "policy_type_id"
     t.bigint "agency_id"
     t.integer "branding_profile_id"
+    t.bigint "session_id"
     t.index ["agency_id"], name: "index_lead_events_on_agency_id"
     t.index ["created_at"], name: "lead_events_created_at_idx"
     t.index ["lead_id"], name: "index_lead_events_on_lead_id"
@@ -1045,6 +1084,7 @@ ActiveRecord::Schema.define(version: 2022_10_05_071609) do
     t.datetime "updated_at", null: false
     t.jsonb "expanded_covered", default: {}
     t.boolean "defunct", default: false, null: false
+    t.date "sign_date"
     t.index ["account_id"], name: "index_leases_on_account_id"
     t.index ["insurable_id"], name: "index_leases_on_insurable_id"
     t.index ["lease_type_id"], name: "index_leases_on_lease_type_id"
@@ -1161,7 +1201,11 @@ ActiveRecord::Schema.define(version: 2022_10_05_071609) do
     t.boolean "enabled", default: false
     t.string "integration_account_number"
     t.boolean "lease_violation_only", default: true
-    t.index ["carrier_policy_type_id", "configurable_type", "configurable_id"], name: "index_cpt_and_conf_on_mpc", unique: true
+    t.integer "admin_fee", default: 0
+    t.integer "force_admin_fee"
+    t.boolean "prorate_admin_fee", default: false
+    t.integer "charge_date"
+    t.index ["carrier_policy_type_id", "configurable_type", "configurable_id"], name: "index_cpt_and_conf_on_mpc"
     t.index ["configurable_type", "configurable_id"], name: "index_master_policy_configurations_on_configurable"
   end
 
@@ -1668,7 +1712,6 @@ ActiveRecord::Schema.define(version: 2022_10_05_071609) do
     t.jsonb "carrier_payment_data"
     t.index ["account_id"], name: "index_policy_quotes_on_account_id"
     t.index ["agency_id"], name: "index_policy_quotes_on_agency_id"
-    t.index ["external_id"], name: "index_policy_quotes_on_external_id", unique: true
     t.index ["policy_application_id"], name: "index_policy_quotes_on_policy_application_id"
     t.index ["policy_group_quote_id"], name: "index_policy_quotes_on_policy_group_quote_id"
     t.index ["policy_id"], name: "index_policy_quotes_on_policy_id"
@@ -1810,6 +1853,20 @@ ActiveRecord::Schema.define(version: 2022_10_05_071609) do
     t.datetime "updated_at", null: false
     t.index ["global_agency_permission_id"], name: "index_staff_permissions_on_global_agency_permission_id"
     t.index ["staff_id"], name: "index_staff_permissions_on_staff_id"
+  end
+
+  create_table "staff_roles", force: :cascade do |t|
+    t.integer "role", default: 0
+    t.boolean "primary", default: false
+    t.bigint "staff_id", null: false
+    t.string "organizable_type"
+    t.bigint "organizable_id"
+    t.boolean "active", default: false
+    t.boolean "enabled", default: true
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["organizable_type", "organizable_id"], name: "index_staff_roles_on_organizable_type_and_organizable_id"
+    t.index ["staff_id"], name: "index_staff_roles_on_staff_id"
   end
 
   create_table "staffs", force: :cascade do |t|
@@ -1985,4 +2042,5 @@ ActiveRecord::Schema.define(version: 2022_10_05_071609) do
   add_foreign_key "policy_coverages", "policies"
   add_foreign_key "policy_coverages", "policy_applications"
   add_foreign_key "policy_types", "policy_types", column: "master_policy_id"
+  add_foreign_key "staff_roles", "staffs"
 end

@@ -50,6 +50,15 @@ module V2
           policies = policies.where(policy_insurables: { insurable_id: filter[:insurable_id] })
         end
 
+        # Tcode filtering
+        if filter[:tcode].present?
+          matched_integrations = IntegrationProfile
+                                   .where('external_id LIKE ? AND profileable_type = ?', "%#{filter[:tcode]}%", 'PolicyUser')
+          matched_integrations_ids = matched_integrations.pluck(:profileable_id)
+          policy_ids = PolicyUser.where(id: matched_integrations_ids).pluck(:policy_id)
+          policies = policies.where(id: policy_ids)
+        end
+
         if params[:pagination].present?
           per = params[:pagination][:per] if params[:pagination][:per].present?
           page = params[:pagination][:page] if params[:pagination][:page].present?
@@ -65,6 +74,20 @@ module V2
         @policies = policies
         @meta = { total: policies.total_count, page: policies.current_page, per: per }
         render 'v2/policies/list'
+      end
+
+      def show
+        @policy = Policy.find(params[:id])
+        render 'v2/policies/show'
+      end
+
+      def calculate_cost
+        resp = {}
+        policy = Policy.find(params[:id])
+        insurable = Insurable.find(params[:insurable_id])
+        mpc = policy.find_closest_master_policy_configuration(insurable, params[:start_date])
+        resp = { total_placement_amount: mpc.total_placement_amount } unless mpc.nil?
+        render json: resp
       end
 
       private

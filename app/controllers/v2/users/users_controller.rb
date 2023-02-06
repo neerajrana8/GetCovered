@@ -1,6 +1,8 @@
 module V2
   module Users
     class UsersController < ApiController
+      include ActionController::Caching
+
       before_action :authenticate_staff!
       before_action :check_permissions
 
@@ -18,9 +20,29 @@ module V2
         if params[:filter].present?
           if params[:filter][:community_id].present?
             community_ids = params[:filter][:community_id]
-            policies = PolicyInsurable.where(insurable_id: community_ids)
-            policy_ids = policies.pluck(:policy_id)
-            users = users.references(:policy_users).includes(:policy_users).where(policy_users: { policy_ids: policy_ids })
+
+            buildings_ids = []
+            units_ids = []
+            insurables = Insurable.where(insurable_id: community_ids)
+            insurables.each do |i|
+              if ::InsurableType::RESIDENTIAL_BUILDINGS_IDS.include?(i.insurable_type_id)
+                buildings_ids << i.id
+              end
+
+              if ::InsurableType::RESIDENTIAL_IDS.include?(i.insurable_type_id)
+                units_ids << i.id
+              end
+            end
+
+            if buildings_ids.count.positive?
+              units_from_buildings = Insurable.where(insurable_id: buildings_ids)
+              units_ids += units_from_buildings.pluck(:id)
+            end
+
+            leases = Lease.where(insurable_id: units_ids)
+            lease_ids = leases.pluck(:id)
+            users = users.references(:lease_users).includes(:lease_users).where(lease_users: { lease_id: lease_ids })
+            users = ::User.where(id: users.pluck(:id))
           end
 
           if params[:filter][:account_id].present?
@@ -47,8 +69,15 @@ module V2
           if params[:filter][:email].present?
             users = users.where("email ILIKE '%#{params[:filter][:email]}%'")
           end
+
+          # Filtering by tcode
+          if params[:filter][:tcode].present?
+            matched_integrations =
+              IntegrationProfile.where('profileable_type = ? AND external_id LIKE ?', 'User', "%#{params[:filter][:tcode]}%")
+            matched_integrations_user_ids = matched_integrations.pluck(:profileable_id)
+            users = users.where(id: matched_integrations_user_ids)
+          end
         end
-        Rails.logger.info "#DEBUG #{users.to_sql}"
 
         # Sorting
         if params[:sort].present?

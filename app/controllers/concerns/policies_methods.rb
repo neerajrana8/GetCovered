@@ -79,18 +79,22 @@ module PoliciesMethods
     type_id = update_coverage_params[:policy_type_id]
     add_error_master_types(type_id) if type_id.present?
     if @policy.errors.blank? && @policy.update_as(current_staff, update_coverage_params)
-      result = Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes])
-
-      if result.failure?
-        render json: result.failure, status: 422
-      else
-        Rails.logger.info "#DEBUG #{update_coverage_params}"
+      ActiveRecord::Base.transaction do
+        result = Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes])
         selected_insurable = Insurable.find(update_coverage_params[:policy_insurables_attributes].first[:insurable_id])
         @policy.primary_insurable = selected_insurable
         @policy.primary_insurable.save!
         @policy.save!
-        @policy = access_model(::Policy, params[:id])
-        render :show, status: :ok
+        @policy.policy_coverages.delete_all
+        @policy.policy_coverages.create!(update_coverage_params[:policy_coverages_attributes])
+        @policy.send(:create_necessary_policy_coverages_for_external)
+        @policy = Policy.find(params[:id]) # TODO: Not working -> access_model(::Policy, params[:id])
+
+        if result.failure?
+          render json: result.failure, status: 422
+        else
+          render :show, status: :ok
+        end
       end
     else
       render json: @policy.errors, status: :unprocessable_entity
@@ -228,7 +232,7 @@ module PoliciesMethods
 
   def update_user_params
     params.require(:policy).permit(users: [:id, :email,
-                                           profile_attributes: %i[birth_date contact_phone first_name gender job_title last_name salutation],
+                                           profile_attributes: %i[birth_date contact_phone first_name gender job_title last_name middle_name salutation],
                                            address_attributes: %i[city county street_number state street_name street_two zip_code]])
   end
 
@@ -242,7 +246,7 @@ module PoliciesMethods
         :spouse, :primary,
         user_attributes: [
           :email,
-          profile_attributes: %i[birth_date contact_phone first_name gender job_title last_name salutation],
+          profile_attributes: %i[birth_date contact_phone first_name gender job_title last_name middle_name salutation],
           address_attributes: %i[city county street_number state street_name street_two zip_code]
         ]
       ]

@@ -3,6 +3,7 @@ module MasterPolicies
     queue_as :default
 
     def perform(mps = nil, current_time: Time.current) # can pass array of master policies to prevent autoselection
+      return # MOOSE WARNING: disabled for now
 #=begin
       start_of_last_month = (current_time.beginning_of_month - 1.day).beginning_of_month.to_date
       mps ||= Policy.where.not(status: 'CANCELLED').or(Policy.where("cancellation_date >= ?", start_of_last_month))

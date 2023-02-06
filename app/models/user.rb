@@ -119,7 +119,8 @@ class User < ApplicationRecord
   	through: :policy_users
   has_many :policy_quotes,
     through: :policies
-  has_many :lease_users
+  #TODO: need to be discussed and updated after GCVR2-1018
+  has_many :lease_users#, -> { where('moved_in_at <= ?', Time.current).where('moved_out_at >= ?', Time.current) }
   has_many :leases,
     through: :lease_users
 
@@ -133,6 +134,7 @@ class User < ApplicationRecord
   has_many :contact_records, as: :contactable
 
   accepts_nested_attributes_for :payment_profiles, :address
+  accepts_nested_attributes_for :integration_profiles#, reject_if: proc { |attributes| attributes['id'].blank? }
   accepts_nested_attributes_for :profile, update_only: true
   accepts_nested_attributes_for :address, update_only: true
 
@@ -158,6 +160,43 @@ class User < ApplicationRecord
   validates_confirmation_of :password
   #validates_length_of       :password, within: Devise.password_length
 
+  # absorb another user
+  def absorb!(other)
+    return "Users can only absorb Users, not #{other.class.name.pluralize}!" unless other.class == ::User
+    begin
+      ActiveRecord::Base.transaction(requires_new: true) do
+        other.invoices.update_all(payer_id: self.id)
+        other.integration_profiles.update_all(profileable_id: self.id)
+        other.lease_users.update_all(user_id: self.id)
+        other.policy_users.update_all(user_id: self.id)
+        other.account_users.where.not(account_id: self.account_users.select(:account_id)).update_all(user_id: self.id)
+        other.account_users.reload.each{|au| au.delete }
+        if self.address.nil?
+          other.address&.update(addressable_id: self.id)
+        else
+          other.address&.delete
+        end
+        Claim.where(claimant: other).update_all(claimant_type: "User", claimant_id: self.id)
+        ContactRecord.where(contactable: other).update_all(contactable_type: "User", contactable_id: self.id)
+        NotificationSetting.where(notifyable: other).update_all(notifyable_type: "User", notifyable_id: self.id)
+        PaymentProfile.where(payer: other).update_all(payer_type: "User", payer_id: self.id, default_profile: self.payment_profiles.where(default_profile: true).blank?)
+        PaymentProfile.where(payer: self, default_profile: true).order("updated_at desc").to_a.drop(1).each{|pp| pp.update(default_profile: false) }
+        if self.profile.nil?
+          other.profile&.update(profileable_id: self.id)
+        else
+          other.profile&.delete
+        end
+        email = other.email
+        other.delete
+        if self.email.blank?
+          self.update(email: email, provider: 'email', uid: email)
+        end
+      end
+    rescue StandardError => e
+      return e
+    end
+    return nil
+  end
 
   # Override payment_method attribute getters and setters to store data
   # as encrypted
@@ -389,6 +428,11 @@ class User < ApplicationRecord
     profile.first_name + " " + profile.last_name
   end
 
+  #TODO: seems that we still can create multiple leases for one insurable for the same dates. need to figure out is it correct ot not
+  def latest_lease
+    leases&.order(end_date: :desc)&.first
+  end
+
   private
 
   def history_blacklist
@@ -436,7 +480,7 @@ class User < ApplicationRecord
   def set_default_provider
     self.provider = (self.email.blank? ? 'altuid' : 'email')
     self.altuid = Time.current.to_i.to_s + rand.to_s
-    self.uid = self.altuid
+    self.uid = (self.provider == 'email' ? self.email : self.altuid)
   end
 
   def ensure_email_based

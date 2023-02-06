@@ -26,6 +26,13 @@ end
 json.users do
   json.array! lease.lease_users.each do |lease_user|
     json.partial! 'v2/staff_super_admin/users/user_show_full.json.jbuilder', user: lease_user.user if lease_user.present?
+    json.lessee lease_user.lessee
+    json.moved_in_at lease_user.moved_in_at
+    json.moved_out_at lease_user.moved_out_at
+    if lease_user.user.integration_profiles.present?
+      json.t_code lease_user.user&.integration_profiles&.first&.external_id
+      json.integration_profile_id lease_user.user&.integration_profiles&.first&.id
+    end
     json.primary lease_user.primary
   end
 end
@@ -39,3 +46,5 @@ json.policies do
     end
   end
 end
+
+json.master_policy_configurations lease.insurable&.parent_community&.master_policy_configurations

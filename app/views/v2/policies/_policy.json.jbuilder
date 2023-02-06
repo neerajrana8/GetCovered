@@ -53,7 +53,6 @@ json.cache! policy do
   end
 
 
-
   json.primary_user do
     if policy.primary_user.present?
       json.email policy.primary_user.email
@@ -61,5 +60,9 @@ json.cache! policy do
     end
   end
   json.billing_strategy policy.policy_quotes&.last&.policy_application&.billing_strategy&.title
+
+  if policy&.primary_policy_user&.integration_profiles.present?
+    json.tcode policy&.primary_policy_user&.integration_profiles&.first&.external_id
+  end
 
 end

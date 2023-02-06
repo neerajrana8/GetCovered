@@ -16,7 +16,7 @@ end
 json.active_master_policy do
   if @master_policy.present?
     @mpc = insurable.insurable_type_id == 1 ? @master_policy.find_closest_master_policy_configuration(insurable) : @master_policy.find_closest_master_policy_configuration(insurable.parent_community)
-      unless @mpc.lease_violation_only
+      unless @mpc&.lease_violation_only
       json.partial! 'v2/shared/policies/fields.json.jbuilder', policy: @master_policy
       json.coverage_attributes do
         #TODO: need to move to one query
@@ -70,8 +70,24 @@ end
 
 json.user_attributes do
   if @user.present?
-    json.email @user.email
+    json.email @user.contact_email
     json.first_name @user.profile.first_name
     json.last_name @user.profile.last_name
+  end
+end
+
+json.primary_insurable_attributes do
+  if @user.present?
+    if @user.latest_lease.insurable.parent_building.present?
+      json.building do
+        json.partial! "v2/staff_super_admin/insurables/insurable_show_fields.json.jbuilder",
+                          insurable: @user.latest_lease.insurable.parent_building
+      end
+    end
+
+    json.unit do
+        json.partial! "v2/staff_super_admin/insurables/insurable_show_fields.json.jbuilder",
+                      insurable: @user.latest_lease.insurable
+    end
   end
 end
