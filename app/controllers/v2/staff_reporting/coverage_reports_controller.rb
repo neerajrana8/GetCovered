@@ -9,6 +9,10 @@ module V2
         super(:@coverage_reports, access_model(Reporting::CoverageReport))
       end
       
+      def show
+        @coverage_report = access_model(Reporting::CoverageReport, params[:coverage_report_id].to_i)
+      end
+      
       def latest
         @coverage_report = access_model(Reporting::CoverageReport).where(fixed_filters).order("report_time desc").limit(1).first
         render template: 'v2/shared/reporting/coverage_reports/show',
