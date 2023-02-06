@@ -34,6 +34,7 @@ module V2
       if @policy
         @insurable = policy_insurable(@policy)
         @leases = insurable_leases(@insurable)
+        @coverage_requirements = @insurable.coverage_requirements_by_date
       end
 
       render :policy, formats: :html
