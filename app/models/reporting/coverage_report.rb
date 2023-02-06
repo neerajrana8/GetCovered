@@ -167,17 +167,17 @@ module Reporting
       # build the manifest
       standard_columns = [ # we reuse these a lot so centralizing them here
         { title: "id", apiIndex: "id", invisible: true },
-        { title: "# Units", sortable: true, apiIndex: "total_units", data_type: "integer" },
-        { title: "# Master Policy Units", sortable: true, apiIndex: "total_units_with_master_policy", data_type: "integer" },
-        { title: "# HO4 Policy Units", sortable: true, apiIndex: "total_units_with_ho4_policy", data_type: "integer" },
-        hide_internal_vs_external ? nil : { title: "# GC Policy Units", sortable: true, apiIndex: "total_units_with_internal_policy", data_type: "integer" },
-        hide_internal_vs_external ? nil : { title: "# Uploaded Policy Units", sortable: true, apiIndex: "total_units_with_external_policy", data_type: "integer" },
-        { title: "# No Policy Units", sortable: true, apiIndex: "total_units_with_no_policy", data_type: "integer" },
-        { title: "% Master Policy Units", sortable: true, apiIndex: "percent_units_with_master_policy", data_type: "number", format: "percent" },
-        { title: "% HO4 Policy Units", sortable: true, apiIndex: "percent_units_with_ho4_policy", data_type: "number", format: "percent" },
-        hide_internal_vs_external ? nil : { title: "% GC Policy Units", sortable: true, apiIndex: "percent_units_with_internal_policy", data_type: "number", format: "percent" },
-        hide_internal_vs_external ? nil : { title: "% Uploaded Policy Units", sortable: true, apiIndex: "percent_units_with_external_policy", data_type: "number", format: "percent" },
-        { title: "% No Policy Units", sortable: true, apiIndex: "percent_units_with_no_policy", data_type: "number", format: "percent" }
+        { title: "# Units", sortable: true, apiIndex: "total_units", data_type: "integer", filters: ['scalar', 'interval'] },
+        { title: "# Master Policy Units", sortable: true, apiIndex: "total_units_with_master_policy", data_type: "integer", filters: ['scalar', 'interval'] },
+        { title: "# HO4 Policy Units", sortable: true, apiIndex: "total_units_with_ho4_policy", data_type: "integer", filters: ['scalar', 'interval'] },
+        hide_internal_vs_external ? nil : { title: "# GC Policy Units", sortable: true, apiIndex: "total_units_with_internal_policy", data_type: "integer", filters: ['scalar', 'interval'] },
+        hide_internal_vs_external ? nil : { title: "# Uploaded Policy Units", sortable: true, apiIndex: "total_units_with_external_policy", data_type: "integer", filters: ['scalar', 'interval'] },
+        { title: "# No Policy Units", sortable: true, apiIndex: "total_units_with_no_policy", data_type: "integer", filters: ['scalar', 'interval'] },
+        { title: "% Master Policy Units", sortable: true, apiIndex: "percent_units_with_master_policy", data_type: "number", format: "percent", filters: ['scalar', 'interval'] },
+        { title: "% HO4 Policy Units", sortable: true, apiIndex: "percent_units_with_ho4_policy", data_type: "number", format: "percent", filters: ['scalar', 'interval'] },
+        hide_internal_vs_external ? nil : { title: "% GC Policy Units", sortable: true, apiIndex: "percent_units_with_internal_policy", data_type: "number", format: "percent", filters: ['scalar', 'interval'] },
+        hide_internal_vs_external ? nil : { title: "% Uploaded Policy Units", sortable: true, apiIndex: "percent_units_with_external_policy", data_type: "number", format: "percent", filters: ['scalar', 'interval'] },
+        { title: "% No Policy Units", sortable: true, apiIndex: "percent_units_with_no_policy", data_type: "number", format: "percent", filters: ['scalar', 'interval'] }
       ].compact
       dat_manifest = {
         title: "Coverage",
@@ -189,13 +189,14 @@ module Reporting
             fixed_filters: {},
             unique: ["id"],
             columns: [
-              { title: "Address", sortable: true, apiIndex: "street_address" },
-              { title: "Unit", sortable: true, apiIndex: "unit_number" },
+              { title: "Address", sortable: true, apiIndex: "street_address", filters: ['scalar', 'vector', 'like'] },
+              { title: "Unit", sortable: true, apiIndex: "unit_number", filters: ['scalar', 'vector', 'like'] },
               { title: "Coverage", sortable: true, apiIndex: "coverage_status", data_type: "enum",
                 enum_values: visible_enum_values,
-                format: visible_enum_values.map{|vev| vev.titlecase }
+                format: visible_enum_values.map{|vev| vev.titlecase },
+                filters: ['scalar', 'vector']
               },
-              { title: "# Lessees", sortable: true, apiIndex: "lessee_count", data_type: "integer" }
+              { title: "# Lessees", sortable: true, apiIndex: "lessee_count", data_type: "integer", filters: ['scalar', 'vector', 'interval'] }
             ].compact
           },
           !show_insurables ? nil : {
@@ -206,8 +207,8 @@ module Reporting
             },
             unique: ["id"],
             columns: [
-              { title: "Address", sortable: true, apiIndex: "street_address" },
-              { title: "Community", sortable: true, apiIndex: "reportable_title" }
+              { title: "Address", sortable: true, apiIndex: "street_address", filters: ['scalar', 'vector', 'like'] },
+              { title: "Community", sortable: true, apiIndex: "reportable_title", filters: ['scalar', 'vector', 'like'] }
             ].compact + standard_columns
           },
           !show_yardi ? nil : {
@@ -216,13 +217,14 @@ module Reporting
             fixed_filters: {},
             unique: ["id"],
             columns: [
-              { title: "Address", sortable: true, apiIndex: "street_address" },
-              { title: "Unit", sortable: true, apiIndex: "yardi_id" },
+              { title: "Address", sortable: true, apiIndex: "street_address", filters: ['scalar', 'like'] },
+              { title: "Unit", sortable: true, apiIndex: "yardi_id", filters: ['scalar', 'vector', 'like'] },
               { title: "Coverage", sortable: true, apiIndex: "coverage_status", data_type: "enum",
                 enum_values: visible_enum_values,
-                format: visible_enum_values.map{|vev| [vev, vev.titlecase] }
+                format: visible_enum_values.map{|vev| vev.titlecase },
+                filters: ['scalar', 'vector']
               },
-              { title: "# Lessees", sortable: true, apiIndex: "lessee_count", data_type: "integer" }
+              { title: "# Lessees", sortable: true, apiIndex: "lessee_count", data_type: "integer", filters: ['scalar', 'interval'] }
             ].compact
           },
           !show_yardi ? nil : {
@@ -233,8 +235,8 @@ module Reporting
             },
             unique: ["id"],
             columns: [
-              { title: "Title", sortable: true, apiIndex: "reportable_description" },
-              { title: "Property Code", sortable: true, apiIndex: "reportable_title" }
+              { title: "Title", sortable: true, apiIndex: "reportable_description", filters: ['scalar', 'like'] },
+              { title: "Property Code", sortable: true, apiIndex: "reportable_title", filters: ['scalar', 'like'] }
             ].compact + standard_columns
           },
           {
@@ -245,7 +247,7 @@ module Reporting
             },
             unique: ["id"],
             columns: [
-              { title: "State", sortable: true, apiIndex: "reportable_title" }
+              { title: "State", sortable: true, apiIndex: "reportable_title", filters: ['scalar','like'] }
             ].compact + standard_columns
           },
           {
@@ -256,7 +258,7 @@ module Reporting
             },
             unique: ["id"],
             columns: [
-              { title: "PM Account", sortable: true, apiIndex: "reportable_title" }
+              { title: "PM Account", sortable: true, apiIndex: "reportable_title", filters: ['scalar','like'] }
             ].compact + standard_columns,
             direct_access: show_universe ? false : true
           },
