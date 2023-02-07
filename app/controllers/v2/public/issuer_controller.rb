@@ -32,6 +32,15 @@ module V2
         false
       end
 
+      def branding_for_mail
+        BrandingProfile.global_default
+      end
+
+      def cost
+        configuration = MasterPolicy::ConfigurationFinder.call(enrollment_master_policy, @insurable)
+        configuration.total_placement_amount.to_f / 100
+      end
+
       def notify_users(users, policy, force = false)
         users.each do |user|
           # Compliance::PolicyMailer.with(organization: @insurable.account || @insurable.agency)
@@ -39,7 +48,17 @@ module V2
           #                       community: enrollment_community,
           #                       force: force).deliver_now
           #
-          ::Policies::NewChildPolicyMailer.with(user: user, policy: policy).notify.deliver_later
+
+          PolicyMailer
+            .with(
+              organization: @insurable.account || @insurable.agency,
+              branding_profile: branding_for_mail,
+              user: user,
+              policy: policy,
+              community: enrollment_community,
+              unit: @insurable,
+              total_placement_cost: cost)
+            .notify_new_child_policy.deliver_now
         end
       end
 
