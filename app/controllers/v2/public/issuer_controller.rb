@@ -8,8 +8,10 @@ module V2
         @insurable = Insurable.find(enrollment_params[:insurable_id])
         users = enrollment_users
 
-        raise_error "No users found in system matched for Insurable #{@insurable.id}" \
-               "and #{enrollment_params[:user_attributes]}" if users.count.zero?
+        if users.count.zero?
+          raise_error "No users found in system matched for Insurable #{@insurable.id}" \
+               "and #{enrollment_params[:user_attributes]}"
+        end
 
         lease = Lease.find_by(insurable_id: @insurable.id, status: 'current')
 
@@ -18,7 +20,7 @@ module V2
         # invite_users(users)
 
         if policy_exists?
-          policy = {}
+          raise_error "Child policy already exists for Insurable ID=#{@insurable.id}"
         else
           policy = MasterPolicy::ChildPolicyIssuer.call(enrollment_master_policy, lease)
         end
@@ -29,7 +31,13 @@ module V2
       private
 
       def policy_exists?
-        false
+        pi = PolicyInsurable.where(insurable_id: @insurable.id)
+        policies_for_insurable = Policy.where(
+          id: pi.pluck(:policy_id),
+          policy_type_id: PolicyType::MASTER_COVERAGE_ID,
+          status: 'BOUND'
+        )
+        policies_for_insurable.count.positive?
       end
 
       def branding_for_mail
