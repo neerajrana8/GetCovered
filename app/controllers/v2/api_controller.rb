@@ -4,6 +4,7 @@ module V2
     include DeviseTokenAuth::Concerns::SetUserByToken
     respond_to :json
     rescue_from ActiveRecord::RecordNotFound, with: :not_found
+    # rescue_from StandardError, with: :handle_exception
 
     def generate_cache_key(key, payload)
       token = []
@@ -26,6 +27,10 @@ module V2
 
     def params_error(message = nil)
       render json: { message: message, errors: [ :not_enough_params ] }, status: 400
+    end
+
+    def handle_exception(message)
+      render json: { error: message }, status: 400
     end
   end
 end
