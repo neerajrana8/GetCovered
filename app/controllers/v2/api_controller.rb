@@ -3,8 +3,11 @@ module V2
   class ApiController < ApplicationController
     include DeviseTokenAuth::Concerns::SetUserByToken
     respond_to :json
+
+    class ApiError < StandardError; end
+
     rescue_from ActiveRecord::RecordNotFound, with: :not_found
-    # rescue_from StandardError, with: :handle_exception
+    rescue_from ApiError, with: :handle_exception
 
     def generate_cache_key(key, payload)
       token = []
@@ -20,7 +23,6 @@ module V2
       render json: { errors: [ :record_not_found ] }, status: 404
     end
 
-
     def not_found_error(message)
       render json: { message: message, errors: [ :record_not_found ] }, status: 404
     end
@@ -31,6 +33,10 @@ module V2
 
     def handle_exception(message)
       render json: { error: message }, status: 400
+    end
+
+    def raise_error(message)
+      raise ApiError, message
     end
   end
 end

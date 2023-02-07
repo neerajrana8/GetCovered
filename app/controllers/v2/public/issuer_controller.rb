@@ -8,12 +8,12 @@ module V2
         @insurable = Insurable.find(enrollment_params[:insurable_id])
         users = enrollment_users
 
-        raise "No users found in system matched for Insurable #{@insurable.id}" \
+        raise_error "No users found in system matched for Insurable #{@insurable.id}" \
                "and #{enrollment_params[:user_attributes]}" if users.count.zero?
 
         lease = Lease.find_by(insurable_id: @insurable.id, status: 'current')
 
-        raise "Lease not found for insurable ID=#{enrollment_params[:insurable_id]}" unless lease
+        raise_error "Lease not found for insurable ID=#{enrollment_params[:insurable_id]}" unless lease
 
         # invite_users(users)
 
