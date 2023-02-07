@@ -11,6 +11,8 @@ module V2
       
       def show
         @coverage_report = access_model(Reporting::CoverageReport).where(fixed_filters).where(id: params[:coverage_report_id].to_i).take
+        render template: 'v2/shared/reporting/coverage_reports/show',
+          status: :ok
       end
       
       def latest
