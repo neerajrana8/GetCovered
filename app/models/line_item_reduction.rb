@@ -81,11 +81,14 @@ class LineItemReduction < ApplicationRecord
             li.total_due - (li.preproration_total_due - self.amount - li.duplicatable_reduction_total) # same as below, except that the desired max total_due is li.preproration_total_due - self.amount
           when 'max_total_after_reduction'
             li.total_due - (self.amount - li.duplicatable_reduction_total) # self.amount is our desired max total_due; but DRT reductions should remain non-overlapping with proration reductions, i.e. we need to subtract them to get the REAL desired max total_due
+        end
       else # shared/duplicated/reduced get special treatment in Invoice, but nothing is different here
-        when 'max_amount_to_reduce'
-          self.amount - self.amount_successful
-        when 'max_total_after_reduction'
-          li.total_due - self.amount
+        case self.amount_interpretation
+          when 'max_amount_to_reduce'
+            self.amount - self.amount_successful
+          when 'max_total_after_reduction'
+            li.total_due - self.amount
+        end
     end
     to_reduce = to_reduce_ceiling if to_reduce > to_reduce_ceiling
     to_reduce = 0 if to_reduce < 0 && !negative_amount_interpretations.include?(self.amount_interpretation)
@@ -129,9 +132,9 @@ class LineItemReduction < ApplicationRecord
     
     def interpretation_makes_sense_with_value
       if amount > 0 && amount_interpretation.to_s.start_with?("min")
-        errors.add(:amount, "Cannot be positive when amount_interpretation is #{amount_interpretation} (a positive reduction would decrease the price, so interpretation must be a maximum)."
+        errors.add(:amount, "Cannot be positive when amount_interpretation is #{amount_interpretation} (a positive reduction would decrease the price, so interpretation must be a maximum).")
       elsif amount < 0 && amount_interpretation.to_s.start_with?("max")
-        errors.add(:amount, "Cannot be negative when amount_interpretation is #{amount_interpretation} (a negative reduction would increase the price, so interpretation must be a minimum)."
+        errors.add(:amount, "Cannot be negative when amount_interpretation is #{amount_interpretation} (a negative reduction would increase the price, so interpretation must be a minimum).")
       end
     end
     

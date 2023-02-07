@@ -239,6 +239,7 @@ class PolicyPremium < ApplicationRecord
           else
             next_term_start += 1.month
           end
+        end
       rescue ActiveRecord::RecordInvalid => rie
         # MOOSE WARNING: error! should we really just throw the hash back at the caller?
         returned_errors = rie.record.errors.to_h.to_s
@@ -462,7 +463,7 @@ class PolicyPremium < ApplicationRecord
       # prorate our terms
       self.policy_premium_payment_terms.order(id: :asc).lock.each do |pppt|
         unless pppt.update_proration(self.prorated_first_moment, self.prorated_last_moment)
-          to_return = "Applying proration to PolicyPremiumPaymentTerm ##{pppt.id} failed, errors: #{pppt.respond_to?(:errors) ? pppt.errors.to_h : '(return value did not respond to errors call; type '#{pppt.class.name}')}"
+          to_return = "Applying proration to PolicyPremiumPaymentTerm ##{pppt.id} failed, errors: #{pppt.respond_to?(:errors) ? pppt.errors.to_h : "(return value did not respond to errors call; type '#{pppt.class.name}')"}"
           raise ActiveRecord::Rollback
         end
       end
