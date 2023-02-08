@@ -155,7 +155,7 @@ class PolicyPremium < ApplicationRecord
               result = "There is no available or upcoming invoice with due_date less than or equal to the policy premium item term start date (#{line_item.chargeable.policy_premium_payment_term.first_moment.to_date})"
               raise ActiveRecord::Rollback
             else
-              invoice = self.policy_quote.invoices.where(stauts: ['available', 'upcoming']).order("due_date asc").first
+              invoice = self.policy_quote.invoices.where(status: ['available', 'upcoming']).order("due_date asc").first
               if invoice.nil?
                 result = "The policy quote has no available or upcoming invoices, so line items could not be added"
                 raise ActiveRecord::Rollback
