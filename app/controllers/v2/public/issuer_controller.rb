@@ -17,7 +17,9 @@ module V2
 
         raise_error "Lease not found for insurable ID=#{enrollment_params[:insurable_id]}" unless lease
 
-        # invite_users(users)
+        unless lease_users_matched?(lease, users)
+          raise_error "Passed Users not matched with Lease users #{lease.users.pluck(:email)}"
+        end
 
         if policy_exists?
           raise_error "Child policy already exists for Insurable ID=#{@insurable.id}"
@@ -29,6 +31,12 @@ module V2
       end
 
       private
+
+      def lease_users_matched?(lease, users)
+        lease_emails = lease.users.pluck(:email)
+        users_emails = users.pluck(:email)
+        !(lease_emails - users_emails).empty?
+      end
 
       def policy_exists?
         pi = PolicyInsurable.where(insurable_id: @insurable.id)
