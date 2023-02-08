@@ -72,9 +72,9 @@ module Gc
 
   def unit_shouldbe_covered?(lease, policy, check_date)
     return false if lease.nil?
-    !lease_expired?(lease, check_date) && !policy_expired?(policy, check_date)
-  end
 
+    !lease_expired?(lease, check_date) && !policy_expired?(policy, check_date) && tenant_matched?(lease, policy)
+  end
 
   def units_without_leases
     units = all_units
