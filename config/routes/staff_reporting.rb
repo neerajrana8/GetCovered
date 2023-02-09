@@ -23,11 +23,11 @@ scope module: :staff_reporting, path: "reporting" do
     path: "policy-entries"
   post :policy_entries_expiring,
     to: "policy_entries#index",
-    path: "policy-entries/expiring",
+    path: "policy-entries/recent/expiring",
     defaults: { special: "expiring" }
   post :policy_entries_expired,
     to: "policy_entries#index",
-    path: "policy-entries/expired",
+    path: "policy-entries/recent/expired",
     defaults: { special: "expired" }
   post :latest_policy_report,
     to: "policy_entries#fake_report",
