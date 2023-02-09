@@ -616,23 +616,26 @@ class Policy < ApplicationRecord
     end
   end
 
-  def latest_lease(lease_status: 'current', user_matches: [:all, :primary, :any, :none], prefer_more_users: true)
+  def latest_lease(lease_status: 'current', user_matches: [:all, :primary, :any, :none], prefer_more_users: true, lessees_only: false, current_only: false)
     return nil if self.primary_insurable.blank?
+    user_ids = self.users.pluck(:id)
+    lease_users = lease.send(current_only ? :active_lease_users : :lease_users).send(*(lessees_only ? [:where, { lessee: true }] : [:itself]))
+    user_matches = [:all, :primary, :any] if user_matches == true
     found = self.primary_insurable.leases.where(status: lease_status).order(start_date: :desc).group_by do |lease|
-      case lease.users.count{|u| self.users.include?(u) }
+      case lease_users.count{|lu| user_ids.include?(lu.user_id) }
         when self.users.count
           :all
         when 0
           :none
         else
-          lease.users.include?(self.primary_user) ? :primary : :any
+          lease_users.any?{|lu| lu.user_id == self.primary_user.id } ? :primary : :any
       end
     end
     (user_matches.class == ::Array ? user_matches : [user_matches]).each do |match_type|
       unless found[match_type].blank?
         return(
           (prefer_more_users && [:any, :primary].include?(match_type)) ?
-            found[match_type].sort_by{|lease| -lease.users.count{|u| self.users.include?(u) } }.first
+            found[match_type].sort_by{|lease| -lease_users.count{|lu| user_ids.include?(lu.user_id) } }.first
             : found[match_type].first
         )
       end
