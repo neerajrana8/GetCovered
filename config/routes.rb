@@ -88,6 +88,7 @@ Rails.application.routes.draw do
     draw :branding_profiles
     draw :policies
     draw :carriers
+    draw :coverage_requirements
 
     # GC TOOL
     if Rails.env.development? or ENV['RAILS_ENV'] == 'awsdev'
