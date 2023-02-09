@@ -40,7 +40,7 @@ module V2
           ].map do |version|
             {
               title: version[:title],
-              endpoint: "/v2/reporting/policies#{version[:path]}",
+              endpoint: "/v2/reporting/policy-entries#{version[:path]}",
               fixed_filters: {},
               unique: ["id"],
               columns: [
