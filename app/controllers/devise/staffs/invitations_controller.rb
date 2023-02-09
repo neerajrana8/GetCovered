@@ -5,7 +5,7 @@ class Devise::Staffs::InvitationsController < Devise::InvitationsController
 
   def create
     ::Staff.invite!(invite_params, current_staff)
-    render json: { success: ['Staff created.'] }, 
+    render json: { success: ['Staff created.'] },
            status: :created
   end
 
@@ -18,7 +18,7 @@ class Devise::Staffs::InvitationsController < Devise::InvitationsController
       @resource.enabled = true
       @resource.save!
       update_auth_header
-      render json: { success: true },
+      render json: { success: ['User updated.']},
              status: :accepted
     else
       render json: { errors: @staff.errors.full_messages },
@@ -26,7 +26,7 @@ class Devise::Staffs::InvitationsController < Devise::InvitationsController
     end
   end
 
-  private  
+  private
 
     def invite_params
       params.permit(:email, :provider, :skip_invitation)

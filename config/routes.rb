@@ -89,7 +89,13 @@ Rails.application.routes.draw do
     draw :policies
     draw :carriers
     draw :coverage_requirements
+
+    # GC TOOL
+    if Rails.env.development? or ENV['RAILS_ENV'] == 'awsdev'
+      match '/stats/:action', via: [:get, :post], controller: :stats
+    end
   end
+
 
   root to: "application#redirect_home"
 end
