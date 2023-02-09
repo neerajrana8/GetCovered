@@ -55,7 +55,7 @@ module V2
                   data_type: "enum",
                   enum_values: ::Lease.statuses.keys,
                   format: ::Lease.statuses.keys.map{|k| k.titlecase }
-                }
+                },
                 { title: "Community", apiIndex: "community_title", sortable: true, filters: ["scalar", "vector", "like"] },
                 !yardi_mode ? nil : { title: "Yardi Property", apiIndex: "yardi_property", sortable: true, filters: ["scalar", "vector", "like"] },
                 !yardi_mode ? nil : { title: "Unit", apiIndex: "yardi_unit", sortable: true, filters: ["scalar", "vector", "like"] },
