@@ -24,7 +24,7 @@ module V2
       ).to_h.freeze
     
       def index
-        super(:@policy_entries, @account.nil? ? ::PolicyEntry.all : @account.reporting_policy_entries)
+        super(:@policy_entries, @account.nil? ? ::Reporting::PolicyEntry.all : @account.reporting_policy_entries)
       end
       
       def fake_report
