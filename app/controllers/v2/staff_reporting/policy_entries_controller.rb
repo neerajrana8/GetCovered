@@ -24,9 +24,6 @@ module V2
       ).to_h.freeze
     
       def index
-        render json: fixed_filters,
-          status: 200
-        return
         super(:@policy_entries, @account.nil? ? ::Reporting::PolicyEntry.all : @account.reporting_policy_entries)
       end
       
@@ -84,7 +81,6 @@ module V2
           status: 200
       end
       
-      private
       
         def set_account
           @account = if @organizable
