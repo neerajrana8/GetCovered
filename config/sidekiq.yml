@@ -121,6 +121,6 @@ production:
     cron: '45 * * * *' # every hour, 45 minutes in
     class: PerformScheduledActionsJob
   # Update covered status Job
-  update_statuses_job:
-    cron: '0 6 * * *' # Daily , 06:00 AM
-    class: UpdateStatusesJob
+#  update_statuses_job:
+#    cron: '0 6 * * *' # Daily , 06:00 AM
+#    class: UpdateStatusesJob
