@@ -11,12 +11,13 @@ module V2
       def show; end
 
       def change_password
-        if @user.update_with_password(update_params)
+        if valid_password?
+          @user.update(password: update_params["password"], password_confirmation: update_params["password_confirmation"])
           # Sign in the user by passing validation in case their password changed
           bypass_sign_in(@user)
           render :show, status: :ok
         else
-          render json: { success: false, errors: @user.errors }, status: :unprocessable_entity
+          render json: { success: false, errors: {"current_password"=>["is invalid"]} }, status: :unprocessable_entity
         end
       end
 
@@ -46,6 +47,11 @@ module V2
 
       def set_user
         @user = ::User.find(params[:id])
+      end
+
+      #TODO: need to reimplement because valid_password? not working :( because of invitable and database authenthicable
+      def valid_password?
+        Devise::Encryptor.compare(@user.class, @user.encrypted_password, update_params["current_password"])
       end
 
       def update_params
