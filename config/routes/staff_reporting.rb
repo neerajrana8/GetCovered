@@ -29,7 +29,7 @@ scope module: :staff_reporting, path: "reporting" do
     to: "policy_entries#index",
     path: "policy-entries/expired",
     defaults: { special: "expired" }
-  post :latest_policy_report
+  post :latest_policy_report,
     to: "policy_entries#fake_report",
     path: "latest/policy-report"
 
