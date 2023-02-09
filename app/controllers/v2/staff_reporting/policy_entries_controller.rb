@@ -24,6 +24,9 @@ module V2
       ).to_h.freeze
     
       def index
+        render json: params.to_unsafe_hash,
+          status: 200
+        return
         super(:@policy_entries, @account.nil? ? ::Reporting::PolicyEntry.all : @account.reporting_policy_entries)
       end
       
