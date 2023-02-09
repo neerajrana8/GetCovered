@@ -1,6 +1,6 @@
 # All policy related mailers here
 class PolicyMailer < ApplicationMailer
-  layout 'branded_mailer'
+  layout 'branded_mailer', only: 'notify_new_child_policy'
 
   def notify_new_child_policy
     @organization = params[:organization]
