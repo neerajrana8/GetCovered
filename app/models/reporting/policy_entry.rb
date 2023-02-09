@@ -1,6 +1,6 @@
 
 module Reporting
-  class PolicyEntry < ApplicationRecord
+  class Reporting::PolicyEntry < ApplicationRecord
     self.table_name = "reporting_policy_entries"
 
     belongs_to :account
@@ -21,17 +21,17 @@ module Reporting
     #   4) lease status can change, lease user can move out, lease can get created
     def self.sync(account)
       # grab entries that might should be updated due to policy or insurable changes (1)
-      ids = PolicyEntry.references(policies: :policy_insurables).includes(policy: :policy_insurables)
+      ids = Reporting::PolicyEntry.references(policies: :policy_insurables).includes(policy: :policy_insurables)
         .where("reporting_policy_entries.updated_at < greatest(policies.updated_at, policy_insurables.updated_at)")
         .where(account: account, policy_insurables: { primary: true }, policies: {
           policy_type_id: 1
         }
       ).pluck("reporting_policy_entries.id")
       ids.each do |id|
-        PolicyEntry.find(id).refresh!
+        Reporting::PolicyEntry.find(id).refresh!
       end
       # grab entries that might should be updated due to new integration profile (2, 3)
-      ids = PolicyEntry.references(policies: :policy_users).includes(policy: :policy_users)
+      ids = Reporting::PolicyEntry.references(policies: :policy_users).includes(policy: :policy_users)
                        .joins("INNER JOIN integration_profiles ON integration_profiles.profileable_id = policy_users.user_id AND integration_profiles.profileable_type = 'User'")
                        .where(account: account)
                        .where(integration_profiles: {
@@ -43,19 +43,19 @@ module Reporting
                          policy_type_id: 1
                        }).pluck("reporting_policy_entries.id").uniq
       ids.each do |id|
-        PolicyEntry.find(id).refresh!
+        Reporting::PolicyEntry.find(id).refresh!
       end
       # lease status changes, creations, etc.
-      ids = PolicyEntry.references(insurables: { leases: :lease_users }).includes(unit: { leases: :lease_users })
+      ids = Reporting::PolicyEntry.references(insurables: { leases: :lease_users }).includes(unit: { leases: :lease_users })
                        .where(account: account)
                        .where("reporting_policy_entries.updated_at < greatest(leases.updated_at, leases.created_at, lease_users.updated_at, lease_users.created_at)")
                        .pluck("reporting_policy_entries.id").uniq
       ids.each do |id|
-        PolicyEntry.find(id).refresh!
+        Reporting::PolicyEntry.find(id).refresh!
       end
       # grab policies that need new entries
       ids = PolicyInsurable.references(:policies).includes(:policy)
-              .where.not(policy_id: PolicyEntry.where(account: account).select(:policy_id))
+              .where.not(policy_id: Reporting::PolicyEntry.where(account: account).select(:policy_id))
               .where(
                 primary: true,
                 insurable: account.insurables.where(insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS).confirmed
@@ -65,7 +65,7 @@ module Reporting
               }).pluck(:policy_id)
       ids.each do |id|
         params = self.extract_params(account, id)
-        PolicyEntry.create(params) unless params.nil?
+        Reporting::PolicyEntry.create(params) unless params.nil?
       end
     end
     
