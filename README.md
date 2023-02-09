@@ -106,6 +106,13 @@ Resolution:
 Resolution:
 Please be sure that your git and code redactor used LF not CRLF encoding identation. In other case it caused erb isssue with parsing code in yaml files like database.yaml 
 
+- <i><b>M1 Mac</b>: Containers fail to build due to `nokogiri` / other gem issues.</i>  
+Solution:
+Default platform set for building docker containers may be lame, try building `linux/amd64` containers instead. Either run `docker-compose up --build --platform linux/amd64` or set it in `docker-compose.yml` explicitly.
+
+- <i><b>M1 Mac</b>: `Function not implemented - Failed to initialize inotify (Errno::ENOSYS)`</i>  
+Solution: https://github.com/evilmartians/terraforming-rails/issues/34#issuecomment-872021786
+
 `git config --global core.autocrlf input`
 
 Additional commands for managing the API on docker locally include: 
