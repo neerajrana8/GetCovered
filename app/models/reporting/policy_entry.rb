@@ -21,12 +21,12 @@ module Reporting
     #   4) lease status can change, lease user can move out, lease can get created
     def self.sync(account)
       # grab entries that might should be updated due to policy or insurable changes (1)
-      ids = PolicyEntry.references(policies: :policy_insurables).includes(policy: :policy_insurable)
-        .where("policy_entries.updated_at < greatest(policies.updated_at, policy_insurables.updated_at)")
+      ids = PolicyEntry.references(policies: :policy_insurables).includes(policy: :policy_insurables)
+        .where("reporting_policy_entries.updated_at < greatest(policies.updated_at, policy_insurables.updated_at)")
         .where(account: account, policy_insurables: { primary: true }, policies: {
           policy_type_id: 1
         }
-      ).pluck("policy_entries.id")
+      ).pluck("reporting_policy_entries.id")
       ids.each do |id|
         PolicyEntry.find(id).refresh!
       end
@@ -38,18 +38,18 @@ module Reporting
                           integration_id: account.integrations.where(provider: "yardi").select(:id),
                           external_context: "resident"
                        })
-                       .where("policy_entries.updated_at < greatest(policy_users.updated_at, integration_profiles.updated_at, integration_profiles.created_at)")
+                       .where("reporting_policy_entries.updated_at < greatest(policy_users.updated_at, integration_profiles.updated_at, integration_profiles.created_at)")
                        .where(policies: {
                          policy_type_id: 1
-                       }).pluck("policy_entries.id").uniq
+                       }).pluck("reporting_policy_entries.id").uniq
       ids.each do |id|
         PolicyEntry.find(id).refresh!
       end
       # lease status changes, creations, etc.
       ids = PolicyEntry.references(insurables: { leases: :lease_users }).includes(unit: { leases: :lease_users })
                        .where(account: account)
-                       .where("policy_entries.updated_at < greatest(leases.updated_at, leases.created_at, lease_users.updated_at, lease_users.created_at)")
-                       .pluck("policy_entries.id").uniq
+                       .where("reporting_policy_entries.updated_at < greatest(leases.updated_at, leases.created_at, lease_users.updated_at, lease_users.created_at)")
+                       .pluck("reporting_policy_entries.id").uniq
       ids.each do |id|
         PolicyEntry.find(id).refresh!
       end

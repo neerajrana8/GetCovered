@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2023_01_23_002111) do
+ActiveRecord::Schema.define(version: 2023_02_09_025008) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -1806,6 +1806,46 @@ ActiveRecord::Schema.define(version: 2023_01_23_002111) do
     t.string "owner_type"
     t.bigint "owner_id"
     t.index ["owner_type", "owner_id", "status", "report_time"], name: "index_rcr_on_o_and_rt"
+  end
+
+  create_table "reporting_policy_entries", force: :cascade do |t|
+    t.string "account_title"
+    t.string "number"
+    t.string "yardi_property"
+    t.string "community_title"
+    t.string "yardi_unit"
+    t.string "unit_title"
+    t.string "street_address"
+    t.string "city"
+    t.string "state"
+    t.string "zip"
+    t.string "carrier_title"
+    t.string "yardi_lease"
+    t.string "lease_status"
+    t.date "effective_date"
+    t.date "expiration_date"
+    t.bigint "account_id"
+    t.bigint "policy_id"
+    t.bigint "lease_id"
+    t.bigint "community_id"
+    t.bigint "unit_id"
+    t.string "primary_policyholder_first_name"
+    t.string "primary_policyholder_last_name"
+    t.string "primary_policyholder_email"
+    t.string "primary_lessee_first_name"
+    t.string "primary_lessee_last_name"
+    t.string "primary_lessee_email"
+    t.string "any_lessee_email"
+    t.boolean "expires_before_lease"
+    t.boolean "applies_to_lessee"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["account_id", "community_title", "expiration_date"], name: "index_rpe_on_ai_and_ct_and_ed"
+    t.index ["account_id", "expiration_date"], name: "index_rpe_on_ai_and_ed"
+    t.index ["community_id"], name: "index_reporting_policy_entries_on_community_id"
+    t.index ["lease_id"], name: "index_reporting_policy_entries_on_lease_id"
+    t.index ["policy_id"], name: "index_reporting_policy_entries_on_policy_id"
+    t.index ["unit_id"], name: "index_reporting_policy_entries_on_unit_id"
   end
 
   create_table "reporting_unit_coverage_entries", force: :cascade do |t|
