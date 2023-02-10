@@ -22,7 +22,7 @@ module MasterPolicy
 
       raise "Community not found for Insurable #{@insurable.id}" unless community_found?
 
-      raise "MasterPolicy doesn't applied for insurable" unless master_policy_applied_to_insurable?
+      raise "MasterPolicy doesn't assigned for this insurable ID=#{@insurable.id}" unless master_policy_applied_to_insurable?
 
       if community_configuration_found?
         master_policy_configuration = community_configuration
@@ -68,6 +68,8 @@ module MasterPolicy
     end
 
     def master_policy_applied_to_insurable?
+      return false unless @master_policy
+
       @master_policy.insurables.include?(@community)
     end
 
