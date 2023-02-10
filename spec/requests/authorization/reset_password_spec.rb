@@ -2,6 +2,9 @@ describe 'Reset password API', type: :request do
   shared_examples 'scenarios' do
     it 'should reset for the registered entity' do
       # Get a link
+      # /v2/staff/auth/sign_in
+      # /v2/user/auth/sign_in
+
       post("/v2/#{entity_type}/auth/password", params: { 'email': entity.email, "redirect_url": '/login' }.to_json, headers: base_headers)
       expect(response.status).to be(200)
 

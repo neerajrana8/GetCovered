@@ -95,11 +95,14 @@ if policy.integration_profiles.present?
   json.tcode policy&.integration_profiles&.first&.external_id
 end
 
-json.lease policy&.primary_insurable&.leases&.current&.last
+json.lease @lease #policy&.primary_insurable&.leases&.current&.last
 json.tenants do
-  json.array! policy&.primary_insurable&.leases&.current&.last&.lease_users,
+  json.array! @lease&.lease_users,
               partial: 'v2/staff_policy_support/policies/tenant', as: :tenant
 end
 
 
-json.master_policy_configurations policy.primary_insurable&.parent_community&.master_policy_configurations
+json.master_policy_configurations @master_policy_configurations
+# policy.primary_insurable&.parent_community&.master_policy_configurations
+json.coverage_requirements @coverage_requirements
+# policy.primary_insurable&.parent_community&.coverage_requirements_by_date
