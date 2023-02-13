@@ -206,7 +206,7 @@ class PolicyPremiumItem < ApplicationRecord
       new_ppipts += ppipts.drop(1)
       # grab existing line items per ppipt, ignoring spent ones
       preexisting = ppipts.map do |ppipt|
-        ppipt.line_items.find{|li| li.invoice.status == 'upcoming' || li.invoice.status == 'available' }.take
+        ['upcoming', 'available'].include?(ppipt.line_item&.status) ? ppipt.line_item : nil
       end
       preexisting = preexisting.map.with_index do |li, ind| # ensure nil ones are set to the next available invoice, or the prev if not exists, or abort process if none
         next li unless li.nil?
@@ -250,7 +250,7 @@ class PolicyPremiumItem < ApplicationRecord
   def generate_line_items(term_group: nil, force: false, override_original_total_due: self.original_total_due, override_ppipts: nil, allow_preexisting: force, allow_no_payment: force)
     return "Line items are not permitted since this PolicyPremiumItem's commission calculation is set to no_payments" if self.commission_calculation == 'no_payments' && !allow_no_payment
     # verify we haven't already done this & clean our PolicyPremiumItemPaymentTerms
-    return "Line items already scheduled" unless !allow_preexisting && self.line_items.blank?
+    return "Line items already scheduled" unless allow_preexisting || self.line_items.blank?
     to_return = (override_ppipts ||
       self.policy_premium_item_payment_terms.references(:policy_premium_payment_terms).includes(:policy_premium_payment_term)
       .where(policy_premium_payment_terms: { term_group: term_group })
