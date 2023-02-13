@@ -182,7 +182,6 @@ class PolicyPremiumItem < ApplicationRecord
         days_included = ((ppipts.first.policy_premium_payment_term.last_moment.to_date + 1.day) - (start_date)).to_i # number of days included in our derivative term
         multiplier = ((ppipts.first.policy_premium_payment_term.last_moment.to_date + 1.day) - (ppipts.first.policy_premium_payment_term.first_moment.to_date)).to_i # number of days actually in the term
         new_first_pppt = ppipts.first.policy_premium_payment_term.dup
-        new_first_pppt.policy_premium_item = self
         new_first_pppt.term_group = term_group_name
         new_first_pppt.first_moment += (start_date - new_first_pppt.first_moment.to_date).to_i.days # maybe a more convenient base to mod from when adding support one day for non-day time_resolution values?
         new_first_pppt.created_at = Time.current
