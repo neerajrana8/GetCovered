@@ -48,8 +48,7 @@ class LineItemReduction < ApplicationRecord
     max_amount_to_reduce: 0,
     max_total_after_reduction: 1,
     # these guys are for negative values and result in price increases:
-    min_amount_to_reduce: 2,
-    min_total_after_reduction: 3
+    min_amount_to_reduce: 2
   }
   enum refundability: { # these are ordered descending during processing by Invoice#process_reductions, so their numerical values matter! we want to do disputes and refunds first, then pure cancellations.
     cancel_only: 0,
@@ -69,29 +68,38 @@ class LineItemReduction < ApplicationRecord
   }
   
   def negative_amount_interpretations
-    ['min_amount_to_reduce', 'min_total_after_reduction']
+    ['min_amount_to_reduce']
   end
   
   def get_amount_to_reduce(li = self.line_item)
-    to_reduce_ceiling = self.refundability == 'cancel_only' ? li.total_due - li.total_received : li.total_due
-    to_reduce = case self.proration_interaction
-      when 'is_proration'
-        case self.amount_interpretation
-          when 'max_amount_to_reduce'
-            li.total_due - (li.preproration_total_due - self.amount - li.duplicatable_reduction_total) # same as below, except that the desired max total_due is li.preproration_total_due - self.amount
-          when 'max_total_after_reduction'
-            li.total_due - (self.amount - li.duplicatable_reduction_total) # self.amount is our desired max total_due; but DRT reductions should remain non-overlapping with proration reductions, i.e. we need to subtract them to get the REAL desired max total_due
-        end
-      else # shared/duplicated/reduced get special treatment in Invoice, but nothing is different here
-        case self.amount_interpretation
-          when 'max_amount_to_reduce'
-            self.amount - self.amount_successful
-          when 'max_total_after_reduction'
-            li.total_due - self.amount
-        end
+    to_reduce = nil
+    if negative_amount_interpretations.include?(self.amount_interpretation)
+      to_reduce = case self.amount_interpretation
+        when 'min_amount_to_reduce'
+          self.amount
+      end
+      to_reduce = 0 if to_reduce > 0
+    else
+      to_reduce_ceiling = self.refundability == 'cancel_only' ? li.total_due - li.total_received : li.total_due
+      to_reduce = case self.proration_interaction
+        when 'is_proration'
+          case self.amount_interpretation
+            when 'max_amount_to_reduce'
+              li.total_due - (li.preproration_total_due - self.amount - li.duplicatable_reduction_total) # same as below, except that the desired max total_due is li.preproration_total_due - self.amount
+            when 'max_total_after_reduction'
+              li.total_due - (self.amount - li.duplicatable_reduction_total) # self.amount is our desired max total_due; but DRT reductions should remain non-overlapping with proration reductions, i.e. we need to subtract them to get the REAL desired max total_due
+          end
+        else # shared/duplicated/reduced get special treatment in Invoice, but nothing is different here
+          case self.amount_interpretation
+            when 'max_amount_to_reduce'
+              self.amount - self.amount_successful
+            when 'max_total_after_reduction'
+              li.total_due - self.amount
+          end
+      end
+      to_reduce = to_reduce_ceiling if to_reduce > to_reduce_ceiling
+      to_reduce = 0 if to_reduce < 0
     end
-    to_reduce = to_reduce_ceiling if to_reduce > to_reduce_ceiling
-    to_reduce = 0 if to_reduce < 0 && !negative_amount_interpretations.include?(self.amount_interpretation)
     return to_reduce
   end
   
