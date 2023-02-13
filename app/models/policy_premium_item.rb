@@ -210,13 +210,13 @@ class PolicyPremiumItem < ApplicationRecord
       end
       preexisting = preexisting.map.with_index do |li, ind| # ensure nil ones are set to the next available invoice, or the prev if not exists, or abort process if none
         next li unless li.nil?
-        found_index = preexisting[ ((ind+1)...(preexisting.length)).find{|i| !preexisting[i].nil? } ] ||
+        found = preexisting[ ((ind+1)...(preexisting.length)).find{|i| !preexisting[i].nil? } ] ||
                       preexisting[ (0...(ind-1)).to_a.reverse.find{|i| !preexisting[i].nil? } ]
-        if found_index.nil?
+        if found.nil?
           error_message = "No line items exist on available or upcoming invoices; unable to modify line items"
           raise ActiveRecord::Rollback
         end
-        next preexisting[found_index]
+        next found
       end
       # generate unsaved new line items
       lis = generate_line_items(force: true, override_original_total_due: quantity.abs, override_ppipts: new_ppipts)
