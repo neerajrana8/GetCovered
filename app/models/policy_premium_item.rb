@@ -136,7 +136,7 @@ class PolicyPremiumItem < ApplicationRecord
 =end
   # WARNING: currently this method does not create new line items under any circumstances; it only modifies existing ones
   def change_remaining_total_by(quantity, start_date = Time.current.to_date, build_on_term_group: nil, first_term_prorated: true, term_group_name: "ppi#{self.id}crtb#{quantity}time#{Time.current.to_i}rand#{rand(9999999)}", clamp_start_date_to_effective_date: true, clamp_start_date_to_today: true, clamp_start_date_to_first: true)
-    return "No line items exist yet, so there is no way to change their totals"
+    return "No line items exist on payable invoices, so there is no way to change their totals" if self.line_items.references(:invoices).includes(:invoice).where(invoices: { status: ['upcoming', 'available'] }).blank?
     error_message = nil
     ActiveRecord::Base.transaction(requires_new: true) do
       # lock our bois
