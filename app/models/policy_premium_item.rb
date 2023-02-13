@@ -206,7 +206,7 @@ class PolicyPremiumItem < ApplicationRecord
       new_ppipts += ppipts.drop(1)
       # grab existing line items per ppipt, ignoring spent ones
       preexisting = ppipts.map do |ppipt|
-        ['upcoming', 'available'].include?(ppipt.line_item&.status) ? ppipt.line_item : nil
+        ['upcoming', 'available'].include?(ppipt.line_item&.invoice&.status) ? ppipt.line_item : nil
       end
       preexisting = preexisting.map.with_index do |li, ind| # ensure nil ones are set to the next available invoice, or the prev if not exists, or abort process if none
         next li unless li.nil?
