@@ -16,12 +16,12 @@ module V2
       def invoices_data
         limit = params.dig('pagination', 'per').to_i
         offset = params.dig('pagination', 'page').to_i * limit
-        total_records = current_user.invoices.order(created_at: :desc).count
+        total_records = current_user.invoices.count
         response.headers['total-pages'] = (total_records.to_f / limit.to_f).ceil
         response.headers['total-entries'] = total_records.to_s
         response.headers['current-page'] = params.dig('pagination', 'page')
-
-        invoices = current_user.invoices.order(created_at: :desc)
+        sorting_order = "#{params[:sort][:column].first} #{params[:sort][:direction].first}"
+        invoices = current_user.invoices.order(sorting_order)
                                .includes(:invoiceable)
                                .limit(limit)
                                .offset(offset)
