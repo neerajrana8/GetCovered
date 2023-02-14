@@ -104,37 +104,8 @@ class PolicyPremiumItem < ApplicationRecord
   # Public Class Methods
   
   # Public Instance Methods
-=begin
-
-  # how this should actually work:
-  #  1) get a distribution over line items
-  #  2) create a bunch of LineItemReductions with negative amounts (!)
-  #  3) if the LIRs don't do it for you (which right  now they don't), update the relevant PolicyPremium totals...
-
-  def change_remaining_total_by(quantity)
-    error_message = nil
-    ActiveRecord::Base.transaction(requires_new: true) do
-      # lock our bois
-      invoice_array = ::Invoice.where(id: self.line_items.map{|li| li.invoice_id }).order(id: :asc).lock.to_a
-      line_item_array = self.line_items.order(id: :asc).lock.to_a
-      self.lock!
-      # flee if nonsense
-      if quantity < 0 && -quantity > total_due
-        error_message = "PolicyPremiumItem total_due cannot be negative"
-        raise ActiveRecord::Rollback
-      end
-      # begin
-      to_return = self.policy_premium_item_payment_terms.references(:policy_premium_payment_terms).includes(:policy_premium_payment_term)
-                      .order("policy_premium_payment_terms.original_first_moment ASC, policy_premium_payment_terms.original_last_moment DESC")
-                      .map{|pt| ::LineItem.new(chargeable: pt, title: self.title, hidden: self.hidden, original_total_due: 0, analytics_category: "policy_#{self.category}", policy_quote: self.policy_quote) }
-      
-      
-      
-    end
-    return error_message
-  end
-=end
-  # WARNING: currently this method does not create new line items under any circumstances; it only modifies existing ones
+  
+  # WARNING: currently, this method does not create new line items under any circumstances; it only modifies existing ones
   def change_remaining_total_by(quantity, start_date = Time.current.to_date, build_on_term_group: nil, first_term_prorated: true, term_group_name: "ppi#{self.id}crtb#{quantity}time#{Time.current.to_i}rand#{rand(9999999)}", clamp_start_date_to_effective_date: true, clamp_start_date_to_today: true, clamp_start_date_to_first: true)
     return "No line items exist on payable invoices, so there is no way to change their totals" if self.line_items.references(:invoices).includes(:invoice).where(invoices: { status: ['upcoming', 'available'] }).blank?
     error_message = nil
