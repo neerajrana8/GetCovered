@@ -106,14 +106,20 @@ class PolicyPremiumItem < ApplicationRecord
   # Public Instance Methods
   
   # WARNING: currently, this method does not create new line items under any circumstances; it only modifies existing ones
-  def change_remaining_total_by(quantity, start_date = Time.current.to_date, build_on_term_group: nil, first_term_prorated: true, term_group_name: "ppi#{self.id}crtb#{quantity}time#{Time.current.to_i}rand#{rand(9999999)}", clamp_start_date_to_effective_date: true, clamp_start_date_to_today: true, clamp_start_date_to_first: true)
+  def change_remaining_total_by(quantity, start_date = Time.current.to_date, treat_as_original: false, build_on_term_group: nil, first_term_prorated: true, term_group_name: "ppi#{self.id}crtb#{quantity}time#{Time.current.to_i}rand#{rand(9999999)}", clamp_start_date_to_effective_date: true, clamp_start_date_to_today: true, clamp_start_date_to_first: true)
     return "No line items exist on payable invoices, so there is no way to change their totals" if self.line_items.references(:invoices).includes(:invoice).where(invoices: { status: ['upcoming', 'available'] }).blank?
     error_message = nil
     ActiveRecord::Base.transaction(requires_new: true) do
       # lock our bois
+      self.policy_premium.lock! if treat_as_original # MOOSE WARNING: should review finance system record locking order in the documentation, this might not should go here
       invoice_array = ::Invoice.where(id: self.line_items.map{|li| li.invoice_id }).order(id: :asc).lock.to_a
       line_item_array = self.line_items.order(id: :asc).lock.to_a
       self.lock!
+      # alter totals
+      if treat_as_original
+        self.update(original_total_due: self.original_total_due + quantity)
+        self.policy_premium.update_totals
+      end
       # flee if nonsense
       if quantity < 0 && -quantity > total_due
         error_message = "PolicyPremiumItem total_due cannot be negative"
