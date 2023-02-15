@@ -1,0 +1,22 @@
+Hola <%= @user.profile.full_name %>,
+
+Buenas noticias, todavía está cubierto por una <%= @product_type %> de <%= @agency.title %>.
+
+Su factura se pagó con éxito el <%= (@invoice.status_changed || @invoice.due_date).to_date.to_s %> para la Póliza <%= @product_identifier %> por un monto de $<%= "#{(@invoice.total_due/100).floor}.#{(@invoice.total_due % 100)}" %>.’
+
+Para revisar la información de su póliza, visite el siguiente enlace:
+https://www.getcoveredinsurance.com/user/policies
+
+Si tiene alguna pregunta, comuníquese con nosotros a support@getcoveredinsurance.com.
+
+Gracias,
+
+El equipo de Get Covered
+support@getcoveredinsurance.com
+
+Conozca a su operador: QBE
+- Fundada en 1886, QBE es una de las aseguradoras más antiguas del mundo
+- QBE tiene una calificación AM Best de A (Excelente)
+- Índice de satisfacción del cliente 92,7%
+- La tasa de respuesta de QBE es el doble del promedio de la industria
+- QBE hace negocios en 27 países diferentes con más de 11,000 empleados en todo el mundo

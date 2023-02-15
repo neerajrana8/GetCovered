@@ -1,0 +1,23 @@
+Hello <%= @user.profile.full_name %>,
+
+Good News, you're still covered for a <%= @product_type %> from <%= @agency.title %>.
+
+Your invoice was successfully paid on  <%= (@invoice.status_changed || @invoice.due_date).to_date.to_s %> for Policy <%= @product_identifier %> in the amount of $<%= "#{(@invoice.total_due/100).floor}.#{(@invoice.total_due % 100)}" %>.
+
+To review your policy information, please visit the following link:
+https://www.getcoveredinsurance.com/user/policies
+
+If you have any questions, please contact us at support@getcoveredinsurance.com.
+
+Thank you,
+
+The Get Covered Team
+
+support@getcoveredinsurance.com
+
+Get to know your Carrier: QBE
+- Founded in 1886, QBE is one of the oldest insurance carriers in the world
+- QBE holds an AM Best rating of A (Excellent)
+- Customer Satisfaction index 92.7%
+- QBE Response rate is 2X the industry average
+- QBE does business in 27 different countries with over 11,000 employees globally
