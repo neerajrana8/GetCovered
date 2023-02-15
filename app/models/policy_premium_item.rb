@@ -117,8 +117,10 @@ class PolicyPremiumItem < ApplicationRecord
       self.lock!
       # alter totals
       if treat_as_original
-        self.update(original_total_due: self.original_total_due + quantity)
-        self.policy_premium.update_totals
+        unless self.update(original_total_due: self.original_total_due + quantity) || !self.policy_premium.update_totals
+          error_message = "Failed to update totals as requested by treat_as_original: #{self.errors.to_h.blank? ? self.policy_premium.errors.to_h : self.errors.to_h}"
+          raise ActiveRecord::Rollback
+        end
       end
       # flee if nonsense
       if quantity < 0 && -quantity > total_due
