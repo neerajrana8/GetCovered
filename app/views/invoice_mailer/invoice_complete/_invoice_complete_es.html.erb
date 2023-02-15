@@ -1,11 +1,14 @@
 <div class="text-left" style="font-family: 'Roboto';">
   <p>Hola <%= @user.profile.full_name %>,</p>
-  <p>Buenas noticias, todavía está cubierto por una <%= @product_type %> de <%= @agency.title %>.</p>
-  <p>Su factura se pagó con éxito el <%= (@invoice.status_changed || @invoice.due_date).to_date.to_s %>
-    para la Póliza <%= @product_identifier %> por un monto de $<%= "#{(@invoice.total_due/100).floor}.#{(@invoice.total_due % 100)}" %>.’</p>
+  <p>Buenas noticias, todavía está cubierto por una <b><%= @product_type %></b> de <b><%= @agency.title %></b>.</p>
+  <p>Su factura se pagó con éxito el <b><%= (@invoice.status_changed || @invoice.due_date).to_date.to_s %></b>
+    para la Póliza <b><%= @product_identifier %></b> por un monto de
+    <b>$<%= "#{(@invoice.total_due / 100).floor}.#{(@invoice.total_due % 100)}" %></b>.’</p>
   <p>Para revisar la información de su póliza, visite el siguiente enlace:</p>
-  <p><a href="https://www.getcoveredinsurance.com/user/policies">https://www.getcoveredinsurance.com/user/policies</a></p>
-  <p>Si tiene alguna pregunta, comuníquese con nosotros a <a href="mailto:support@getcoveredinsurance.com">support@getcoveredinsurance.com</a>.</p>
+  <p><a href="https://www.getcoveredinsurance.com/user/policies">https://www.getcoveredinsurance.com/user/policies</a>
+  </p>
+  <p>Si tiene alguna pregunta, comuníquese con nosotros a
+    <a href="mailto:support@getcoveredinsurance.com">support@getcoveredinsurance.com</a>.</p>
   <p>Gracias,</p>
   <p>El equipo de Get Covered</p>
   <p><a href="mailto:support@getcoveredinsurance.com">support@getcoveredinsurance.com</a></p>
@@ -13,13 +16,15 @@
   <div style="border: 1px solid black;
     margin: 2% 8%;
     padding: 1%;">
-    <b>Conozca a su operador: QBE</b><br>
-    <ul>
-      <li>Fundada en 1886, QBE es una de las aseguradoras más antiguas del mundo</li>
-      <li>QBE tiene una calificación AM Best de A (Excelente)</li>
-      <li>Índice de satisfacción del cliente 92,7%</li>
-      <li>La tasa de respuesta de QBE es el doble del promedio de la industria</li>
-      <li>QBE hace negocios en 27 países diferentes con más de 11,000 empleados en todo el mundo</li>
-    </ul>
+    <div style="margin-top: 10px">
+      <b>Conozca a su operador: QBE</b><br>
+      <ul>
+        <li>Fundada en 1886, QBE es una de las aseguradoras más antiguas del mundo</li>
+        <li>QBE tiene una calificación AM Best de A (Excelente)</li>
+        <li>Índice de satisfacción del cliente 92,7%</li>
+        <li>La tasa de respuesta de QBE es el doble del promedio de la industria</li>
+        <li>QBE hace negocios en 27 países diferentes con más de 11,000 empleados en todo el mundo</li>
+      </ul>
+    </div>
   </div>
 </div>
