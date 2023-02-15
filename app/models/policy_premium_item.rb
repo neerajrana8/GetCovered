@@ -229,6 +229,7 @@ class PolicyPremiumItem < ApplicationRecord
     ).map do |pt|
       ::LineItem.new(chargeable: pt, title: self.title, hidden: self.hidden, original_total_due: 0, analytics_category: "policy_#{self.category}", policy_quote: self.policy_quote)
     end
+    return "There are no policy premium payment terms belonging to term group #{term_group ? "'#{term_group}'" : "<null>"}" if to_return.blank? 
     # calculate line item totals
     case self.rounding_error_distribution
       when 'dynamic_forward', 'dynamic_reverse'

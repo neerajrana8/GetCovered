@@ -141,7 +141,7 @@ class PolicyPremium < ApplicationRecord
         end
         # generate line items
         ppi = metadata[:down_payment] || metadata[:amortized_premium] # only one will exist since we didn't request first_payment_down_payment mode
-        line_items = ppi.generate_line_items
+        line_items = ppi.generate_line_items(term_group: term_group)
         if line_items.class == ::String
           result = "Unable to generate line items: #{line_items}"
           raise ActiveRecord::Rollback
