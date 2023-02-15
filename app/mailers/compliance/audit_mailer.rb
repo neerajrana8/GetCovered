@@ -27,7 +27,7 @@ module Compliance
       set_locale(@user&.profile&.language || "en")
 
       @onboarding_url = tokenized_url(@user.id, @community)
-      @min_liability = @community.coverage_requirements_by_date(date: available_lease_date)&.amount
+      @min_liability = @community.coverage_requirements_by_date(date: available_lease_date).where(designation: 'liability')&.take&.amount
 
       @requirements_date = @configuration.nil? ? lease_start_date : lease_start_date + @configuration.grace_period
       @placement_cost = @configuration.nil? ? 0 : @configuration.total_placement_amount(true).to_f / 100
