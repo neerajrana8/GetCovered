@@ -68,8 +68,10 @@ class Carrier < ApplicationRecord
   validates :title, presence: true,
                     uniqueness: true
   
-  validates :integration_designation, inclusion: { in: %w[qbe qbe_specialty crum pensio msi dc], message: 'must be valid' }
-  
+  validates :integration_designation, inclusion: {
+    in: %w[qbe qbe_specialty crum pensio msi dc out_of_system], message: 'must be valid'
+  }
+
   validates_presence_of :slug, :call_sign
 
   accepts_nested_attributes_for :carrier_policy_types, allow_destroy: true

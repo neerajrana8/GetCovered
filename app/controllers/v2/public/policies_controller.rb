@@ -63,10 +63,29 @@ module V2
       end
 
       def add_coverage_proof
-        if Policy.where(number: coverage_proof_params[:number]).count > 0
-          self.external_unverified_proof(coverage_proof_params)
+        # NOTE: if there’s a matched carrier, the front-end sends the carrier_id,
+        #       if there are no matches the front-end sends ‘out_of_system_carrier_title’ that contains the entered string
+        params_hash = coverage_proof_params
+        if coverage_proof_params[:out_of_system_carrier_title] && coverage_proof_params[:carrier_id].blank?
+          carrier = ::Carrier.new(
+            title: coverage_proof_params[:out_of_system_carrier_title],
+            integration_designation: 'out_of_system'
+          )
+
+          unless carrier.save
+            return render(
+              json: standard_error(:carrier_invalid, 'Provided out of systme title has already been taken', carrier.errors.full_messages),
+              status: :unprocessable_entity
+            )
+          end
+
+          params_hash[:carrier_id] = carrier.id
+        end
+
+        if Policy.where(number: params_hash[:number]).count > 0
+          self.external_unverified_proof(params_hash)
         else
-          self.apply_proof(coverage_proof_params)
+          self.apply_proof(params_hash)
         end
       end
 
