@@ -36,6 +36,6 @@ describe 'Staff invitation spec', type: :request do
     result = JSON.parse response.body
     expect(new_staff.reload.enabled).to eq(true)
     expect(new_staff.owner).to eq(false)
-    expect(result["success"]).to eq(true)
+    expect(result["success"]).to eq(["User updated."])
   end
 end
