@@ -32,7 +32,22 @@ module V2
 
       private
 
-      def lease_users_matched?(lease, users)
+      def lease_users_matched(lease, users)
+        r = false
+        lease_emails = lease.users.pluck(:email)
+        users_emails = users.pluck(:email)
+        users_emails.each do |ue|
+          lease_emails.each do |le|
+            if ue == le
+              r = true
+              break
+            end
+          end
+        end
+        r
+      end
+
+      def disabled_lease_users_matched?(lease, users)
         lease_emails = lease.users.pluck(:email)
         users_emails = users.pluck(:email)
         !(lease_emails - users_emails).empty?
