@@ -118,7 +118,7 @@ module MasterPolicy
     end
 
     def lease_valid?
-      @lease.start_date < Time.current.to_date
+      @lease.start_date <= Time.current.to_date
     end
   end
 end
