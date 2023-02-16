@@ -226,7 +226,7 @@ module MasterPoliciesMethods
               mpc_params = params[:master_policy_confguration]
               mpc_params[:configurable_id] = insurable.id
               mpc_params[:configurable_type] = 'Insurable'
-              MasterPolicyConfiguration.create! mpc
+              MasterPolicyConfiguration.create! mpc_params
             end
           end
 
