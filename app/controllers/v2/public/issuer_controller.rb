@@ -32,7 +32,7 @@ module V2
 
       private
 
-      def lease_users_matched(lease, users)
+      def lease_users_matched?(lease, users)
         r = false
         lease_emails = lease.users.pluck(:email)
         users_emails = users.pluck(:email)
