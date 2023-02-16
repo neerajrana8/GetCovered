@@ -615,7 +615,7 @@ class Policy < ApplicationRecord
       end
     end
   end
-  
+
   def latest_lease(lease_status: 'current', user_matches: [:all, :primary, :any, :none], prefer_more_users: true)
     return nil if self.primary_insurable.blank?
     found = self.primary_insurable.leases.where(status: lease_status).order(start_date: :desc).group_by do |lease|
@@ -710,7 +710,7 @@ class Policy < ApplicationRecord
       end
     end
   end
-  
+
   def sanitize_policy_number
     self.number = self.number&.strip
   end

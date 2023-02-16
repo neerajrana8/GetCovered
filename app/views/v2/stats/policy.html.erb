@@ -1,0 +1,50 @@
+<div class="row">
+    <div class="col">
+        <h2>Find Policy</h2>
+        <form action="/v2/stats/policy" method=POST >
+            <div class="mb-3">
+                <label for="policy_id" class="form-label">Policy ID</label>
+
+                <input type="text" name="policy_id" class="form-control"/>
+            </div>
+            <input type="submit" value="Find" class="btn btn-primary mb-3">
+        </form>
+
+        <% if @policy %>
+            <h3>Policy ID: <%= @policy.id %>, # <%=@policy.number%></h3>
+            <table class="table">
+                <% @policy.attributes.each do |k, v| %>
+                    <tr>
+                        <td><b><%=k%></b></td>
+                        <td><%=v %></td>
+                    </tr>
+                <% end %>
+            </table>
+            <h3>Insurable</h3>
+            <table class="table">
+                <% @insurable.attributes.each do |k, v| %>
+                    <tr>
+                        <td><b><%=k%></b></td>
+                        <td><%=v %></td>
+                    </tr>
+                <% end %>
+            </table>
+
+            <h3>Leases</h3>
+            <% @leases.each do |lease| %>
+                <table class="table">
+                    <% lease.attributes.each do |k, v| %>
+                        <tr>
+                            <td><b><%=k%></b></td>
+                            <td><%=v %></td>
+                        </tr>
+                    <% end %>
+                </table>
+            <% end %>
+
+
+            <%=@coverage_requirements.inspect %>
+        <% end %>
+    </div>
+</div>
+</div>
