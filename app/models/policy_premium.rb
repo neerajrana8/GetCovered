@@ -115,10 +115,11 @@ class PolicyPremium < ApplicationRecord
   def add_premium_item(
     premium_amount,
     start_date,
-    and_modify_invoices: true,
-    use_later_invoice_if_needed: true,
-    term_group: nil,
-    collector: nil
+    title: nil,                               # use to override default line item title of "Premium"
+    and_modify_invoices: true,                # pass false to skip invoice generation
+    use_later_invoice_if_needed: true,        # if the provided start_date means some charges should have been collected in the past, true will frontload them on the first available invoice; false will return failure
+    term_group: nil,                          # pass a string to customize the term group of generated invoices
+    collector: nil                            # can be overridden if GetCovered isn't the one actually collecting payment
   )
     term_group ||= "tg_#{premium_amount}_#{start_date.to_s}_#{Time.current.to_i}_#{rand(2**32)}"
     result = nil
@@ -131,7 +132,7 @@ class PolicyPremium < ApplicationRecord
       raise ActiveRecord::Rollback unless result.nil? || result.end_with?("already_exist")
       # premium
       metadata = {}
-      result = self.itemize_premium(premium_amount, and_update_totals: false, metadata: metadata, term_group: term_group, collector: collector)
+      result = self.itemize_premium(premium_amount, title: title, and_update_totals: false, metadata: metadata, term_group: term_group, collector: collector)
       raise ActiveRecord::Rollback unless result.nil?
       # invoices
       if and_modify_invoices
@@ -327,7 +328,8 @@ class PolicyPremium < ApplicationRecord
     self.itemize_premium(amount, and_update_totals: and_update_totals, proratable: proratable, refundable: refundable, term_group: term_group, collector: collector, is_tax: true, recipient: recipient, first_payment_down_payment: first_payment_down_payment, first_payment_down_payment_override: first_payment_down_payment_override)
   end
 
-  def itemize_premium(amount, and_update_totals: true, proratable: nil, refundable: nil, term_group: nil, payment_terms: nil, collector: nil, is_tax: false, recipient: nil, first_payment_down_payment: false, first_payment_down_payment_override: nil, metadata: nil) # pass a hash to metadata to get extra returned information
+  def itemize_premium(amount, title: nil, and_update_totals: true, proratable: nil, refundable: nil, term_group: nil, payment_terms: nil, collector: nil, is_tax: false, recipient: nil, first_payment_down_payment: false, first_payment_down_payment_override: nil, metadata: nil) # pass a hash to metadata to get extra returned information
+    title ||= (is_tax ? "Tax" : "Premium")
     # get payment terms
     payment_terms ||= self.policy_premium_payment_terms.where(term_group: term_group).sort.select{|p| p.default_weight != 0 }
     if payment_terms.blank?
@@ -369,7 +371,7 @@ class PolicyPremium < ApplicationRecord
       unless down_payment_amount == 0 
         down_payment = ::PolicyPremiumItem.new(
           policy_premium: self,
-          title: is_tax ? "Tax" : "Premium Down Payment",
+          title: is_tax ? "#{title}" : "#{title} Down Payment",
           category: is_tax ? "tax" : "premium",
           rounding_error_distribution: "first_payment_simple",
           total_due: down_payment_amount,
@@ -389,7 +391,7 @@ class PolicyPremium < ApplicationRecord
     unless amount == 0
       amortized_premium = ::PolicyPremiumItem.new(
         policy_premium: self,
-        title: is_tax ? "Tax" : "Premium",
+        title: is_tax ? "#{title}" : "#{title}",
         category: is_tax ? "tax" : "premium",
         rounding_error_distribution: "first_payment_multipass",
         total_due: amount,
