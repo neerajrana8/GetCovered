@@ -8,21 +8,24 @@ module Policies
     def refund_request
       mail(
         subject: I18n.t('cancellation_mailer.refund_request.subject', agency_policy_type: @agency_policy_type),
-        bcc: @agency.contact_info['contact_email']
+        bcc: "#{@agency.contact_info.dig('contact_email')};systememails@getcovered.io",
+        cc:  'support@getcoveredinsurance.com'
       )
     end
 
     def cancel_request
       mail(
         subject: I18n.t('cancellation_mailer.cancel_request.subject', agency_policy_type: @agency_policy_type),
-        bcc: @agency.contact_info['contact_email']
+        bcc: "#{@agency.contact_info.dig('contact_email')};systememails@getcovered.io",
+        cc:  'support@getcoveredinsurance.com'
       )
     end
 
     def cancel_confirmation
       mail(
         subject: I18n.t('cancellation_mailer.cancel_confirmation.subject', agency_policy_type: @agency_policy_type),
-        bcc: @agency.contact_info['contact_email']
+        bcc: "#{@agency.contact_info.dig('contact_email')};systememails@getcovered.io",
+        cc:  'support@getcoveredinsurance.com'
       )
     end
 
