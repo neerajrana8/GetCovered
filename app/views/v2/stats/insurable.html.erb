@@ -1,0 +1,43 @@
+<div class="row">
+    <div class="col">
+        <h2>Find Insurable</h2>
+        <form action="/v2/stats/insurable" method=POST >
+            <div class="mb-3">
+                <label for="insurable_id" class="form-label">Insurable ID</label>
+
+                <input type="text" name="insurable_id" class="form-control"/>
+            </div>
+            <input type="submit" value="Find" class="btn btn-primary mb-3">
+        </form>
+        <%= @insurable %>
+
+        <% if @insurable %>
+            <h3>Insurable ID: <%= @insurable.id %></h3>
+            <table class="table">
+                <% @insurable.attributes.each do |k, v| %>
+                    <tr>
+                        <td><b><%=k%></b></td>
+                        <td><%=v %></td>
+                    </tr>
+                <% end %>
+            </table>
+
+            <h3>Coverage Requirements</h3>
+            <table class="table">
+                <% @coverage_requirements.each do |r| %>
+                <% r.attributes.each do |k, v| %>
+                    <tr>
+                        <td><b><%=k%></b></td>
+                        <td><%=v %></td>
+                    </tr>
+                <% end %>
+                <tr><td>--- </td><td></td></tr>
+                <% end %>
+            </table>
+
+
+
+        <% end %>
+    </div>
+</div>
+</div>

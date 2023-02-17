@@ -14,7 +14,7 @@ class MailInterceptor
           direction: 'outgoing',
           approach: 'email',
           status: 'sent',
-          contactable: user.last,
+          contactable: user&.last,
           body: body,
           subject: message.subject
         )

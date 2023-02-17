@@ -218,15 +218,16 @@ module MasterPoliciesMethods
           #   :enabled
           # ]
 
-          if params[:master_policy_confguration].present?
-            unless params[:master_policy_configuration][:id].nil?
-              mpc = MasterPolicyConfiguration.find(params[:master_policy_configuration][:id])
-              mpc.update(params[:master_policy_configuration])
+          if params[:master_policy_configurations].present?
+            if params[:master_policy_configurations][:id].present?
+              mpc = MasterPolicyConfiguration.find(params[:master_policy_configurations][:id])
+              mpc.update(params[:master_policy_configurations])
             else
-              mpc_params = params[:master_policy_confguration]
               mpc_params[:configurable_id] = insurable.id
               mpc_params[:configurable_type] = 'Insurable'
-              MasterPolicyConfiguration.create! mpc
+              # TODO: How to get carrier policy type if carrier has many  ?
+              mpc_params[:carrier_policy_type_id] = @master_policy.carrier.carrier_policy_types.first.id
+              MasterPolicyConfiguration.create! mpc_params
             end
           end
 
@@ -497,6 +498,10 @@ module MasterPoliciesMethods
       end
 
       permitted_params
+    end
+
+    def mpc_params
+      params.require(:master_policy_configurations).permit!
     end
 
     def create_policy_premium

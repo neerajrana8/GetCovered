@@ -14,6 +14,7 @@ class Devise::Staffs::SessionsController < DeviseTokenAuth::SessionsController
 
       render template: 'v2/shared/staffs/show.json', status: :ok
     else
+      # https://stackoverflow.com/questions/32752578/whats-the-appropriate-http-status-code-to-return-if-a-user-tries-logging-in-wit
       render json: {
         success: false,
         errors: [I18n.t('user_users_controler.invalid_login_credentials')]
