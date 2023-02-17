@@ -14,6 +14,10 @@ else
   end
 end
 
+if policy.policy_type&.master_coverage
+  json.master_policy_configurations @master_policy_configurations
+end
+
 if policy.account.present?
   json.account policy.account
 else

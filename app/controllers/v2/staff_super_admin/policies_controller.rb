@@ -69,7 +69,14 @@ module V2
         response.headers['total-entries'] = total
       end
 
-      def show; end
+      def show
+        # NOTE: show master_policy_configurations for policies which are covered by master policies
+        if @policy.policy_type&.master_coverage
+          lease = @policy.latest_lease(lease_status: ['pending', 'current'])
+          available_lease_date = lease.nil? ? DateTime.current.to_date : lease.sign_date.nil? ? lease.start_date : lease.sign_date
+          @master_policy_configurations = [@policy.find_closest_master_policy_configuration(@policy.primary_insurable, available_lease_date)]
+        end
+      end
 
       def search
         @policies = Policy.search(params[:query]).records
