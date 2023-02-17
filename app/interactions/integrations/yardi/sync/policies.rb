@@ -388,7 +388,7 @@ module Integrations
               lease_priu = users_to_export.find{|u| !u[:external_id].downcase.start_with?("r") }
               next if policy_priu.blank? # MOOSE WARNING: we are rejecting policies whose primary user is not on the lease...
               # set up export stuff
-              priu = policy_priu
+              priu = integration.configuration['sync']['policy_push']['force_primary_lessee'] ? lease_priu : policy_priu
               # export the policy
               roommate_index = 0
               policy_hash = {
@@ -416,6 +416,9 @@ module Integrations
                   # WARNING: are these weirdos required? LATER ANSWER: apparently not.
                 }.compact
               }
+              if policy.status == 'CANCELLED' && policy.cancellation_date
+                policy_hash[:PolicyDetails][:CancelDate] = policy.cancellation_date&.to_s
+              end
               # export
               yardi_id = policy_ip&.configuration&.[]('policy_id')
               if !policy_exported || policy_hash != policy_ip&.configuration&.[]('exported_hash')
@@ -445,8 +448,6 @@ module Integrations
                   to_return[:policy_export_errors][policy.number] = "Failed to export policy due to error response from Yardi's API (Event id #{result[:event]&.id})."
                   next
                 else
-                  # MOOSE WARNING: at the moment we go ahead even if yardi just responds that the policy exists. Ultimately, we need to implement update calls and such, in case the previous upload didn't include everything.
-                  Policy Id:4962:Policy No:Q54-7609984:Resident Code:t0001321
                   respy_fella = (result[:request].response.body.split(":") rescue [])
                   received_yardi_id_preindex = respy_fella.find_index{|x| x == "Policy No" }
                   if !received_yardi_id_preindex.nil?
@@ -480,7 +481,7 @@ module Integrations
                 end
               end # end if !policy_exported...
               if !policy_document_exported && integration.configuration.dig('sync', 'policy_push', 'push_document')
-                priu = policy_priu
+                priu = integration.configuration['sync']['policy_push']['force_primary_lessee_for_documents'] ? lease_priu : policy_priu
                 next if priu.nil?
                 # upload document
                 export_problem = export_policy_document(property_id: property_id, policy: policy, resident_id: priu[:external_id], policy_ip: policy_ip)
