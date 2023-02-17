@@ -153,6 +153,9 @@ module PoliciesMethods
   def set_optional_coverages
     if ![::MsiService.carrier_id, ::QbeService.carrier_id].include?(@policy.carrier_id) || @policy.primary_insurable.nil? || @policy.primary_insurable.primary_address.nil?
       @optional_coverages = nil
+    elsif @policy.policy_premiums.blank? || @policy.policy_premiums.last&.billing_strategy.nil?
+      # NOTE: don't return optional coverages in case billing strategy is empty
+      @optional_coverages = nil
     else
       results = ::InsurableRateConfiguration.get_coverage_options(
         ::CarrierPolicyType.where(carrier_id: @policy.carrier_id, policy_type_id: @policy.policy_type_id).take,
