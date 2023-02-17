@@ -16,16 +16,33 @@ module Integrations
           
           problem = nil
           policy_document = policy.documents.last # MOOSE WARNING: change to something more reliable once we have a system for labelling documents properly
-          result2 = Integrations::Yardi::ResidentData::ImportTenantLeaseDocumentPDF.run!(
-            integration: integration,
-            property_id: property_id,
-            resident_id: resident_id,
-            attachment_type: integration.configuration['sync']['policy_push']['attachment_type'],
-            description: "(GC) Policy ##{policy.number}",
-            attachment: policy_document,
-            eventable: policy
-          )
-          attachment_result = (result2[:parsed_response].dig("Envelope", "Body", "ImportTenantLeaseDocumentPDFResponse", "ImportTenantLeaseDocumentPDFResult", "ImportAttach", "DocumentAttachment", "Result") rescue nil)
+          attachment_result = nil
+          result2 = nil
+          case policy_document.content_type
+            when 'application/pdf'
+              result2 = Integrations::Yardi::ResidentData::ImportTenantLeaseDocumentPDF.run!(
+                integration: integration,
+                property_id: property_id,
+                resident_id: resident_id,
+                attachment_type: integration.configuration['sync']['policy_push']['attachment_type'],
+                description: "(GC) Policy ##{policy.number}",
+                attachment: policy_document,
+                eventable: policy
+              )
+              attachment_result = (result2[:parsed_response].dig("Envelope", "Body", "ImportTenantLeaseDocumentPDFResponse", "ImportTenantLeaseDocumentPDFResult", "ImportAttach", "DocumentAttachment", "Result") rescue nil)
+            else
+              result2 = Integrations::Yardi::ResidentData::ImportTenantLeaseDocumentExt.run!(
+                integration: integration,
+                property_id: property_id,
+                resident_id: resident_id,
+                attachment_type: integration.configuration['sync']['policy_push']['attachment_type'],
+                description: "(GC) Policy ##{policy.number}",
+                attachment: policy_document,
+                eventable: policy,
+                file_extension: policy_document.content_type.split("/").last
+              )
+              attachment_result = (result2[:parsed_response].dig("Envelope", "Body", "ImportTenantLeaseDocumentExtResponse", "ImportTenantLeaseDocumentExtResult", "ImportAttach", "DocumentAttachment", "Result") rescue nil)
+          end
           policy_ip.configuration['exported_documents_to'] ||= {}
           if !attachment_result.blank? && attachment_result.start_with?("Successful")
             #policy_ip.configuration['exported_to_primary_as'] = (attachment_result.split(':')[1] rescue nil) # cut off initial "Successful:"
@@ -391,7 +408,7 @@ module Integrations
                 PolicyDetails: {
                   EffectiveDate: policy.effective_date.to_s,
                   ExpirationDate: policy.expiration_date&.to_s, # WARNING: should we do something else for MPCs?
-                  IsRenew: policy.auto_renew,
+                  IsRenew: false, # MOOSE WARNING: mark true when renewal... policy.auto_renew,
                   LiabilityAmount: '%.2f' % (policy.get_liability.nil? ? nil : (policy.get_liability.to_d / 100.to_d)) #,
                   #Notes: "GC Verified" #, DISALBRD CAUSSES BROKEENNN
                   #IsRequiredForMoveIn: "false",
@@ -399,10 +416,24 @@ module Integrations
                   # WARNING: are these weirdos required? LATER ANSWER: apparently not.
                 }.compact
               }
-              #export
+              # export
+              yardi_id = policy_ip&.configuration&.[]('policy_id')
               if !policy_exported || policy_hash != policy_ip&.configuration&.[]('exported_hash')
+                # try to grab id if necessary
+                if yardi_id.blank?
+                  property_id = policy.primary_insurable&.integration_profiles&.where(integration: integration)&.where("external_context ILIKE 'unit_in_community_%'")&.take&.external_context&.[](18...)
+                  retrieved = (Integrations::Yardi::RentersInsurance::GetInsurancePolicies.run!(integration: integration, property_id: property_id, policy_number: policy.number)[:parsed_response]
+                                                                                         &.dig("Envelope", "Body", "GetInsurancePoliciesResponse", "GetInsurancePoliciesResult", "RenterInsurance", "InsurancePolicy") rescue nil)
+                  unless retrieved.nil?
+                    retrieved = retrieved.first if retrieved.class == ::Array
+                    yardi_id = retrieved&.[]("PolicyDetails")&.[]("PolicyId")
+                  end
+                end
+                # try to add id to hash
+                policy_hash[:PolicyDetails][:PolicyId] = yardi_id if yardi_id
+                # export attempt
                 policy_updated = nil
-                result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: policy_exported)
+                result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: policy_exported || yardi_id)
                 if result[:request].response&.body&.index("Policy already exists in database")
                   policy_updated = true
                   result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: true)
@@ -415,6 +446,12 @@ module Integrations
                   next
                 else
                   # MOOSE WARNING: at the moment we go ahead even if yardi just responds that the policy exists. Ultimately, we need to implement update calls and such, in case the previous upload didn't include everything.
+                  Policy Id:4962:Policy No:Q54-7609984:Resident Code:t0001321
+                  respy_fella = (result[:request].response.body.split(":") rescue [])
+                  received_yardi_id_preindex = respy_fella.find_index{|x| x == "Policy No" }
+                  if !received_yardi_id_preindex.nil?
+                    yardi_id = respy_fella[received_yardi_id_preindex + 1]
+                  end
                   if policy_ip.nil?
                     policy_ip = IntegrationProfile.create(
                       integration: integration,
@@ -422,6 +459,7 @@ module Integrations
                       external_context: "policy",
                       external_id: policy.number,
                       configuration: {
+                        'policy_id' => yardi_id,
                         'history' => 'exported_to_yardi',
                         'synced_at' => Time.current.to_s,
                         'exported_hash' => policy_hash
@@ -432,6 +470,7 @@ module Integrations
                       next
                     end
                   else
+                    policy_ip.configuration['policy_id'] = yardi_id
                     policy_ip.configuration['history'] = 'exported_to_yardi'
                     policy_ip.configuration['synced_at'] = Time.current.to_s
                     policy_ip.configuration['exported_hash'] = policy_hash
