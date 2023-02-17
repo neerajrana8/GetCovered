@@ -210,7 +210,7 @@ module PoliciesMethods
 
     permitted_params =
       params.require(:policy).permit(
-        :account_id, :agency_id, :policy_type_id, :insurable_id,
+        :account_id, :agency_id, :policy_type_id, :insurable_id, :carrier_id,
         :effective_date, :expiration_date, :number, :status, :out_of_system_carrier_title,
         documents: [],
         policy_insurables_attributes: [:insurable_id],

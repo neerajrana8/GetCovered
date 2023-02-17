@@ -7,8 +7,6 @@ module V2
 
       CARRIERS_PER_PAGE = 50
 
-      before_action :check_permissions, only: %i[index]
-
       def index
         page = params[:page] || 1
         per_page = params[:per_page] || CARRIERS_PER_PAGE
@@ -17,16 +15,6 @@ module V2
         @meta = { total: @carriers.total_count, page: @carriers.current_page, per_page: per_page }
 
         render 'v2/carriers/index'
-      end
-
-      private
-
-      def check_permissions
-        if current_staff && %w[super_admin staff agent].include?(current_staff.role)
-          true
-        else
-          render json: { error: 'Permission denied' }, status: :forbidden
-        end
       end
     end
   end
