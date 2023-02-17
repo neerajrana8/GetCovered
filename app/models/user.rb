@@ -60,7 +60,8 @@ class User < ApplicationRecord
          :trackable, :invitable, validate_on_invite: true
 
   include RecordChange
-  include DeviseCustomUser
+  #include DeviseCustomUser
+  include DeviseTokenAuth::Concerns::User
   include SessionRecordable
 
   # Active Record Callbacks
@@ -426,6 +427,11 @@ class User < ApplicationRecord
 
   def full_name
     profile.first_name + " " + profile.last_name
+  end
+
+  #TODO: seems that we still can create multiple leases for one insurable for the same dates. need to figure out is it correct ot not
+  def latest_lease
+    leases&.order(end_date: :desc)&.first
   end
 
   private

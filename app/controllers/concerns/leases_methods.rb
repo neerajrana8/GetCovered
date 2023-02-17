@@ -7,6 +7,7 @@ module LeasesMethods
       users_params[:users]&.each do |user_params|
         user = ::User.find_by(id: user_params[:user][:id]) || ::User.find_by(email: user_params[:user][:email])
         if user.nil?
+          # TODO: Move to standard method for user creation
           user = ::User.new(user_params[:user])
           user.password = SecureRandom.base64(12)
           user.password_confirmation = user.password
@@ -16,7 +17,7 @@ module LeasesMethods
         ::LeaseUser.create(lease: @lease, user: user, primary: user_params[:primary],
                            moved_in_at: user_params[:moved_in_at],
                            moved_out_at: user_params[:moved_out_at],
-                           lessee: user_params[:lessee])#,
+                           lessee: user_params[:lessee] || true)#,
         #integration_profiles_attributes: user_params[:user][:integration_profiles_attributes])
       end
 
@@ -39,7 +40,7 @@ module LeasesMethods
         lease_user = LeaseUser.where(lease_id: @lease.id).find_by(user_id: user_params[:user][:id])
 
         if lease_user.present?
-          lease_user.update(primary: user_params[:primary], lessee: user_params[:lessee],
+          lease_user.update(primary: user_params[:primary], lessee: user_params[:lessee] || true,
                             moved_in_at: user_params[:moved_in_at], moved_out_at: user_params[:moved_out_at])
           #lease_user.integration_profiles.find(user_params[:user][:integration_profiles_attributes]&.last[:id])&.update(external_id: user_params[:user][:integration_profiles_attributes]&.last[:external_id])
           user = lease_user.user
@@ -56,6 +57,7 @@ module LeasesMethods
           if user.nil?
             user = ::User.new(user_params[:user])
             user.password = SecureRandom.base64(12)
+            user.password_confirmation = user.password
             user.invite! if user.save
           else
             user.update(user_params[:user].except(:integration_profiles_attributes))
@@ -70,7 +72,7 @@ module LeasesMethods
           LeaseUser.create(lease: @lease, user: user, primary: user_params[:primary],
                            moved_in_at: user_params[:moved_in_at],
                            moved_out_at: user_params[:moved_out_at],
-                           lessee: user_params[:lessee])#,
+                           lessee: user_params[:lessee] || true)#,
           #integration_profiles_attributes: user_params[:user][:integration_profiles_attributes])
         end
       end

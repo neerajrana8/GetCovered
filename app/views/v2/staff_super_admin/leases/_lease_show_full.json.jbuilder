@@ -27,7 +27,7 @@ end
 
 json.users do
   unless lease.lease_users.blank?
-    json.array! lease&.lease_users&.lessees do |lease_user|
+    json.array! lease&.lease_users do |lease_user|
       json.partial! "v2/staff_super_admin/users/user_show_full.json.jbuilder", user: lease_user.user
       json.lessee lease_user.lessee
       json.moved_in_at lease_user.moved_in_at

@@ -15,8 +15,8 @@ module V2
       cache_key
     end
 
-    def not_found
-      render json: { errors: [ :record_not_found ] }, status: 404
+    def not_found(exception)
+      render json: { errors: [ exception.model => "Record not found ID=#{exception.id}" ] }, status: 404
     end
 
 

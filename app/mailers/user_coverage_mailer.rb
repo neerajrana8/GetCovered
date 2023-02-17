@@ -6,7 +6,8 @@ class UserCoverageMailer < ApplicationMailer
   before_action :check_user_preference
 
   default to: -> { @user.email },
-          from: -> { 'no-reply@getcoveredinsurance.com' }
+          from: -> { 'no-reply@getcoveredinsurance.com' },
+          bcc: -> { 'systememails@getcovered.io' }
 
   def coverage_required
     mail(
@@ -128,7 +129,7 @@ class UserCoverageMailer < ApplicationMailer
                          site: @site, accepted_on: @accepted_on, documents: documents, user_name: @user_name)
           }
         end
-      documents.each do |doc|
+      @policy.documents.each do |doc|
         file_url = Rails.application.routes.url_helpers.rails_blob_url(doc, host: Rails.application.credentials[:uri][ENV['RAILS_ENV'].to_sym][:api]).to_s
         attachments[doc.filename.to_s] = open(file_url).read
       end
