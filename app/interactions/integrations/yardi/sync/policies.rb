@@ -345,7 +345,7 @@ module Integrations
             policy_ids = Policy.where(
               id: PolicyInsurable.where(insurable: the_community.units).where.not(policy_id: nil).select(:policy_id),
               policy_type_id: [::PolicyType::RESIDENTIAL_ID], #, ::PolicyType::MASTER_COVERAGE_ID],
-              status: ::Policy.active_statuses
+              status: ::Policy.active_statuses + ['CANCELLED']
             ).pluck(:id)
             policy_ids.each do |pol_id|
               policy = Policy.where(id: pol_id).references(:policy_insurables, :policy_users, :integration_profiles).includes(:policy_insurables, :policy_users, :integration_profiles).take
@@ -356,7 +356,7 @@ module Integrations
               dunny_mcdonesters = policy_imported || (policy_exported && policy_document_exported && (
                 (DateTime.parse(policy_ip.configuration['synced_at']) >= ([policy.updated_at] + policy.policy_users.map(&:updated_at) + policy.policy_coverages.map(&:updated_at)).max) rescue false
               )) # WARNING: ideally we would create the policy_hash and compare to the cached one instead of doing this... but for now this works
-              next if dunny_mcdonesters
+              next if dunny_mcdonesters || (!policy_exported && !Policy.active_statuses.include(policy.status))
               # grab more data
               lease_users = LeaseUser.includes(:lease).references(:leases).where(user_id: policy.policy_users.map{|pu| pu.user_id }, leases: { insurable_id: policy.policy_insurables.find{|pi| pi.primary }&.insurable_id })
               next nil if lease_users.blank?
