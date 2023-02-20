@@ -1,5 +1,5 @@
 class PolicyMailer < ApplicationMailer
-  layout 'agency_styled_mail'
+  layout 'branded_mailer'
   # Subject can be set in your I18n file at config/locales/en.yml
   # with the following lookup:
   #
@@ -8,6 +8,7 @@ class PolicyMailer < ApplicationMailer
     @policy = params[:policy]
     @agency = @policy.agency
     @branding_profile = @policy.branding_profile || BrandingProfile.global_default
+    @organization = Agency.find(1)
 
     mail to: @policy.primary_user.email, subject: 'Policy Submission Received'
   end
