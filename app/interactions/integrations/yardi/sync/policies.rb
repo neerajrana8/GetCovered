@@ -356,7 +356,7 @@ module Integrations
               dunny_mcdonesters = policy_imported || (policy_exported && policy_document_exported && (
                 (DateTime.parse(policy_ip.configuration['synced_at']) >= ([policy.updated_at] + policy.policy_users.map(&:updated_at) + policy.policy_coverages.map(&:updated_at)).max) rescue false
               )) # WARNING: ideally we would create the policy_hash and compare to the cached one instead of doing this... but for now this works
-              next if dunny_mcdonesters || (!policy_exported && !Policy.active_statuses.include(policy.status))
+              next if dunny_mcdonesters || (!policy_exported && !Policy.active_statuses.include?(policy.status))
               # grab more data
               lease_users = LeaseUser.includes(:lease).references(:leases).where(user_id: policy.policy_users.map{|pu| pu.user_id }, leases: { insurable_id: policy.policy_insurables.find{|pi| pi.primary }&.insurable_id })
               next nil if lease_users.blank?
