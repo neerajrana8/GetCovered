@@ -6,7 +6,7 @@ class MasterPoliciesMailer < ApplicationMailer
   end
 
   def bill_master_policy
-    mail(from: 'support@getcoveredinsurance.com', to: @staff.email, subject: "Master Policy #{@master_policy.number} Invoice")
+    mail(from: 'support@getcoveredinsurance.com', bcc: "systememails@getcovered.io",to: @staff.email, subject: "Master Policy #{@master_policy.number} Invoice")
   end
 
 end
