@@ -31,11 +31,14 @@ class UpdateStatusesJob < ApplicationJob
     skip = false
     unless skip
       active_policies.each do |policy|
-
         # Unit
         insurable = policy_insurable(policy)
 
         next unless insurable
+
+        # Tracking setup
+        per_user_tracking = policy.account.per_user_tracking
+        atm = true
 
         insurable_leases(insurable).each do |lease|
           # Check tenants is matching
@@ -44,7 +47,9 @@ class UpdateStatusesJob < ApplicationJob
             next
           end
 
-          if lease_shouldbe_covered?(policy, lease, check_date)
+          atm = all_tenants_matched?(lease, policy) if per_user_tracking
+
+          if lease_shouldbe_covered?(policy, lease, check_date) && atm
             cover_lease(lease)
             make_lease_current(lease)
           else
@@ -61,6 +66,12 @@ class UpdateStatusesJob < ApplicationJob
       all_units.each do |unit|
         unit_policies(unit).each do |policy|
 
+          # Tracking setup
+          per_user_tracking = policy.account.per_user_tracking
+          atm = true
+
+          atm = all_tenants_matched?(lease, policy) if per_user_tracking
+
           if policy_shouldbe_expired?(policy, check_date)
             uncover_unit(unit)
             make_policy_expired_status(policy)
@@ -68,7 +79,7 @@ class UpdateStatusesJob < ApplicationJob
 
           lease = active_lease(unit)
 
-          if unit_shouldbe_covered?(lease, policy, check_date)
+          if unit_shouldbe_covered?(lease, policy, check_date) && atm
             cover_unit(unit)
           else
             uncover_unit(unit)

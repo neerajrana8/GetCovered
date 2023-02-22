@@ -127,6 +127,24 @@ module Gc
     lease_name == policy_name && policy_email == lease_email
   end
 
+  # Matching tenants by name
+  def all_tenants_matched?(lease, policy)
+    lease_users = lease.users
+    policy_users = policy.users
+    lease_names = []
+    policy_names = []
+
+    lease_users.each do |lu|
+      lease_names << "#{lu.profile.first_name} #{lu.profile.last_name}"
+    end
+
+    policy_users.each do |pu|
+      policy_names << "#{pu.profile.first_name} #{pu.profile.last_name}"
+    end
+    matched = lease_names - policy_names | policy_names - lease_names
+    !matched.empty?
+  end
+
   def uncover_lease(lease)
     lease.update covered: false
   end
