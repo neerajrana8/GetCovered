@@ -13,9 +13,9 @@ module V2
                "and #{enrollment_params[:user_attributes]}"
         end
 
-        lease = Lease.find_by(insurable_id: @insurable.id, status: 'current')
+        lease = Lease.find_by(insurable_id: @insurable.id, status: 'current', defunct: false)
 
-        raise_error "Lease not found for insurable ID=#{enrollment_params[:insurable_id]}" unless lease
+        raise_error "No valid lease found for insurable ID=#{enrollment_params[:insurable_id]}" unless lease
 
         unless lease_users_matched?(lease, users)
           raise_error "Passed Users not matched with Lease users #{lease.users.pluck(:email)}"
