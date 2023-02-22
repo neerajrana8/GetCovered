@@ -74,7 +74,7 @@ module V2
         if @policy.policy_type&.master_coverage
           lease = @policy.latest_lease(lease_status: ['pending', 'current'])
           available_lease_date = lease.nil? ? DateTime.current.to_date : lease.sign_date.nil? ? lease.start_date : lease.sign_date
-          @master_policy_configurations = [@policy.find_closest_master_policy_configuration(@policy.primary_insurable, available_lease_date)]
+          @master_policy_configuration = @policy.find_closest_master_policy_configuration(@policy.primary_insurable, available_lease_date)
         end
       end
 
