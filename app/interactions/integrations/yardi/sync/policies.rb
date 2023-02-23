@@ -453,7 +453,7 @@ module Integrations
                   next
                 else
                   respy_fella = (result[:request].response.body.split(":") rescue [])
-                  received_yardi_id_preindex = respy_fella.find_index{|x| x == "Policy No" }
+                  received_yardi_id_preindex = respy_fella.find_index{|x| x == "Policy Id" }
                   if !received_yardi_id_preindex.nil?
                     yardi_id = respy_fella[received_yardi_id_preindex + 1]
                   end
