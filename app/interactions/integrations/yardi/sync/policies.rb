@@ -421,7 +421,7 @@ module Integrations
                 }.compact
               }
               if policy.status == 'CANCELLED' && policy.cancellation_date
-                policy_hash[:PolicyDetails][:CancelDate] = policy.cancellation_date&.to_s
+                #policy_hash[:PolicyDetails][:CancelDate] = policy.cancellation_date&.to_s
               end
               # export
               yardi_id = policy_ip&.configuration&.[]('policy_id')
@@ -440,7 +440,7 @@ module Integrations
                 policy_hash[:PolicyDetails][:PolicyId] = yardi_id if yardi_id
                 # export attempt
                 policy_updated = nil
-                result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: policy_exported || yardi_id)
+                result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: (policy_exported || yardi_id) ? true : false)
                 if result[:request].response&.body&.index("Policy already exists in database")
                   policy_updated = true
                   result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: true)
@@ -453,7 +453,7 @@ module Integrations
                   next
                 else
                   respy_fella = (result[:request].response.body.split(":") rescue [])
-                  received_yardi_id_preindex = respy_fella.find_index{|x| x == "Policy No" }
+                  received_yardi_id_preindex = respy_fella.find_index{|x| x == "Policy Id" }
                   if !received_yardi_id_preindex.nil?
                     yardi_id = respy_fella[received_yardi_id_preindex + 1]
                   end
