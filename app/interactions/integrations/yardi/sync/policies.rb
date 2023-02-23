@@ -421,7 +421,7 @@ module Integrations
                 }.compact
               }
               if policy.status == 'CANCELLED' && policy.cancellation_date
-                policy_hash[:PolicyDetails][:CancelDate] = policy.cancellation_date&.to_s
+                #policy_hash[:PolicyDetails][:CancelDate] = policy.cancellation_date&.to_s
               end
               # export
               yardi_id = policy_ip&.configuration&.[]('policy_id')
