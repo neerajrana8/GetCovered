@@ -51,12 +51,10 @@ module V2
         available_lease_date = @lease.nil? ? DateTime.current.to_date : @lease.sign_date.nil? ? @lease.start_date : @lease.sign_date
         @coverage_requirements = @policy.primary_insurable&.parent_community&.coverage_requirements_by_date(date: available_lease_date)
 
-        # NOTE This is architectural flaw and bs way to get master policy
         begin
-        master_policy = @policy.primary_insurable.parent_community.policies.current.where(policy_type_id: PolicyType::MASTER_IDS).take
-        @master_policy_configuration = MasterPolicy::ConfigurationFinder.call(master_policy, insurable, available_lease_date)
+          @master_policy_configuration = ChildPolicy::MPConfigurationFinder.call(@policy)
         rescue StandardError => e
-          render json: {error: e}, status: 400
+          return render json: {error: e}, status: 400
         end
       end
 
