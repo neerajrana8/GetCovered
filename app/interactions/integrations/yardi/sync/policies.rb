@@ -440,7 +440,7 @@ module Integrations
                 policy_hash[:PolicyDetails][:PolicyId] = yardi_id if yardi_id
                 # export attempt
                 policy_updated = nil
-                result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: policy_exported || yardi_id)
+                result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: (policy_exported || yardi_id) ? true : false)
                 if result[:request].response&.body&.index("Policy already exists in database")
                   policy_updated = true
                   result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: true)
