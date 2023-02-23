@@ -14,6 +14,9 @@ module MasterPolicy
     end
 
     def call
+      #TODO: this closure is hot fix from 02.23.2023 need to be discussed and maybe reimplemented
+      return nil if @master_policy.blank?
+
       master_policy_configuration = nil
 
       raise 'Insurable is nil' if @insurable.nil?
