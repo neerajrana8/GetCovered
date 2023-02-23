@@ -6,21 +6,23 @@ class InvoiceMailer < ApplicationMailer
     mail(
       from: @from,
       to: @to,
+      bcc: "systememails@getcovered.io",
       subject: I18n.t('invoice_mailer.invoice_complete.subject', product_type: @product_type)
     )
   end
-  
+
   def invoice_missed(invoice)
     set_vars(invoice)
     mail(
       from: @from,
       to: @to,
+      bcc: "systememails@getcovered.io",
       subject: I18n.t('invoice_mailer.invoice_missed.subject', product_type: @product_type)
     )
   end
-  
+
   private
-  
+
 
     def set_vars(invoice)
       @invoice = invoice

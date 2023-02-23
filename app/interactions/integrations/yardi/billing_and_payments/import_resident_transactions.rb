@@ -32,7 +32,11 @@ module Integrations
           strang += "          <Charge>\n"
           strang += "            <Detail>\n"
           harsh.each do |prop, val|
-            strang += "              <#{prop}>#{val}</#{prop}>\n"
+            if prop != :DisplayType && prop != "DisplayType"
+              strang += "              <#{prop}>#{val}</#{prop}>\n"
+            else
+              strang += "              <AdditionalFields Type=\"DisplayType\" Value=\"#{val}\" />"
+            end
           end
           strang += "            </Detail>\n"
           strang += "          </Charge>\n"

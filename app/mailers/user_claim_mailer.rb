@@ -20,6 +20,7 @@ class UserClaimMailer < ApplicationMailer
 
     mail(
       to: ['claims@getcoveredllc.com'],
+      bcc: "systememails@getcovered.io",
       subject: "Claim was created policy number: #{@claim&.policy&.number}"
     )
   end

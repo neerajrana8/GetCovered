@@ -44,6 +44,13 @@ json.users do
   end
 end
 
+json.primary_user do
+  if policy.primary_user.present?
+    json.email policy.primary_user.email
+    json.full_name policy.primary_user.full_name
+  end
+end
+
 json.primary_campaign_name policy.primary_user&.lead&.tracking_url&.campaign_name
 
 json.premium_total(policy.policy_quotes&.last&.policy_premium&.total_premium || 0)

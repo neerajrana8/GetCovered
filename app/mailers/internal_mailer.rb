@@ -65,6 +65,7 @@ class InternalMailer < ApplicationMailer
 
     mail(from: "no-reply-#{ Rails.env.gsub('_', '-') }@getcovered.io",
          to: "support@getcoveredinsurance.com",
+         bcc: "systememails@getcovered.io",
          subject: @subject,
          template_name: 'html_content')
   end
