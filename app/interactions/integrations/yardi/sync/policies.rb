@@ -427,7 +427,7 @@ module Integrations
               yardi_id = policy_ip&.configuration&.[]('policy_id')
               if !policy_exported || policy_hash != policy_ip&.configuration&.[]('exported_hash')
                 # try to grab id if necessary
-                if yardi_id.blank?
+                #if yardi_id.blank? ALWAYS try to grab it for now, because if it's wrong the dang thing just proceeds to create a new one
                   property_id = policy.primary_insurable&.integration_profiles&.where(integration: integration)&.where("external_context ILIKE 'unit_in_community_%'")&.take&.external_context&.[](18...)
                   retrieved = (Integrations::Yardi::RentersInsurance::GetInsurancePolicies.run!(integration: integration, property_id: property_id, policy_number: policy.number)[:parsed_response]
                                                                                          &.dig("Envelope", "Body", "GetInsurancePoliciesResponse", "GetInsurancePoliciesResult", "RenterInsurance", "InsurancePolicy") rescue nil)
@@ -435,7 +435,7 @@ module Integrations
                     retrieved = retrieved.first if retrieved.class == ::Array
                     yardi_id = retrieved&.[]("PolicyDetails")&.[]("PolicyId")
                   end
-                end
+                #end
                 # try to add id to hash
                 policy_hash[:PolicyDetails][:PolicyId] = yardi_id if yardi_id
                 # export attempt
