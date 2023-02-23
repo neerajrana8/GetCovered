@@ -75,7 +75,6 @@ module V2
           lease = @policy.latest_lease(lease_status: ['pending', 'current'])
           insurable = @policy.primary_insurable.parent_community
           available_lease_date = lease.nil? ? DateTime.current.to_date : lease.sign_date.nil? ? lease.start_date : lease.sign_date
-          @master_policy_configuration = @policy.find_closest_master_policy_configuration(@policy.primary_insurable, available_lease_date)
 
           # NOTE This is architectural flaw and bs way to get master policy
           begin
