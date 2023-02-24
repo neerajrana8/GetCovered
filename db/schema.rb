@@ -665,9 +665,10 @@ ActiveRecord::Schema.define(version: 2023_02_09_025008) do
     t.string "designation"
     t.integer "amount"
     t.date "start_date"
-    t.bigint "insurable_id", null: false
+    t.integer "insurable_id"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.integer "account_id"
     t.index ["insurable_id"], name: "index_coverage_requirements_on_insurable_id"
   end
 

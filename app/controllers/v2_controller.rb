@@ -556,7 +556,7 @@ class V2Controller < ApplicationController
     end
   end
 
-	def health_check
-		render json: { ok: true , node: "It's alive!"}.to_json	
-	end
+  def health_check
+    render json: { ok: true , node: "It's alive!", env: ENV['RAILS_ENV']}.to_json
+  end
 end

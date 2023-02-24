@@ -105,6 +105,8 @@ class Account < ApplicationRecord
            
   has_many :insurable_rate_configurations,
            as: :configurer
+
+  has_many :coverage_requirements
   
   has_many :reporting_coverage_reports,
     class_name: "Reporting::CoverageReport",
@@ -119,7 +121,8 @@ class Account < ApplicationRecord
     class_name: "Reporting::UnitCoverageEntry",
     through: :reporting_coverage_reports,
     source: :unit_coverage_entries
-  
+
+
   scope :enabled, -> { where(enabled: true) }
 
   accepts_nested_attributes_for :addresses, allow_destroy: true

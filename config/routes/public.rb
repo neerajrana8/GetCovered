@@ -130,6 +130,7 @@ scope module: :public do
   end
 
   post 'policies/enroll_master_policy', to: '/v2/public/policies#enroll_master_policy'
+  post 'policies/enroll_child_policy', to: '/v2/public/policies#enroll_child_policy'
 
   post 'users/check_email', to: '/v2/check_email#user'
   post 'staffs/check_email', to: '/v2/check_email#staff'
@@ -146,4 +147,7 @@ scope module: :public do
   get 'units/:id' => 'units#communities'
   get 'buildings/:id' => 'buildings#community'
   post '/sendgrid', to: 'contact_records#sendgrid_mails'
+
+
+  match 'issuer/:action', controller: '/v2/public/issuer', via: [:get, :post]
 end
