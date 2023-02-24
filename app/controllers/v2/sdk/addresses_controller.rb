@@ -8,20 +8,24 @@ module V2
       include AddressesMethods
 
       def search
-        @query_address = search_params[:query].split(" ")
-        @query_array = [
-          "INNER JOIN insurables ON insurables.id = addresses.addressable_id",
-          "addresses.addressable_type = 'Insurable'",
-          "insurables.insurable_type_id = #{ @bearer.id }",
-          "insurables.account_id = #{ @bearer.id }"
-        ]
-        @query_address.each do |part|
-          @query_array << "addresses.full_searchable LIKE '%#{ part }%'"
-        end
-        @query = @query_array.join(" AND ")
-        @communities = Insurable.includes(:addresses, insurable: [:integration_profiles, :addresses, insurable: [:integration_profiles]])
-                                .where(id: Address.joins(@query).map(&:addressable_id), addresses: { primary: true })
+        ids = Array.new
+        @addresses = Address.where("addresses.full_searchable LIKE '%#{ search_params[:query] }%' AND addressable_type = 'Insurable'")
+        @addresses.each { |a| ids << a.addressable_id if a.addressable.insurable_type_id == 1 && a.addressable.account_id == @bearer.id }
+        @communities = Insurable.find(ids)
+
+        # @query_array = [
+        #   "INNER JOIN insurables ON insurables.id = addresses.addressable_id",
+        #   "addresses.addressable_type = 'Insurable'",
+        #   "insurables.insurable_type_id = #{ @bearer.id }",
+        #   "insurables.account_id = #{ @bearer.id }",
+        #   "addresses.full_searchable LIKE '%#{ search_params[:query] }%'"
+        # ]
+        # @query = @query_array.join(" AND ")
+        # @communities = Insurable.includes(:addresses, insurable: [:integration_profiles, :addresses, insurable: [:integration_profiles]])
+        #                         .where(id: Address.joins(@query).map(&:addressable_id), addresses: { primary: true })
+
         @response = Array.new
+
         @communities.each do |community|
           building_check = community.insurables.exists?(insurable_type_id: 7)
 
@@ -75,3 +79,22 @@ module V2
     end
   end
 end
+
+{
+  "id": 1,
+  "title": "Random Gibberish Community Name",
+  "address": "725 Ne 24th St Miami FL 33137",
+  "external_id": "lax1259",
+  "units": [
+    {
+      "id": 2,
+      "title": "101",
+      "external_id": "lax1260"
+    },
+    {
+      "id": 3,
+      "title": "102",
+      "external_id": "lax1261"
+    }...
+  ]
+}
