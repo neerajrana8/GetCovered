@@ -12,8 +12,8 @@ module V2
         @query_array = [
           "INNER JOIN insurables ON insurables.id = addresses.addressable_id",
           "addresses.addressable_type = 'Insurable'",
-          "insurables.insurable_type_id = 1",
-          "insurables.account_id = 1"
+          "insurables.insurable_type_id = #{ @bearer.id }",
+          "insurables.account_id = #{ @bearer.id }"
         ]
         @query_address.each do |part|
           @query_array << "addresses.full_searchable LIKE '%#{ part }%'"
