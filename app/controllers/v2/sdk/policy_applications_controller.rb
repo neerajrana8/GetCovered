@@ -45,7 +45,7 @@ module V2
             if @application.update(status: 'in_progress')
               # get token and redirect url
               new_access_token = @application.create_access_token
-              @redirect_url = "#{site}/residential/#{new_access_token.to_urlparam}?format=iframe"
+              @redirect_url = "#{site}/residential/#{new_access_token.to_urlparam}#{ @bearer.is_a?(Account) ? "?access=iframe" : "" }"
               render 'v2/public/policy_applications/show_external'
             else
               render json: standard_error(:policy_application_update_error, nil, @application.errors),
