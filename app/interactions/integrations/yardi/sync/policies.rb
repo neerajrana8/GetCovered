@@ -6,7 +6,8 @@ module Integrations
         string :property_list_id, default: nil
         array :property_ids, default: nil
         date :from_date, default: nil
-        boolean :efficiency_mode, default: false
+        boolean :efficiency_mode, default: false    
+        boolean :fake_export, default: false        # if true, does everything normally but aborts before actually pushing policies
         
         def export_policy_document(property_id:, policy:, resident_id:, policy_ip: policy.integration_profiles.to_a.find{|pip| pip.integration_id == integration.id }.take)
           return "Document push not enabled" unless integration.configuration.dig('sync', 'policy_push', 'push_document')
@@ -359,18 +360,31 @@ module Integrations
                 (DateTime.parse(policy_ip.configuration['synced_at']) >= ([policy.updated_at] + policy.policy_users.map(&:updated_at) + policy.policy_coverages.map(&:updated_at)).max) rescue false
               )) # WARNING: ideally we would create the policy_hash and compare to the cached one instead of doing this... but for now this works
               next if dunny_mcdonesters || (!policy_exported && !Policy.active_statuses.include?(policy.status))
-              # grab more data
-              lease_users = LeaseUser.includes(:lease).references(:leases).where(user_id: policy.policy_users.map{|pu| pu.user_id }, leases: { insurable_id: policy.policy_insurables.find{|pi| pi.primary }&.insurable_id })
-              if lease_users.blank?
+              # create the policy IP if needed
+              policy_ip ||= IntegrationProfile.create(
+                integration: integration,
+                profileable: policy,
+                external_context: "policy",
+                external_id: policy.number,
+                configuration: {
+                  'history' => 'not_exported',
+                  'synced_at' => (Time.current - 100.years).to_s,
+                  'exported_hash' => {}
+                }
+              )
+              # grab lease stuff
+              lease = policy.latest_lease(user_matches: true)
+              if lease.nil?
                 policy_ip.configuration ||= {}
-                policy_ip.configuration['export_problem'] = "Policyholder/lessee mismatch"
+                policy_ip.configuration['export_problem'] = "No current lease with matching users"
                 policy_ip.save
                 next nil
               end
+              lease_users = lease.lease_users.select{|lu| policy.users.pluck(:id).include?(lu.user_id) }
               lease_user_ips = IntegrationProfile.where(integration: integration, profileable: lease_users)
               if lease_user_ips.blank?
                 policy_ip.configuration ||= {}
-                policy_ip.configuration['export_problem'] = "No matching Yardi lessee"
+                policy_ip.configuration['export_problem'] = "No matching Yardi lessee records"
                 policy_ip.save
                 next nil
               end
@@ -398,7 +412,7 @@ module Integrations
               end.compact.uniq
               if users_to_export.blank?
                 policy_ip.configuration ||= {}
-                policy_ip.configuration['no_export_because'] = "No exportable policyholding residents"
+                policy_ip.configuration['export_problem'] = "No exportable policyholding residents"
                 policy_ip.save
                 next nil
               end
@@ -406,7 +420,7 @@ module Integrations
               lease_priu = users_to_export.find{|u| !u[:external_id].downcase.start_with?("r") }
               if policy_priu.blank? # MOOSE WARNING: we are rejecting policies whose primary user is not on the lease...
                 policy_ip.configuration ||= {}
-                policy_ip.configuration['no_export_because'] = "Primary policyholder not on lease"
+                policy_ip.configuration['export_problem'] = "Primary policyholder not on lease"
                 policy_ip.save
                 next nil
               end
@@ -415,7 +429,7 @@ module Integrations
               if !priu[:lease_user].primary
                 if integration.configuration['sync']['policy_push']['push_roommate_policies'] == false
                   policy_ip.configuration ||= {}
-                  policy_ip.configuration['no_export_because'] = "Roommate policy push disabled"
+                  policy_ip.configuration['export_problem'] = "Roommate policy push disabled"
                   policy_ip.save
                   next nil
                 end
@@ -451,6 +465,7 @@ module Integrations
                 #policy_hash[:PolicyDetails][:CancelDate] = policy.cancellation_date&.to_s
               end
               # export
+              next nil if fake_export # lets us pull back at the last minute if we're just trying to gather data on failures etc.
               yardi_id = policy_ip&.configuration&.[]('policy_id')
               if !policy_exported || policy_hash != policy_ip&.configuration&.[]('exported_hash')
                 # try to grab id if necessary
@@ -506,7 +521,7 @@ module Integrations
                     policy_ip.configuration['history'] = 'exported_to_yardi'
                     policy_ip.configuration['synced_at'] = Time.current.to_s
                     policy_ip.configuration['exported_hash'] = policy_hash
-                    policy_ip.configuration.delete('no_export_because')
+                    policy_ip.configuration.delete('export_problem')
                     policy_ip.save
                   end
                   to_return[:policies_exported][policy.number] = policy
