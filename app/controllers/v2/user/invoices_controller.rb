@@ -9,8 +9,30 @@ module V2
       before_action :set_substrate, only: [:index]
 
       def index
-        super(:@invoices, current_user.invoices.order(created_at: :desc))
+        @invoices = invoices_data
         render json: @invoices, status: :ok
+      end
+
+      def invoices_data
+        limit = params.dig('pagination', 'per').to_i
+        offset = params.dig('pagination', 'page').to_i * limit
+        total_records = current_user.invoices.count
+        response.headers['total-pages'] = (total_records.to_f / limit.to_f).ceil
+        response.headers['total-entries'] = total_records.to_s
+        response.headers['current-page'] = params.dig('pagination', 'page')
+        sorting_order = "#{params[:sort][:column].first} #{params[:sort][:direction].first}"
+        invoices = current_user.invoices.order(sorting_order)
+                               .includes(:invoiceable)
+                               .limit(limit)
+                               .offset(offset)
+        data = []
+        invoices.each do |invoice|
+          attrs = invoice.attributes
+          attrs['policy_number'] = invoice.invoiceable.policy.number
+          attrs['policy_type'] = invoice.invoiceable.policy.policy_type.title
+          data << attrs
+        end
+        data
       end
 
       def show
@@ -46,11 +68,11 @@ module V2
           external: [:scalar],
           available_date: [:scalar, :array, :interval],
           due_date: [:scalar, :array, :interval],
-          
+
           total_due: [:scalar, :array, :interval],
           total_payable: [:scalar, :array, :interval],
           total_received: [:scalar, :array, :interval],
-          
+
           invoiceable_id: [:scalar, :array],
           invoiceable_type: [:scalar, :array]
         }
