@@ -23,7 +23,7 @@ module Compliance
                                                 insurable_id: unit_ids,
                                                 created_at: created_at_search_range,
                                                 start_date: start_date_search_range)
-                                          .where.not(id: excluded_leases).pluck(:id)
+                                         .where.not(defunct: true).where.not(id: excluded_leases).pluck(:id)
 
               @lease_ids = @lease_ids + community_lease_ids
             end
