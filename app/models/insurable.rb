@@ -131,6 +131,19 @@ class Insurable < ApplicationRecord
   #    indexes :title, type: :text, analyzer: 'english'
   #  end
   #end
+  
+  def latest_lease(fake_now: nil)
+    return nil unless ::InsurableType::RESIDENTIAL_UNITS_IDS.include?(self.insurable_type_id)
+    query = self.leases
+    if fake_now
+      query = query.where(end_date: nil).or(query.where("end_date > ?", fake_now.to_date)).where("start_date <= ?", fake_now.to_date)
+    else
+      query = query.where(status: 'current')
+    end
+    query = query.order("start_date desc")
+    return(query.first)
+  end
+  
 
   # returns carrier status, which may differ by carrier; for MSI and QBE, it returns :preferred or :nonpreferred
   def get_carrier_status(carrier, refresh: nil)

@@ -616,7 +616,14 @@ class Policy < ApplicationRecord
     end
   end
 
-  def latest_lease(lease_status: 'current', user_matches: [:all, :primary, :any, :none], prefer_more_users: true, lessees_only: false, current_only: false)
+  def latest_lease(
+    lease_status: 'current',                      # string or array of lease statuses to restrict to
+    user_matches: [:all, :primary, :any, :none],  # array of user match types to accept, in order from most to least preferred
+    prefer_more_users: true,                      # if true & multiple equivalent results, returns the one with the most matching users rather than the latest start date
+    lessees_only: false,                          # true to only count lessees, not non-lessee residents, when counting matching users
+    current_only: false                          # true to disregard moved-out residents when counting matching users
+    # NOT YET IMPLEMENTED: fake_now: nil                                 # pass a date (or datetime) to pretend that's the current date (uses lease start_date and end_date to guess what lease_status values were & what residents were present at that time)
+  )
     return nil if self.primary_insurable.blank?
     user_ids = self.users.pluck(:id)
     user_matches = [:all, :primary, :any] if user_matches == true

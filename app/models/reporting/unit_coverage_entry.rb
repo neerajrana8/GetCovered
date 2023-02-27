@@ -17,8 +17,12 @@ module Reporting
       class_name: "Reporting::CoverageEntry",
       through: :links,
       source: :parent
+    has_many :lease_user_coverage_entries,
+      class_name: "Reporting::LeaseUserCoverageEntry",
+      inverse_of :unit_coverage_entry,
+      foreign_key: :unit_coverage_entry_id
       
-    before_create :generate
+    before_create :prepare
     
     enum coverage_status_any: COVERAGE_STATUSES,
       _prefix: true
@@ -48,12 +52,9 @@ module Reporting
     def covered_by_no_policy(determinant)
       'none' == self.send("coverage_status_#{determinant}")
     end
-
-    def generate!
-      self.generate(bang: true)
-    end
     
-    def generate(bang: false) # only :report_time and :insurable need to be provided by the user
+    # only :report_time and :insurable need to be provided by the user
+    def prepare
       # basic setup
       today = self.report_time.to_date
       self.street_address ||= self.insurable.primary_address&.full || ""
@@ -63,8 +64,18 @@ module Reporting
       self.lease_yardi_id ||= self.lease&.integration_profiles&.where(external_context: 'lease')&.take&.external_id
       lessee_ids = self.lease.nil? ? [] : self.lease.lease_users.where(lessee: true, moved_out_at: nil).or(self.lease.lease_users.where(lessee: true, moved_out_at: (today + 1.day)...)).pluck(:user_id).uniq
       self.lessee_count ||= lessee_ids.count
+    end
+
+    def generate!
+      self.generate(bang: true)
+    end
+    
+    def generate(bang: false)
+      today = self.report_time.to_date
       # prepare for coverage_statuses
-      time_query = self.insurable.policies.where(expiration_date: nil).or(self.insurable.policies.where(expiration_date: (today + 1.day)...)).where("effective_date <= ?", today)
+      time_query = self.insurable.policies.where(expiration_date: nil).or(self.insurable.policies.where(expiration_date: (today + 1.day)...))
+      time_query = time_query.where(cancellation_date: nil).or(time_query.where(cancellation_date: (today + 1.day)...))
+      time_query = time_query.where("effective_date <= ?", today)
       mpc = time_query.where(policy_type_id: ::PolicyType::MASTER_COVERAGES_IDS, status: "BOUND")
       ho4 = time_query.where(policy_type_id: ::PolicyType::RESIDENTIAL_ID, status: ::Policy.active_statuses)
       internal = []
