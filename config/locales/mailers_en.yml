@@ -199,6 +199,10 @@ en:
       thank_you_for_registering: "Thank you for purchasing a renters insurance policy with Get Covered!"
       please_click: "Please click below to finish activating your account."
       the_gc_portal_will_allow: "The Get Covered portal will allow you to access your policy documents, update your personal information and review your billing details."
-
+  policy_mailer:
+    coverage_proof_uploaded:
+      subject: 'Policy Submission Received'
+    notify_new_child_policy:
+      subject: 'Master Policy Enrollment Confirmation'
 
 

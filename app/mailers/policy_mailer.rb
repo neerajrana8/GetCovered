@@ -8,7 +8,7 @@ class PolicyMailer < ApplicationMailer
 
     mail(to: @policy.primary_user.email,
          bcc: 'systememails@getcovered.io',
-         subject: 'Policy Submission Received')
+         subject: t('policy_mailer.coverage_proof_uploaded.subject'))
   end
 
   def notify_new_child_policy
@@ -21,6 +21,6 @@ class PolicyMailer < ApplicationMailer
     mail(to: params[:user].contact_email,
          bcc: 'systememails@getcovered.io',
          from: 'policyverify@getcovered.io',
-         subject: 'Master Policy Enrollment Confirmation')
+         subject: t('policy_mailer.notify_new_child_policy.subject'))
   end
 end
