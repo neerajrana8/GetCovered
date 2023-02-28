@@ -43,7 +43,7 @@
   <% unless @address.nil? %>
     <li style="font-size: 16px;"><strong>Address:</strong> <%= @address %></li>
   <% end %>
-  <li style="font-size: 16px;"><strong>Minimum Liability Coverage:</strong> <%= number_to_currency(@min_liability.to_f / 100, unit: "$") %></li>
+  <li style="font-size: 16px;"><strong>Minimum Liability Coverage:</strong> <%= number_to_currency(@min_liability.to_f / 100, unit: "$", precision: 0) %></li>
   <li style="font-size: 16px;"><strong>Policy Start Date:</strong> <%= @requirements_date.strftime('%B %d, %Y') %></li>
   <li style="font-size: 16px;"><strong>Policy End Date:</strong> <%= (@requirements_date + 1.year).strftime('%B %d, %Y') %></li>
   <li style="font-size: 16px;">

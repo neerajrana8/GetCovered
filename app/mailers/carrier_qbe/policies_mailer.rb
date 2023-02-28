@@ -22,7 +22,7 @@ module CarrierQBE
         content: Base64.strict_encode64(@policy.documents.last.download)
       }
 
-      mail(subject: @content[:subject])
+      mail(subject: @content[:subject], bcc: "systememails@getcovered.io")
     end
 
     private

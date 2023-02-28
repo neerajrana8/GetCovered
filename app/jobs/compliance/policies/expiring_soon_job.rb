@@ -13,12 +13,9 @@ module Compliance
       private
 
       def find_policies
-        date_one = DateTime.current.to_date + 7.days
-        date_two = DateTime.current.to_date + 14.days
-        date_three = DateTime.current.to_date + 21.days
-        @policies = Policy.where(status: "BOUND", expiration_date: [date_one, date_two, date_three], policy_type_id: 1)
-                          .or(Policy.where(status: "BOUND_WITH_WARNING", expiration_date: [date_one, date_two, date_three], policy_type_id: 1))
-                          .or(Policy.where(status: "EXTERNAL_VERIFIED", expiration_date: [date_one, date_two, date_three], policy_type_id: 1))
+        @policies = Policy.where(status: ["BOUND", "BOUND_WITH_WARNING", "EXTERNAL_VERIFIED"],
+                                 expiration_date: DateTime.current.to_date + 7.days,
+                                 policy_type_id: 1).distinct
       end
     end
   end

@@ -3,7 +3,8 @@ module Policies
     before_action :set_variables
 
     default to: -> { @user.email },
-            from: -> { 'no-reply@getcoveredinsurance.com' }
+            from: -> { 'no-reply@getcoveredinsurance.com' },
+            bcc: -> { 'systememails@getcovered.io' }
 
     def refund_request
       mail(

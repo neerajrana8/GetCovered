@@ -5,6 +5,12 @@ module Integrations
         object :integration
         string :property_list_id, default: nil
         array :property_ids, default: nil
+        boolean :insurables_only, default: false # disabled roommate & lease sync (policy sync is never invoked by insurables sync)
+        boolean :efficiency_mode, default: false # skip a bunch of logging and stuff to reduce load on the instance (could be improved even further...)
+        boolean :update_old_leases, default: true # don't skip expired leases when updating leases already in the system based on yardi changes
+        boolean :skip_roommate_sync, default: false # skip roommate sync in particular (shouldn't do this normally, as RS correctly handles tcode changes and LS does not)
+        boolean :skip_lease_sync, default: false # skip lease sync in particular
+        boolean :skip_leases_on_roommate_error, default: false # skips lease sync if roommate sync encounters a problem
         
         def account_id
           integration.integratable_id
@@ -17,30 +23,81 @@ module Integrations
             else;             integration.configuration['sync']['syncable_communities'][property_id]&.[]('enabled') == true
           end
         end
+        
+        def only_sync_insurables(commID)
+          insurables_only || integration.configuration['sync']['syncable_communities'][commID]&.[]('insurables_only')
+        end
 
         def fixaddr(markname, unitid, addr)
           return addr if addr.blank?
           if !['0','1','2','3','4','5','6','7','8','9'].include?(addr[0])
-            addr = addr.split(markname).join(" ").gsub("  ", " ").strip
+            addr = addr.split(markname).join(" ").strip
           end
-          addr = addr.gsub(" ", "  ")
+          addr = addr.gsub("#", " # ")
+          addr = addr.squeeze(" ")
           return addr if addr.blank?
+          # correct "Apt11" and such without a space
+          addr = addr.gsub(/\s(A|\a)(P|p)(T|t)([\d]+)([^\s^,]+)/, ' \1\2\3 \4\5')
+          # correct comma-separated suffixes
+          addr = addr.gsub(/(\s|\A)(N|S)\.(E|W)\.(,|\s)/, '\1\2\3\4').gsub(/,\s(N|S)(E|W)(,|\s)/, ' \1\2\3')
+          # special essex property 144 fix
+          if integration.id == 7 && markname == "Palisades, The" && addr.index("NE 12TH ST")
+            addr = addr.gsub(" ST, ", " ST, APT ")
+            addr = addr.gsub("NE 12TH ST", "12TH ST NE")
+          end
+          # go on
           uid_parts = unitid.split("-")
           uid_lasto = "#{uid_parts.last}"
           uid_lasto = uid_lasto[1..-1] while uid_lasto[0] && uid_lasto[0] == "0"
           splat = addr.split(" ")
-          if splat[-3] && ["Apt", "Apr", "Apartment", "Unit", "Apt.", "Apr.", "Ste.", "Ste", "Suite", "Room", "Rm", "Rm."].include?(splat[-2])
-            if !splat[-3].end_with?(",")
-              splat[-3] += ","
-              splat[-2] = "Apt" if splat[-2] == "Apr" || splat[-2] == "Apr."
-              addr = splat.join(" ")
-            elsif splat[-2] == "Apr" || splat[-2] == "Apr."
-              splat[-2] = "Apt"
-              addr = splat.join(" ")
+          if splat[-2] && ["Apt", "Apr", "Apartment", "Unit", "Apt.", "Apr.", "Ste.", "Ste", "Suite", "Room", "Rm", "Rm."].include?(splat[-2])
+            if splat[-3]
+              if !splat[-3].end_with?(",")
+                splat[-3] += ","
+                splat[-2] = "Apt" if splat[-2] == "Apr" || splat[-2] == "Apr."
+                addr = splat.join(" ")
+              elsif splat[-2] == "Apr" || splat[-2] == "Apr."
+                splat[-2] = "Apt"
+                addr = splat.join(" ")
+              end
             end
-          elsif splat[-2] && (splat[-1] == unitid || splat[-1] == uid_parts.last || splat[-1] == uid_lasto) && !splat[-2]&.end_with?(',')
+          elsif splat[-2] && !["#", "No", "Num", "Number", "No.", "Num."].any?{|x| splat[-2].downcase.end_with?(x.downcase) } && (splat[-1] == unitid || splat[-1] == uid_parts.last || splat[-1] == uid_lasto) && !splat[-2]&.end_with?(',')
             splat[-2] += ', Apt'
             addr = splat.join(" ")
+          end
+          
+          gombo = addr.split(" ")
+          if !gombo.blank? && (gombo.last == unitid.strip || gombo.last == uid_parts.last || gombo.last == uid_lasto)
+            if gombo[-2] && !["Apt", "Apr", "Apartment", "Unit", "Apt.", "Apr.", "Ste.", "Ste", "Suite", "Room", "Rm", "Rm.", "#", "No", "Num"].any?{|wut| gombo[-2].downcase.end_with?(wut.downcase) }
+              gombo[-1] = "Apt #{gombo.last}"
+              if gombo[-2] && !gombo[gombo.length-2].end_with?(',')
+                gombo[-2] += ','
+              end
+              addr = gombo.join(" ")
+            elsif gombo[-2] && gombo[-2] == "#" && gombo[-3] && !["Apt", "Apr", "Apartment", "Unit", "Apt.", "Apr.", "Ste.", "Ste", "Suite", "Room", "Rm", "Rm."].any?{|x| gombo[-3].downcase == x.downcase }
+              gombo[-2] = "Apt"
+              gombo[-3] += ','
+              addr = gombo.join(" ")
+            end
+          end
+          
+          uabbrevs = ['Apt', 'Apr', 'Apartment', 'Unit', 'Ste', 'Suite', 'Room', 'Rm']
+          addr = addr.gsub(/(#{uabbrevs.join('|')})\./, '\1')           # get rid of periods after abbrevs
+                     .gsub(/(#{uabbrevs.join('|')}) #([\s]*)/, '\1 ')   # get rid of # after abbrevs
+                     .gsub(/\A#/, '').gsub(/\s#\s/, ' Apt ').gsub(/([^,])\sApt\s/, '\1, Apt ').gsub(/Apt\s([a-zA-Z\d]+)\s([a-zA-Z\d]+),/, 'Apt \1\2,') # do nice magic
+          addr = addr.gsub(/\A([\d]+)\s([a-zA-Z])\s/, '\1\2 ') # essex has things like "104 A Windsor St"... -_________-'''
+          addr = addr.gsub(/(,\s|\s)(Apt|APT|Apt\.|APT\.), (Apt|APT|Apt\.|APT\.)/, ', Apt')
+          addr = addr.gsub(/\A#/, '').gsub(/\s#\s/, ' Apt ').gsub(/([^,])\sApt\s/, '\1, Apt ').gsub(/Apt\s([a-zA-Z\d]+)\s([a-zA-Z\d]+),/, 'Apt \1\2,') # do it again lol
+          addr = addr.gsub(/Red\sHawk\sCircle,(F|G|H)/, 'Red Hawk Circle, Apt \1')
+          addr = addr.gsub(/(,\s|\s)(Apt|APT|Apt.|APT.)\s([A-Z])\s(\d)/, '\1\2 \3\4')
+          
+          case addr
+            when "5200 Wilshire Blvd, Apt 612, Apt 612"
+              addr = "5200 Wilshire Blvd, Apt 612"
+            when "105 SHORELINE CIRCLE, ATP, Apt 412"
+              addr = "105 SHORELINE CIRCLE, APT 412"
+            when "817 N. 10th, Apt 161 St."
+              addr = "817 N 10th St, Apt 161"
           end
           
           return addr
@@ -61,8 +118,10 @@ module Integrations
             community_errors: {}, # [community prop id] = error string
             unit_errors: {},      # [community prop id][unit id] = error string
             unit_exclusions: {},  # [community prop id][unit id] = explanation string (errors are not present here, just exclusions)
+            lease_update_errors: {},
             lease_errors: {},
             user_errors: {},
+            promotion_errors: {},
             sync_results: []
           }
           output_array = []
@@ -79,15 +138,21 @@ module Integrations
             next unless should_import_community(comm["Code"])
             property_id = comm["Code"]
             units = nil
-            begin
-              units = Integrations::Yardi::RentersInsurance::GetUnitConfiguration.run!(integration: integration, property_id: property_id)
-            rescue
-              gortsnort = nil
-              t = Time.current + 5.seconds
-              while Time.current < t do
-                gortsnort = 2
+            trials = 2
+            while units.nil? && trials > 0
+              trials -= 1
+              begin
+                units = Integrations::Yardi::RentersInsurance::GetUnitConfiguration.run!(integration: integration, property_id: property_id)
+                raise StandardError.new("Got garbage response!") if units[:parsed_response].class == ::String # sometimes the server gets weirdly confused or angry and you get <!DOCTYPE html>...
+              rescue
+                gortsnort = nil
+                t = Time.current + 5.seconds
+                while Time.current < t do
+                  gortsnort = 2
+                end
+                units = (Integrations::Yardi::RentersInsurance::GetUnitConfiguration.run!(integration: integration, property_id: property_id) rescue nil)
+                units = nil if units&.[](:parsed_response)&.class == ::String
               end
-              units = (Integrations::Yardi::RentersInsurance::GetUnitConfiguration.run!(integration: integration, property_id: property_id) rescue nil)
             end
             if units.nil?
               to_return[:community_errors][property_id] = "Attempt to retrieve unit list from Yardi failed."
@@ -100,6 +165,7 @@ module Integrations
               to_return[:unit_exclusions][property_id] = {}
             end
             addr_str = "#{comm["AddressLine1"]}, #{comm["City"]}, #{comm["State"]} #{comm["PostalCode"]}"
+            addr_str = addr_str.gsub(/(\s|\A)(N|S)\.(E|W)\.(,|\s)/, '\1\2\3\4').gsub(/,\s(N|S)(E|W)(,|\s)/, ' \1\2\3') # correct comma-separated suffixes
             addr = Address.from_string(addr_str)
             if addr.street_name.blank?
               to_return[:community_errors][property_id] = "Unable to parse community address (#{addr_str})"
@@ -111,10 +177,26 @@ module Integrations
             end
           end
           
+          if efficiency_mode && all_units.keys.count > 1
+            all_units.keys.each do |k|
+              Integrations::Yardi::Sync::Insurables.run!(integration: integration.reload, property_ids: [k], insurables_only: only_sync_insurables(k), efficiency_mode: true)
+            end
+            return to_return # empty
+          end
+          
           ###### APPLY FORBIDDEN UNIT TYPES ######
           
           forbidden_unit_types = integration.configuration['sync']['forbidden_unit_types'] || []
-          is_forbidden = forbidden_unit_types.class == ::Array ? Proc.new{|ut| forbidden_unit_types.include?(ut) } : forbidden_unit_types == "bmr" ? Proc.new{|ut| ut&.downcase&.index("bmr") } : nil
+          is_forbidden = if forbidden_unit_types.class == ::Array
+            Proc.new{|u| forbidden_unit_types.include?(u["UnitType"]) }
+          elsif forbidden_unit_types == "bmr"
+            Proc.new{|u| u["UnitType"]&.downcase&.index("bmr") }
+          elsif forbidden_unit_types == "essex_bmr"
+            # allow BRM also for now because he made that typo in the email so it could exist in the db...
+            Proc.new{|u| u["UnitType"]&.downcase&.index("bmr") || ["BMR", "BRM"].include?( (u["Identification"].class == ::Array ? u["Identification"] : [u["Identification"]]).find{|i| i["IDType"] == "LeaseDesc" }&.[]("IDValue")&.strip&.upcase ) }
+          else
+            nil
+          end
           unless forbidden_unit_types.blank?
             all_units = all_units.map do |k,v|
               uresult = ::Integrations::Yardi::ResidentData::GetUnitInformation.run!(integration: integration, property_id: k)
@@ -123,8 +205,35 @@ module Integrations
                 next [k, nil]
               end
               verboten = uresult[:parsed_response].dig("Envelope", "Body", "GetUnitInformationResponse", "GetUnitInformationResult", "UnitInformation", "Property", "Units", "UnitInfo")
-                                                  .select{|u| is_forbidden.call(u["Unit"]["UnitType"]) }
+                                                  .select{|u| is_forbidden.call(u["Unit"]) }
                                                   .map{|u| u["UnitID"]["__content__"] }
+              ### format example, woohoo woohoo:
+              # <UnitInfo>
+              #   <UnitID UniqueID="85223">506</UnitID>
+              #   <PersonID Type="Current Resident">t0586444</PersonID>
+              #   <Unit>
+              #     <Identification IDType="LeaseDesc" IDValue="Conventional" />
+              #     <Identification IDType="RentalType" IDValue="Residential" />
+              #     <Identification IDType="UnitTypeUniqueID" IDValue="2331" />
+              #     <UnitType>6712j</UnitType>
+              #     <UnitBedrooms>1</UnitBedrooms>
+              #     <UnitBathrooms>1.00</UnitBathrooms>
+              #     <MinSquareFeet>750</MinSquareFeet>
+              #     <MaxSquareFeet>750</MaxSquareFeet>
+              #     <MarketRent>1705.00</MarketRent>
+              #     <UnitEconomicStatus>residential</UnitEconomicStatus>
+              #     <UnitEconomicStatusDescription>Occupied No Notice</UnitEconomicStatusDescription>
+              #     <FloorplanName>1x1 740 - 760 SQFT - Aritosthenes</FloorplanName>
+              #     <BuildingName />
+              #     <Address AddressType="property">
+              #       <AddressLine1>101 BIG MOOSE AVE APT 506</AddressLine1>
+              #       <City>Little Rock</City>
+              #       <State>AR</State>
+              #       <PostalCode>72076</PostalCode>
+              #     </Address>
+              #   </Unit>
+              # </UnitInfo>
+              ###
               next [k,
                 v.select do |u|
                   if verboten.include?(u["UnitId"])
@@ -145,11 +254,11 @@ module Integrations
             [k,
               v.map do |u|
                 (to_return[:unit_exclusions][k][u["UnitId"]] = "Field 'Excluded' is not equal to 0."; next nil) if u["Excluded"] != "0" && u["Excluded"] != 0
-                (to_return[:unit_exclusions][k][u["UnitId"]] = "Unit ID is #{u["UnitId"]}."; next nil) if ["NONRESID", "WAIT", "WAIT_AFF", "RETAIL"].include?(u["UnitId"])
+                (to_return[:unit_exclusions][k][u["UnitId"]] = "Unit ID is #{u["UnitId"]}."; next nil) if ["NONRESID", "WAIT", "WAIT_AFF", "RETAIL", "XWAIT"].include?(u["UnitId"])
                 (to_return[:unit_exclusions][k][u["UnitId"]] = "Field 'Address' is blank."; next nil) if u["Address"].blank?
-                addr = fixaddr(comm["MarketingName"], u["UnitId"], u["Address"])
+                addr = fixaddr(comm["MarketingName"], u["UnitId"], u["Address"]).gsub(/(\s|\A)(N|S)\.(E|W)\.(,|\s)/, '\1\2\3\4').gsub(/,\s(N|S)(E|W)(,|\s)/, ' \1\2\3').gsub(/\s(A|\a)(P|p)(T|t)([\d]+)([^\s^,]+)/, ' \1\2\3 \4\5')
                 (to_return[:unit_errors][k][u["UnitId"]] = "Could not clean up address (Community name #{comm["MarketingName"]}, unit ID #{u["UnitId"]}, unit address #{u["Address"]})."; next nil) if addr.blank?
-                u.merge({
+                next u.merge({
                   gc_addr: addr
                 })
               end.compact
@@ -185,7 +294,30 @@ module Integrations
                   u[:gc_addr_obj].street_two = u["UnitId"]
                   next u
                 end
-                next u if u["UnitId"] == u[:gc_addr_obj].street_number || u["UnitId"] == "#{u[:gc_addr_obj].street_number}-0" || u["UnitId"].chomp(u[:gc_addr_obj].street_number).chars.all?{|c| c == "0" || c == " " || c == "-" }
+                if k == "474"
+                  # hack for particular essex community with odd setup
+                  next u if u["UnitId"] == u[:gc_addr_obj].street_number || u["UnitId"].downcase.end_with?(u["Address"].strip.last.downcase)
+                end
+                next u if u["UnitId"] == u[:gc_addr_obj].street_number || u["UnitId"] == "#{u[:gc_addr_obj].street_number}-0" || u["UnitId"].downcase.end_with?(u[:gc_addr_obj].street_number.downcase) || (  !u[:gc_addr_obj].street_two.blank? && u["UnitId"].downcase.end_with?(u[:gc_addr_obj].street_two.split(' ').last.gsub("#",""))    )# && (u["UnitId"].chomp(u[:gc_addr_obj].street_number).match?(/^([^2-9]*)$/)))  # last case is for a weird essex community
+                # next if they match other than leading 0s
+                next u if u["UnitId"].gsub(/^0+/, "") == u[:gc_addr_obj].street_number.gsub(/^0+/, "")
+                # for 01234 Moogle Poogle Avenue, accept 1234MP and 01234MP (because of their relationship to 01234MPA)
+                next u if "#{u["UnitId"].tr('^0-9', '').gsub(/^0+/, "")}#{u["Address"].tr('0-9', '').strip.squeeze.split(" ").map{|x| x[0] }.join("").upcase}".start_with?(u[:gc_addr_obj].street_number.gsub(/^0+/, "").upcase)
+                # hackaroo for essex 220                
+                if u[:gc_addr_obj].street_name == "Belleville Way" && u[:gc_addr_obj].city == "Sunnyvale"
+                  next u if u[:gc_addr_obj].street_number == u["UnitId"].gsub(/\A0/, '').gsub(/\A10/, '16')
+                end
+                # essex has a bunch of XX113A for things like "113 A Westinghouse..." (which the parser should covert into "113A", hence a perfect match except the XX
+                next u if u[:gc_addr_obj].street_name = u["UnitId"][2...]
+                # hacky nonsense for essex san1100
+                if u[:gc_addr_obj].street_number.end_with?("1/2")
+                  cleanuid = u["UnitId"].strip
+                  cleanuid = cleanuid[1...] while cleanuid[0] == '0' # kill leading zeros
+                  cleanuid = cleanuid[0...(cleanuid.length-1)] while cleanuid[cleanuid.length-1]&.match?(/^[a-zA-Z]/) && !cleanuid[0]&.match?(/^a-zA-Z/) # kill trailing letters
+                  cleangomp = u[:gc_addr_obj].street_number.chomp("1/2").chomp("-").strip
+                  cleangomp = cleangomp[1...] while cleangomp[0] == '0'
+                  next u if cleangomp == cleanuid
+                end
                 to_return[:unit_errors][k][u["UnitId"]] = "Unable to determine line two of address, but UnitId does not seem to conform to line one (UnitId '#{u["UnitId"]}', address '#{u["Address"]}', parsed as '#{u[:gc_addr_obj].full}')"
                 next nil
               end.compact
@@ -217,7 +349,7 @@ module Integrations
             {
               yardi_id: comm["Code"],
               title: comm["MarketingName"],
-              address: "#{comm["AddressLine1"]}, #{comm["City"]}, #{comm["State"]} #{comm["PostalCode"]}",
+              address: "#{comm["AddressLine1"]}, #{comm["City"]}, #{comm["State"]} #{comm["PostalCode"]}".gsub(/(\s|\A)(N|S)\.(E|W)\.(,|\s)/, '\1\2\3\4').gsub(/,\s(N|S)(E|W)(,|\s)/, ' \1\2\3'),
             }.merge({
                 buildings: (by_building[comm["Code"]] || {}).map do |bldg, units|
                   {
@@ -341,7 +473,8 @@ module Integrations
             comm[:buildings].each do |bldg|
               addr = ::Address.new(street_name: bldg[:street_name], street_number: bldg[:street_number], city: bldg[:city], state: bldg[:state], zip_code: bldg[:zip_code])
               addr.standardize_case; addr.set_full; addr.set_full_searchable; addr.from_full; addr.standardize
-              building = (comm[:buildings].length == 1 && bldg[:is_community] ? comm[:insurable] : comm[:insurable].buildings.confirmed.find{|b| b.primary_address.street_name == addr.street_name && b.primary_address.street_number == addr.street_number })
+              building = (comm[:buildings].length == 1 && bldg[:is_community] ? comm[:insurable] : comm[:insurable].buildings.confirmed.find{|b| b.primary_address.street_name.downcase == addr.street_name.downcase && b.primary_address.street_number.downcase == addr.street_number.downcase })
+              building ||= comm[:insurable].buildings.confirmed.find{|b| b.title == "#{bldg[:street_number]} #{bldg[:street_name]}" && b.primary_address.zip_code[0...5] == bldg[:zip_code][0...5] }
               if building.nil?
                 building = Insurable.create(
                   insurable_id: comm[:insurable].id,
@@ -442,21 +575,36 @@ module Integrations
           ###### TENANT IMPORT ######
    
           tenant_array = []
-          output_array.each do |comm|
-            comm[:buildings].each do |bldg|
-              bldg[:units].each do |unit|
-                next if unit[:yardi_data]["Resident"].blank?
-                result = Integrations::Yardi::Sync::Leases.run!(integration: integration, update_old: true, unit: unit[:insurable], resident_data: unit[:yardi_data]["Resident"].class == ::Array ? unit[:yardi_data]["Resident"] : [unit[:yardi_data]["Resident"]])
-                unless result[:lease_errors].blank?
-                  to_return[:lease_errors][comm[:yardi_id]] ||= {}
-                  to_return[:lease_errors][comm[:yardi_id]][unit[:yardi_id]] = result[:lease_errors]
-                end
-                unless result[:user_errors].blank?
-                  to_return[:user_errors][comm[:yardi_id]] ||= {}
-                  to_return[:user_errors][comm[:yardi_id]][unit[:yardi_id]] = result[:user_errors]
-                end
-                [:leases_created, :leases_found, :leases_expired, :users_created, :users_found].each do |prop|
-                  unit[prop] = result[prop]
+          unless insurables_only
+            output_array.each do |comm|
+              next if only_sync_insurables(comm[:yardi_id])
+              unless skip_roommate_sync
+                result = Integrations::Yardi::Sync::Roommates.run!(integration: integration, property_id: comm[:yardi_id])
+                comm[:last_sync_f] = result[:last_sync_f]
+                to_return[:promotion_errors][comm[:yardi_id]] = result[:errors] unless result[:errors].blank?
+                next if skip_leases_on_roommate_error && !result[:errors].blank?
+              end
+              comm[:buildings].each do |bldg|
+                bldg[:units].each do |unit|
+                  unless skip_lease_sync
+                    next if unit[:yardi_data]["Resident"].blank?
+                    result = Integrations::Yardi::Sync::Leases.run!(integration: integration, update_old: update_old_leases, unit: unit[:insurable], resident_data: unit[:yardi_data]["Resident"].class == ::Array ? unit[:yardi_data]["Resident"] : [unit[:yardi_data]["Resident"]])
+                    unless result[:lease_update_errors].blank?
+                      to_return[:lease_update_errors][comm[:yardi_id]] ||= {}
+                      to_return[:lease_update_errors][comm[:yardi_id]][unit[:yardi_id]] = result[:lease_update_errors]
+                    end
+                    unless result[:lease_errors].blank?
+                      to_return[:lease_errors][comm[:yardi_id]] ||= {}
+                      to_return[:lease_errors][comm[:yardi_id]][unit[:yardi_id]] = result[:lease_errors]
+                    end
+                    unless result[:user_errors].blank?
+                      to_return[:user_errors][comm[:yardi_id]] ||= {}
+                      to_return[:user_errors][comm[:yardi_id]][unit[:yardi_id]] = result[:user_errors]
+                    end
+                    [:leases_created, :leases_found, :leases_expired, :users_created, :users_found].each do |prop|
+                      unit[prop] = result[prop]
+                    end
+                  end
                 end
               end
             end
@@ -470,6 +618,8 @@ module Integrations
             integration.configuration['sync']['syncable_communities'][comm[:yardi_id]] ||= {}
             integration.configuration['sync']['syncable_communities'][comm[:yardi_id]]["name"] = comm[:title]
             integration.configuration['sync']['syncable_communities'][comm[:yardi_id]]["gc_id"] = comm[:insurable]&.id
+            integration.configuration['sync']['syncable_communities'][comm[:yardi_id]]["last_sync_f"] = comm[:last_sync_f]
+            integration.configuration['sync']['syncable_communities'][comm[:yardi_id]]["last_sync_i"] = Time.current.to_date.to_s
           end
           integration.configuration['sync']['sync_history'] ||= []
           integration.configuration['sync']['sync_history'].push({
@@ -485,7 +635,8 @@ module Integrations
           
           to_return[:unit_errors].select!{|k,v| !v.blank? }
           to_return[:unit_exclusions].select!{|k,v| !v.blank? }
-          to_return[:sync_results] = output_array
+          integration.integration_profiles.create(profileable: integration, external_context: "log_sync_insurables", external_id: Time.current.to_i.to_s + "_" + rand(100000000).to_s, configuration: to_return)
+          # commented out because after like a year I've NEVER used the sync_results and always have to delete it to make the output readable: to_return[:sync_results] = output_array unless efficiency_mode
           return to_return
 
         end # end execute

@@ -1,6 +1,6 @@
 class Devise::Users::SessionsController < DeviseTokenAuth::SessionsController
   include SessionsMethods
-  
+
   protected
 
     def render_create_success
@@ -10,11 +10,11 @@ class Devise::Users::SessionsController < DeviseTokenAuth::SessionsController
 
         render template: "v2/auth/user.json", status: :ok
       else
+        # https://stackoverflow.com/questions/32752578/whats-the-appropriate-http-status-code-to-return-if-a-user-tries-logging-in-wit
         render json: {
           success: false,
           errors: ["Invalid login credentials"]
         }, status: 401
-      end        
-    end 
-    
+      end
+    end
 end

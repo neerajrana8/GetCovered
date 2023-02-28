@@ -16,7 +16,7 @@ class WarnUpcomingChargeMailer < ApplicationMailer
     subject = t('warn_upcoming_charge_mailer.send_warn_upcoming_invoice.subject',
                 agency_title: @agency.title,
                 policy_number: @policy.number)
-    mail(from: @from, to: @user.email, subject: subject)
+    mail(from: @from, bcc: "systememails@getcovered.io", to: @user.email, subject: subject)
   end
 
 end

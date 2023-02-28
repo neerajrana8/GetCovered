@@ -41,7 +41,7 @@ exit
     last_id = nil
     if params[:short]
       instance_variable_set(instance_symbol, pseudodistinct ? query.select{|m| if m.id == last_id then next(false) else last_id = m.id end; next(true) } : query)
-      render template: (view_path + '/short.json.jbuilder')
+      render template: (view_path + '/short.json.jbuilder') if v2_should_render[:short]
     else
       count = query.count
       per = (params.has_key?(:pagination) && params[:pagination].has_key?(:per)) ? params[:pagination][:per].to_i : default_pagination_per
@@ -56,6 +56,7 @@ exit
       response.headers['total-pages'] = page_count.to_s
       response.headers['total-entries'] = count.to_s
       instance_variable_set(instance_symbol, pseudodistinct ? query.page(page + 1).per(per).select{|m| if m.id == last_id then next(false) else last_id = m.id end; next(true) } : query.page(page + 1).per(per)) # pagination starts at page 1 with kaminary -____-
+      render template: (view_path + '/index.json.jbuilder') if v2_should_render[:index]
     end
   end
 
@@ -80,6 +81,12 @@ exit
     response.headers['total-entries'] = count.to_s
 
     query.page(page + 1).per(per)
+  end
+  
+  
+  # control of what's rendered automatically; should probably both be true or both false, but backwards compatibility is a thing
+  def v2_should_render
+    { short: true, index: false }
   end
 
   # The default number of items per page.
@@ -542,7 +549,7 @@ exit
     end
   end
 
-	def health_check
-		render json: { ok: true , node: "It's alive!"}.to_json	
-	end
+  def health_check
+    render json: { ok: true , node: "It's alive!", env: ENV['RAILS_ENV']}.to_json
+  end
 end

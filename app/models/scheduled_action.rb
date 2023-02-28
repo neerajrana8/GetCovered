@@ -16,8 +16,11 @@
 #  parent_id       :bigint
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
-#
+#  #prerequisite_ids :bigint          default([]), not null, is an Array
+
 class ScheduledAction < ApplicationRecord
+  #include ScheduledActionUserConsolidation
+  
   belongs_to :actionable,
     polymorphic: true,
     optional: true
@@ -39,13 +42,19 @@ class ScheduledAction < ApplicationRecord
   
   enum action: { # WARNING: define a method called perform_#{self.action} when you add an action here
     scheduled_action_test: 0,
-    error_handling_test: 1
+    error_handling_test: 1,
+    user_consolidation: 2
   }
+  
+  def prerequisites
+    #ScheduledAction.where(id: self.prerequisite_ids)
+  end
   
   def perform!
     # set to executing
     self.with_lock do
       return "Status is '#{self.status}', but must be 'pending' or 'errored' to perform!" unless self.status == 'pending' || self.status == 'errored'
+      #return "Some prerequisites have not yet been completed!" unless self.prerequisites.where.not(status: 'complete').blank?
       self.update(status: 'executing')
     end
     # perform the action
@@ -61,7 +70,7 @@ class ScheduledAction < ApplicationRecord
       end
       raise
     end
-    # mark ourselves finished if the performance logic didn't do it; save oursevles in case performance logic set some properties
+    # mark ourselves finished if the performance logic didn't do it; save ourselves in case performance logic set some properties
     self.status = 'complete' if self.status == 'executing'
     self.save
   end
@@ -84,4 +93,5 @@ class ScheduledAction < ApplicationRecord
     def perform_error_handling_test
       goose = 3 / 0
     end
+    
 end

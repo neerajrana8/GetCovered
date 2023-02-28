@@ -19,6 +19,9 @@ module Integrations
           return response_body&.index("Xml Imported:") ? false : true #### a normal error contains 'XSD Error'; a permissions error contains 'Access Denied'
         end
         
+        def get_eventable
+          return ((policy || Policy.find_by_number(policy_xml.split("<PolicyNumber>")[1].split("</PolicyNumber>")[0])) rescue nil)
+        end
         
         def get_policy_xml_from_hash
           harsh = policy_hash.deep_stringify_keys

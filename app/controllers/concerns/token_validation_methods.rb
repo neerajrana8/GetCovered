@@ -9,6 +9,7 @@ module TokenValidationMethods
       if @resource
         render json: @resource.as_json
       else
+        # https://stackoverflow.com/questions/32752578/whats-the-appropriate-http-status-code-to-return-if-a-user-tries-logging-in-wit
         render json: {
           success: false,
           errors: ["Invalid login credentials"]
