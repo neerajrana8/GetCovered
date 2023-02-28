@@ -18,6 +18,8 @@ module MasterPolicies
             leases = leases_without_child_policy(config, community)
             leases.each do |lease|
               begin
+                next if unit_affordable?(lease.insurable)
+
                 cp = MasterPolicy::ChildPolicyIssuer.call(mpo, lease)
               rescue StandardError => e
                 Rails.logger.info e.to_s
@@ -29,6 +31,13 @@ module MasterPolicies
     end
 
     private
+
+    def unit_affordable?(unit)
+      return true if unit.special_status == :affordable
+
+      false
+    end
+
 
     def configuration(master_policy, insurable)
       MasterPolicy::ConfigurationFinder.call(master_policy, insurable)
