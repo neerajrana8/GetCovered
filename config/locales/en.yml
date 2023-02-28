@@ -285,6 +285,8 @@ en:
     refund_was_not_successfully_sent: 'Refund was not successfully sent'
     you_cannot_add_coverage_with_master: 'You cannot add coverage with master policy type'
     unable_to_attach_payment: "Unable to attach payment source to user"
+  public_policies_controller:
+    title_already_exists_error: Provided out of system title has already been taken
   signable_documents_controller:
     signing_failed: 'An error occurred while trying to apply your signature; please try again later'
     document_not_found: 'Document not found'

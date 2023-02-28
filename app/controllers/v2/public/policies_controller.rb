@@ -74,7 +74,11 @@ module V2
 
           unless carrier.save
             return render(
-              json: standard_error(:carrier_invalid, 'Provided out of systme title has already been taken', carrier.errors.full_messages),
+              json: standard_error(
+                :carrier_invalid,
+                I18n.t('public_policies_controller.title_already_exists_error'),
+                carrier.errors.full_messages
+              ),
               status: :unprocessable_entity
             )
           end
