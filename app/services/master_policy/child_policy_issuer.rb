@@ -106,7 +106,7 @@ module MasterPolicy
         expiration_date: @master_policy.expiration_date,
         system_data: @master_policy.system_data,
         policy_users_attributes: policy_users,
-        master_policy_configuration_id: @mpc.id
+        master_policy_configuration_id: @mpc&.id
       }
       @unit.policies.create(new_child_policy_params)
     end

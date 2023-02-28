@@ -71,13 +71,7 @@ module V2
 
       def show
         # NOTE: show master_policy_configurations for policies which are covered by master policies
-        if @policy.policy_type&.master_coverage
-          begin
-            @master_policy_configuration = ChildPolicy::MPConfigurationFinder.call(@policy)
-          rescue StandardError => e
-            return render json: {error: e}, status: 400
-          end
-        end
+        @master_policy_configuration = @policy.master_policy_configuration if @policy.policy_type&.master_coverage
       end
 
       def search
