@@ -124,3 +124,7 @@ production:
 #  update_statuses_job:
 #    cron: '0 6 * * *' # Daily , 06:00 AM
 #    class: UpdateStatusesJob
+
+  master_policy_issue_job:
+    cron: '0 5 * * *'
+    class: MasterPoliciesIssueJob
