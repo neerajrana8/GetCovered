@@ -71,7 +71,19 @@ module V2
 
       def show
         # NOTE: show master_policy_configurations for policies which are covered by master policies
-        @master_policy_configuration = @policy.master_policy_configuration if @policy.policy_type&.master_coverage
+        if @policy.policy_type&.master_coverage
+          lease = @policy.latest_lease(lease_status: ['pending', 'current'])
+          insurable = @policy.primary_insurable.parent_community
+          available_lease_date = lease.nil? ? DateTime.current.to_date : lease.sign_date.nil? ? lease.start_date : lease.sign_date
+
+          # NOTE This is architectural flaw and bs way to get master policy
+          begin
+          master_policy = @policy.primary_insurable.parent_community.policies.current.where(policy_type_id: PolicyType::MASTER_IDS).take
+          @master_policy_configuration = MasterPolicy::ConfigurationFinder.call(master_policy, insurable, available_lease_date)
+          rescue StandardError => e
+            return render json: { error: e }, status: 400
+          end
+        end
       end
 
       def search
