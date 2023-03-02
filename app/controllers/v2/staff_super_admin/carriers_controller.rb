@@ -63,7 +63,7 @@ module V2
       def create
         if create_allowed?
           ActiveRecord::Base.transaction do
-            @carrier = Carrier.create(create_params)
+            @carrier = Carrier.create(create_params.merge(is_system: true))
             @carrier.get_or_create_universal_parent_commission_strategy if create_params[:commission_strategy_attributes].nil?
             if @carrier.errors.blank? && @carrier.update(init_types_params)
               render template: 'v2/shared/carriers/show', status: :created
@@ -181,7 +181,7 @@ module V2
         return({}) if params[:carrier].blank?
 
         to_return = params.require(:carrier).permit(
-          :bindable, :call_sign, :enabled, :id,
+          :bindable, :call_sign, :enabled, :id, :synonyms,
           :integration_designation, :quotable, :rateable, :syncable,
           :title, :verifiable, settings: {}
         )
@@ -205,7 +205,7 @@ module V2
         return({}) if params[:carrier].blank?
 
         to_return = params.require(:carrier).permit(
-          :bindable, :call_sign, :enabled, :id,
+          :bindable, :call_sign, :enabled, :id, :synonyms,
           :integration_designation, :quotable, :rateable, :syncable,
           :title, :verifiable,
           settings: {}, carrier_policy_types_attributes: [
