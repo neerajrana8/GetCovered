@@ -5,11 +5,15 @@ module MasterPolicies
 
     QBE_ID = 2
     BOUND_STATUS_ID = 3
+    AFFORDABLE_ID = 1
 
     def perform
       master_policices.find_in_batches do |group|
         group.each do |mpo|
           mpo.insurables.each do |community|
+
+            next unless InsurableType::COMMUNITIES_IDS.include?(community.insurable_type_id)
+
             config = configuration(mpo, community)
 
             next unless config
@@ -33,7 +37,7 @@ module MasterPolicies
     private
 
     def unit_affordable?(unit)
-      return true if unit.special_status == :affordable
+      return true if unit.special_status == AFFORDABLE_ID
 
       false
     end
