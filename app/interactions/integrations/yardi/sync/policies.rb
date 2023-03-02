@@ -70,6 +70,9 @@ module Integrations
         end
         
         def execute
+          puts "universal_export: #{universal_export}"
+          puts "early_presence_check: #{early_presence_check}"
+        
           ##############################################################
           ###################### MANAGE ARGUMENTS ######################
           ##############################################################
@@ -383,10 +386,12 @@ module Integrations
                                                                                        &.dig("Envelope", "Body", "GetInsurancePoliciesResponse", "GetInsurancePoliciesResult", "RenterInsurance", "InsurancePolicy") rescue nil)
                 if retrieved.nil?
                   policy_ip.configuration['present_last_check'] = false
+                  policy_ip.configuration.delete('policy_id')
                 else
                   policy_ip.configuration['present_last_check'] = true
                   retrieved = retrieved.first if retrieved.class == ::Array
                   yardi_id = retrieved&.[]("PolicyDetails")&.[]("PolicyId")
+                  policy_ip.configuration['policy_id'] = yardi_id
                 end
               end
               # grab lease stuff
@@ -490,12 +495,15 @@ module Integrations
                   property_id = policy.primary_insurable&.integration_profiles&.where(integration: integration)&.where("external_context ILIKE 'unit_in_community_%'")&.take&.external_context&.[](18...)
                   retrieved = (Integrations::Yardi::RentersInsurance::GetInsurancePolicies.run!(integration: integration, property_id: property_id, policy_number: policy.number)[:parsed_response]
                                                                                          &.dig("Envelope", "Body", "GetInsurancePoliciesResponse", "GetInsurancePoliciesResult", "RenterInsurance", "InsurancePolicy") rescue nil)
+
                   if retrieved.nil?
                     policy_ip.configuration['present_last_check'] = false
+                    policy_ip.configuration.delete('policy_id')
                   else
                     policy_ip.configuration['present_last_check'] = true
                     retrieved = retrieved.first if retrieved.class == ::Array
                     yardi_id = retrieved&.[]("PolicyDetails")&.[]("PolicyId")
+                    policy_ip.configuration['policy_id'] = yardi_id
                   end
                 end
                 #end
