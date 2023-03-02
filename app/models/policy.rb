@@ -687,26 +687,26 @@ class Policy < ApplicationRecord
   end
 
   def notify_users
-    # ['EXTERNAL_UNVERIFIED', 'EXTERNAL_VERIFIED', 'EXTERNAL_REJECTED'].include?(self.status)
-    if self.previous_changes.has_key?('status') && ['EXTERNAL_VERIFIED', 'EXTERNAL_REJECTED'].include?(self.status)
-      unless self.integration_profiles.count > 0
+    # TODO: ADD GUARD STATEMENTS AND REMOVE NESTED CONDITIONS
+    if previous_changes.has_key?('status') && %w[EXTERNAL_UNVERIFIED EXTERNAL_VERIFIED EXTERNAL_REJECTED].include?(status)
+      unless integration_profiles.count.positive?
 
-        if self.account_id == 0 || self.agency_id == 0
+        if account_id == 0 || agency_id == 0
           reload() if inline_fix_external_policy_relationships
         end
 
         begin
-          Compliance::PolicyMailer.with(organization: self.account.nil? ? self.agency : self.account)
+          Compliance::PolicyMailer.with(organization: (account || agency))
                                   .external_policy_status_changed(policy: self)
-                                  .deliver_now() unless self.in_system?
+                                  .deliver_later(wait: 5.minutes) unless in_system?
         rescue Exception => e
           @error = ModelError.create!(
             kind: "external_policy_status_change_notification_error",
             model_type: "Policy",
-            model_id: self.id,
+            model_id: id,
             information: e.to_json,
             backtrace: e.backtrace.to_json,
-            description: "Unable to generate external Policy status change email for Policy ID: #{ self.id }<br><br>"
+            description: "Unable to generate external Policy status change email for Policy ID: #{ id }<br><br>"
           )
         end
       end

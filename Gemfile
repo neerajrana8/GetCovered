@@ -67,6 +67,7 @@ gem 'rack-timeout'
 # Sidekiq for background job processing
 gem 'sidekiq'
 gem 'sidekiq-scheduler'
+gem 'sidekiq-failures'
 
 # Timezone for automatic timezones
 gem 'timezone', '~> 1.0'

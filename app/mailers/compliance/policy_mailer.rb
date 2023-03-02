@@ -97,7 +97,7 @@ module Compliance
         @from = @pm_account&.contact_info["contact_email"] if @pm_account&.contact_info&.has_key?("contact_email") &&
           (!@pm_account&.contact_info["contact_email"].nil? || !@pm_account&.contact_info["contact_email"].blank?)
       end
-      @from = "policyverify@getcovered.io" if @from.nil?
+      @from = t('policy_verify_email') if @from.blank?
       @final = nil
 
       case @policy.status
@@ -119,7 +119,7 @@ module Compliance
         ['EXTERNAL_UNVERIFIED','EXTERNAL_VERIFIED','EXTERNAL_REJECTED'].include?(@policy.status)
 
       mail(to: @user.contact_email,
-           bcc: "systememails@getcovered.io",
+           bcc: t('system_email'),
            from: @from,
            subject: subject,
            template_path: 'compliance/policy') if sending_condition
