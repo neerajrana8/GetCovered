@@ -447,6 +447,7 @@ class Policy < ApplicationRecord
   # Cancels a policy; returns nil if no errors, otherwise a string explaining the error
   def cancel(reason, last_active_moment = Time.current.to_date.end_of_day)
     last_active_moment = last_active_moment.end_of_day if last_active_moment.class == ::Date
+    reason = reason.to_s
     # Flee on invalid data
     return I18n.t('policy_model.cancellation_reason_invalid') unless self.class.cancellation_reasons.has_key?(reason)
     return I18n.t('policy_model.policy_is_already_cancelled') if self.status == 'CANCELLED'
