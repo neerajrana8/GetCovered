@@ -23,7 +23,7 @@ module V2
                      status: :unprocessable_entity
             else
               begin
-                if branding_profile&.profileable_type.is_a?(Account)
+                if branding_profile&.profileable_type.eql?("Account")
                   @communities = Insurable.communities.where(account_id: account.id, preferred_ho4: true)
                                    .joins(:addresses).where(addresses: { state: params[:state] } )
                 else
@@ -55,7 +55,7 @@ module V2
                    status: :unprocessable_entity
           else
             begin
-              if branding_profile&.profileable_type.is_a?(Account)
+              if branding_profile&.profileable_type.eql?("Account")
                 @states = Insurable.communities.includes(:addresses).where(account_id: profileable.id)
                             .where.not(addresses: { state: nil})
                             .extract_associated(:addresses)&.flatten.map(&:state).uniq
