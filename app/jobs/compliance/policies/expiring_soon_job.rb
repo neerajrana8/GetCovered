@@ -20,7 +20,7 @@ module Compliance
 
       #TODO: need to move to service object
       def was_already_sent?(policy)
-        ContactRecord.where(subject: t('policy_mailer.policy_expiring_soon.subject'), contactable_type: "User", contactable_id: policy&.primary_user.id).count > 0
+        ContactRecord.where(subject: I18n.t('policy_mailer.policy_expiring_soon.subject'), contactable_type: "User", contactable_id: policy&.primary_user.id).count > 0
       end
     end
   end
