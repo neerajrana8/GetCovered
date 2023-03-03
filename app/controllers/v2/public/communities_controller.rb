@@ -23,7 +23,7 @@ module V2
                      status: :unprocessable_entity
             else
               begin
-                if branding_profile&.profileable_type.eql?("Account")
+                if profileable.is_a?(Account)
                   @communities = Insurable.communities.where(account_id: profileable.id, preferred_ho4: true)
                                    .joins(:addresses).where(addresses: { state: params[:state] } )
                 else
