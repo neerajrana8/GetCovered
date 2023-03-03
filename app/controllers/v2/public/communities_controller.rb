@@ -15,16 +15,25 @@ module V2
             render json: standard_error(:branding_profile_id_param_blank,'branding_profile_id parameter can\'t be blank'),
                    status: :unprocessable_entity
           else
-            account_id = BrandingProfile.find_by_id(params[:branding_id])&.profileable_id
-            account = Account.find_by_id(account_id)
+            branding_profile = BrandingProfile.find_by_id(params[:branding_profile_id])
+            profileable = branding_profile&.profileable_type.is_a?(Account) ? Account.find_by_id(branding_profile&.profileable_id) : Agency.find_by_id(branding_profile&.profileable_id)
 
-            if account.blank?
-              render json: standard_error(:account_not_found,'Account for this branding_id not found'),
+
+            #account_id = BrandingProfile.find_by_id(params[:branding_id])&.profileable_id
+            #account = Account.find_by_id(account_id)
+
+            if profileable.blank?
+              render json: standard_error(:account_not_found,'Account or Agency for this branding_id not found'),
                      status: :unprocessable_entity
             else
               begin
-                @communities = Insurable.communities.where(account_id: account.id, preferred_ho4: true)
+                if branding_profile&.profileable_type.is_a?(Account)
+                  @communities = Insurable.communities.where(account_id: account.id, preferred_ho4: true)
                                    .joins(:addresses).where(addresses: { state: params[:state] } )
+                else
+                  @communities = Insurable.communities.where(agency_id: agency.id, preferred_ho4: true)
+                                          .joins(:addresses).where(addresses: { state: params[:state] } )
+                end
               rescue StandardError => e
                 render json: standard_error(:query_failed,"#{e.message}"),
                        status: :unprocessable_entity
