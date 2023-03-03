@@ -3,10 +3,12 @@ module MasterPolicy
   class ChildPolicyIssuer < ApplicationService
     attr_accessor :master_policy
     attr_accessor :lease
+    attr_accessor :users
 
-    def initialize(master_policy, lease)
+    def initialize(master_policy, lease, users=nil)
       @master_policy = master_policy
       @lease = lease
+      @users = users
     end
 
     def call
@@ -81,6 +83,8 @@ module MasterPolicy
     end
 
     def policy_users
+      return @users unless @users.nil?
+
       users = []
       @lease.users.each do |u|
         users << { user_id: u.id }
