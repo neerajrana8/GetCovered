@@ -24,10 +24,10 @@ module V2
             else
               begin
                 if branding_profile&.profileable_type.eql?("Account")
-                  @communities = Insurable.communities.where(account_id: account.id, preferred_ho4: true)
+                  @communities = Insurable.communities.where(account_id: profileable.id, preferred_ho4: true)
                                    .joins(:addresses).where(addresses: { state: params[:state] } )
                 else
-                  @communities = Insurable.communities.where(agency_id: agency.id, preferred_ho4: true)
+                  @communities = Insurable.communities.where(agency_id: profileable.id, preferred_ho4: true)
                                           .joins(:addresses).where(addresses: { state: params[:state] } )
                 end
               rescue StandardError => e
