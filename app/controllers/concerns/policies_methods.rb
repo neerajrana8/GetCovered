@@ -82,6 +82,7 @@ module PoliciesMethods
       ActiveRecord::Base.transaction do
         result = Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes])
         selected_insurable = Insurable.find(update_coverage_params[:policy_insurables_attributes].first[:insurable_id])
+        @policy.reload
         @policy.primary_insurable = selected_insurable
         @policy.primary_insurable.save!
         @policy.save!
