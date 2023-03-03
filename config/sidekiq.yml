@@ -127,4 +127,4 @@ production:
 
   master_policy_issue_job:
     cron: '0 5 * * *'
-    class: MasterPoliciesIssueJob
+    class: MasterPolicies::IssueJob
