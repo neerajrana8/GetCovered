@@ -119,14 +119,9 @@ module Compliance
         ['EXTERNAL_UNVERIFIED','EXTERNAL_VERIFIED','EXTERNAL_REJECTED'].include?(@policy.status)
 
       bcc_emails = [t('system_email')]
-      
+
       @policy.account.staffs.each do |staff|
-        add_me = begin
-                   staff.notification_settings.find_by_action('external_policy_emails_copy').enabled
-                 rescue StandardError
-                   false
-                 end
-        bcc_emails << staff.email if add_me
+        bcc_emails << staff.email if need_to_add_staff_to_bcc?(staff)
       end
 
       bcc_emails = bcc_emails.join("; ")
@@ -139,6 +134,18 @@ module Compliance
     end
 
     private
+    #TODO: need to move to service objects
+    def need_to_add_staff_to_bcc?(staff)
+      notification_setting_enabled?(staff) && community_assigned?(staff)
+    end
+
+    def notification_setting_enabled?(staff)
+      staff.notification_settings.find_by(action: 'external_policy_emails_copy', enabled: true)
+    end
+
+    def community_assigned?(staff)
+      staff.assignments.find_by(assignable_type: "Insurable", assignable_id: @community.id)
+    end
 
     def set_variables
       @organization = params[:organization].blank? ? Agency.find(1) : params[:organization]
