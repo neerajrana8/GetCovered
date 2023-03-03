@@ -5,20 +5,17 @@ module Compliance
     before_action :set_variables
 
     def policy_expiring_soon(policy:)
-      @user = policy.primary_user()
+      @user = policy.primary_user
       @pm_account = policy.account
-      @content = "Hello, #{ @user.profile.first_name }!<br><br>
-                  Your insurance policy on file with us is set to expire on #{ policy.expiration_date.strftime('%B %d, %Y') }.
-                  Please submit your new insurance policy or renewal documents before the expiration date.Thank you!"
+      #TODO: it missed spanish translation
+      @content = t('policy_mailer.policy_expiring_soon.content', first_name: @user.profile.first_name, policy_expiration_date: policy.expiration_date.strftime('%B %d, %Y')  )
 
-      @from = @pm_account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] : "policyverify@getcovered.io"
-
-      subject = "Your insurance will expire soon!"
+      @from = @pm_account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] : t('policy_verify_email')
 
       mail(to: @user.contact_email,
-           bcc: "systememails@getcovered.io",
+           bcc: t('system_email'),
            from: @from,
-           subject: subject,
+           subject: t('policy_mailer.policy_expiring_soon.subject'),
            template_path: 'compliance/policy',
            template_name: 'text_only')
     end
@@ -66,12 +63,12 @@ module Compliance
       @placement_cost = @configuration.nil? ? 0 : @configuration.total_placement_amount(force).to_f / 100
       @onboarding_url = tokenized_url(@user.id, @community)
 
-      @from = @pm_account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] : "policyverify@getcovered.io"
+      @from = @pm_account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] : t('policy_verify_email')
 
       mail(to: @user.contact_email,
-           bcc: "systememails@getcovered.io",
+           bcc: t('system_email'),
            from: @from,
-           subject: "Default Policy Enrollment",
+           subject: t('policy_mailer.enrolled_in_master.subject'),
            template_path: 'compliance/policy')
     end
 
