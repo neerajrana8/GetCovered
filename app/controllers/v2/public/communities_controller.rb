@@ -16,11 +16,7 @@ module V2
                    status: :unprocessable_entity
           else
             branding_profile = BrandingProfile.find_by_id(params[:branding_profile_id])
-            profileable = branding_profile&.profileable_type.is_a?(Account) ? Account.find_by_id(branding_profile&.profileable_id) : Agency.find_by_id(branding_profile&.profileable_id)
-
-
-            #account_id = BrandingProfile.find_by_id(params[:branding_id])&.profileable_id
-            #account = Account.find_by_id(account_id)
+            profileable = branding_profile&.profileable_type.eql?("Account") ? Account.find_by_id(branding_profile&.profileable_id) : Agency.find_by_id(branding_profile&.profileable_id)
 
             if profileable.blank?
               render json: standard_error(:account_not_found,'Account or Agency for this branding_id not found'),
@@ -52,7 +48,7 @@ module V2
         else
           branding_profile = BrandingProfile.find_by_id(params[:branding_profile_id])
 
-          profileable = branding_profile&.profileable_type.is_a?(Account) ? Account.find_by_id(branding_profile&.profileable_id) : Agency.find_by_id(branding_profile&.profileable_id)
+          profileable = branding_profile&.profileable_type.eql?("Account") ? Account.find_by_id(branding_profile&.profileable_id) : Agency.find_by_id(branding_profile&.profileable_id)
 
           if profileable.blank?
             render json: standard_error(:account_not_found,'Account or Agency for this branding_id not found'),
