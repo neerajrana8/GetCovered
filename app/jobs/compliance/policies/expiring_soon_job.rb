@@ -14,7 +14,7 @@ module Compliance
 
       def find_policies
         @policies = Policy.where(status: ["BOUND", "BOUND_WITH_WARNING", "EXTERNAL_VERIFIED"],
-                                 expiration_date: DateTime.current.to_date + 7.days,
+                                 expiration_date: Date.today + 7.days,
                                  policy_type_id: 1).distinct
       end
     end
