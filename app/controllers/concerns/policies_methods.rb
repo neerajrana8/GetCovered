@@ -83,8 +83,18 @@ module PoliciesMethods
         result = Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes])
         selected_insurable = Insurable.find(update_coverage_params[:policy_insurables_attributes].first[:insurable_id])
         @policy.reload
-        @policy.primary_insurable = selected_insurable
-        @policy.primary_insurable.save!
+        # @policy.primary_insurable = selected_insurable
+        # @policy.primary_insurable.save!
+
+        policy_insurable = @policy.policy_insurables.where(insurable_id: selected_insurable.id).take
+        if policy_insurable
+          policy_insurable.primary = true
+          policy_insurable.save
+        else
+          @policy.primary_insurable = selected_insurable
+          @policy.primary_insurable.save!
+        end
+
         @policy.save!
         @policy.policy_coverages.delete_all
         @policy.policy_coverages.create!(update_coverage_params[:policy_coverages_attributes])
