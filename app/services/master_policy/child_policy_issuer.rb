@@ -5,7 +5,7 @@ module MasterPolicy
     attr_accessor :lease
     attr_accessor :users
 
-    def initialize(master_policy, lease, users=nil)
+    def initialize(master_policy, lease, users = nil)
       @master_policy = master_policy
       @lease = lease
       @users = users
