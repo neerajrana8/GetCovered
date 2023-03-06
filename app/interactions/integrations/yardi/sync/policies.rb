@@ -395,7 +395,7 @@ module Integrations
               lease = policy.latest_lease(user_matches: true)
               if lease.nil?
                 policy_ip.configuration ||= {}
-                policy_ip.configuration['export_problem'] = "No current lease with matching users"
+                policy_ip.configuration['export_problem'] = (policy.latest_lease(lease_status: 'expired', user_matches: true).nil? ? "No current lease with matching users" : "Lease expired")
                 policy_ip.save
                 next nil
               end
