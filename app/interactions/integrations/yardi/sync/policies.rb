@@ -70,9 +70,6 @@ module Integrations
         end
         
         def execute
-          puts "universal_export: #{universal_export}"
-          puts "early_presence_check: #{early_presence_check}"
-        
           ##############################################################
           ###################### MANAGE ARGUMENTS ######################
           ##############################################################
