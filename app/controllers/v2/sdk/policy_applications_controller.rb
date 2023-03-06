@@ -12,18 +12,26 @@ module V2
         site = @bearer.branding_profiles.count > 0 ? "https://#{@bearer.branding_profiles.where(default: true).take.url}" :
                  Rails.application.credentials[:uri][Rails.env.to_sym][:client]
 
+        base_date = create_policy_application_params[:effective_date].blank? ? Date.current :
+                      create_policy_application_params[:effective_date].to_date
+
         init_hash = {
           carrier_id: 1,
           policy_type_id: 1,
           account_id: @bearer.is_a?(Agency) ? nil : @bearer.id,
           agency_id: @bearer.is_a?(Agency) ? @bearer.id : @bearer.agency_id,
-          effective_date: create_policy_application_params[:effective_date],
-          expiration_date: create_policy_application_params[:effective_date].to_date + 1.year,
+          effective_date: base_date,
+          expiration_date: base_date + 1.year,
           fields: create_policy_application_params[:fields]
         }
 
         @application = PolicyApplication.new(init_hash)
         @application.build_from_carrier_policy_type
+
+        create_policy_application_params[:fields].keys.each do |key|
+          @application.fields << { "#{ key }": create_policy_application_params[:fields][key] }
+        end
+
         @application.billing_strategy = BillingStrategy.where(agency:       @application.agency,
                                                               policy_type:  @application.policy_type,
                                                               carrier:      @application.carrier).take
