@@ -204,5 +204,10 @@ en:
       subject: 'Policy Submission Received'
     notify_new_child_policy:
       subject: 'Master Policy Enrollment Confirmation'
-
-
+    policy_expiring_soon:
+      subject: "Your insurance will expire soon!"
+      content: "Hello, %{first_name}!\n
+                  Your insurance policy on file with us is set to expire on %{policy_expiration_date}.\n
+                  Please submit your new insurance policy or renewal documents before the expiration date.Thank you!"
+    enrolled_in_master:
+      subject: "Default Policy Enrollment"
