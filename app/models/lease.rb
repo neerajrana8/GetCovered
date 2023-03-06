@@ -91,6 +91,28 @@ class Lease < ApplicationRecord
     range = start_date..end_date
     range === Time.current
   end
+  
+  def active_lease_users(present_date = Time.current.to_date, lease_user_where: nil, lessee: [true, false])
+    self.lease_users.where(moved_out_at: nil, moved_in_at: nil)
+        .or(self.lease_users.where(moved_out_at: nil).where("moved_in_at <= ?", present_date))
+        .or(self.lease_users.where(moved_out_at: (present_date...), moved_in_at: nil))
+        .or(self.lease_users.where(moved_out_at: (present_date...)).where("moved_in_at <= ?", present_date))
+        .send(*(lease_user_where ? [:where, lease_user_where] : [:itself]))
+        .where(lessee: lessee) 
+  end
+  
+  def active_users(present_date = Time.current.to_date, lease_user_where: nil, user_where: nil, lessee: [true, false])
+    User.where(id: self.active_lease_users(present_date, lease_user_where: lease_user_where, lessee: lessee).select(:user_id))
+        .send(*(user_where ? [:where, user_where] : [:itself]))
+  end
+  
+  def current_lease_users(*linear, **keyword)
+    active_lease_users(*linear, **keyword)
+  end
+  
+  def current_users(*linear, **keyword)
+    active_users(*linear, **keyword)
+  end
 
   # Lease.activate
   def activate
