@@ -117,7 +117,10 @@ module Compliance
 
       bcc_emails = [t('system_email')]
 
-      @policy.account.staffs.each do |staff|
+      #TODO: need to figure out across the mailers logic what need to be shown in case when no relation with account or with agency
+      @pm_account = @policy.account if @pm_account.nil?
+
+      @pm_account.staffs.each do |staff|
         bcc_emails << staff.email if need_to_add_staff_to_bcc?(staff)
       end
 
