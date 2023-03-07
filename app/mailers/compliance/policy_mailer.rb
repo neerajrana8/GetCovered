@@ -8,7 +8,7 @@ module Compliance
       @user = policy.primary_user
       @pm_account = policy.account
       #TODO: it missed spanish translation
-      @content = t('policy_mailer.policy_expiring_soon.content', first_name: @user.profile.first_name, policy_expiration_date: policy.expiration_date.strftime('%B %d, %Y')  )
+      @content = t('policy_mailer.policy_expiring_soon.content', first_name: @user&.profile&.first_name, policy_expiration_date: policy&.expiration_date.strftime('%B %d, %Y')  )
 
       @from = @pm_account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] : t('policy_verify_email')
 
