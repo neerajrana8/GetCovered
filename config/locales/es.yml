@@ -32,7 +32,8 @@
 es:
   hello: "Hello world"
   support_email: "support@getcoveredinsurance.com"
-
+  policy_verify_email: "policyverify@getcovered.io"
+  system_email: "systememails@getcovered.io"
   shared:
     hi_there: "Hola %{name},"
     help_center: "Centro de ayuda"

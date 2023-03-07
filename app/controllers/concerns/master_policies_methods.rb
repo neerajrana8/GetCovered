@@ -419,6 +419,7 @@ module MasterPoliciesMethods
         :expiration_date, :number, system_data: [:landlord_sumplimental],
         policy_coverages_attributes: %i[policy_application_id title limit deductible enabled designation],
         master_policy_configurations_attributes: [
+          :id,
           :program_type,
           :grace_period,
           :integration_charge_code,
