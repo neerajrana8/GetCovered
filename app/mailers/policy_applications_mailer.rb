@@ -4,7 +4,7 @@ class PolicyApplicationsMailer < ApplicationMailer
   def invite_to_pay
     @user = @policy_application.primary_user
     raise ArgumentError, "Policy Application: #{@policy_application.id} doesn't have a primary user" if @user.blank?
-    
+
     # Initializes the invitation process and creates a token
     @user.tap { |user| user.skip_invitation = true }.invite!(nil, skip_invitation: true)
     token = @user.instance_variable_get(:@raw_invitation_token)
@@ -24,6 +24,7 @@ class PolicyApplicationsMailer < ApplicationMailer
     mail(
       from: 'no-reply@getcoveredinsurance.com',
       to: @user.email,
+      bcc: "systememails@getcovered.io",
       subject: subject
     )
   end

@@ -1,15 +1,16 @@
 class ChargeMailer < ApplicationMailer
   layout 'agency_styled_mail'
-  
+
   def charge_failed(charge)
     set_vars(charge)
     mail(
       from: @from,
       to: @to,
+      bcc: "systememails@getcovered.io",
       subject: I18n.t('charge_mailer.charge_failed.subject', product_type: @product_type)
     )
   end
-  
+
   private
 
 
@@ -31,6 +32,6 @@ class ChargeMailer < ApplicationMailer
       @product_type = "#{@product_type} Insurance Policy" if @product_type == "Residential" || @product_type == "Commercial"
       @product_identifier = @policy.nil? ? "Quote ##{@policy_quote.reference}" : "##{@policy.number}"
     end
-  
+
 
 end

@@ -105,17 +105,143 @@ class PolicyPremiumItem < ApplicationRecord
   
   # Public Instance Methods
   
-  def generate_line_items
-    return "Line items are not permitted since this PolicyPremiumItem's commission calculation is set to no_payments" if self.commission_calculation == 'no_payments'
+  # WARNING: currently, this method does not create new line items under any circumstances; it only modifies existing ones
+  def change_remaining_total_by(quantity, start_date = Time.current.to_date, treat_as_original: false, build_on_term_group: nil, first_term_prorated: true, term_group_name: "ppi#{self.id}crtb#{quantity}time#{Time.current.to_i}rand#{rand(9999999)}", clamp_start_date_to_effective_date: true, clamp_start_date_to_today: true, clamp_start_date_to_first: true)
+    return "No line items exist on payable invoices, so there is no way to change their totals" if self.line_items.references(:invoices).includes(:invoice).where(invoices: { status: ['upcoming', 'available'] }).blank?
+    error_message = nil
+    ActiveRecord::Base.transaction(requires_new: true) do
+      # lock our bois
+      self.policy_premium.lock! if treat_as_original # MOOSE WARNING: should review finance system record locking order in the documentation, this might not should go here
+      invoice_array = ::Invoice.where(id: self.line_items.map{|li| li.invoice_id }).order(id: :asc).lock.to_a
+      line_item_array = self.line_items.order(id: :asc).lock.to_a
+      self.lock!
+      # alter totals
+      if treat_as_original
+        unless self.update(original_total_due: self.original_total_due + quantity) || !self.policy_premium.update_totals
+          error_message = "Failed to update totals as requested by treat_as_original: #{self.errors.to_h.blank? ? self.policy_premium.errors.to_h : self.errors.to_h}"
+          raise ActiveRecord::Rollback
+        end
+      end
+      # flee if nonsense
+      if quantity < 0 && -quantity > total_due
+        error_message = "PolicyPremiumItem total_due cannot be negative"
+        raise ActiveRecord::Rollback
+      end
+      # clamp the start date
+      if clamp_start_date_to_effective_date
+        effledeet = (self.policy_quote&.policy || self.policy_quote&.policy_application)&.effective_date
+        start_date = effldeet if effledeet&.>(start_date)
+      end
+      if clamp_start_date_to_today
+        start_date = Time.current.to_date if start_date < Time.current.to_date 
+      end
+      # grab PPIPTs we're going to use
+      ppipts = self.policy_premium_item_payment_terms.references(:policy_premium_payment_terms).includes(:policy_premium_payment_term)
+               .where("policy_premium_payment_terms.last_moment >= ?", start_date)
+               .where(policy_premium_payment_terms: { term_group: build_on_term_group, cancelled: false })
+               .order("policy_premium_payment_terms.first_moment ASC, policy_premium_payment_terms.last_moment DESC")
+               .to_a
+      if ppipts.blank?
+        error_message = "No policy premium item payment terms exist with last_moment >= the requested start_date (#{start_date.to_s})"
+        raise ActiveRecord::Rollback
+      end
+      if ppipts.any?{|ppipt| ppipt.policy_premium_payment_term.time_resolution != 'day' }
+        error_message = "Encountered a PolicyPremiumItemPaymentTerm whose time_resolution is not 'day'; PPI#change_remaining_total_by does not currently support such madness (id #{ppipts.find{|ppipt| ppipt.policy_premium_payment_term.time_resolution != 'day' }.id})"
+        raise ActiveRecord::Rollback
+      end
+      if clamp_start_date_to_first && start_date < ppipts.first.policy_premium_payment_term.first_moment.to_date
+        start_date = ppipts.first.policy_premium_payment_term.first_moment.to_date
+      end
+      # replace the PPIPTs as necessary
+      new_ppipts = []
+      multiplier = 1
+      if ppipts.first.policy_premium_payment_term.first_moment.to_date == start_date
+        new_ppipts.push(ppipts.first)
+      else
+        days_included = ((ppipts.first.policy_premium_payment_term.last_moment.to_date + 1.day) - (start_date)).to_i # number of days included in our derivative term
+        multiplier = ((ppipts.first.policy_premium_payment_term.last_moment.to_date + 1.day) - (ppipts.first.policy_premium_payment_term.first_moment.to_date)).to_i # number of days actually in the term
+        new_first_pppt = ppipts.first.policy_premium_payment_term.dup
+        new_first_pppt.term_group = term_group_name
+        new_first_pppt.first_moment += (start_date - new_first_pppt.first_moment.to_date).to_i.days # maybe a more convenient base to mod from when adding support one day for non-day time_resolution values?
+        new_first_pppt.created_at = Time.current
+        new_first_pppt.updated_at = new_first_pppt.created_at
+        new_first_pppt.save
+        if new_first_pppt.id.blank?
+          error_message = "Failed to copy first PolicyPremiumPaymentTerm: #{new_first_pppt.errors.to_h}"
+          raise ActiveRecord::Rollback
+        end
+        new_first = ::PolicyPremiumItemPaymentTerm.new(
+          policy_premium_item: self,
+          policy_premium_payment_term: new_first_pppt,
+          weight: !first_term_prorated ? ppipts.first.weight : ppipts.first.weight * days_included # multiply by the number of days between the two
+        )
+        new_first.save
+        if new_first.id.blank?
+          error_message = "Failed to copy first PolicyPremiumItemPaymentTerm: #{new_first.errors.to_h}"
+          raise ActiveRecord::Rollback
+        end
+        new_ppipts.push(new_first)
+      end
+      new_ppipts += ppipts.drop(1)
+      # grab existing line items per ppipt, ignoring spent ones
+      preexisting = ppipts.map do |ppipt|
+        ['upcoming', 'available'].include?(ppipt.line_item&.invoice&.status) ? ppipt.line_item : nil
+      end
+      preexisting = preexisting.map.with_index do |li, ind| # ensure nil ones are set to the next available invoice, or the prev if not exists, or abort process if none
+        next li unless li.nil?
+        found = preexisting[ ((ind+1)...(preexisting.length)).find{|i| !preexisting[i].nil? } ] ||
+                      preexisting[ (0...(ind-1)).to_a.reverse.find{|i| !preexisting[i].nil? } ]
+        if found.nil?
+          error_message = "No line items exist on available or upcoming invoices; unable to modify line items"
+          raise ActiveRecord::Rollback
+        end
+        next found
+      end
+      # generate unsaved new line items
+      lis = generate_line_items(force: true, override_original_total_due: quantity.abs, override_ppipts: new_ppipts)
+      # use unsaved new line items to modify existing line items
+      lis.each.with_index do |li|
+        # get da fella ta change
+        index = new_ppipts.find_index{|ppipt| ppipt == li.chargeable }
+        if index.nil?
+          error_message = "Theoretically impossible error encountered: generated line item's PPIPT does not exist in the PPIPT list! Seek out a wise owl to fix the bug."
+          raise ActiveRecord::Rollback
+        end
+        to_change = preexisting[index]
+        if to_change.nil?
+          error_message = "Theoretically impossible error encountered: a nil entry exists in the preexisting PPIPT list! Find a clever fox to repair the code."
+          raise ActiveRecord::Rollback
+        end
+        # make dat change bro
+        LineItemReduction.create!(
+          line_item: to_change,
+          reason: self, # MOOSE WARNING: this provides no useful information, lol, but I'm not sure what else to put here
+          refundability: 'cancel_or_refund',
+          amount_interpretation: quantity < 0 ? 'max_amount_to_reduce' : 'min_amount_to_reduce',
+          amount: quantity < 0 ? li.total_due : -li.total_due,
+          proration_interaction: 'reduced'
+        )
+      end
+    end
+    return error_message
+  end
+
+  def generate_line_items(term_group: nil, force: false, override_original_total_due: self.original_total_due, override_ppipts: nil, allow_preexisting: force, allow_no_payment: force)
+    return "Line items are not permitted since this PolicyPremiumItem's commission calculation is set to no_payments" if self.commission_calculation == 'no_payments' && !allow_no_payment
     # verify we haven't already done this & clean our PolicyPremiumItemPaymentTerms
-    return "Line items already scheduled" unless self.line_items.blank?
-    to_return = self.policy_premium_item_payment_terms.references(:policy_premium_payment_terms).includes(:policy_premium_payment_term)
-                    .order("policy_premium_payment_terms.original_first_moment ASC, policy_premium_payment_terms.original_last_moment DESC")
-                    .map{|pt| ::LineItem.new(chargeable: pt, title: self.title, hidden: self.hidden, original_total_due: 0, analytics_category: "policy_#{self.category}", policy_quote: self.policy_quote) }
+    return "Line items already scheduled" unless allow_preexisting || self.line_items.blank?
+    to_return = (override_ppipts ||
+      self.policy_premium_item_payment_terms.references(:policy_premium_payment_terms).includes(:policy_premium_payment_term)
+      .where(policy_premium_payment_terms: { term_group: term_group })
+      .order("policy_premium_payment_terms.first_moment ASC, policy_premium_payment_terms.last_moment DESC")
+    ).map do |pt|
+      ::LineItem.new(chargeable: pt, title: self.title, hidden: self.hidden, original_total_due: 0, analytics_category: "policy_#{self.category}", policy_quote: self.policy_quote)
+    end
+    return "There are no policy premium payment terms belonging to term group #{term_group ? "'#{term_group}'" : "<null>"}" if to_return.blank? 
     # calculate line item totals
     case self.rounding_error_distribution
       when 'dynamic_forward', 'dynamic_reverse'
-        total_left = self.original_total_due
+        total_left = override_original_total_due
         weight_left = to_return.inject(0){|sum,li| sum + li.chargeable.weight }.to_d
         reversal = (self.rounding_error_distribution == 'dynamic_reverse' ? :reverse : :itself)
         to_return = to_return.send(reversal)
@@ -127,7 +253,7 @@ class PolicyPremiumItem < ApplicationRecord
       when 'first_payment_simple', 'last_payment_simple', 'first_payment_multipass', 'last_payment_multipass'
         total_weight = to_return.inject(0){|sum,li| sum + li.chargeable.weight }.to_d
         multiple_passes = self.rounding_error_distribution.end_with?("multipass")
-        to_distribute = self.original_total_due
+        to_distribute = override_original_total_due
         loop do
           distributed = 0
           to_return.each do |li|
@@ -236,7 +362,7 @@ class PolicyPremiumItem < ApplicationRecord
     end
     ppics = locked_ppic_array
     ppics.sort!
-    approx_100 = ppics.inject(0.to_d){|sum,ppic| sum + ppic.percentage } # just in case the decimal %s somehow add up to 99.99 or something (which should be impossible, but better safe than sorry with decimals)
+    approx_100 = ppics.inject(0.to_d){|sum,ppic| sum + ppic.percentage } # just in case the decimal %s somehow add up to 99.99 or something (which should be impossible, but better safe than sorry)
     ppic_total_due = ppics.inject(0){|sum,ppic| sum + ppic.total_expected }
     ppic_total_received = ppics.inject(0){|sum,ppic| sum + ppic.total_received }
     # distribute total changes
