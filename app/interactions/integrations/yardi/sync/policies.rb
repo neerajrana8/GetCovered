@@ -70,9 +70,6 @@ module Integrations
         end
         
         def execute
-          puts "universal_export: #{universal_export}"
-          puts "early_presence_check: #{early_presence_check}"
-        
           ##############################################################
           ###################### MANAGE ARGUMENTS ######################
           ##############################################################
@@ -97,16 +94,16 @@ module Integrations
             propz = propz&.map{|comm| comm["Code"] }
             return(to_return) if propz.blank?
             if efficency_mode
-              propz.each{|propid| Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [propid], efficiency_mode: true) }
+              propz.each{|propid| Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [propid], efficiency_mode: true, fake_export: fake_export, universal_export: universal_export, early_presence_check: early_presence_check) }
               return to_return # blank
             end
-            return propz.inject(to_return){|tr, property_id| tr.deep_merge(Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id])) }
+            return propz.inject(to_return){|tr, property_id| tr.deep_merge(Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id], efficiency_mode: false, fake_export: fake_export, universal_export: universal_export, early_presence_check: early_presence_check)) }
           elsif true_property_ids.length > 1
             if efficiency_mode
-              true_property_ids.each{|propid| Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id]) }
+              true_property_ids.each{|propid| Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id], efficiency_mode: true, fake_export: fake_export, universal_export: universal_export, early_presence_check: early_presence_check) }
               return to_return # blank
             end
-            return true_property_ids.inject(to_return){|tr, property_id| tr.deep_merge(Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id])) }
+            return true_property_ids.inject(to_return){|tr, property_id| tr.deep_merge(Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id], efficiency_mode: false, fake_export: fake_export, universal_export: universal_export, early_presence_check: early_presence_check)) }
           elsif true_property_ids.length == 0
             return(to_return)
           end
@@ -398,7 +395,7 @@ module Integrations
               lease = policy.latest_lease(user_matches: true)
               if lease.nil?
                 policy_ip.configuration ||= {}
-                policy_ip.configuration['export_problem'] = "No current lease with matching users"
+                policy_ip.configuration['export_problem'] = (policy.latest_lease(lease_status: 'expired', user_matches: true).nil? ? "No current lease with matching users" : "Lease expired")
                 policy_ip.save
                 next nil
               end
