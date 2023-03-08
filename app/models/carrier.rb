@@ -7,12 +7,14 @@
 #  slug                    :string
 #  call_sign               :string
 #  integration_designation :string
+#  synonyms                :string
 #  syncable                :boolean          default(FALSE), not null
 #  rateable                :boolean          default(FALSE), not null
 #  quotable                :boolean          default(FALSE), not null
 #  bindable                :boolean          default(FALSE), not null
 #  verifiable              :boolean          default(FALSE), not null
 #  enabled                 :boolean          default(FALSE), not null
+#  is_system               :boolean          default(FALSE), not null
 #  settings                :jsonb            not null
 #  created_at              :datetime         not null
 #  updated_at              :datetime         not null
@@ -66,8 +68,10 @@ class Carrier < ApplicationRecord
   validates :title, presence: true,
                     uniqueness: true
   
-  validates :integration_designation, inclusion: { in: %w[qbe qbe_specialty crum pensio msi dc], message: 'must be valid' }
-  
+  validates :integration_designation, inclusion: {
+    in: %w[qbe qbe_specialty crum pensio msi dc out_of_system], message: 'must be valid'
+  }
+
   validates_presence_of :slug, :call_sign
 
   accepts_nested_attributes_for :carrier_policy_types, allow_destroy: true

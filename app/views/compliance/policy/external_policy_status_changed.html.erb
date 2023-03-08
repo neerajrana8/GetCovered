@@ -122,6 +122,8 @@
 <% end %>
 <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
   <% @bottom_inline_display = @second_nature_condition == true ? "Second Nature" : "#{ @pm_account&.title } & Get Covered"%>
-  <span style="font-size: 16px;">Thank you,<br> <%= @bottom_inline_display %><% unless @second_nature_condition %><br>
-    <a href="mailto:<%= @from %>"><%= @from %></a></span><% end %>
+  <span style="font-size: 16px;">Thank you,<br> <%= @bottom_inline_display %>
+    <% unless @second_nature_condition %><br>
+      <a href="mailto:<%= @from %>"><%= @from %></a></span>
+    <% end %>
 </p>
