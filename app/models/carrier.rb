@@ -90,13 +90,6 @@ class Carrier < ApplicationRecord
     return self.commission_strategy
   end
 
-  def formatted_synonyms
-    # NOTE: sorts synonyms alphabetically and capitalizes them
-    return if synonyms.blank?
-
-    synonyms.split(',').map { |syn| syn.strip.upcase_first }.sort.join(',')
-  end
-
   private
 
   def initialize_carrier

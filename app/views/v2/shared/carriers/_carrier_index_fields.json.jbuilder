@@ -1,2 +1,2 @@
-json.extract! carrier, :call_sign, :enabled, :id, :syncable, :title, :verifiable
-json.synonyms carrier.formatted_synonyms
+json.extract! carrier, :call_sign, :enabled, :id, :syncable, :title, :verifiable, :synonyms
+json.title carrier.title&.upcase_first
