@@ -74,7 +74,7 @@ module Reports
       mpc = fetch_master_policy_configuration(coverage, master_policy, insurable)
 
       {
-        'insurable_address' => insured&.address&.full_street_address,
+        'insurable_address' => insurable&.primary_address&.full_street_address,
         'user_full_name' => insured&.full_name,
         'charge_amount' => mpc&.charge_amount ? format('%.2f', mpc&.charge_amount / 100.0) : nil,
         'master_policy_configuration_id' => mpc&.id,
