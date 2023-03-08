@@ -11,7 +11,6 @@ module MasterPolicies
       master_policices.find_in_batches do |group|
         group.each do |mpo|
           mpo.insurables.each do |community|
-
             next unless InsurableType::COMMUNITIES_IDS.include?(community.insurable_type_id)
 
             config = configuration(mpo, community)
@@ -23,6 +22,7 @@ module MasterPolicies
             leases.each do |lease|
               begin
                 next if unit_affordable?(lease.insurable)
+                next if lease_created_dafter_master_policy?(lease, mpo)
 
                 cp = MasterPolicy::ChildPolicyIssuer.call(mpo, lease)
               rescue StandardError => e
@@ -42,6 +42,11 @@ module MasterPolicies
       false
     end
 
+    def lease_created_after_master_policy?(lease, mpo)
+      return true if lease.start_date > mpo.effective_date
+
+      false
+    end
 
     def configuration(master_policy, insurable)
       MasterPolicy::ConfigurationFinder.call(master_policy, insurable)
