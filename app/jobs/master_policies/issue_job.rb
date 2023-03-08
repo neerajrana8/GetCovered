@@ -22,7 +22,7 @@ module MasterPolicies
             leases.each do |lease|
               begin
                 next if unit_affordable?(lease.insurable)
-                next if lease_created_dafter_master_policy?(lease, mpo)
+                next if lease_created_after_master_policy?(lease, mpo)
 
                 cp = MasterPolicy::ChildPolicyIssuer.call(mpo, lease)
               rescue StandardError => e
