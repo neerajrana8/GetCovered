@@ -128,3 +128,6 @@ production:
   master_policy_issue_job:
     cron: '0 5 * * *'
     class: MasterPolicies::IssueJob
+  master_policy_issue_job_for_uncovered_tenants:
+    cron: '0 6 * * *'
+    class: MasterPolicies::MissingTenantsCoverageJob
