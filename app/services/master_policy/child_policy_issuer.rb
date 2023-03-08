@@ -107,7 +107,7 @@ module MasterPolicy
         policy_type_id: PolicyType::MASTER_COVERAGE_ID,
         policy: @master_policy,
         effective_date: effective_date,
-        expiration_date: @master_policy.expiration_date,
+        expiration_date: @lease.end_date,
         system_data: @master_policy.system_data,
         policy_users_attributes: policy_users
       }
