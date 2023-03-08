@@ -5,7 +5,7 @@ module MasterPolicies
 
     QBE_ID = 2
     BOUND_STATUS_ID = 3
-    AFFORDABLE_ID = 1
+    AFFORDABLE_ID = 'affordable'.freeze
 
     def perform
       master_policices.find_in_batches do |group|
