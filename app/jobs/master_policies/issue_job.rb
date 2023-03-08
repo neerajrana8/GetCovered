@@ -22,7 +22,7 @@ module MasterPolicies
             leases.each do |lease|
               begin
                 next if unit_affordable?(lease.insurable)
-                next if lease_created_after_master_policy?(lease, mpo)
+                next unless lease_started_before_master_policy_started?(lease, mpo)
 
                 cp = MasterPolicy::ChildPolicyIssuer.call(mpo, lease)
               rescue StandardError => e
@@ -42,8 +42,8 @@ module MasterPolicies
       false
     end
 
-    def lease_created_after_master_policy?(lease, mpo)
-      return true if lease.start_date > mpo.effective_date
+    def lease_started_before_master_policy_started?(lease, mpo)
+      return true if lease.start_date >= mpo.effective_date
 
       false
     end
