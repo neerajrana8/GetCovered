@@ -116,6 +116,10 @@ production:
   yardi_sync_job:
     cron: '0 1 * * *' # Every day at 1:00 AM
     class: YardiSyncJob
+  # User merge
+  user_merge_job:
+    cron: '0 22 * * *' # Every day at 10:00 PM
+    class: UserMergeJob
   # Generic Actions
   perform_scheduled_actions_job:
     cron: '45 * * * *' # every hour, 45 minutes in
