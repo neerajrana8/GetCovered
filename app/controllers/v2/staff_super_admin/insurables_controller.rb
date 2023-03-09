@@ -1,6 +1,6 @@
 ##
-# V2 StaffAgency Insurables Controller
-# File: app/controllers/v2/staff_agency/insurables_controller.rb
+# V2 StaffSuperAdmin Insurables Controller
+# File: app/controllers/v2/staff_super_admin/insurables_controller.rb
 
 module V2
   module StaffSuperAdmin
