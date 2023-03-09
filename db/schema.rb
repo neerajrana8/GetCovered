@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2023_02_13_164106) do
+ActiveRecord::Schema.define(version: 2023_03_09_065713) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -1163,7 +1163,6 @@ ActiveRecord::Schema.define(version: 2023_02_13_164106) do
     t.datetime "updated_at", precision: 6, null: false
     t.boolean "enabled", default: false
     t.string "integration_account_number"
-    t.boolean "lease_violation_only", default: true
     t.integer "admin_fee", default: 0
     t.integer "force_admin_fee"
     t.boolean "prorate_admin_fee", default: false
