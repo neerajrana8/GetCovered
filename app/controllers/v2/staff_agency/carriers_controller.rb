@@ -12,6 +12,7 @@ module V2
 
       def index
         super(:@carriers, @substrate)
+        @carriers = @carriers.order(title: :asc)
         render template: 'v2/shared/carriers/index', status: :ok
       end
 
