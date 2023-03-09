@@ -386,7 +386,6 @@ module Integrations
           ##############################################################
           if integration.configuration['sync']['push_policies']
             # get data on internal policies that haven't yet been exported
-            , export_only_ids: export_only_ids, force_all_export_only_ids: force_all_export_only_ids
             policy_ids = (
               force_all_export_only_ids ? Policy.where(id: export_only_ids).where(
                 id: PolicyInsurable.where(insurable: the_community.units).where.not(policy_id: nil).select(:policy_id),
