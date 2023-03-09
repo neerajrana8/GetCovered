@@ -8,6 +8,7 @@
   <title>Invoice</title>
   <style type="text/css">
       a { text-decoration: none; outline: none; }
+      .text-left { text-align: left !important;}
       @media (max-width: 649px) {
           .o_col-full { max-width: 100% !important; }
           .o_col-half { max-width: 50% !important; }
@@ -155,7 +156,7 @@
             <div class="o_col o_col-4" style="display: inline-block;vertical-align: top;width: 100%;max-width: 400px;">
               <div style="font-size: 32px; line-height: 32px; height: 32px;">&nbsp; </div>
               <div class="o_px-xs o_sans o_text-xs o_text-light o_left o_xs-center" style="font-family: Helvetica, Arial, sans-serif;margin-top: 0px;margin-bottom: 0px;font-size: 14px;line-height: 21px;color: #82899a;text-align: left;padding-left: 8px;padding-right: 8px;">
-                <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><%= @agency.addresses.first&.full%>y</p>
+                <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><%= @agency.addresses.first&.full%></p>
               </div>
             </div>
           </td>
