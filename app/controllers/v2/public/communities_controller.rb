@@ -15,7 +15,7 @@ module V2
             render json: standard_error(:branding_profile_id_param_blank,'branding_profile_id parameter can\'t be blank'),
                    status: :unprocessable_entity
           else
-            branding_profile = BrandingProfile.find_by_id(params[:branding_profile_id])
+            branding_profile = BrandingProfile.find_by_id(params[:branding_id])
             profileable = branding_profile&.profileable_type.eql?("Account") ? Account.find_by_id(branding_profile&.profileable_id) : Agency.find_by_id(branding_profile&.profileable_id)
 
             if profileable.blank?
