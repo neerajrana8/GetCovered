@@ -54,8 +54,7 @@ module V2
         # NOTE This is architectural flaw and bs way to get master policy
         begin
           master_policy = @policy.primary_insurable.parent_community.policies.current.where(policy_type_id: PolicyType::MASTER_IDS).take
-          config = MasterPolicy::ConfigurationFinder.call(master_policy, insurable, available_lease_date)
-          @master_policy_configurations = [config]
+          @master_policy_configuration = MasterPolicy::ConfigurationFinder.call(master_policy, insurable, available_lease_date)
         rescue StandardError => e
           render json: {error: e}, status: 400
         end
