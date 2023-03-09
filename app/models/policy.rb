@@ -717,6 +717,19 @@ class Policy < ApplicationRecord
 
   def set_status_changed_on
     self.status_changed_on = DateTime.current
+    #if Rails.env == "awsdev"
+      if self.account_id == 28
+        url = "https://webhooks-chuck-mirror-resapp-a.nestiostaging.com/getcovered-webhooks/policy-status/"
+        request = { :number => self.number, :status => self.status, :user_email => self.primary_user().nil? ? nil : self.primary_user().email,
+                    :tcode => self.primary_user().nil? ? nil : self.primary_user().integration_profiles.nil? ? nil : self.primary_user()&.integration_profiles&.first&.external_id }
+        event = Event.new(verb: 'post', process: 'policy_status_update_webhook', started: DateTime.current, request: request.to_json.to_s, eventable: self,
+                          endpoint: url)
+        result = HTTParty.post(url, :body => request.to_json, :headers => { 'Content-Type' => 'application/json' })
+        event.response = result.parsed_response
+        event.status = result.code == 200 ? "success" : "error"
+        event.save
+      end
+    #end
   end
 
   def inline_fix_external_policy_relationships
