@@ -8,23 +8,40 @@ module MasterPolicies
     AFFORDABLE_ID = 'affordable'.freeze
 
     def perform
+      log(self.class.to_s, "Starting #{self.class} #{DateTime.now}")
       master_policices.find_in_batches do |group|
         group.each do |mpo|
           mpo.insurables.each do |community|
+            log(self.class.to_s, "\tProcessing '#{community.title}' (ID=#{community.id})")
+            log(self.class.to_s, "\t - Checking if type is Community?...#{InsurableType::COMMUNITIES_IDS.include?(community.insurable_type_id)}")
             next unless InsurableType::COMMUNITIES_IDS.include?(community.insurable_type_id)
 
             config = configuration(mpo, community)
+            log(self.class.to_s, "\t - Finding configuration...#{config.id if config}")
 
+            # next if tracking_per_user?(community)
             next unless config
-            next unless InsurableType::COMMUNITIES_IDS.include?(community.insurable_type_id)
 
             leases = leases_without_child_policy(config, community)
+            log(self.class.to_s, "\t - Finding leases withtout child policies...#{leases.count}")
             leases.each do |lease|
               begin
+                log(self.class.to_s, "\t\t Affordable?...#{unit_affordable?(lease.insurable)}")
                 next if unit_affordable?(lease.insurable)
+
+                log(self.class.to_s, "\t\t Lease before master policy?...#{lease_started_before_master_policy_started?(lease, mpo)}")
                 next unless lease_started_before_master_policy_started?(lease, mpo)
 
-                cp = MasterPolicy::ChildPolicyIssuer.call(mpo, lease)
+                log(self.class.to_s, "\t\t Tracking per user...#{tracking_per_user?(community)}")
+                if tracking_per_user?(community)
+                  policies = lease_active_policies(lease)
+                  user_ids = users_ids_on_active_policies(policies)
+                  uncovered_users = uncovered_users(lease, user_ids)
+                  cp = MasterPolicy::ChildPolicyIssuer.call(mpo, lease, uncovered_users)
+                else
+                  cp = MasterPolicy::ChildPolicyIssuer.call(mpo, lease)
+                end
+                log(self.class.to_s, "\t\t Child policy issued...#{cp.id if cp}")
               rescue StandardError => e
                 Rails.logger.info e.to_s
               end
@@ -32,9 +49,20 @@ module MasterPolicies
           end
         end
       end
+      log(self.class.to_s, "Finish #{self.class} #{DateTime.now}")
     end
 
     private
+
+    def tracking_per_user?(community)
+      community.account.per_user_tracking
+    end
+
+    def uncovered_users(lease, user_ids)
+      lease.active_users.where(lessee: true).reject do |user|
+        user_ids.include?(user.id)
+      end
+    end
 
     def unit_affordable?(unit)
       return true if unit.special_status == AFFORDABLE_ID
