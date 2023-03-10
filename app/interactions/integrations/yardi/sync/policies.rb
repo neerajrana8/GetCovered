@@ -11,7 +11,6 @@ module Integrations
         boolean :universal_export, default: false          # if true, forcibly attempts to sync even policies that do not appear to have changed or to have anything unsunc
         boolean :early_presence_check, default: true       # if true, checks for policy presence before even deciding whether it should be exported in the first place
         array :export_only_ids, default: nil               # if non-nil, restricts the export to only the supplied policies (won't export them if they wouldn't have exported anyway, though)
-        boolean :force_all_export_only_ids, default: false # if true, forces ALL the provided export_only_ids to export regardless of whether they normally would have
         
         def export_policy_document(property_id:, policy:, resident_id:, policy_ip: policy.integration_profiles.to_a.find{|pip| pip.integration_id == integration.id }.take)
           return "Document push not enabled" unless integration.configuration.dig('sync', 'policy_push', 'push_document')
@@ -132,16 +131,16 @@ module Integrations
             propz = propz&.map{|comm| comm["Code"] }
             return(to_return) if propz.blank?
             if efficency_mode
-              propz.each{|propid| Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [propid], efficiency_mode: true, fake_export: fake_export, universal_export: universal_export, early_presence_check: early_presence_check, export_only_ids: export_only_ids, force_all_export_only_ids: force_all_export_only_ids) }
+              propz.each{|propid| Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [propid], efficiency_mode: true, fake_export: fake_export, universal_export: universal_export, early_presence_check: early_presence_check, export_only_ids: export_only_ids) }
               return to_return # blank
             end
-            return propz.inject(to_return){|tr, property_id| tr.deep_merge(Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id], efficiency_mode: false, fake_export: fake_export, universal_export: universal_export, early_presence_check: early_presence_check, export_only_ids: export_only_ids, force_all_export_only_ids: force_all_export_only_ids)) }
+            return propz.inject(to_return){|tr, property_id| tr.deep_merge(Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id], efficiency_mode: false, fake_export: fake_export, universal_export: universal_export, early_presence_check: early_presence_check, export_only_ids: export_only_ids)) }
           elsif true_property_ids.length > 1
             if efficiency_mode
-              true_property_ids.each{|propid| Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id], efficiency_mode: true, fake_export: fake_export, universal_export: universal_export, early_presence_check: early_presence_check, export_only_ids: export_only_ids, force_all_export_only_ids: force_all_export_only_ids) }
+              true_property_ids.each{|propid| Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id], efficiency_mode: true, fake_export: fake_export, universal_export: universal_export, early_presence_check: early_presence_check, export_only_ids: export_only_ids) }
               return to_return # blank
             end
-            return true_property_ids.inject(to_return){|tr, property_id| tr.deep_merge(Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id], efficiency_mode: false, fake_export: fake_export, universal_export: universal_export, early_presence_check: early_presence_check, export_only_ids: export_only_ids, force_all_export_only_ids: force_all_export_only_ids)) }
+            return true_property_ids.inject(to_return){|tr, property_id| tr.deep_merge(Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id], efficiency_mode: false, fake_export: fake_export, universal_export: universal_export, early_presence_check: early_presence_check, export_only_ids: export_only_ids)) }
           elsif true_property_ids.length == 0
             return(to_return)
           end
@@ -387,11 +386,7 @@ module Integrations
           if integration.configuration['sync']['push_policies']
             # get data on internal policies that haven't yet been exported
             policy_ids = (
-              force_all_export_only_ids ? Policy.where(id: export_only_ids).where(
-                id: PolicyInsurable.where(insurable: the_community.units).where.not(policy_id: nil).select(:policy_id),
-                policy_type_id: [::PolicyType::RESIDENTIAL_ID]
-              )
-              : Policy.where(
+              Policy.where(
                 id: PolicyInsurable.where(insurable: the_community.units).where.not(policy_id: nil).select(:policy_id),
                 policy_type_id: [::PolicyType::RESIDENTIAL_ID], #, ::PolicyType::MASTER_COVERAGE_ID],
                 status: ::Policy.active_statuses + ['CANCELLED']
