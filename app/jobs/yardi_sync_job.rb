@@ -1,7 +1,7 @@
 class YardiSyncJob < ApplicationJob
   queue_as :default # call it gordo
 
-  def perform(account_or_integration = nil)
+  def perform(account_or_integration = nil, resync: false)
     ids = case account_or_integration
       when nil
         ::Integration.where(provider: 'yardi', enabled: true).order("updated_at asc").map{|i| i.id }
@@ -19,6 +19,7 @@ class YardiSyncJob < ApplicationJob
       begin
         integration.configuration['sync']['syncable_communities'].select do |property_id, config|
           next unless config['enabled']
+          next if !resync && !integration.configuration['sync']['queued_resync'] && config['last_sync_f'] == Time.current.to_date.to_s && config['last_sync_i'] == Time.current.to_date.to_s
           Integrations::Yardi::Sync::Insurables.run!(integration: integration, property_ids: [property_id], efficiency_mode: true) rescue  nil
         end
       rescue
@@ -28,7 +29,8 @@ class YardiSyncJob < ApplicationJob
         universal_export = (integration.configuration['sync']['queued_universal_export'] ? true : false)
         begin
           integration.configuration['sync']['syncable_communities'].select do |property_id, config|
-            next unless config['enabled']
+            next unless config['enabled'] && !config['insurables_only']
+            next if !resync && !integration.configuration['sync']['queued_resync'] && config['last_sync_p'] == Time.current.to_date.to_s
             Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id], efficiency_mode: true, universal_export: universal_export) rescue  nil
           end
         rescue
@@ -37,6 +39,7 @@ class YardiSyncJob < ApplicationJob
       end
       integration.configuration['sync']['next_sync']['timestamp'] = (Time.current.to_date + 1.day).to_s rescue nil
       integration.configuration['sync']['queued_universal_export'] = false
+      integration.configuration['sync']['queued_resync'] = false
       integration.save
     end
   end
