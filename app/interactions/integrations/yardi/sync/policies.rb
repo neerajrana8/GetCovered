@@ -456,7 +456,8 @@ module Integrations
               end
               used = []
               users_to_export = policy.policy_users.to_a.uniq.map do |pu|
-                found = lease_user_ips.find{|lup| !used.include?(lup.external_id) && lup.profileable.user_id == pu.user_id && !lup.external_id.start_with?("was") } || lease_user_ips.find{|lup| !used.include?(lup.external_id) && lup.profileable.user_id == pu.user_id }
+                found = lease_user_ips.find{|lup| !used.include?(lup.external_id) && lup.profileable.user_id == pu.user_id && !lup.external_id.start_with?("was") && (lup.profileable.moved_out_at.nil? || lup.profileable.moved_out_at > Time.current.to_date) } || lease_user_ips.find{|lup| !used.include?(lup.external_id) && lup.profileable.user_id == pu.user_id && (lup.profileable.moved_out_at.nil? || lup.profileable.moved_out_at > Time.current.to_date) } ||
+                        lease_user_ips.find{|lup| !used.include?(lup.external_id) && lup.profileable.user_id == pu.user_id && !lup.external_id.start_with?("was") } || lease_user_ips.find{|lup| !used.include?(lup.external_id) && lup.profileable.user_id == pu.user_id }
                 next nil if found.nil?
                 preexisting = integration.integration_profiles.where(external_context: "policy_user_for_policy_#{policy.number}", external_id: found.external_id).take
                 if preexisting.nil?
@@ -505,11 +506,12 @@ module Integrations
               policy_hash = {
                 Customer: {
                   #Identification: users_to_export.map{|u| { "IDValue" => u[:external_id], "IDType" => !u[:external_id].downcase.start_with?("r") ? "Resident ID" : "Roomate#{roommate_index += 1} ID" } },
-                  Identification: users_to_export.map{|u| { "IDValue" => u[:external_id], "IDType" => u[:policy_user].primary ? "Resident ID" : "Roomate#{roommate_index += 1} ID" } },
+                  #Identification: users_to_export.map{|u| { "IDValue" => u[:external_id], "IDType" => u[:policy_user].primary ? "Resident ID" : "Roomate#{roommate_index += 1} ID" } },
+                  Identification: users_to_export.map{|u| { "IDValue" => u[:external_id], "IDType" => (u == priu ? "Resident ID" : "Roomate#{roommate_index += 1} ID") } },
                   Name: {
-                      "FirstName" => policy_priu[:policy_user].user.profile.first_name,
-                      "MiddleName" => policy_priu[:policy_user].user.profile.middle_name.blank? ? nil : priu[:policy_user].user.profile.middle_name,
-                      "LastName" => policy_priu[:policy_user].user.profile.last_name#,
+                      "FirstName" => (priu[:policy_user] || priu[:lease_user]).user.profile.first_name,
+                      "MiddleName" => (priu[:policy_user] || priu[:lease_user]).user.profile.middle_name.blank? ? nil : (priu[:policy_user] || priu[:lease_user]).user.profile.middle_name,
+                      "LastName" => (priu[:policy_user] || prui[:lease_user]).user.profile.last_name#,
                       #"Relationship"=> priu[:policy_user].primary ? nil : priu[:policy_user].spouse ? "Spouse" : "Roommate"
                   }.compact
                 },
@@ -575,11 +577,11 @@ module Integrations
                     event_sequence.push(result[:event].id)
                     policy_ip.configuration['export_problem'] = "Got failure response (event #{result[:event]&.id})."
                     policy_ip.save
-                    IntegrationProfile.create(
+                    ipd = {
                       integration: integration,
                       profileable: policy_ip,
                       external_context: "policy_push_log",
-                      external_id: Time.current.to_s,
+                      external_id: Time.current.to_s + "_" + rand(100000000).to_s,
                       configuration: {
                         success: false,
                         push_type: (policy_updated ? "change" : "create"),
@@ -591,7 +593,8 @@ module Integrations
                         export_setup: export_setup,
                         prior_configuration: prior_configuration
                       }
-                    )
+                    }
+                    IntegrationProfile.create(ipd)
                     to_return[:policy_export_errors][policy.number] = "Failed to export policy due to error response from Yardi's API (Event id #{result[:event]&.id})."
                     next
                   else
@@ -630,7 +633,7 @@ module Integrations
                       integration: integration,
                       profileable: policy_ip,
                       external_context: "policy_push_log",
-                      external_id: Time.current.to_s,
+                      external_id: Time.current.to_s + "_" + rand(100000000).to_s,
                       configuration: {
                         success: true,
                         push_type: (policy_updated ? "change" : "create"),
