@@ -76,7 +76,7 @@ module Compliance
       @policy = policy
       @user = @policy.primary_user
 
-      set_locale(@user.profile&.language || "en")
+      set_locale(@user&.profile&.language || "en")
 
       #TODO: need to move hardcoded id to env dependant logic
       @second_nature_condition = false
