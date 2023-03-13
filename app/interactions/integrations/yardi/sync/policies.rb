@@ -395,6 +395,7 @@ module Integrations
             policy_ids.each do |pol_id|
               policy = Policy.where(id: pol_id).references(:policy_insurables, :policy_users, :integration_profiles).includes(:policy_insurables, :policy_users, :integration_profiles).take
               policy_ip = policy.integration_profiles.find{|ip| ip.integration_id == integration.id }
+              next if policy.status == 'CANCELLED' && policy_ip&.configuration&.[]('cancelled') # we've already cancelled it on the remote server, nothing to do
               policy_imported = (policy_ip&.configuration&.[]('history') == 'imported_from_yardi')
               policy_exported = (policy_ip&.configuration&.[]('history') == 'exported_to_yardi' && policy_ip.configuration['present_last_check'] == true)
               policy_document_exported = (policy_ip&.configuration&.[]('exported_to_primary') ? true : false)
@@ -636,6 +637,7 @@ module Integrations
                       policy_ip.configuration['history'] = 'exported_to_yardi'
                       policy_ip.configuration['synced_at'] = Time.current.to_s
                       policy_ip.configuration['exported_hash'] = policy_hash
+                      policy_ip.configuration['cancelled'] = must_cancel
                       policy_ip.configuration.delete('export_problem')
                       policy_ip.save
                     end
@@ -646,7 +648,7 @@ module Integrations
                       external_id: Time.current.to_s + "_" + rand(100000000).to_s,
                       configuration: {
                         success: true,
-                        push_type: (policy_updated ? "change" : "create"),
+                        push_type: (must_cancel ? "cancel" : policy_updated ? "change" : "create"),
                         property_id: property_id,
                         event: result[:event].id,
                         prior_events: event_sequence,
