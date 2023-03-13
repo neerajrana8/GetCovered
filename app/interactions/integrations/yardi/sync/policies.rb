@@ -530,8 +530,15 @@ module Integrations
                   # WARNING: are these weirdos required? LATER ANSWER: apparently not.
                 }.compact
               }
-              if policy.status == 'CANCELLED' && policy.cancellation_date
-                #policy_hash[:PolicyDetails][:CancelDate] = policy.cancellation_date&.to_s
+              if policy.status == 'CANCELLED' && !policy.cancellation_date.nil?
+                cd = policy.cancellation_date || policy.status_changed_on
+                if !cd.nil?
+                  cd = policy.effective_date if cd < policy.effective_date
+                  cd = policy.expiration_date if cd > policy.expiration_date
+                  if cd <= Time.current.to_date
+                    policy_hash[:PolicyDetails][:CancelDate] = policy.cancellation_date.to_s
+                  end
+                end
               end
               # export the policy
               yardi_id ||= policy_ip&.configuration&.[]('policy_id')
@@ -563,15 +570,17 @@ module Integrations
                 else
                   event_sequence = []
                   policy_updated = (policy_exported || yardi_id) ? true : false
-                  result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: policy_updated)
+                  must_cancel = !policy_hash[:PolicyDetails]&.[](:CancelDate).blank?
+                  result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: policy_updated, cancel: must_cancel)
                   if result[:request].response&.body&.index("Policy already exists in database")
                     event_sequence.push(result[:event].id)
                     policy_updated = true
-                    result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: true)
+                    result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: true, cancel: must_cancel)
                   end
                   if result[:request].response&.body&.index("could not locate insurance policy based on policy number and tenant identifier")
                     event_sequence.push(result[:event].id)
                     policy_updated = false
+                    must_cancel = false # can't cancel on create...
                     result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: false)
                   end
                   if !result[:success]
@@ -585,7 +594,7 @@ module Integrations
                       external_id: Time.current.to_s + "_" + rand(100000000).to_s,
                       configuration: {
                         success: false,
-                        push_type: (policy_updated ? "change" : "create"),
+                        push_type: (must_cancel ? 'cancel' : policy_updated ? "change" : "create"),
                         property_id: property_id,
                         event: result[:event].id,
                         prior_events: event_sequence,
