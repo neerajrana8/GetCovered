@@ -146,15 +146,6 @@ es:
   invoice_mailer:
     invoice_complete:
       subject: "%{product_type} Factura Premium Pagada"
-      body: "Hola %{recipient_name},\n
-             Gracias por elegir una %{product_type} de %{agency_title}.\n
-             La factura de la prima de su cuenta de $%{invoice_total} se pagó con éxito el %{invoice_date}.\n
-             Para revisar la información de su póliza, visite el siguiente enlace:\n
-                %{url}\n
-             Si tiene alguna pregunta, comuníquese con nosotros a %{support_email}.\n
-             Gracias,\n
-             El equipo de Get Covered\n
-             %{support_email}"
     invoice_missed:
       subject: "%{product_type} Factura Perdida"
       body: "Hola %{recipient_name},\n
@@ -184,3 +175,11 @@ es:
       thank_you_for_registering: "¡Gracias por comprar una póliza de seguro de inquilinos con Get Covered!"
       please_click: "Por favor, click abajo para terminar de activar su cuenta."
       the_gc_portal_will_allow: "El portal de Get Covered le permitirá actualizar su información personal, configuraciones y administrar sus documentos de seguro."
+  policy_mailer:
+    policy_expiring_soon:
+      subject: "Your insurance will expire soon!"
+      content: "Hello, %{first_name}!\n
+                  Your insurance policy on file with us is set to expire on %{policy_expiration_date}.\n
+                  Please submit your new insurance policy or renewal documents before the expiration date.Thank you!"
+    enrolled_in_master:
+      subject: "Default Policy Enrollment"
