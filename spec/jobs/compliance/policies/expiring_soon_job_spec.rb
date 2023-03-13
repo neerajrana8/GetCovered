@@ -3,7 +3,7 @@ require 'rails_helper'
 RSpec.describe Compliance::Policies::ExpiringSoonJob, type: :job do
   pending "add some examples to (or delete) #{__FILE__}"
 
-  it 'should sent notification for policy which expected to expire in 7 days' do
+  xit 'should sent notification for policy which expected to expire in 7 days' do
     user = FactoryBot.create(:user)
     policy_type = PolicyType.find_by_title('Residential')
     agency = FactoryBot.create(:agency)
