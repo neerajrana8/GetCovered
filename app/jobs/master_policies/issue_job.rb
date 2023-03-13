@@ -36,6 +36,7 @@ module MasterPolicies
                 if tracking_per_user?(community)
                   policies = lease_active_policies(lease)
                   user_ids = users_ids_on_active_policies(policies)
+                  log(self.class.to_s, "\t\t Uncovered users ids...IDS=#{user_ids}")
                   uncovered_users = uncovered_users(lease, user_ids)
                   cp = MasterPolicy::ChildPolicyIssuer.call(mpo, lease, uncovered_users)
                 else
