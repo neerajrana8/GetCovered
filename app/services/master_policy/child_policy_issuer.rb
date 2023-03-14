@@ -83,10 +83,11 @@ module MasterPolicy
     end
 
     def policy_users
-      return @users unless @users.nil?
+      users_source = @lease.users
+      users_source = @users unless @users.nil?
 
       users = []
-      @lease.users.each do |u|
+      users_source.each do |u|
         users << { user_id: u.id }
       end
       users

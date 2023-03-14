@@ -228,6 +228,15 @@ module Gc
     all_valid_by_date_policies.where(status: active_policy_statuses)
   end
 
+  def wipe_child_policy(policy_id)
+    policy = Policy.find(policy_id)
+    if policy
+      PolicyCoverage.where(policy_id: policy_id).delete_all
+      PolicyInsurable.where(policy_id: policy_id).delete_all
+      Policy.find(policy_id).delete
+    end
+  end
+
 
   # Analytics
   def total_stats
