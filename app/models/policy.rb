@@ -617,7 +617,7 @@ class Policy < ApplicationRecord
     end
   end
 
-  def latest_lease(lease_status: 'current', user_matches: [:all, :primary, :any, :none], prefer_more_users: true, lessees_only: false, current_only: false)
+  def latest_lease(lease_status: ['current', 'pending'], user_matches: [:all, :primary, :any, :none], prefer_more_users: true, lessees_only: false, current_only: false)
     return nil if self.primary_insurable.blank?
     lease_status = [lease_status] unless lease_status.class == ::Array
     user_matches = [:all, :primary, :any] if user_matches == true

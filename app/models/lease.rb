@@ -192,6 +192,13 @@ class Lease < ApplicationRecord
   def primary_user
     lease_users.where(primary: true).take&.user
   end
+  
+  def matching_policies(users: nil, policy_type_id: 1, policy_status: Policy.active_statuses)
+    user_set ||= self.users
+    user_set = [users] if users.class == ::User || users.class == ::Integer
+    user_set.map!{|u| u.class == ::Integer ? u : u.id }
+    self.insurable.policies.where(policy_type_id: policy_type_id, policy_status: policy_status, id: PolicyUser.where(user_id: user_set).select(:policy_id))
+  end
 
   private
 

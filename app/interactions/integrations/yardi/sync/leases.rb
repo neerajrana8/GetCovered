@@ -537,9 +537,11 @@ module Integrations
               lease.start_date = Date.parse(tenant["LeaseFrom"]) unless tenant["LeaseFrom"].blank?
               lease.end_date = Date.parse(tenant["LeaseTo"]) unless tenant["LeaseTo"].blank?
               lease.defunct = false # just in case it was once missing from yardi and now is magically back, for example if it got moved to a different unit. likewise, update statuses in case someone defuncted and expired us previously because we jumped units
-              lease.status = 'current' if (lease.end_date.nil? || lease.end_date > Time.current.to_date) && RESIDENT_STATUSES['present'].include?(tenant["Status"])
-              lease.status = 'pending' if (lease.end_date.nil? || lease.end_date > Time.current.to_date) && RESIDENT_STATUSES['future'].include?(tenant["Status"]) || RESIDENT_STATUSES['potential'].include?(tenant["Status"])
               lease.sign_date = Date.parse(tenant["LeaseSign"]) unless tenant["LeaseSign"].blank?
+              lease.month_to_month = (!tenant["LeaseTo"].blank? && ((Date.parse(tenant["LeaseTo"]) rescue nil) || Time.current.to_date) < Time.current.to_date && (RESIDENT_STATUSES['present'].include?(tenant['Status']) || RESIDENT_STATUSES['future'].include?(tenant['Status'])))
+              lease.end_date = nil if lease.month_to_month
+              lease.status = 'current' if (lease.month_to_month || lease.end_date.nil? || lease.end_date > Time.current.to_date) && RESIDENT_STATUSES['present'].include?(tenant["Status"])
+              lease.status = 'pending' if (lease.month_to_month || lease.end_date.nil? || lease.end_date > Time.current.to_date) && RESIDENT_STATUSES['future'].include?(tenant["Status"]) || RESIDENT_STATUSES['potential'].include?(tenant["Status"])
               lease.save if lease.changed?
               fmr = fix_missing(lease, tenant, da_tenants)
               update_errors[tenant["Id"]] = fmr[:errors] unless fmr[:errors].blank?
@@ -569,11 +571,13 @@ module Integrations
               next
             end
             # create the lease
+            month_to_month = (!tenant["LeaseTo"].blank? && ((Date.parse(tenant["LeaseTo"]) rescue nil) || Time.current.to_date) < Time.current.to_date && (RESIDENT_STATUSES['present'].include?(tenant['Status']) || RESIDENT_STATUSES['future'].include?(tenant['Status'])))
             ActiveRecord::Base.transaction(requires_new: true) do
               lease = unit.leases.create(
                 start_date: Date.parse(tenant["LeaseFrom"]),
-                end_date: tenant["LeaseTo"].blank? ? nil : Date.parse(tenant["LeaseTo"]),
+                end_date: tenant["LeaseTo"].blank? || month_to_month ? nil : Date.parse(tenant["LeaseTo"]),
                 sign_date: tenant["LeaseSign"].blank? ? nil : Date.parse(tenant["LeaseSign"]),
+                month_to_month: month_to_month,
                 lease_type_id: LeaseType.residential_id,
                 account: integration.integratable
               )
