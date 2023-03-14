@@ -161,15 +161,6 @@ en:
   invoice_mailer:
     invoice_complete:
       subject: "%{product_type} Invoice Paid"
-      body: "Hello %{recipient_name},\n
-             Thank you for selecting a %{product_type} from %{agency_title}.\n
-             Your account invoice for %{product_type} %{product_identifier} in the amount of $%{invoice_total} was successfully paid on %{invoice_date}.\n
-             To review your policy information, please visit the following link:\n
-                %{url}\n
-             If you have any questions, please contact us at %{support_email}.\n
-             Thank you,\n
-             The Get Covered Team\n
-             %{support_email}"
     invoice_missed:
       subject: "%{product_type} Invoice Missed"
       body: "Hello %{recipient_name},\n

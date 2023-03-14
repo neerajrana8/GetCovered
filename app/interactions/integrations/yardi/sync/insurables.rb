@@ -179,7 +179,7 @@ module Integrations
           
           if efficiency_mode && all_units.keys.count > 1
             all_units.keys.each do |k|
-              Integrations::Yardi::Sync::Insurables.run!(integration: integration.reload, property_ids: [k], insurables_only: only_sync_insurables(k), efficiency_mode: true)
+              Integrations::Yardi::Sync::Insurables.run!(integration: integration.reload, property_ids: [k], insurables_only: only_sync_insurables(k), efficiency_mode: true, update_old_leases: update_old_leases, skip_roommate_sync: skip_roommate_sync, skip_lease_sync: skip_lease_sync, skip_leases_on_roommate_error: skip_leases_on_roommate_error)
             end
             return to_return # empty
           end

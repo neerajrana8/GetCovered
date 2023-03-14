@@ -621,15 +621,17 @@ class Policy < ApplicationRecord
     return nil if self.primary_insurable.blank?
     lease_status = [lease_status] unless lease_status.class == ::Array
     user_matches = [:all, :primary, :any] if user_matches == true
+    user_matches.map!{|um| um.to_sym }
+    user_matches = [:all] + user_matches unless user_matches.include?(:all) || (user_matches - [:none]).blank?
     found = self.primary_insurable.leases.where(status: lease_status).order(start_date: :desc).sort_by{|l| lease_status.find_index(l.status) }.group_by do |lease|
       lease_users = lease.send(current_only ? :active_lease_users : :lease_users).send(*(lessees_only ? [:where, { lessee: true }] : [:itself]))
-      case lease_users.count{|u| self.users.include?(u) }
+      case lease_users.count{|lu| self.users.any?{|u| u.id == lu.user_id } }
         when self.users.count
           :all
         when 0
           :none
         else
-          lease_users.any?{|lu| lu.user_id == self.primary_user.id } ? :primary : :any
+          lease_users.any?{|lu| lu.user_id == self.primary_user&.id } ? :primary : :any
       end
     end
     (user_matches.class == ::Array ? user_matches : [user_matches]).each do |match_type|
@@ -638,7 +640,7 @@ class Policy < ApplicationRecord
           (prefer_more_users && [:any, :primary].include?(match_type)) ?
             found[match_type].sort_by do |lease|
               lease_users = lease.send(current_only ? :active_lease_users : :lease_users).send(*(lessees_only ? [:where, { lessee: true }] : [:itself]))
-              -lease_users.count{|lu| user_ids.include?(lu.user_id) }
+              -lease_users.count{|lu| self.users.any?{|u| u.id == lu.user_id } }
             end.first
             : found[match_type].first
         )
