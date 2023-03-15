@@ -1,6 +1,8 @@
 module MasterPolicies
   # MasterPolicy Issue Job
   class IssueJob < ApplicationJob
+    prepend Gc
+
     queue_as :default
 
     QBE_ID = 2
@@ -8,76 +10,65 @@ module MasterPolicies
     CHILD_POLICY_TYPE_ID = 3
     AFFORDABLE_ID = 'affordable'.freeze
 
+
     def perform
-      log(self.class.to_s, "Starting #{self.class} #{DateTime.now}")
-      master_policices.find_in_batches do |group|
-        group.each do |mpo|
-          mpo.insurables.each do |community|
-            log(self.class.to_s, "\tProcessing '#{community.title}' (ID=#{community.id})")
-            log(self.class.to_s, "\t - Checking if type is Community?...#{InsurableType::COMMUNITIES_IDS.include?(community.insurable_type_id)}")
-            next unless InsurableType::COMMUNITIES_IDS.include?(community.insurable_type_id)
+      child_policies = []
 
-            # NOTE: Take configuration with closest date to check if configurations exists
-            config = configuration(mpo, community)
-            log(self.class.to_s, "\t - Finding configuration...#{config.id if config}")
+      leases = Lease.where(status: 1)
 
-            # next if tracking_per_user?(community)
-            next unless config
+      leases.each do |lease|
+        insurable = lease.insurable
+        community = insurable.parent_community
+        account = insurable.account
+        next unless account
 
-            # leases = leases_without_child_policy(community)
-            #
-            leases = leases_for_community(community)
-            log(self.class.to_s, "\t - Finding leases withtout child policies...#{leases.count}")
-            leases.each do |lease|
-              begin
-                log(self.class.to_s, "\t\t Affordable?...#{unit_affordable?(lease.insurable)}")
-                next if unit_affordable?(lease.insurable)
+        per_user_tracking = account.per_user_tracking
 
-                log(self.class.to_s, "\t\t Lease before master policy? #{mpo.id}...#{lease_started_after_master_policy_started?(lease, mpo)}")
+        pi_mpo = PolicyInsurable.find_by(insurable_id: community.id)
+        next unless pi_mpo
 
-                next unless lease_started_after_master_policy_started?(lease, mpo)
+        mpo = Policy.find(pi_mpo.policy_id)
 
-                # NOTE: Find configuration with the certain date
-                cutoff_date = lease.sign_date.nil? ? lease.start_date : lease.sign_date
-                config = configuration(mpo, community, cutoff_date)
-                log(self.class.to_s, "\t - Finding configuration with date...#{config.id if config}")
+        next unless mpo
+        next if unit_affordable?(insurable)
 
-                # NOTE: Skip if master policy configuration is not found
-                next unless config
+        next unless lease_started_after_master_policy_started?(lease, mpo)
 
-                log(self.class.to_s, "\t\t Tracking per user...#{tracking_per_user?(community)}")
+        cutoff_date = lease.sign_date.nil? ? lease.start_date : lease.sign_date
+        config = configuration(mpo, community, cutoff_date)
+        next unless config
 
-                child_policies = []
+        atm = true
 
-                unless lease_has_child_policy?(lease)
-                  child_policies << MasterPolicy::ChildPolicyIssuer.call(mpo, lease)
-                end
+        if per_user_tracking
 
-                # NOTE: Disabled
-                #
-                # next if tracking_per_user?(community)
-                # if tracking_per_user?(community)
-                #   policies = lease_active_policies(lease)
-                #   user_ids = users_ids_on_active_policies(policies).flatten.uniq
-                #   log(self.class.to_s, "\t\t Uncovered users ids...IDS=#{user_ids}")
-                #   uncovered_users = uncovered_users(lease, user_ids)
-                #   child_policies <<  MasterPolicy::ChildPolicyIssuer.call(mpo, lease, uncovered_users)
-                # end
+          all_policy_users = []
+          pi_rels = PolicyInsurable.where(insurable_id: insurable.id)
+          policies = Policy.where(id: pi_rels.pluck(:policy_id), status: active_policy_statuses)
+          policies.each do |policy|
+            # Gathering users from acitve policies
+            all_policy_users << policy.users.pluck(:id) if active_policy_statuses.include?(policy.status)
+          end
 
-                # unless lease_has_child_policy?(lease)
-                #     child_policies << MasterPolicy::ChildPolicyIssuer.call(mpo, lease)
-                # end
+          lease_users = lease.users.pluck(:id).sort
+          all_policy_users = all_policy_users.flatten.uniq.sort
 
-                log(self.class.to_s, "\t\t Child policy issued...#{child_policies.count}")
-                puts "\t\t Child policy issued...#{child_policies.inspect}"
-              rescue StandardError => e
-                Rails.logger.info e.to_s
-              end
-            end
+          # atm = (lease_users & all_policy_users) == lease_users
+          uncovered_users_ids = lease_users - (lease_users & all_policy_users)
+
+          uncovered_users = User.where(id: uncovered_users_ids)
+          if uncovered_users&.count&.positive?
+            child_policies << MasterPolicy::ChildPolicyIssuer.call(mpo, lease, uncovered_users)
+          end
+        else
+
+          if !lease_has_child_policy?(lease) && !lease_expired?(lease, DateTime.now)
+            child_policies << MasterPolicy::ChildPolicyIssuer.call(mpo, lease)
           end
         end
       end
-      log(self.class.to_s, "Finish #{self.class} #{DateTime.now}")
+
+      child_policies
     end
 
     private

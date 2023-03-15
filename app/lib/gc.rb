@@ -73,7 +73,7 @@ module Gc
   def unit_shouldbe_covered?(lease, policy, check_date)
     return false if lease.nil?
 
-    !lease_expired?(lease, check_date) && !policy_expired?(policy, check_date) && tenant_matched?(lease, policy)
+    !lease_expired?(lease, check_date) && !policy_expired?(policy, check_date) #  && tenant_matched?(lease, policy)
   end
 
   def units_without_leases
@@ -127,6 +127,16 @@ module Gc
     lease_name == policy_name && policy_email == lease_email
   end
 
+  def lease_policy_users_matched?(lease, policy)
+    lease.users.pluck(:id).sort == policy.users.pluck(:id).sort
+  end
+
+  def lease_policy_users_intersect?(lease, policy)
+    a = lease.users.pluck(:id).sort
+    b = policy.users.pluck(:id).sort
+    !(a & b).empty?
+  end
+
   # Matching tenants by name
   def all_tenants_matched?(lease, policy)
     lease_users = lease.users
@@ -142,6 +152,7 @@ module Gc
       policy_names << "#{pu.profile.first_name} #{pu.profile.last_name}"
     end
     matched = lease_names - policy_names | policy_names - lease_names
+    puts "MATCHED = #{matched}"
     !matched.empty?
   end
 

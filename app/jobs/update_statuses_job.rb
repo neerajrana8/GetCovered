@@ -26,67 +26,41 @@ class UpdateStatusesJob < ApplicationJob
   def perform
     check_date = Time.now
 
-    tenants_mismatched_cx = 0
-
     skip = false
     unless skip
-      active_policies.each do |policy|
-        # Unit
-        insurable = policy_insurable(policy)
 
-        next unless insurable
+      all_units.each do |insurable|
+        next if insurable.account.nil?
 
-        # Tracking setup
-        per_user_tracking = policy.account.per_user_tracking
-        atm = true
-
+        per_user_tracking = insurable.account.per_user_tracking
+        # Iterate over leases on insurable
         insurable_leases(insurable).each do |lease|
-          # Check tenants is matching
-          unless tenant_matched?(lease, policy)
-            tenants_mismatched_cx += 1
-            next
+          pi_rels = PolicyInsurable.where(insurable_id: insurable.id)
+          policies = Policy.where(id: pi_rels.pluck(:policy_id))
+
+          all_policy_users = []
+          policies.each do |policy|
+            # Gathering users from acitve policies
+            all_policy_users << policy.users.pluck(:id) if active_policy_statuses.include?(policy.status)
           end
 
-          atm = all_tenants_matched?(lease, policy) if per_user_tracking
+          lease_users = lease.users.pluck(:id).sort
+          all_policy_users = all_policy_users.flatten.uniq.sort
+          intersection = !(all_policy_users & lease_users).empty?
 
-          if lease_shouldbe_covered?(policy, lease, check_date) && atm
+          atm = true
+          atm = (lease_users & all_policy_users) == lease_users if per_user_tracking
+
+          if intersection && !lease_expired?(lease, check_date) && atm
             cover_lease(lease)
-            make_lease_current(lease)
+            cover_unit(insurable)
           else
             uncover_lease(lease)
-            make_lease_expired(lease) if lease_expired?(lease, check_date)
+            uncover_unit(insurable)
           end
         end
       end
-    end
 
-    skip = false
-    unless skip
-
-      all_units.each do |unit|
-        unit_policies(unit).each do |policy|
-
-          # Tracking setup
-          per_user_tracking = policy.account.per_user_tracking
-          atm = true
-
-          atm = all_tenants_matched?(lease, policy) if per_user_tracking
-
-          if policy_shouldbe_expired?(policy, check_date)
-            uncover_unit(unit)
-            make_policy_expired_status(policy)
-          end
-
-          lease = active_lease(unit)
-
-          if unit_shouldbe_covered?(lease, policy, check_date) && atm
-            cover_unit(unit)
-          else
-            uncover_unit(unit)
-          end
-
-        end
-      end
     end
     puts stats_as_table
   end
