@@ -538,7 +538,7 @@ module Integrations
                   # WARNING: are these weirdos required? LATER ANSWER: apparently not.
                 }.compact
               }
-              if policy.status == 'CANCELLED' && !policy.cancellation_date.nil?
+              if policy.status == 'CANCELLED'
                 cd = policy.cancellation_date || policy.status_changed_on
                 if !cd.nil?
                   cd = policy.effective_date if cd < policy.effective_date
