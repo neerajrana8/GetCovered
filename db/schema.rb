@@ -10,7 +10,8 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2023_03_09_065713) do
+
+ActiveRecord::Schema.define(version: 2023_03_13_202623) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -1099,6 +1100,7 @@ ActiveRecord::Schema.define(version: 2023_03_09_065713) do
     t.jsonb "expanded_covered", default: {}
     t.boolean "defunct", default: false, null: false
     t.date "sign_date"
+    t.boolean "month_to_month", default: false, null: false
     t.index ["account_id"], name: "index_leases_on_account_id"
     t.index ["insurable_id"], name: "index_leases_on_insurable_id"
     t.index ["lease_type_id"], name: "index_leases_on_lease_type_id"

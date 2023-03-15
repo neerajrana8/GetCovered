@@ -10,7 +10,7 @@ module Integrations
         boolean :fake_export, default: false               # if true, does everything normally but aborts before actually pushing policies
         boolean :universal_export, default: false          # if true, forcibly attempts to sync even policies that do not appear to have changed or to have anything unsunc
         boolean :early_presence_check, default: true       # if true, checks for policy presence before even deciding whether it should be exported in the first place
-        array :export_only_ids, default: nil               # if non-nil, restricts the export to only the supplied policies (won't export them if they wouldn't have exported anyway, though)
+        array :exportable_ids, default: nil               # if non-nil, restricts the export to only the supplied policies (won't export them if they wouldn't have exported anyway, though)
         
         def export_policy_document(property_id:, policy:, resident_id:, policy_ip: policy.integration_profiles.to_a.find{|pip| pip.integration_id == integration.id }.take)
           return "Document push not enabled" unless integration.configuration.dig('sync', 'policy_push', 'push_document')
@@ -131,16 +131,16 @@ module Integrations
             propz = propz&.map{|comm| comm["Code"] }
             return(to_return) if propz.blank?
             if efficency_mode
-              propz.each{|propid| Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [propid], efficiency_mode: true, fake_export: fake_export, universal_export: universal_export, early_presence_check: early_presence_check, export_only_ids: export_only_ids) }
+              propz.each{|propid| Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [propid], efficiency_mode: true, fake_export: fake_export, universal_export: universal_export, early_presence_check: early_presence_check, exportable_ids: exportable_ids) }
               return to_return # blank
             end
-            return propz.inject(to_return){|tr, property_id| tr.deep_merge(Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id], efficiency_mode: false, fake_export: fake_export, universal_export: universal_export, early_presence_check: early_presence_check, export_only_ids: export_only_ids)) }
+            return propz.inject(to_return){|tr, property_id| tr.deep_merge(Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id], efficiency_mode: false, fake_export: fake_export, universal_export: universal_export, early_presence_check: early_presence_check, exportable_ids: exportable_ids)) }
           elsif true_property_ids.length > 1
             if efficiency_mode
-              true_property_ids.each{|propid| Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id], efficiency_mode: true, fake_export: fake_export, universal_export: universal_export, early_presence_check: early_presence_check, export_only_ids: export_only_ids) }
+              true_property_ids.each{|propid| Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id], efficiency_mode: true, fake_export: fake_export, universal_export: universal_export, early_presence_check: early_presence_check, exportable_ids: exportable_ids) }
               return to_return # blank
             end
-            return true_property_ids.inject(to_return){|tr, property_id| tr.deep_merge(Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id], efficiency_mode: false, fake_export: fake_export, universal_export: universal_export, early_presence_check: early_presence_check, export_only_ids: export_only_ids)) }
+            return true_property_ids.inject(to_return){|tr, property_id| tr.deep_merge(Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id], efficiency_mode: false, fake_export: fake_export, universal_export: universal_export, early_presence_check: early_presence_check, exportable_ids: exportable_ids)) }
           elsif true_property_ids.length == 0
             return(to_return)
           end
@@ -390,11 +390,12 @@ module Integrations
                 id: PolicyInsurable.where(insurable: the_community.units).where.not(policy_id: nil).select(:policy_id),
                 policy_type_id: [::PolicyType::RESIDENTIAL_ID], #, ::PolicyType::MASTER_COVERAGE_ID],
                 status: ::Policy.active_statuses + ['CANCELLED']
-              ).send(*(export_only_ids.nil? ? [:itself] : [:where, { id: export_only_ids }]))
+              ).send(*(exportable_ids.nil? ? [:itself] : [:where, { id: exportable_ids }]))
             ).pluck(:id)
             policy_ids.each do |pol_id|
               policy = Policy.where(id: pol_id).references(:policy_insurables, :policy_users, :integration_profiles).includes(:policy_insurables, :policy_users, :integration_profiles).take
               policy_ip = policy.integration_profiles.find{|ip| ip.integration_id == integration.id }
+              next if policy.status == 'CANCELLED' && policy_ip&.configuration&.[]('cancelled') # we've already cancelled it on the remote server, nothing to do
               policy_imported = (policy_ip&.configuration&.[]('history') == 'imported_from_yardi')
               policy_exported = (policy_ip&.configuration&.[]('history') == 'exported_to_yardi' && policy_ip.configuration['present_last_check'] == true)
               policy_document_exported = (policy_ip&.configuration&.[]('exported_to_primary') ? true : false)
@@ -442,7 +443,8 @@ module Integrations
               lease = policy.latest_lease(user_matches: true)
               if lease.nil?
                 policy_ip.configuration ||= {}
-                policy_ip.configuration['export_problem'] = (policy.latest_lease(lease_status: 'expired', user_matches: true).nil? ? "No current lease with matching users" : "Lease expired")
+                expired_matcher = policy.latest_lease(lease_status: 'expired', user_matches: true)
+                policy_ip.configuration['export_problem'] = (expired_matcher.nil? ? "No current lease with matching users" : expired_matcher.defunct ? "Lease defunct" : "Lease expired")
                 policy_ip.save
                 next nil
               end
@@ -529,8 +531,15 @@ module Integrations
                   # WARNING: are these weirdos required? LATER ANSWER: apparently not.
                 }.compact
               }
-              if policy.status == 'CANCELLED' && policy.cancellation_date
-                #policy_hash[:PolicyDetails][:CancelDate] = policy.cancellation_date&.to_s
+              if policy.status == 'CANCELLED' && !policy.cancellation_date.nil?
+                cd = policy.cancellation_date || policy.status_changed_on
+                if !cd.nil?
+                  cd = policy.effective_date if cd < policy.effective_date
+                  cd = policy.expiration_date if cd > policy.expiration_date
+                  if cd <= Time.current.to_date
+                    policy_hash[:PolicyDetails][:CancelDate] = policy.cancellation_date.to_s
+                  end
+                end
               end
               # export the policy
               yardi_id ||= policy_ip&.configuration&.[]('policy_id')
@@ -562,15 +571,17 @@ module Integrations
                 else
                   event_sequence = []
                   policy_updated = (policy_exported || yardi_id) ? true : false
-                  result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: policy_updated)
+                  must_cancel = !policy_hash[:PolicyDetails]&.[](:CancelDate).blank?
+                  result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: policy_updated, cancel: must_cancel)
                   if result[:request].response&.body&.index("Policy already exists in database")
                     event_sequence.push(result[:event].id)
                     policy_updated = true
-                    result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: true)
+                    result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: true, cancel: must_cancel)
                   end
                   if result[:request].response&.body&.index("could not locate insurance policy based on policy number and tenant identifier")
                     event_sequence.push(result[:event].id)
                     policy_updated = false
+                    must_cancel = false # can't cancel on create...
                     result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: false)
                   end
                   if !result[:success]
@@ -584,7 +595,7 @@ module Integrations
                       external_id: Time.current.to_s + "_" + rand(100000000).to_s,
                       configuration: {
                         success: false,
-                        push_type: (policy_updated ? "change" : "create"),
+                        push_type: (must_cancel ? 'cancel' : policy_updated ? "change" : "create"),
                         property_id: property_id,
                         event: result[:event].id,
                         prior_events: event_sequence,
@@ -626,6 +637,7 @@ module Integrations
                       policy_ip.configuration['history'] = 'exported_to_yardi'
                       policy_ip.configuration['synced_at'] = Time.current.to_s
                       policy_ip.configuration['exported_hash'] = policy_hash
+                      policy_ip.configuration['cancelled'] = must_cancel
                       policy_ip.configuration.delete('export_problem')
                       policy_ip.save
                     end
@@ -636,7 +648,7 @@ module Integrations
                       external_id: Time.current.to_s + "_" + rand(100000000).to_s,
                       configuration: {
                         success: true,
-                        push_type: (policy_updated ? "change" : "create"),
+                        push_type: (must_cancel ? "cancel" : policy_updated ? "change" : "create"),
                         property_id: property_id,
                         event: result[:event].id,
                         prior_events: event_sequence,
