@@ -546,7 +546,7 @@ module Integrations
                   if cd <= Time.current.to_date
                     policy_hash[:PolicyDetails][:CancelDate] = policy.cancellation_date.to_s
                     policy_hash[:PolicyDetails] = policy_hash[:PolicyDetails].to_a.sort_by do |x|
-                      [:EffectveDate, :ExpirationDate, :IsRenew, :PolicyDetails, :LiabilityAmount].find_index(x[0])
+                      [:EffectiveDate, :ExpirationDate, :IsRenew, :CancelDate, :LiabilityAmount].find_index(x[0])
                     end.to_h
                   end
                 end
