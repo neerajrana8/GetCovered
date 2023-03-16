@@ -86,7 +86,9 @@ module PoliciesMethods
         # @policy.primary_insurable = selected_insurable
         # @policy.primary_insurable.save!
 
-        policy_insurable = @policy.policy_insurables.where(insurable_id: selected_insurable.id).take
+        policy_insurable = @policy.policy_insurables.where(insurable_id: selected_insurable.id).last
+        # Delete all except last for this policy
+        PolicyInsurable.where(insurable_id: selected_insurable, policy_id: @policy.id).where.not(id: policy_insurable.id).delete_all
         if policy_insurable
           policy_insurable.primary = true
           policy_insurable.save
