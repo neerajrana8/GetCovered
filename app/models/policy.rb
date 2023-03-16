@@ -624,7 +624,11 @@ class Policy < ApplicationRecord
     user_matches.map!{|um| um.to_sym }
     user_matches = [:all] + user_matches unless user_matches.include?(:all) || (user_matches - [:none]).blank?
     found = self.primary_insurable.leases.where(status: lease_status).order(start_date: :desc).sort_by{|l| lease_status.find_index(l.status) }.group_by do |lease|
-      lease_users = lease.send(current_only ? :active_lease_users : :lease_users).where({ lessee: (lessees_only || nil), allow_future: future_users }.compact)
+      lease_users = if current_only
+          lease.lease_users.send(*(lessees_only ? [:where, { lessee: true }] : [:itself]))
+        else
+          lease.active_lease_users(**({ lessee: (lessees_only || nil), allow_future: future_users }.compact))
+      end
       case lease_users.count{|lu| self.users.any?{|u| u.id == lu.user_id } }
         when self.users.count
           :all
@@ -639,7 +643,11 @@ class Policy < ApplicationRecord
         return(
           (prefer_more_users && [:any, :primary].include?(match_type)) ?
             found[match_type].sort_by do |lease|
-              lease_users = lease.send(current_only ? :active_lease_users : :lease_users).where({ lessee: (lessees_only || nil), allow_future: future_users }.compact)
+              lease_users = if current_only
+                  lease.lease_users.send(*(lessees_only ? [:where, { lessee: true }] : [:itself]))
+                else
+                  lease.active_lease_users(**({ lessee: (lessees_only || nil), allow_future: future_users }.compact))
+              end
               -lease_users.count{|lu| self.users.any?{|u| u.id == lu.user_id } }
             end.first
             : found[match_type].first
