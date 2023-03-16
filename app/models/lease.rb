@@ -92,7 +92,7 @@ class Lease < ApplicationRecord
     range === Time.current
   end
   
-  def active_lease_users(present_date = Time.current.to_date, lease_user_where: nil, lessee: [true, false], allow_future: false)
+  def active_lease_users(present_date = Time.current.to_date, lessee: [true, false], allow_future: false, lease_user_where: nil)
     if allow_future
       return(
         self.lease_users.where(moved_out_at: nil)
@@ -109,9 +109,8 @@ class Lease < ApplicationRecord
         .where(lessee: lessee) 
   end
   
-  def active_users(present_date = Time.current.to_date, lease_user_where: nil, user_where: nil, lessee: [true, false])
-    User.where(id: self.active_lease_users(present_date, lease_user_where: lease_user_where, lessee: lessee).select(:user_id))
-        .send(*(user_where ? [:where, user_where] : [:itself]))
+  def active_users(present_date = Time.current.to_date, user_where: nil, lessee: [true, false], allow_future: false, lease_user_where: nil)
+    User.where(id: self.active_lease_users(present_date, lessee: lessee, allow_future: allow_future, lease_user_where: lease_user_where).select(:user_id))
   end
   
   def current_lease_users(*linear, **keyword)
