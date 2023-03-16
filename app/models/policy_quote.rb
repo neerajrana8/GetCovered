@@ -362,6 +362,7 @@ class PolicyQuote < ApplicationRecord
             index += 1
             available_date = pppt.invoice_available_date_override || (index == 0 ? Time.current.to_date : pppt.first_moment.beginning_of_day - 1.day - self.available_period) # MOOSE WARNING: model must support .available_period
             due_date = pppt.invoice_due_date_override || (index == 0 ? Time.current.to_date + 1.day : pppt.first_moment.beginning_of_day - 1.day)
+            #TODO: Thats  also can create duplicate invoices emails by change status in callbacks - NEED TO CHECK
             created = ::Invoice.create(
               available_date: available_date,
               due_date: due_date,
