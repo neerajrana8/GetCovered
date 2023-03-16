@@ -545,9 +545,6 @@ module Integrations
                   cd = policy.expiration_date if cd > policy.expiration_date
                   if cd <= Time.current.to_date
                     policy_hash[:PolicyDetails][:CancelDate] = policy.cancellation_date.to_s
-                    policy_hash[:PolicyDetails] = policy_hash[:PolicyDetails].to_a.sort_by do |x|
-                      [:EffectiveDate, :ExpirationDate, :IsRenew, :CancelDate, :LiabilityAmount].find_index(x[0])
-                    end.to_h
                   end
                 end
               end
@@ -575,6 +572,10 @@ module Integrations
                 #end
                 # try to add id to hash
                 policy_hash[:PolicyDetails][:PolicyId] = yardi_id if yardi_id
+                # fix hash horder because Yardi is insane
+                policy_hash[:PolicyDetails] = policy_hash[:PolicyDetails].to_a.sort_by do |x|
+                  [:EffectiveDate, :ExpirationDate, :IsRenew, :CancelDate, :LiabilityAmount, :PolicyId].find_index(x[0])
+                end.to_h
                 # export attempt
                 if fake_export
                   policy_ip.save

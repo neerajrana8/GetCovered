@@ -490,7 +490,8 @@ module Integrations
           # group resident leases
           resident_datas = resident_data.group_by{|td| td["Status"] }
           future_tenants = (
-            (RESIDENT_STATUSES['future'] || []).map{|s| resident_datas[s] || [] }
+            (RESIDENT_STATUSES['future'] || []).map{|s| resident_datas[s] || [] } +
+            ((integration.id == 6 || integration.id == 14) ? (resident_datas['Applicant'] || []) : [])
           ).flatten
           present_tenants = (
             (RESIDENT_STATUSES['present'] || []).map{|s| resident_datas[s] || [] } +
@@ -498,6 +499,7 @@ module Integrations
           ).flatten
           past_tenants = (
             (RESIDENT_STATUSES['past'] || []).map{|s| resident_datas[s] || [] } +
+            ((integration.id == 6 || integration.id == 14) ? (resident_datas['Denied'] || []) : []) +
             (RESIDENT_STATUSES['nonfuture'] || []).map{|s| (resident_datas[s] || []).select{|td| !td['MoveOut'].blank? && (Date.parse(td['MoveOut']) rescue nil)&.<(Time.current.to_date) } }
           ).flatten
           # grab some variables we shall require in the execution of our noble purpose
@@ -552,11 +554,11 @@ module Integrations
                 ten = da_tenants.find{|t| t["Id"] == lu.integration_profiles.where(integration: integration).take&.external_id }
                 next if ten.nil? # can't happen but just in case
                 moved_in_at = (Date.parse(ten["MoveIn"]) rescue nil)
-                moved_out_at = (Date.parse(ten["MoveOut"]) rescue nil)
+                moved_out_at = (Date.parse(ten["MoveOut"]) rescue :broken)
                 primary = (tenant["Id"] == ten["Id"])
                 lessee = primary || (ten["Lessee"] == "Yes")
-                if (lu.moved_in_at != moved_in_at && !moved_in_at.blank?) || (lu.moved_out_at != moved_out_at && !moved_out_at.blank?) || (lu.primary != primary) || (lu.lessee != lessee)
-                  lu.update(moved_in_at: moved_in_at, moved_out_at: moved_out_at, primary: primary, lessee: lessee)
+                if (lu.moved_in_at != moved_in_at && !moved_in_at.blank?) || (lu.moved_out_at != moved_out_at && moved_out_at != :broken) || (lu.primary != primary) || (lu.lessee != lessee)
+                  lu.update({ moved_in_at: moved_in_at, moved_out_at: moved_out_at, primary: primary, lessee: lessee }.select{|k,v| v != :broken })
                 end
               end
               # handle ridiculous swaps
