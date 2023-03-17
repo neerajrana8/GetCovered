@@ -391,7 +391,7 @@ module Integrations
                 policy_type_id: [::PolicyType::RESIDENTIAL_ID], #, ::PolicyType::MASTER_COVERAGE_ID],
                 status: ::Policy.active_statuses + ['CANCELLED']
               ).send(*(exportable_ids.nil? ? [:itself] : [:where, { id: exportable_ids }]))
-            ).pluck(:id)
+            ).pluck(:id).uniq
             policy_ids.each do |pol_id|
               policy = Policy.where(id: pol_id).references(:policy_insurables, :policy_users, :integration_profiles).includes(:policy_insurables, :policy_users, :integration_profiles).take
               policy_ip = policy.integration_profiles.find{|ip| ip.integration_id == integration.id }
@@ -531,8 +531,9 @@ module Integrations
                   EffectiveDate: policy.effective_date.to_s,
                   ExpirationDate: policy.expiration_date&.to_s, # WARNING: should we do something else for MPCs?
                   IsRenew: false, # MOOSE WARNING: mark true when renewal... policy.auto_renew,
-                  LiabilityAmount: '%.2f' % (policy.get_liability.nil? ? nil : (policy.get_liability.to_d / 100.to_d)) #,
+                  LiabilityAmount: '%.2f' % (policy.get_liability.nil? ? nil : (policy.get_liability.to_d / 100.to_d)),
                   #Notes: "GC Verified" #, DISALBRD CAUSSES BROKEENNN
+                  hvendorpolicy: (policy.policy_in_system ? "1" : "0")#,
                   #IsRequiredForMoveIn: "false",
                   #IsPMInterestedParty: "true"
                   # WARNING: are these weirdos required? LATER ANSWER: apparently not.
