@@ -404,17 +404,19 @@ module Integrations
               )) # WARNING: ideally we would create the policy_hash and compare to the cached one instead of doing this... but for now this works
               next if !universal_export && (dunny_mcdonesters || (!policy_exported && !Policy.active_statuses.include?(policy.status)))
               # create the policy IP if needed
-              policy_ip ||= IntegrationProfile.create(
-                integration: integration,
-                profileable: policy,
-                external_context: "policy",
-                external_id: policy.number,
-                configuration: {
-                  'history' => 'not_exported',
-                  'synced_at' => (Time.current - 100.years).to_s,
-                  'exported_hash' => {}
-                }
-              )
+              if policy_ip.nil?
+                policy_ip = IntegrationProfile.create(
+                  integration: integration,
+                  profileable: policy,
+                  external_context: "policy",
+                  external_id: policy.number,
+                  configuration: {
+                    'history' => 'not_exported',
+                    'synced_at' => (Time.current - 100.years).to_s,
+                    'exported_hash' => {}
+                  }
+                )
+              end
               prior_configuration = policy_ip.configuration.dup
               export_setup = {
                 policy_exported: policy_exported,
@@ -575,7 +577,7 @@ module Integrations
                 policy_hash[:PolicyDetails][:PolicyId] = yardi_id if yardi_id
                 # fix hash horder because Yardi is insane
                 policy_hash[:PolicyDetails] = policy_hash[:PolicyDetails].to_a.sort_by do |x|
-                  [:EffectiveDate, :ExpirationDate, :IsRenew, :CancelDate, :LiabilityAmount, :PolicyId].find_index(x[0])
+                  [:EffectiveDate, :ExpirationDate, :IsRenew, :CancelDate, :LiabilityAmount, :Notes, :hvendorpolicy, :PolicyId].find_index(x[0])
                 end.to_h
                 # export attempt
                 if fake_export
