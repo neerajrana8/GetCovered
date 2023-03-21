@@ -133,7 +133,7 @@ module V2
         @policy                  = Policy.new(params)
         @policy.policy_in_system = false
         @policy.status           = 'EXTERNAL_UNVERIFIED' if params[:status].blank?
-        @policy.number = number.strip
+        @policy.number = @policy.number.strip
         add_error_master_types(@policy.policy_type_id)
         if @policy.errors.blank? && @policy.save
           result = ::Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes]&.values)
