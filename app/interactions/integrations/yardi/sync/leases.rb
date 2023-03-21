@@ -540,7 +540,7 @@ module Integrations
               lease.end_date = Date.parse(tenant["LeaseTo"]) unless tenant["LeaseTo"].blank?
               lease.defunct = false # just in case it was once missing from yardi and now is magically back, for example if it got moved to a different unit. likewise, update statuses in case someone defuncted and expired us previously because we jumped units
               lease.sign_date = Date.parse(tenant["LeaseSign"]) unless tenant["LeaseSign"].blank?
-              lease.month_to_month = (!tenant["LeaseTo"].blank? && ((Date.parse(tenant["LeaseTo"]) rescue nil) || Time.current.to_date) < Time.current.to_date && (RESIDENT_STATUSES['present'].include?(tenant['Status']) || RESIDENT_STATUSES['future'].include?(tenant['Status'])))
+              lease.month_to_month = ( lease.start_date && lease.end_date && lease.end_date < lease.start_date && (RESIDENT_STATUSES['present'].include?(tenant['Status']) || RESIDENT_STATUSES['future'].include?(tenant['Status'])) )
               lease.end_date = nil if lease.month_to_month
               lease.status = 'current' if (lease.month_to_month || lease.end_date.nil? || lease.end_date > Time.current.to_date) && RESIDENT_STATUSES['present'].include?(tenant["Status"])
               lease.status = 'pending' if (lease.month_to_month || lease.end_date.nil? || lease.end_date > Time.current.to_date) && RESIDENT_STATUSES['future'].include?(tenant["Status"]) || RESIDENT_STATUSES['potential'].include?(tenant["Status"])
