@@ -55,13 +55,28 @@ module Reporting
         integrations: { integratable_type: "Account", integratable_id: self.account_id, provider: 'yardi' }
       ).take&.external_id
       
-      self.policy =  #################################################################################################################################################################################
+      policies = lease.matching_policies(users: self.lease_user.user_id, policy_type_id: [::PolicyType::RESIDENTIAL_ID, ::PolicyType::MASTER_COVERAGE_ID]).order("expiration_date desc")
+      self.policy = policies.find{|p| p.policy_type_id == ::PolicyType::RESIDENTIAL_ID } || policies.find{|p| p.policy_type_id == ::PolicyType::MASTER_COVERAGE_ID }
+      self.policy_number = policy&.number
       
-      
-      
-      t.integer :coverage_status_exact, null: false
-      t.references :policy, null: true
-      t.string :policy_number, null: true
+      self.coverage_status_exact =
+        if self.policy.nil?
+          :none
+        elsif self.policy&.policy_type_id == ::MASTER_COVERAGE_ID
+          :master
+        else
+          if policies.any?{|p| p.policy_type_id == ::PolicyType::RESIDENTIAL_ID && p.policy_in_system }
+            if policies.any?{|p| p.policy_type_id == ::PolicyType::RESIDENTIAL_ID && !p.policy_in_system }
+              :internal_or_external
+            else
+              :internal
+            end
+          else 
+            :external
+          end
+        end
+      ;
+      # all done
       
     end
 
