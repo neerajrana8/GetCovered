@@ -71,6 +71,7 @@ module V2
             policies.each do |policy|
               active_policy_types[policy.policy_type_id] = policy
             end
+            Insurables::StatusUpdater.call(insurable)
           end
 
           active_policy_types.each do |policy_type, policy|
