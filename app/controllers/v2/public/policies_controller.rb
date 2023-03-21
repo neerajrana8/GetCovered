@@ -113,14 +113,18 @@ module V2
 
       def external_unverified_proof(params)
         @policy = Policy.find_by_number params[:number]
-        if !@policy.nil? && @policy.policy_in_system == false && self.external_policy_status_check(@policy)
-          if @policy.update(params)
-            @policy.policy_coverages.where.not(id: @policy.policy_coverages.order(id: :asc).last.id).each do |coverage|
-              coverage.destroy
+        if !@policy.nil? && @policy.policy_in_system == false
+          if self.external_policy_status_check(@policy)
+            if @policy.update(params)
+              @policy.policy_coverages.where.not(id: @policy.policy_coverages.order(id: :asc).last.id).each do |coverage|
+                coverage.destroy
+              end
+              render :show, status: :ok
+            else
+              render json: @policy.errors, status: 422
             end
-            render :show, status: :ok
           else
-            render json: @policy.errors, status: 422
+            render json: standard_error(:update_time_violation, '30 days update violation'), status: 401
           end
         end
       end
@@ -129,6 +133,7 @@ module V2
         @policy                  = Policy.new(params)
         @policy.policy_in_system = false
         @policy.status           = 'EXTERNAL_UNVERIFIED' if params[:status].blank?
+        @policy.number = number.strip
         add_error_master_types(@policy.policy_type_id)
         if @policy.errors.blank? && @policy.save
           result = ::Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes]&.values)
