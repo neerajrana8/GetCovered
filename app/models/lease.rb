@@ -206,7 +206,7 @@ class Lease < ApplicationRecord
     user_set ||= self.users
     user_set = [users] if users.class == ::User || users.class == ::Integer
     user_set = user_set.map{|u| u.class == ::Integer ? u : u.id }
-    self.insurable.policies.where(policy_type_id: policy_type_id, policy_status: policy_status, id: PolicyUser.where(user_id: user_set).select(:policy_id))
+    self.insurable.policies.where(policy_type_id: policy_type_id, status: policy_status, id: PolicyUser.where(user_id: user_set).select(:policy_id))
   end
 
   private
