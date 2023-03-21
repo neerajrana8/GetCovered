@@ -102,7 +102,7 @@ json.tenants do
 end
 
 
-json.master_policy_configurations @master_policy_configurations
+json.master_policy_configuration @master_policy_configuration
 # policy.primary_insurable&.parent_community&.master_policy_configurations
 json.coverage_requirements @coverage_requirements
 # policy.primary_insurable&.parent_community&.coverage_requirements_by_date

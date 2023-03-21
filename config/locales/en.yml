@@ -32,6 +32,8 @@
 en:
   hello: "Hello world"
   support_email: "support@getcoveredinsurance.com"
+  policy_verify_email: "policyverify@getcovered.io"
+  system_email: "systememails@getcovered.io"
   shared:
     hi_there: "Hi there %{name},"
     help_center: "Help center"
@@ -285,6 +287,8 @@ en:
     refund_was_not_successfully_sent: 'Refund was not successfully sent'
     you_cannot_add_coverage_with_master: 'You cannot add coverage with master policy type'
     unable_to_attach_payment: "Unable to attach payment source to user"
+  public_policies_controller:
+    title_already_exists_error: Provided out of system title has already been taken
   signable_documents_controller:
     signing_failed: 'An error occurred while trying to apply your signature; please try again later'
     document_not_found: 'Document not found'
@@ -422,6 +426,10 @@ en:
       cip_save_error: "Carrier error occurred"
       invalid_county_selection_error: "Invalid county selection"
       no_counties_available: "The carrier is unable to provide a county list for this address"
+  user_coverage_mailer:
+    policy_number: Policy Number
+    effective_date: Effective Date
+    expiration_date: Expiration Date
 
 # I18n.t('agency_model.no_branding')
 # I18n.t('policy_application_contr.new.unit_not_found')

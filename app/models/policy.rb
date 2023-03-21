@@ -447,6 +447,7 @@ class Policy < ApplicationRecord
   # Cancels a policy; returns nil if no errors, otherwise a string explaining the error
   def cancel(reason, last_active_moment = Time.current.to_date.end_of_day)
     last_active_moment = last_active_moment.end_of_day if last_active_moment.class == ::Date
+    reason = reason.to_s
     # Flee on invalid data
     return I18n.t('policy_model.cancellation_reason_invalid') unless self.class.cancellation_reasons.has_key?(reason)
     return I18n.t('policy_model.policy_is_already_cancelled') if self.status == 'CANCELLED'
@@ -616,26 +617,25 @@ class Policy < ApplicationRecord
     end
   end
 
-  def latest_lease(
-    lease_status: 'current',                      # string or array of lease statuses to restrict to
-    user_matches: [:all, :primary, :any, :none],  # array of user match types to accept, in order from most to least preferred
-    prefer_more_users: true,                      # if true & multiple equivalent results, returns the one with the most matching users rather than the latest start date
-    lessees_only: false,                          # true to only count lessees, not non-lessee residents, when counting matching users
-    current_only: false                          # true to disregard moved-out residents when counting matching users
-    # NOT YET IMPLEMENTED: fake_now: nil                                 # pass a date (or datetime) to pretend that's the current date (uses lease start_date and end_date to guess what lease_status values were & what residents were present at that time)
-  )
+  def latest_lease(lease_status: ['current', 'pending'], user_matches: [:all, :primary, :any, :none], prefer_more_users: true, lessees_only: false, current_only: false, future_users: true, fake_now: nil)
     return nil if self.primary_insurable.blank?
-    user_ids = self.users.pluck(:id)
+    lease_status = [lease_status] unless lease_status.class == ::Array
     user_matches = [:all, :primary, :any] if user_matches == true
-    found = self.primary_insurable.leases.where(status: lease_status).order(start_date: :desc).group_by do |lease|
-      lease_users = lease.send(current_only ? :active_lease_users : :lease_users).send(*(lessees_only ? [:where, { lessee: true }] : [:itself]))
-      case lease_users.count{|lu| user_ids.include?(lu.user_id) }
+    user_matches.map!{|um| um.to_sym }
+    user_matches = [:all] + user_matches unless user_matches.include?(:all) || (user_matches - [:none]).blank?
+    found = self.primary_insurable.leases.where(status: lease_status).order(start_date: :desc).sort_by{|l| lease_status.find_index(l.status) }.group_by do |lease|
+      lease_users = if current_only
+          lease.lease_users.send(*(lessees_only ? [:where, { lessee: true }] : [:itself]))
+        else
+          lease.active_lease_users(fake_now || Time.current.to_date, **({ lessee: (lessees_only || nil), allow_future: future_users }.compact))
+      end
+      case lease_users.count{|lu| self.users.any?{|u| u.id == lu.user_id } }
         when self.users.count
           :all
         when 0
           :none
         else
-          lease_users.any?{|lu| lu.user_id == self.primary_user.id } ? :primary : :any
+          lease_users.any?{|lu| lu.user_id == self.primary_user&.id } ? :primary : :any
       end
     end
     (user_matches.class == ::Array ? user_matches : [user_matches]).each do |match_type|
@@ -643,8 +643,12 @@ class Policy < ApplicationRecord
         return(
           (prefer_more_users && [:any, :primary].include?(match_type)) ?
             found[match_type].sort_by do |lease|
-              lease_users = lease.send(current_only ? :active_lease_users : :lease_users).send(*(lessees_only ? [:where, { lessee: true }] : [:itself]))
-              -lease_users.count{|lu| user_ids.include?(lu.user_id) }
+              lease_users = if current_only
+                  lease.lease_users.send(*(lessees_only ? [:where, { lessee: true }] : [:itself]))
+                else
+                  lease.active_lease_users(fake_now || Time.current.to_date, **({ lessee: (lessees_only || nil), allow_future: future_users }.compact))
+              end
+              -lease_users.count{|lu| self.users.any?{|u| u.id == lu.user_id } }
             end.first
             : found[match_type].first
         )
@@ -698,26 +702,26 @@ class Policy < ApplicationRecord
   end
 
   def notify_users
-    # ['EXTERNAL_UNVERIFIED', 'EXTERNAL_VERIFIED', 'EXTERNAL_REJECTED'].include?(self.status)
-    if self.previous_changes.has_key?('status') && ['EXTERNAL_VERIFIED', 'EXTERNAL_REJECTED'].include?(self.status)
-      unless self.integration_profiles.count > 0
+    # TODO: ADD GUARD STATEMENTS AND REMOVE NESTED CONDITIONS
+    if previous_changes.has_key?('status') && %w[EXTERNAL_UNVERIFIED EXTERNAL_VERIFIED EXTERNAL_REJECTED].include?(status)
+      unless integration_profiles.count.positive?
 
-        if self.account_id == 0 || self.agency_id == 0
+        if account_id == 0 || agency_id == 0
           reload() if inline_fix_external_policy_relationships
         end
 
         begin
-          Compliance::PolicyMailer.with(organization: self.account.nil? ? self.agency : self.account)
+          Compliance::PolicyMailer.with(organization: (account || agency))
                                   .external_policy_status_changed(policy: self)
-                                  .deliver_now() unless self.in_system?
+                                  .deliver_later(wait: 5.minutes) unless in_system?
         rescue Exception => e
           @error = ModelError.create!(
             kind: "external_policy_status_change_notification_error",
             model_type: "Policy",
-            model_id: self.id,
+            model_id: id,
             information: e.to_json,
             backtrace: e.backtrace.to_json,
-            description: "Unable to generate external Policy status change email for Policy ID: #{ self.id }<br><br>"
+            description: "Unable to generate external Policy status change email for Policy ID: #{ id }<br><br>"
           )
         end
       end

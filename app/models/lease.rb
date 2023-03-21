@@ -92,7 +92,17 @@ class Lease < ApplicationRecord
     range === Time.current
   end
   
-  def active_lease_users(present_date = Time.current.to_date, lease_user_where: nil, lessee: [true, false])
+  
+  def active_lease_users(present_date = Time.current.to_date, lessee: [true, false], allow_future: nil, lease_user_where: nil)
+    allow_future = (self.status == 'pending') if allow_future.nil?
+    if allow_future
+      return(
+        self.lease_users.where(moved_out_at: nil)
+          .or(self.lease_users.where(moved_out_at: (present_date...)))
+          .send(*(lease_user_where ? [:where, lease_user_where] : [:itself]))
+          .where(lessee: lessee) 
+      )
+    end
     self.lease_users.where(moved_out_at: nil, moved_in_at: nil)
         .or(self.lease_users.where(moved_out_at: nil).where("moved_in_at <= ?", present_date))
         .or(self.lease_users.where(moved_out_at: (present_date...), moved_in_at: nil))
@@ -101,9 +111,8 @@ class Lease < ApplicationRecord
         .where(lessee: lessee) 
   end
   
-  def active_users(present_date = Time.current.to_date, lease_user_where: nil, user_where: nil, lessee: [true, false])
-    User.where(id: self.active_lease_users(present_date, lease_user_where: lease_user_where, lessee: lessee).select(:user_id))
-        .send(*(user_where ? [:where, user_where] : [:itself]))
+  def active_users(present_date = Time.current.to_date, lessee: [true, false], allow_future: nil, lease_user_where: nil)
+    User.where(id: self.active_lease_users(present_date, lessee: lessee, allow_future: allow_future, lease_user_where: lease_user_where).select(:user_id))
   end
   
   def current_lease_users(*linear, **keyword)
@@ -192,6 +201,13 @@ class Lease < ApplicationRecord
   def primary_user
     lease_users.where(primary: true).take&.user
   end
+  
+  def matching_policies(users: nil, policy_type_id: 1, policy_status: Policy.active_statuses)
+    user_set ||= self.users
+    user_set = [users] if users.class == ::User || users.class == ::Integer
+    user_set = user_set.map{|u| u.class == ::Integer ? u : u.id }
+    self.insurable.policies.where(policy_type_id: policy_type_id, policy_status: policy_status, id: PolicyUser.where(user_id: user_set).select(:policy_id))
+  end
 
   private
 
@@ -205,7 +221,7 @@ class Lease < ApplicationRecord
   end
 
   def start_date_precedes_end_date
-    errors.add(:end_date, 'must come after start date') if start_date >= end_date
+    errors.add(:end_date, 'must come after start date') if !end_date.nil? && start_date >= end_date
   end
 
   def lease_type_insurable_type

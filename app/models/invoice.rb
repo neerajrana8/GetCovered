@@ -547,19 +547,26 @@ class Invoice < ApplicationRecord
     end
   
     # bring in line items
-    def mark_line_items_priced_in
+    def mark_line_items_priced_in(update_original_total_due: true)
+      # WARNING: assumes line items with priced_in==false have not had any payments or reductions, i.e. it assumes their total_due value suffices to uniquely specify their state
+      # WARNING: performs updates to mark line items priced in; expected to be called from a callback which will either roll it all back or save changes to the invoice too
       dat_total_tho = 0
       self.line_items.group_by{|li| li.id.nil? }.each do |unsaved, lis|
         if unsaved
-          lis.each{|li| li.priced_in = true; dat_total_tho += li.total_due }
+          lis.each do |li|
+            dat_total_tho += li.total_due unless li.priced_in
+            li.priced_in = true
+          end
         else
-          ::LineItem.where(id: lis.map{|li| li.id }).update_all(priced_in: true)
-          lis.each{|li| dat_total_tho += li.total_due }
+          ::LineItem.where(id: lis.map{|li| li.id }, priced_in: false).each do |li|
+            dat_total_tho += li.total_due
+            li.update!(priced_in: true)
+          end
         end
       end
-      self.original_total_due = dat_total_tho
-      self.total_due = dat_total_tho
-      self.total_payable = dat_total_tho
+      self.original_total_due += dat_total_tho if update_original_total_due
+      self.total_due += dat_total_tho
+      self.total_payable += dat_total_tho
     end
   
     # sets our current status based on various values

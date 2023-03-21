@@ -12,7 +12,7 @@
 #
 class NotificationSetting < ApplicationRecord
   USERS_NOTIFICATIONS = %w[upcoming_invoice update_credit_card rent_guarantee_warnings].freeze
-  STAFFS_NOTIFICATIONS = %w[purchase cancellation_request cancelled expired renewed daily_sales_report].freeze
+  STAFFS_NOTIFICATIONS = %w[purchase cancellation_request cancelled expired renewed daily_sales_report external_policy_emails_copy].freeze
   ACCOUNTS_NOTIFICATIONS = %w[daily_sales_report].freeze
   AGENCIES_NOTIFICATIONS = %w[daily_sales_report].freeze
 
