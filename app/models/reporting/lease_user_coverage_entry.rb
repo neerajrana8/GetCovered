@@ -6,7 +6,8 @@ module Reporting
     belongs_to :lease_user
     belongs_to :unit_coverage_entry,
       class_name: "Reporting::UnitCoverageEntry",
-      foreign_key: :unit_coverage_entry_id
+      foreign_key: :unit_coverage_entry_id,
+      inverse_of: :lease_user_coverage_entries
     belongs_to :account
     belongs_to :policy,
       optional: true
@@ -39,14 +40,12 @@ module Reporting
     end
 
     def prepare # only unit_coverage_entry and lease_user need to be provided
-      self.account_id = self.lease_user.lease.account_id
-      
       self.report_time = self.unit_coverage_entry.report_time
       lease = self.lease_user.lease
-      self.lease_yardi_id = self.lease.integration_profiles.references(:integrations).includes(:integration).where(
-        integrations: { integratable_type: "Account", integratable_id: self.account_id, provider: 'yardi' },
-        external_context: "lease"
-      ).take&.external_id
+      
+      self.account_id = self.lease_user.lease.account_id
+      self.lessee = self.lease_user.lessee
+      self.current = (lease.pending || self.lease_user.current?(self.report_time.to_date))
       
       self.first_name = self.lease_user.user&.profile&.first_name || "Unknown"
       self.last_name = self.lease_user.user&.profile&.last_name || "Unknown"

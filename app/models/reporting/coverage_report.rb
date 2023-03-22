@@ -183,6 +183,26 @@ module Reporting
         title: "Coverage",
         root_subreport: show_universe ? "Universe" : "PM Accounts",
         subreports: [
+          {
+            title: "Residents",
+            endpoint: "/v2/reportiong/coverage-reports/#{self.id}/lease-user-entries",
+            fixed_filters: {},
+            unique: ["id"],
+            columns: [
+              show_yardi ? { title: "Yardi Code", sortable: true, apiIndex: "yardi_id", filters: ['scalar', 'vector', 'like'] } : nil,
+              { title: "Email", sortable: true, apiIndex: "email", filters: ['scalar', 'vector', 'like'] },
+              { title: "First Name", sortable: true, apiIndex: "first_name", filters: ['scalar', 'vector', 'like'] },
+              { title: "Last Name", sortable: true, apiIndex: "last_name", filters: ['scalar', 'vector', 'like'] },
+              { title: "Lessee", sortable: true, apiIndex: "lessee", filters: ['scalar'], data_type: 'boolean' },
+              { title: "Current", sortable: true, apiIndex: "current", filters: ['scalar'], data_type: 'boolean' },
+              { title: "Coverage", sortable: true, apiIndex: "coverage_status_exact", data_type: "enum",
+                enum_values: visible_enum_values,
+                format: visible_enum_values.map{|vev| vev.titlecase },
+                filters: ['scalar', 'vector']
+              },
+              { title: "Policy", sortable: true, apiIndex: "policy_number" }
+            ].compact
+          },
           !show_insurables ? nil : {
             title: "Units",
             endpoint: "/v2/reporting/coverage-reports/#{self.id}/unit-entries",
@@ -274,6 +294,30 @@ module Reporting
           }
         ].compact,
         subreport_links: [
+          {
+            title: "Residents",
+            origin: "Units",
+            destination: "Residents",
+            fixed_filters: {
+              parent_id: "id"
+            },
+            copied_columns: [
+              "Address",
+              "Unit"
+            ]
+          },
+          {
+            title: "Residents",
+            origin: "Yardi Units",
+            destination: "Residents",
+            fixed_filters: {
+              parent_id: "id"
+            },
+            copied_columns: [
+              "Address",
+              "Unit"
+            ]
+          },
           {
             title: "Units",
             origin: "Communities",

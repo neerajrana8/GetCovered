@@ -62,7 +62,7 @@ module Reporting
       self.yardi_id ||= self.insurable.integration_profiles.where("external_context ILIKE '%unit_in_community_%'").take&.external_id
       self.lease_id ||= self.insurable.leases.current.order(start_date: :desc, created_at: :desc).first&.id
       self.lease_yardi_id ||= self.lease&.integration_profiles&.where(external_context: 'lease')&.take&.external_id
-      lessee_ids = self.lease.nil? ? [] : self.lease.lease_users.where(lessee: true, moved_out_at: nil).or(self.lease.lease_users.where(lessee: true, moved_out_at: (today + 1.day)...)).pluck(:user_id).uniq
+      lessee_ids = self.lease.nil? ? [] : self.lease.active_lease_users(lessee: true).pluck(:user_id).uniq
       self.lessee_count ||= lessee_ids.count
     end
 
@@ -72,63 +72,37 @@ module Reporting
     
     def generate(bang: false)
       today = self.report_time.to_date
-      # prepare for coverage_statuses
-      time_query = self.insurable.policies.where(expiration_date: nil).or(self.insurable.policies.where(expiration_date: (today + 1.day)...))
-      time_query = time_query.where(cancellation_date: nil).or(time_query.where(cancellation_date: (today + 1.day)...))
-      time_query = time_query.where("effective_date <= ?", today)
-      mpc = time_query.where(policy_type_id: ::PolicyType::MASTER_COVERAGES_IDS, status: "BOUND")
-      ho4 = time_query.where(policy_type_id: ::PolicyType::RESIDENTIAL_ID, status: ::Policy.active_statuses)
-      internal = []
-      external = []
-      ho4.each{|p| (p.in_system? ? internal : external).push(p) }
-      self.ho4_coverages = {
-        'ulu_lexicon' => self.lease&.lease_users&.map{|lu| [lu.user_id, lu.id] }, # so it's possible to reconstruct internal/external from LUs in case user mergers break the IDs
-        'internal' => PolicyUser.where(policy: internal).pluck(:user_id).uniq.sort.to_a, # already an array, but paranoia > efficiency
-        'external' => PolicyUser.where(policy: external).pluck(:user_id).uniq.sort.to_a,
-      }
-      self.ho4_coverages['none'] = lessee_ids - (self.ho4_coverages['internal'] | self.ho4_coverages['external'])
+      # get lease user entries ready
+      luces = []
+      lessee_luces = []
+      begin
+        self.lease.active_lease_users(today, allow_future: true).each do |alu|
+          luce = (LeaseUserCoverageEntry.where(unit_coverage_entry: self, lease_user: alu).take || LeaseUserCoverageEntry.create!(unit_coverage_entry: self, lease_user: alu))
+          if (self.lease.status == 'pending' || alu.is_current?(today))
+            luces.push(luce)
+          end
+        end
+      rescue ActiveRecord::RecordInvalid => e
+        raise
+      end
       # coverage_status_any
-      self.coverage_status_any = if ho4.blank? || self.lessee_count == 0
-          mpc.blank? ? 'none' : 'master'
-        elsif !internal.blank?
-          external.blank? ? 'internal' : 'internal_or_external'
-        else
-          'external'
-      end
-      # coverage_status_numeric
-      self.coverage_status_numeric = case ['internal', 'external'].map{|pss| self.lessee_count > 0 && ho4_coverages[pss].count >= self.lessee_count }
-        when [true, true]
-          'internal_or_external'
-        when [true, false]
-          'internal'
-        when [false, true]
-          'external'
-        when [false, false]
-          if self.lessee_count > 0 && (ho4_coverages['internal'] | ho4_coverages['external']).count >= self.lessee_count
-            'internal_and_external'
-          elsif !mpc.blank?
-            'master'
-          else
-            'none'
-          end
-      end
+      self.coverage_status_any = luces.sort_by{|luce| COVERAGE_STATUSES_ORDER.find_index(luce.coverage_status_exact) }.first&.coverage_status_exact || "none"
       # coverage_status_exact
-      self.coverage_status_exact = case ['internal', 'external'].map{|pss| self.lessee_count > 0 && (lessee_ids - ho4_coverages[pss]).count == 0 }
-        when [true, true]
+      self.coverage_status_exact = (
+        if lessee_luces.all?{|luce| luce.coverage_status_exact == 'internal_or_external' }
           'internal_or_external'
-        when [true, false]
+        elsif lessee_luces.all?{|luce| ['internal_or_external', 'internal'].include?(luce.coverage_status_exact) }
           'internal'
-        when [false, true]
+        elsif lessee_luces.all?{|luce| ['internal_or_external', 'external'].include?(luce.coverage_status_exact) }
           'external'
-        when [false, false]
-          if self.lessee_count > 0 && (lessee_ids - (ho4_coverages['internal'] | ho4_coverages['external'])).count == 0
-            'internal_and_external'
-          elsif !mpc.blank?
-            'master'
-          else
-            'none'
-          end
-      end
+        elsif lessee_luces.all?{|luce| ['internal_or_external', 'internal', 'external'].include?(luce.coverage_status_exact) }
+          'internal_and_external'
+        elsif lessee_luces.all?{|luce| ['master', 'internal_or_external', 'internal', 'external'].include?(luce.coverage_status_exact) }
+          'master'
+        else
+          'none'
+        end
+      )
     end # end generate()
 
 

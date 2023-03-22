@@ -63,20 +63,17 @@ class CreateCoverageReportSystem < ActiveRecord::Migration[6.1]
       t.string :yardi_id, null: true
       
       t.integer :coverage_status_exact # :none, :internal, :external, :master, :internal_and_external, :internal_or_external
-      t.integer :coverage_status_numeric # :none, :internal, :external, :master, :internal_and_external, :internal_or_external
       t.integer :coverage_status_any # :none, :internal, :external, :master, :internal_and_external, :internal_or_external
       
       t.references :lease, null: true
       t.integer :lessee_count, null: false, default: 0
       t.string :lease_yardi_id, null: true
-      t.jsonb :ho4_coverages, default: {}, null: false
       
       t.jsonb :error_info, null: true
       # no timestamps
     end
     add_index :reporting_unit_coverage_entries, [:report_time, :insurable_id], name: "index_ruce_on_rt_and_ii", unique: true
     add_index :reporting_unit_coverage_entries, [:report_time, :coverage_status_exact], name: "index_ruce_on_rt_and_cse", unique: false
-    add_index :reporting_unit_coverage_entries, [:report_time, :coverage_status_numeric], name: "index_ruce_on_rt_and_csn", unique: false
     add_index :reporting_unit_coverage_entries, [:report_time, :coverage_status_any], name: "index_ruce_on_rt_and_css", unique: false
     add_index :reporting_unit_coverage_entries, [:report_time, :lessee_count], name: "index_ruce_on_rt_and_lc", unique: false
     
@@ -86,6 +83,26 @@ class CreateCoverageReportSystem < ActiveRecord::Migration[6.1]
       t.boolean :direct, null: false, default: true
     end
     add_index :reporting_coverage_entry_links, [:parent_id, :child_id], name: "index_rcel_on_pi_and_ci", unique: true
+    
+    create_table :reporting_lease_user_coverage_entries do |t|
+      t.references :lease_user
+      t.datetime :report_time, null: false
+      
+      t.boolean :lessee, null: false
+      t.boolean :current, null: false
+      t.string :first_name, null: false
+      t.string :last_name, null: false
+      t.string :email, null: true
+      t.string :yardi_id, null: true
+      
+      t.references :policy, null: true
+      t.string :policy_number, null: true
+      
+      t.integer :coverage_status_exact, null: false
+      
+      t.references :unit_coverage_entry
+      t.references :account
+    end
     
   end
 end
