@@ -10,6 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
+
 ActiveRecord::Schema.define(version: 2023_03_13_202623) do
 
   # These are extensions that must be enabled in order to support this database
@@ -66,8 +67,12 @@ ActiveRecord::Schema.define(version: 2023_03_13_202623) do
     t.boolean "additional_interest", default: true
     t.integer "minimum_liability"
     t.string "additional_interest_name"
+    t.boolean "reporting_coverage_reports_generate", default: false, null: false
+    t.jsonb "reporting_coverage_reports_settings", default: {"coverage_determinant"=>"any"}, null: false
+    t.boolean "per_user_tracking", default: false
     t.index ["agency_id"], name: "index_accounts_on_agency_id"
     t.index ["call_sign"], name: "index_accounts_on_call_sign", unique: true
+    t.index ["reporting_coverage_reports_generate"], name: "index_accounts_on_rcrg"
     t.index ["staff_id"], name: "index_accounts_on_staff_id"
     t.index ["stripe_id"], name: "index_accounts_on_stripe_id", unique: true
   end
@@ -122,6 +127,7 @@ ActiveRecord::Schema.define(version: 2023_03_13_202623) do
     t.datetime "updated_at", null: false
     t.boolean "searchable", default: false
     t.string "neighborhood"
+    t.string "verified"
     t.index ["addressable_type", "addressable_id"], name: "index_addresses_on_addressable"
   end
 
@@ -146,6 +152,7 @@ ActiveRecord::Schema.define(version: 2023_03_13_202623) do
     t.string "integration_designation"
     t.string "producer_code"
     t.jsonb "carrier_preferences", default: {"by_policy_type"=>{}}, null: false
+    t.boolean "passthrough", default: false
     t.index ["agency_id"], name: "index_agencies_on_agency_id"
     t.index ["call_sign"], name: "index_agencies_on_call_sign", unique: true
     t.index ["integration_designation"], name: "index_agencies_on_integration_designation", unique: true
@@ -420,6 +427,13 @@ ActiveRecord::Schema.define(version: 2023_03_13_202623) do
     t.index ["url"], name: "index_branding_profiles_on_url", unique: true
   end
 
+  create_table "brands", id: :serial, force: :cascade do |t|
+  end
+
+  create_table "car", force: :cascade do |t|
+    t.string "title", null: false
+  end
+
   create_table "carrier_agencies", force: :cascade do |t|
     t.string "external_carrier_id"
     t.bigint "carrier_id"
@@ -584,6 +598,9 @@ ActiveRecord::Schema.define(version: 2023_03_13_202623) do
     t.datetime "updated_at", null: false
     t.integer "type_of_loss", default: 0, null: false
     t.text "staff_notes"
+    t.string "name"
+    t.string "address"
+    t.string "nature_of_claim"
     t.integer "amount"
     t.index ["claimant_type", "claimant_id"], name: "index_claims_on_claimant"
     t.index ["insurable_id"], name: "index_claims_on_insurable_id"
@@ -669,6 +686,22 @@ ActiveRecord::Schema.define(version: 2023_03_13_202623) do
     t.datetime "updated_at", precision: 6, null: false
     t.integer "account_id"
     t.index ["insurable_id"], name: "index_coverage_requirements_on_insurable_id"
+  end
+
+  create_table "daily_reports", force: :cascade do |t|
+    t.bigint "account_id"
+    t.json "report"
+    t.string "report_type"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.string "reportable_type", null: false
+    t.bigint "reportable_id", null: false
+    t.integer "resolution"
+    t.index ["account_id"], name: "index_daily_reports_on_account_id"
+    t.index ["reportable_type", "reportable_id"], name: "index_daily_reports_on_reportable"
+  end
+
+  create_table "data_migrations", primary_key: "version", id: :string, force: :cascade do |t|
   end
 
   create_table "disputes", force: :cascade do |t|
@@ -763,6 +796,14 @@ ActiveRecord::Schema.define(version: 2023_03_13_202623) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["agency_id"], name: "index_global_agency_permissions_on_agency_id"
+  end
+
+  create_table "global_permissions", force: :cascade do |t|
+    t.jsonb "permissions"
+    t.bigint "ownerable_id"
+    t.string "ownerable_type"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "histories", force: :cascade do |t|
@@ -964,7 +1005,9 @@ ActiveRecord::Schema.define(version: 2023_03_13_202623) do
     t.bigint "policy_type_id"
     t.bigint "agency_id"
     t.integer "branding_profile_id"
+    t.bigint "session_id"
     t.index ["agency_id"], name: "index_lead_events_on_agency_id"
+    t.index ["created_at"], name: "lead_events_created_at_idx"
     t.index ["lead_id"], name: "index_lead_events_on_lead_id"
     t.index ["policy_type_id"], name: "index_lead_events_on_policy_type_id"
   end
@@ -984,12 +1027,21 @@ ActiveRecord::Schema.define(version: 2023_03_13_202623) do
     t.boolean "archived", default: false
     t.integer "account_id"
     t.integer "branding_profile_id"
+    t.bigint "session_id"
     t.integer "lead_events_cx"
     t.json "lead_events_timeseries"
     t.integer "premium_total"
     t.datetime "premium_last_updated_at"
+    t.index ["archived", "last_visit", "status", "email"], name: "leads_archived_last_visit_status_email_idx"
+    t.index ["archived"], name: "leads_archived_idx"
     t.index ["email"], name: "index_leads_on_email"
+    t.index ["email"], name: "leads_email_idx", where: "(email IS NOT NULL)"
+    t.index ["email"], name: "leads_email_idx1", where: "(email IS NULL)"
     t.index ["identifier"], name: "index_leads_on_identifier", unique: true
+    t.index ["last_visit"], name: "leads_last_visit_idx"
+    t.index ["last_visit"], name: "leads_last_visit_idx1"
+    t.index ["last_visit"], name: "leads_last_visit_idx2", using: :brin
+    t.index ["status", "last_visit"], name: "leads_status_last_visit_idx"
     t.index ["tracking_url_id"], name: "index_leads_on_tracking_url_id"
     t.index ["user_id"], name: "index_leads_on_user_id"
   end
@@ -1164,7 +1216,6 @@ ActiveRecord::Schema.define(version: 2023_03_13_202623) do
     t.datetime "updated_at", precision: 6, null: false
     t.boolean "enabled", default: false
     t.string "integration_account_number"
-    t.boolean "lease_violation_only", default: true
     t.integer "admin_fee", default: 0
     t.integer "force_admin_fee"
     t.boolean "prorate_admin_fee", default: false
@@ -1303,6 +1354,7 @@ ActiveRecord::Schema.define(version: 2023_03_13_202623) do
     t.integer "document_status", default: 0
     t.boolean "force_placed"
     t.date "cancellation_date"
+    t.integer "master_policy_configuration_id"
     t.index ["account_id"], name: "index_policies_on_account_id"
     t.index ["agency_id"], name: "index_policies_on_agency_id"
     t.index ["carrier_id"], name: "index_policies_on_carrier_id"
@@ -1676,7 +1728,6 @@ ActiveRecord::Schema.define(version: 2023_03_13_202623) do
     t.jsonb "carrier_payment_data"
     t.index ["account_id"], name: "index_policy_quotes_on_account_id"
     t.index ["agency_id"], name: "index_policy_quotes_on_agency_id"
-    t.index ["external_id"], name: "index_policy_quotes_on_external_id", unique: true
     t.index ["policy_application_id"], name: "index_policy_quotes_on_policy_application_id"
     t.index ["policy_group_quote_id"], name: "index_policy_quotes_on_policy_group_quote_id"
     t.index ["policy_id"], name: "index_policy_quotes_on_policy_id"
@@ -1719,6 +1770,7 @@ ActiveRecord::Schema.define(version: 2023_03_13_202623) do
     t.datetime "disputed_at"
     t.integer "dispute_status", default: 0
     t.text "dispute_reason"
+    t.bigint "insured_address_id"
     t.index ["policy_application_id"], name: "index_policy_users_on_policy_application_id"
     t.index ["policy_id"], name: "index_policy_users_on_policy_id"
     t.index ["user_id"], name: "index_policy_users_on_user_id"
@@ -1755,6 +1807,121 @@ ActiveRecord::Schema.define(version: 2023_03_13_202623) do
     t.datetime "updated_at", null: false
     t.bigint "invoice_id"
     t.index ["invoice_id"], name: "index_refunds_on_invoice_id"
+  end
+
+  create_table "reporting_coverage_entries", force: :cascade do |t|
+    t.string "reportable_category"
+    t.string "reportable_title"
+    t.string "reportable_description"
+    t.integer "status", default: 0, null: false
+    t.integer "total_units", default: 0, null: false
+    t.integer "total_units_unoccupied", default: 0, null: false
+    t.integer "total_units_with_master_policy", default: 0, null: false
+    t.integer "total_units_with_ho4_policy", default: 0, null: false
+    t.integer "total_units_with_internal_policy", default: 0, null: false
+    t.integer "total_units_with_external_policy", default: 0, null: false
+    t.integer "total_units_with_no_policy", default: 0, null: false
+    t.decimal "percent_units_unoccupied", precision: 5, scale: 2, default: "0.0", null: false
+    t.decimal "percent_units_with_master_policy", precision: 5, scale: 2, default: "0.0", null: false
+    t.decimal "percent_units_with_ho4_policy", precision: 5, scale: 2, default: "0.0", null: false
+    t.decimal "percent_units_with_internal_policy", precision: 5, scale: 2, default: "0.0", null: false
+    t.decimal "percent_units_with_external_policy", precision: 5, scale: 2, default: "0.0", null: false
+    t.decimal "percent_units_with_no_policy", precision: 5, scale: 2, default: "0.0", null: false
+    t.bigint "coverage_report_id"
+    t.string "reportable_type"
+    t.bigint "reportable_id"
+    t.bigint "parent_id"
+    t.jsonb "error_data"
+    t.index ["coverage_report_id", "reportable_category", "parent_id", "reportable_type", "reportable_id"], name: "index_rce_on_cri_rc_pi_rt_ri", unique: true
+    t.index ["coverage_report_id"], name: "index_reporting_coverage_entries_on_coverage_report_id"
+    t.index ["reportable_type", "reportable_id"], name: "index_reporting_coverage_entries_on_reportable"
+  end
+
+  create_table "reporting_coverage_entry_links", force: :cascade do |t|
+    t.bigint "parent_id"
+    t.bigint "child_id"
+    t.boolean "direct", default: true, null: false
+    t.index ["child_id"], name: "index_reporting_coverage_entry_links_on_child_id"
+    t.index ["parent_id", "child_id"], name: "index_rcel_on_pi_and_ci", unique: true
+    t.index ["parent_id"], name: "index_reporting_coverage_entry_links_on_parent_id"
+  end
+
+  create_table "reporting_coverage_reports", force: :cascade do |t|
+    t.integer "status", default: 0, null: false
+    t.integer "coverage_determinant", null: false
+    t.datetime "report_time"
+    t.datetime "completed_at"
+    t.boolean "visible", default: true, null: false
+    t.jsonb "special", default: {}, null: false
+    t.jsonb "error_data"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.string "owner_type"
+    t.bigint "owner_id"
+    t.index ["owner_type", "owner_id", "status", "report_time"], name: "index_rcr_on_o_and_rt"
+  end
+
+  create_table "reporting_policy_entries", force: :cascade do |t|
+    t.string "account_title"
+    t.string "number"
+    t.string "yardi_property"
+    t.string "community_title"
+    t.string "yardi_unit"
+    t.string "unit_title"
+    t.string "street_address"
+    t.string "city"
+    t.string "state"
+    t.string "zip"
+    t.string "carrier_title"
+    t.string "yardi_lease"
+    t.string "lease_status"
+    t.date "effective_date"
+    t.date "expiration_date"
+    t.bigint "account_id"
+    t.bigint "policy_id"
+    t.bigint "lease_id"
+    t.bigint "community_id"
+    t.bigint "unit_id"
+    t.string "primary_policyholder_first_name"
+    t.string "primary_policyholder_last_name"
+    t.string "primary_policyholder_email"
+    t.string "primary_lessee_first_name"
+    t.string "primary_lessee_last_name"
+    t.string "primary_lessee_email"
+    t.string "any_lessee_email"
+    t.boolean "expires_before_lease"
+    t.boolean "applies_to_lessee"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["account_id", "community_title", "expiration_date"], name: "index_rpe_on_ai_and_ct_and_ed"
+    t.index ["account_id", "expiration_date"], name: "index_rpe_on_ai_and_ed"
+    t.index ["community_id"], name: "index_reporting_policy_entries_on_community_id"
+    t.index ["lease_id"], name: "index_reporting_policy_entries_on_lease_id"
+    t.index ["policy_id"], name: "index_reporting_policy_entries_on_policy_id"
+    t.index ["unit_id"], name: "index_reporting_policy_entries_on_unit_id"
+  end
+
+  create_table "reporting_unit_coverage_entries", force: :cascade do |t|
+    t.bigint "insurable_id"
+    t.datetime "report_time", null: false
+    t.string "street_address", null: false
+    t.string "unit_number"
+    t.string "yardi_id"
+    t.integer "coverage_status_exact"
+    t.integer "coverage_status_numeric"
+    t.integer "coverage_status_any"
+    t.bigint "lease_id"
+    t.integer "lessee_count", default: 0, null: false
+    t.string "lease_yardi_id"
+    t.jsonb "ho4_coverages", default: {}, null: false
+    t.jsonb "error_info"
+    t.index ["insurable_id"], name: "index_reporting_unit_coverage_entries_on_insurable_id"
+    t.index ["lease_id"], name: "index_reporting_unit_coverage_entries_on_lease_id"
+    t.index ["report_time", "coverage_status_any"], name: "index_ruce_on_rt_and_css"
+    t.index ["report_time", "coverage_status_exact"], name: "index_ruce_on_rt_and_cse"
+    t.index ["report_time", "coverage_status_numeric"], name: "index_ruce_on_rt_and_csn"
+    t.index ["report_time", "insurable_id"], name: "index_ruce_on_rt_and_ii", unique: true
+    t.index ["report_time", "lessee_count"], name: "index_ruce_on_rt_and_lc"
   end
 
   create_table "reports", force: :cascade do |t|
@@ -1817,6 +1984,20 @@ ActiveRecord::Schema.define(version: 2023_03_13_202623) do
     t.datetime "updated_at", null: false
     t.index ["global_agency_permission_id"], name: "index_staff_permissions_on_global_agency_permission_id"
     t.index ["staff_id"], name: "index_staff_permissions_on_staff_id"
+  end
+
+  create_table "staff_roles", force: :cascade do |t|
+    t.integer "role", default: 0
+    t.boolean "primary", default: false
+    t.bigint "staff_id", null: false
+    t.string "organizable_type"
+    t.bigint "organizable_id"
+    t.boolean "active", default: false
+    t.boolean "enabled", default: true
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["organizable_type", "organizable_id"], name: "index_staff_roles_on_organizable_type_and_organizable_id"
+    t.index ["staff_id"], name: "index_staff_roles_on_staff_id"
   end
 
   create_table "staffs", force: :cascade do |t|
@@ -1974,6 +2155,7 @@ ActiveRecord::Schema.define(version: 2023_03_13_202623) do
     t.boolean "has_current_leases", default: false
     t.boolean "has_leases", default: false
     t.string "altuid"
+    t.bigint "insured_address_id"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["invitation_token"], name: "index_users_on_invitation_token", unique: true
@@ -1991,4 +2173,5 @@ ActiveRecord::Schema.define(version: 2023_03_13_202623) do
   add_foreign_key "policy_coverages", "policies"
   add_foreign_key "policy_coverages", "policy_applications"
   add_foreign_key "policy_types", "policy_types", column: "master_policy_id"
+  add_foreign_key "staff_roles", "staffs"
 end
