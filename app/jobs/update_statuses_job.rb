@@ -62,6 +62,7 @@ class UpdateStatusesJob < ApplicationJob
       end
 
     end
+    Rails.cache.clear
     puts stats_as_table
   end
 end
