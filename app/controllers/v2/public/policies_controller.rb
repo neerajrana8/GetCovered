@@ -119,10 +119,19 @@ module V2
               @policy.policy_coverages.where.not(id: @policy.policy_coverages.order(id: :asc).last.id).each do |coverage|
                 coverage.destroy
               end
+
+              #TODO: temp test need to remove according to GCVR2-1197
+              if Rails.env.development? or ENV['RAILS_ENV'] == 'awsdev'
+                PolicyMailer.with(policy: @policy).coverage_proof_uploaded.deliver_now
+              else
+                PolicyMailer.with(policy: @policy).coverage_proof_uploaded.deliver_later
+              end
+
               render :show, status: :ok
             else
               render json: @policy.errors, status: 422
             end
+
           else
             render json: standard_error(:update_time_violation, '30 days update violation'), status: 401
           end
@@ -133,6 +142,7 @@ module V2
         @policy                  = Policy.new(params)
         @policy.policy_in_system = false
         @policy.status           = 'EXTERNAL_UNVERIFIED' if params[:status].blank?
+        @policy.number = @policy.number.strip
         add_error_master_types(@policy.policy_type_id)
         if @policy.errors.blank? && @policy.save
           result = ::Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes]&.values)
