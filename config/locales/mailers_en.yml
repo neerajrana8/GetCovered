@@ -161,15 +161,6 @@ en:
   invoice_mailer:
     invoice_complete:
       subject: "%{product_type} Invoice Paid"
-      body: "Hello %{recipient_name},\n
-             Thank you for selecting a %{product_type} from %{agency_title}.\n
-             Your account invoice for %{product_type} %{product_identifier} in the amount of $%{invoice_total} was successfully paid on %{invoice_date}.\n
-             To review your policy information, please visit the following link:\n
-                %{url}\n
-             If you have any questions, please contact us at %{support_email}.\n
-             Thank you,\n
-             The Get Covered Team\n
-             %{support_email}"
     invoice_missed:
       subject: "%{product_type} Invoice Missed"
       body: "Hello %{recipient_name},\n
@@ -199,6 +190,11 @@ en:
       thank_you_for_registering: "Thank you for purchasing a renters insurance policy with Get Covered!"
       please_click: "Please click below to finish activating your account."
       the_gc_portal_will_allow: "The Get Covered portal will allow you to access your policy documents, update your personal information and review your billing details."
-
-
-
+  policy_mailer:
+    policy_expiring_soon:
+      subject: "Your insurance will expire soon!"
+      content: "Hello, %{first_name}!\n
+                  Your insurance policy on file with us is set to expire on %{policy_expiration_date}.\n
+                  Please submit your new insurance policy or renewal documents before the expiration date.Thank you!"
+    enrolled_in_master:
+      subject: "Default Policy Enrollment"

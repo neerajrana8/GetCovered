@@ -7,7 +7,10 @@ module Integrations
         array :property_ids, default: nil
         date :from_date, default: nil
         boolean :efficiency_mode, default: false    
-        boolean :fake_export, default: false        # if true, does everything normally but aborts before actually pushing policies
+        boolean :fake_export, default: false               # if true, does everything normally but aborts before actually pushing policies
+        boolean :universal_export, default: false          # if true, forcibly attempts to sync even policies that do not appear to have changed or to have anything unsunc
+        boolean :early_presence_check, default: true       # if true, checks for policy presence before even deciding whether it should be exported in the first place
+        array :export_only_ids, default: nil               # if non-nil, restricts the export to only the supplied policies (won't export them if they wouldn't have exported anyway, though)
         
         def export_policy_document(property_id:, policy:, resident_id:, policy_ip: policy.integration_profiles.to_a.find{|pip| pip.integration_id == integration.id }.take)
           return "Document push not enabled" unless integration.configuration.dig('sync', 'policy_push', 'push_document')
@@ -19,6 +22,7 @@ module Integrations
           policy_document = policy.documents.last # MOOSE WARNING: change to something more reliable once we have a system for labelling documents properly
           attachment_result = nil
           result2 = nil
+          policy_ip.configuration['content_type'] = policy_document.content_type
           case policy_document.content_type
             when 'application/pdf'
               result2 = Integrations::Yardi::ResidentData::ImportTenantLeaseDocumentPDF.run!(
@@ -55,6 +59,24 @@ module Integrations
             unless policy_ip.save
               problem = "Had a problem saving policy IP changes: #{policy_ip.errors.to_h}"
             end
+            IntegrationProfile.create(
+              integration: integration,
+              profileable: policy_ip,
+              external_context: "policy_document_push_log",
+              external_id: Time.current.to_s,
+              configuration: {
+                success: true,
+                property_id: property_id,
+                resident_id: resident_id,
+                attachment_type: integration.configuration['sync']['policy_push']['attachment_type'],
+                description: "(GC) Policy ##{policy.number}",
+                file_extension: policy_document.content_type.split("/").last,
+                filename: (attachment_result.split(':')[1] rescue nil),
+                event: result2[:event]&.id,
+                attachment_result: attachment_result,
+                problem: problem
+              }
+            )
           else
             problem = "Yardi responded to our upload request in a way that could not be understood."
             policy_ip.configuration['exported_to_primary'] = false
@@ -62,6 +84,24 @@ module Integrations
             #policy_ip.configuration['exported_to_primary_freak_response'] = result2[:parsed_response]
             policy_ip.configuration['exported_documents_to'][resident_id] = { success: false, event_id: result2[:event]&.id }
             policy_ip.save
+            IntegrationProfile.create(
+              integration: integration,
+              profileable: policy_ip,
+              external_context: "policy_document_push_log",
+              external_id: Time.current.to_s,
+              configuration: {
+                success: false,
+                property_id: property_id,
+                resident_id: resident_id,
+                attachment_type: integration.configuration['sync']['policy_push']['attachment_type'],
+                description: "(GC) Policy ##{policy.number}",
+                file_extension: policy_document.content_type.split("/").last,
+                filename: nil,
+                event: result2[:event]&.id,
+                attachment_result: attachment_result,
+                problem: problem
+              }
+            )
           end
           return problem
         end
@@ -91,16 +131,16 @@ module Integrations
             propz = propz&.map{|comm| comm["Code"] }
             return(to_return) if propz.blank?
             if efficency_mode
-              propz.each{|propid| Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [propid], efficiency_mode: true) }
+              propz.each{|propid| Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [propid], efficiency_mode: true, fake_export: fake_export, universal_export: universal_export, early_presence_check: early_presence_check, export_only_ids: export_only_ids) }
               return to_return # blank
             end
-            return propz.inject(to_return){|tr, property_id| tr.deep_merge(Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id])) }
+            return propz.inject(to_return){|tr, property_id| tr.deep_merge(Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id], efficiency_mode: false, fake_export: fake_export, universal_export: universal_export, early_presence_check: early_presence_check, export_only_ids: export_only_ids)) }
           elsif true_property_ids.length > 1
             if efficiency_mode
-              true_property_ids.each{|propid| Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id]) }
+              true_property_ids.each{|propid| Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id], efficiency_mode: true, fake_export: fake_export, universal_export: universal_export, early_presence_check: early_presence_check, export_only_ids: export_only_ids) }
               return to_return # blank
             end
-            return true_property_ids.inject(to_return){|tr, property_id| tr.deep_merge(Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id])) }
+            return true_property_ids.inject(to_return){|tr, property_id| tr.deep_merge(Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id], efficiency_mode: false, fake_export: fake_export, universal_export: universal_export, early_presence_check: early_presence_check, export_only_ids: export_only_ids)) }
           elsif true_property_ids.length == 0
             return(to_return)
           end
@@ -345,21 +385,23 @@ module Integrations
           ##############################################################
           if integration.configuration['sync']['push_policies']
             # get data on internal policies that haven't yet been exported
-            policy_ids = Policy.where(
-              id: PolicyInsurable.where(insurable: the_community.units).where.not(policy_id: nil).select(:policy_id),
-              policy_type_id: [::PolicyType::RESIDENTIAL_ID], #, ::PolicyType::MASTER_COVERAGE_ID],
-              status: ::Policy.active_statuses + ['CANCELLED']
+            policy_ids = (
+              Policy.where(
+                id: PolicyInsurable.where(insurable: the_community.units).where.not(policy_id: nil).select(:policy_id),
+                policy_type_id: [::PolicyType::RESIDENTIAL_ID], #, ::PolicyType::MASTER_COVERAGE_ID],
+                status: ::Policy.active_statuses + ['CANCELLED']
+              ).send(*(export_only_ids.nil? ? [:itself] : [:where, { id: export_only_ids }]))
             ).pluck(:id)
             policy_ids.each do |pol_id|
               policy = Policy.where(id: pol_id).references(:policy_insurables, :policy_users, :integration_profiles).includes(:policy_insurables, :policy_users, :integration_profiles).take
               policy_ip = policy.integration_profiles.find{|ip| ip.integration_id == integration.id }
               policy_imported = (policy_ip&.configuration&.[]('history') == 'imported_from_yardi')
-              policy_exported = (policy_ip&.configuration&.[]('history') == 'exported_to_yardi')
+              policy_exported = (policy_ip&.configuration&.[]('history') == 'exported_to_yardi' && policy_ip.configuration['present_last_check'] == true)
               policy_document_exported = (policy_ip&.configuration&.[]('exported_to_primary') ? true : false)
               dunny_mcdonesters = policy_imported || (policy_exported && policy_document_exported && (
                 (DateTime.parse(policy_ip.configuration['synced_at']) >= ([policy.updated_at] + policy.policy_users.map(&:updated_at) + policy.policy_coverages.map(&:updated_at)).max) rescue false
               )) # WARNING: ideally we would create the policy_hash and compare to the cached one instead of doing this... but for now this works
-              next if dunny_mcdonesters || (!policy_exported && !Policy.active_statuses.include?(policy.status))
+              next if !universal_export && (dunny_mcdonesters || (!policy_exported && !Policy.active_statuses.include?(policy.status)))
               # create the policy IP if needed
               policy_ip ||= IntegrationProfile.create(
                 integration: integration,
@@ -372,11 +414,35 @@ module Integrations
                   'exported_hash' => {}
                 }
               )
+              prior_configuration = policy_ip.configuration.dup
+              export_setup = {
+                policy_exported: policy_exported,
+                policy_document_exported: policy_document_exported,
+                dunny_mcdonesters: dunny_mcdonesters
+              }
+              # early presence check
+              yardi_id = nil
+              if early_presence_check
+                property_id = policy.primary_insurable&.integration_profiles&.where(integration: integration)&.where("external_context ILIKE 'unit_in_community_%'")&.take&.external_context&.[](18...)
+                retrieved = (Integrations::Yardi::RentersInsurance::GetInsurancePolicies.run!(integration: integration, property_id: property_id, policy_number: policy.number)[:parsed_response]
+                                                                                       &.dig("Envelope", "Body", "GetInsurancePoliciesResponse", "GetInsurancePoliciesResult", "RenterInsurance", "InsurancePolicy") rescue nil)
+                if retrieved.nil?
+                  policy_ip.configuration['present_last_check'] = false
+                  policy_ip.configuration.delete('policy_id')
+                else
+                  policy_ip.configuration['present_last_check'] = true
+                  policy_ip.configuration['history'] = 'exported_to_yardi'
+                  retrieved = retrieved.first if retrieved.class == ::Array
+                  yardi_id = retrieved&.[]("PolicyDetails")&.[]("PolicyId")
+                  policy_ip.configuration['policy_id'] = yardi_id
+                end
+                policy_ip.save
+              end
               # grab lease stuff
               lease = policy.latest_lease(user_matches: true)
               if lease.nil?
                 policy_ip.configuration ||= {}
-                policy_ip.configuration['export_problem'] = "No current lease with matching users"
+                policy_ip.configuration['export_problem'] = (policy.latest_lease(lease_status: 'expired', user_matches: true).nil? ? "No current lease with matching users" : "Lease expired")
                 policy_ip.save
                 next nil
               end
@@ -417,24 +483,24 @@ module Integrations
                 next nil
               end
               policy_priu = users_to_export.find{|u| u[:policy_user].primary }
-              lease_priu = users_to_export.find{|u| !u[:external_id].downcase.start_with?("r") }
-              if policy_priu.blank? # MOOSE WARNING: we are rejecting policies whose primary user is not on the lease...
+              lease_priu = users_to_export.find{|u| u[:lease_user].primary }
+              # set up export stuff
+              priu = integration.configuration['sync']['policy_push']['force_primary_lessee'] ? lease_priu : policy_priu
+              if priu.nil?
                 policy_ip.configuration ||= {}
-                policy_ip.configuration['export_problem'] = "Primary policyholder not on lease"
+                policy_ip.configuration['export_problem'] = (integration.configuration['sync']['policy_push']['force_primary_lessee'] ?
+                  "Primary lessee not on policy"
+                  : "Primary policyholder not on lease"
+                )
                 policy_ip.save
                 next nil
               end
-              # set up export stuff
-              priu = integration.configuration['sync']['policy_push']['force_primary_lessee'] ? lease_priu : policy_priu
-              if !priu[:lease_user].primary
-                if integration.configuration['sync']['policy_push']['push_roommate_policies'] == false
-                  policy_ip.configuration ||= {}
-                  policy_ip.configuration['export_problem'] = "Roommate policy push disabled"
-                  policy_ip.save
-                  next nil
-                end
+              if integration.configuration['sync']['policy_push']['push_roommate_policies'] == false && !priu[:lease_user].primary
+                policy_ip.configuration ||= {}
+                policy_ip.configuration['export_problem'] = "Roommate policy push disabled"
+                policy_ip.save
+                next nil
               end
-              # export the policy
               roommate_index = 0
               policy_hash = {
                 Customer: {
@@ -464,69 +530,127 @@ module Integrations
               if policy.status == 'CANCELLED' && policy.cancellation_date
                 #policy_hash[:PolicyDetails][:CancelDate] = policy.cancellation_date&.to_s
               end
-              # export
-              next nil if fake_export # lets us pull back at the last minute if we're just trying to gather data on failures etc.
-              yardi_id = policy_ip&.configuration&.[]('policy_id')
-              if !policy_exported || policy_hash != policy_ip&.configuration&.[]('exported_hash')
+              # export the policy
+              yardi_id ||= policy_ip&.configuration&.[]('policy_id')
+              if !policy_exported || policy_hash != policy_ip&.configuration&.[]('exported_hash') || fake_export || universal_export
                 # try to grab id if necessary
                 #if yardi_id.blank? ALWAYS try to grab it for now, because if it's wrong the dang thing just proceeds to create a new one
+                unless early_presence_check
                   property_id = policy.primary_insurable&.integration_profiles&.where(integration: integration)&.where("external_context ILIKE 'unit_in_community_%'")&.take&.external_context&.[](18...)
                   retrieved = (Integrations::Yardi::RentersInsurance::GetInsurancePolicies.run!(integration: integration, property_id: property_id, policy_number: policy.number)[:parsed_response]
                                                                                          &.dig("Envelope", "Body", "GetInsurancePoliciesResponse", "GetInsurancePoliciesResult", "RenterInsurance", "InsurancePolicy") rescue nil)
-                  unless retrieved.nil?
+
+                  if retrieved.nil?
+                    policy_ip.configuration['present_last_check'] = false
+                    policy_ip.configuration.delete('policy_id')
+                  else
+                    policy_ip.configuration['history'] = 'exported_to_yardi'
+                    policy_ip.configuration['present_last_check'] = true
                     retrieved = retrieved.first if retrieved.class == ::Array
                     yardi_id = retrieved&.[]("PolicyDetails")&.[]("PolicyId")
+                    policy_ip.configuration['policy_id'] = yardi_id
                   end
+                end
                 #end
                 # try to add id to hash
                 policy_hash[:PolicyDetails][:PolicyId] = yardi_id if yardi_id
                 # export attempt
-                policy_updated = nil
-                result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: (policy_exported || yardi_id) ? true : false)
-                if result[:request].response&.body&.index("Policy already exists in database")
-                  policy_updated = true
-                  result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: true)
-                end
-                if result[:request].response&.body&.index("could not locate insurance policy based on policy number and tenant identifier")
-                  result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: false)
-                end
-                if !result[:success]
-                  to_return[:policy_export_errors][policy.number] = "Failed to export policy due to error response from Yardi's API (Event id #{result[:event]&.id})."
-                  next
+                if fake_export
+                  policy_ip.save
                 else
-                  respy_fella = (result[:request].response.body.split(":") rescue [])
-                  received_yardi_id_preindex = respy_fella.find_index{|x| x == "Policy Id" }
-                  if !received_yardi_id_preindex.nil?
-                    yardi_id = respy_fella[received_yardi_id_preindex + 1]
+                  event_sequence = []
+                  policy_updated = (policy_exported || yardi_id) ? true : false
+                  result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: policy_updated)
+                  if result[:request].response&.body&.index("Policy already exists in database")
+                    event_sequence.push(result[:event].id)
+                    policy_updated = true
+                    result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: true)
                   end
-                  if policy_ip.nil?
-                    policy_ip = IntegrationProfile.create(
-                      integration: integration,
-                      profileable: policy,
-                      external_context: "policy",
-                      external_id: policy.number,
-                      configuration: {
-                        'policy_id' => yardi_id,
-                        'history' => 'exported_to_yardi',
-                        'synced_at' => Time.current.to_s,
-                        'exported_hash' => policy_hash
-                      }.merge({ policy_updatd: policy_updated }.compact)
-                    )
-                    if(policy_ip.id.nil?)
-                      to_return[:policy_export_errors][policy.number] = "Failed to create IntegrationProfile: #{policy_ip.errors.to_h}"
-                      next
-                    end
-                  else
-                    policy_ip.configuration['policy_id'] = yardi_id
-                    policy_ip.configuration['history'] = 'exported_to_yardi'
-                    policy_ip.configuration['synced_at'] = Time.current.to_s
-                    policy_ip.configuration['exported_hash'] = policy_hash
-                    policy_ip.configuration.delete('export_problem')
+                  if result[:request].response&.body&.index("could not locate insurance policy based on policy number and tenant identifier")
+                    event_sequence.push(result[:event].id)
+                    policy_updated = false
+                    result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: false)
+                  end
+                  if !result[:success]
+                    event_sequence.push(result[:event].id)
+                    policy_ip.configuration['export_problem'] = "Got failure response (event #{result[:event]&.id})."
                     policy_ip.save
+                    IntegrationProfile.create(
+                      integration: integration,
+                      profileable: policy_ip,
+                      external_context: "policy_push_log",
+                      external_id: Time.current.to_s,
+                      configuration: {
+                        success: false,
+                        push_type: (policy_updated ? "change" : "create"),
+                        property_id: property_id,
+                        event: result[:event].id,
+                        prior_events: event_sequence,
+                        yardi_id: yardi_id,
+                        policy_hash: policy_hash,
+                        export_setup: export_setup,
+                        prior_configuration: prior_configuration
+                      }
+                    )
+                    to_return[:policy_export_errors][policy.number] = "Failed to export policy due to error response from Yardi's API (Event id #{result[:event]&.id})."
+                    next
+                  else
+                    respy_fella = (result[:request].response.body.split(":") rescue [])
+                    received_yardi_id_preindex = respy_fella.find_index{|x| x == "Policy Id" }
+                    if !received_yardi_id_preindex.nil?
+                      yardi_id = respy_fella[received_yardi_id_preindex + 1]
+                    end
+                    if policy_ip.nil?
+                      policy_ip = IntegrationProfile.create(
+                        integration: integration,
+                        profileable: policy,
+                        external_context: "policy",
+                        external_id: policy.number,
+                        configuration: {
+                          'policy_id' => yardi_id,
+                          'present_last_check' => true,
+                          'history' => 'exported_to_yardi',
+                          'synced_at' => Time.current.to_s,
+                          'exported_hash' => policy_hash
+                        }.merge({ policy_updated: policy_updated }.compact)
+                      )
+                      if(policy_ip.id.nil?)
+                        to_return[:policy_export_errors][policy.number] = "Failed to create IntegrationProfile: #{policy_ip.errors.to_h}"
+                        next
+                      end
+                    else
+                      policy_ip.configuration['policy_id'] = yardi_id
+                      policy_ip.configuration['history'] = 'exported_to_yardi'
+                      policy_ip.configuration['synced_at'] = Time.current.to_s
+                      policy_ip.configuration['exported_hash'] = policy_hash
+                      policy_ip.configuration.delete('export_problem')
+                      policy_ip.save
+                    end
+                    IntegrationProfile.create(
+                      integration: integration,
+                      profileable: policy_ip,
+                      external_context: "policy_push_log",
+                      external_id: Time.current.to_s,
+                      configuration: {
+                        success: true,
+                        push_type: (policy_updated ? "change" : "create"),
+                        property_id: property_id,
+                        event: result[:event].id,
+                        prior_events: event_sequence,
+                        yardi_id: yardi_id,
+                        policy_hash: policy_hash,
+                        export_setup: export_setup,
+                        prior_configuration: prior_configuration
+                      }
+                    )
+                    to_return[:policies_exported][policy.number] = policy
                   end
-                  to_return[:policies_exported][policy.number] = policy
-                end
+                end # end unless fake_export
               end # end if !policy_exported...
+              if fake_export
+                policy_ip.save
+                next nil
+              end
               if !policy_document_exported && integration.configuration.dig('sync', 'policy_push', 'push_document')
                 priu = integration.configuration['sync']['policy_push']['force_primary_lessee_for_documents'] ? lease_priu : policy_priu
                 next if priu.nil?

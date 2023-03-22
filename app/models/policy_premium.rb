@@ -106,36 +106,137 @@ class PolicyPremium < ApplicationRecord
       # fees
       result = self.itemize_fees(premium_amount, and_update_totals: false, term_group: term_group, collector: collector, filter: filter_fees)
       raise ActiveRecord::Rollback unless result.nil?
+      # oop-dayte
       self.update_totals(persist: true)
     end
     return result
   end
   
-  def create_payment_terms(term_group: nil, billing_strategy_terms: nil)
+  def add_premium_item(
+    premium_amount,
+    start_date,
+    title: nil,                               # use to override default line item title of "Premium"
+    and_modify_invoices: true,                # pass false to skip invoice generation
+    use_later_invoice_if_needed: true,        # if the provided start_date means some charges should have been collected in the past, true will frontload them on the first available invoice; false will return failure
+    term_group: nil,                          # pass a string to customize the term group of generated invoices
+    collector: nil                            # can be overridden if GetCovered isn't the one actually collecting payment
+  )
+    term_group ||= "tg_#{premium_amount}_#{start_date.to_s}_#{Time.current.to_i}_#{rand(2**32)}"
+    result = nil
+    ActiveRecord::Base.transaction do
+      result = self.create_payment_terms(
+        term_group: term_group,
+        start_date: start_date,
+        alignment_start: self.policy_rep.effective_date,
+      )
+      raise ActiveRecord::Rollback unless result.nil? || result.end_with?("already_exist")
+      # premium
+      metadata = {}
+      result = self.itemize_premium(premium_amount, title: title, and_update_totals: false, metadata: metadata, term_group: term_group, collector: collector)
+      raise ActiveRecord::Rollback unless result.nil?
+      # invoices
+      if and_modify_invoices
+        if self.policy_quote.nil?
+          result = "Cannot modify invoices because PolicyQuote does not yet exist"
+          raise ActiveRecord::Rollback
+        end
+        # generate line items
+        ppi = metadata[:down_payment] || metadata[:amortized_premium] # only one will exist since we didn't request first_payment_down_payment mode
+        line_items = ppi.generate_line_items(term_group: term_group)
+        if line_items.class == ::String
+          result = "Unable to generate line items: #{line_items}"
+          raise ActiveRecord::Rollback
+        end
+        # add line items to invoices MOOSE WARNING: ideally we would lock ourselves and the invoices here, but there's a specific order of model locking that needs to be looked up somewhere in the documentation to be sure it's followed so that deadlocks remain impossible before that's implemented
+        line_items.each do |line_item|
+          # find the invoice
+          invoice = self.policy_quote.invoices.where(status: ['available', 'upcoming']).where("due_date <= ?", line_item.chargeable.policy_premium_payment_term.first_moment.to_date).order("due_date desc").first
+          if invoice.nil?
+            if !use_later_invoice_if_needed
+              result = "There is no available or upcoming invoice with due_date less than or equal to the policy premium item term start date (#{line_item.chargeable.policy_premium_payment_term.first_moment.to_date})"
+              raise ActiveRecord::Rollback
+            else
+              invoice = self.policy_quote.invoices.where(status: ['available', 'upcoming']).order("due_date asc").first
+              if invoice.nil?
+                result = "The policy quote has no available or upcoming invoices, so line items could not be added"
+                raise ActiveRecord::Rollback
+              end
+            end
+          end
+          # add the line item
+          invoice.line_items.push(line_item)
+          invoice.send(:mark_line_items_priced_in) # private method normally called within on_create callback
+          invoice.save!
+        end
+      end
+      # update totals to reflect the new fella
+      self.update_totals(persist: true)
+    end
+    return result
+  end 
+
+
+  def create_payment_terms(
+    term_group: nil,                  # an optional string to group payment terms for the same premium
+    billing_strategy_terms: nil,      # array of up to 12 integer weights describing distribution of payments over monthly terms; defaults to the policy's billing strategy's new_business array 
+    start_date: nil,                  # the first day of the first payment term; defaults to the policy's effective_date
+    alignment_start: nil,             # the first day of the first payment term for month alignment purposes; billing strategy term weights apply to months starting from this date; defaults to start_date
+    last_date: nil,                   # the last day of the last payment term; defaults to expiration_date
+    adjust_first_weight: true,        # true if the first weight represents the weight that term WOULD have for a full month, and we should adjust it if start_date isn't an exact number of months after alignment_start
+    sum_preterm_weights: false        # if alignment_start is months before start_date, by default we behave as if billing_strategy_terms had 0 entries for the months fully before start_date; true here makes us instead sum up any nonzero terms in this interim and dump the weight on the first payment. In other words, default behavior is "keep to the applicable part of the provided proportionate payment schedule" whereas passing true here is for "you're entering in the middle of the schedule and owe the money that WOULD have been due before you entered in up front"
+  )
+    # figure out basic shizzle
     billing_strategy_terms ||= self.policy_application&.billing_strategy&.new_business&.[]('payments')
+    start_date ||= self.policy_rep.effective_date
+    alignment_start ||= start_date
+    if alignment_start > start_date
+      start_date = alignment_start # we have implicit 0 weights for the terms before alignment_start, since billing_strategy_terms are monthly starting on alignment_start; so this setup is equivalent
+    end
+    while alignment_start <= start_date - 1.month
+      alignment_start += 1.month
+      billing_strategy_terms.shift
+      billing_strategy_terms.first += billing_strategy_terms.shift if sum_preterm_weights && billing_strategy_terms.length > 1
+    end
+    billing_strategy_terms = [1] if billing_strategy_terms.blank?
+    last_date ||= self.policy_rep.expiration_date
+    # flee if arguments are invalid
     return "No billing_strategy_terms were provided and policy application does not exist or has no associated billing strategy" if billing_strategy_terms.blank?
     return "Payment terms for term group '#{term_group || 'nil'}' already exist" unless self.policy_premium_payment_terms.where(term_group: term_group).blank?
     return "The billing strategy terms are interpreted as applying to successive months, but there are more than 12 of them" if billing_strategy_terms.length > 12
+    # prepare useful values
     returned_errors = nil
-    term_start = self.policy_rep.effective_date
-    next_term_start = term_start + 1.month
+    term_start = start_date
+    next_term_start = alignment_start + 1.month
     term_weight = billing_strategy_terms.first
-    weight = 0
+    term_weight_multiplier = if alignment_start == start_date || !adjust_first_weight
+        1
+      else
+        nil # will be the number of days the first term WOULD have if start_date were aligned, but we can't set it until we know when the first term ends
+    end
+    next_weight = 0
     ActiveRecord::Base.transaction do
       begin
         (1..billing_strategy_terms.length).each do |index|
-          if index == billing_strategy_terms.length || (weight = billing_strategy_terms[index]) > 0
+          if index == billing_strategy_terms.length || (next_weight = billing_strategy_terms[index]) > 0
+            # we have reached the end of a sequence of 0-weight months (which should get gobbled up all together by a single term)
+            last_moment = (index == billing_strategy_terms.length || next_term_start > last_date ? last_date : next_term_start - 1.day).end_of_day
+            multiplier = term_weight_multiplier
+            if multiplier.nil?
+              term_weight_multiplier = ((last_moment.to_date + 1.day) - alignment_start).to_i # number of days between alignment start and the end of the current (first) term
+              multiplier = ((last_moment.to_date + 1.day) - term_start).to_i # number of days ACTUALLY in the term (due to non-alignment)
+            end
             ::PolicyPremiumPaymentTerm.create!(
               policy_premium: self,
+              term_group: term_group,
               first_moment: term_start.beginning_of_day,
-              last_moment: (index == billing_strategy_terms.length ? self.policy_rep.expiration_date : next_term_start - 1.day).end_of_day,
+              last_moment: last_moment,
               time_resolution: 'day',
-              default_weight: term_weight,
-              term_group: term_group
+              default_weight: term_weight * multiplier
             )
             term_start = next_term_start
-            next_term_start = next_term_start + 1.month
-            term_weight = weight
+            next_term_start = term_start + 1.month
+            term_weight = next_weight
+            break if last_moment.to_date == last_date
           else
             next_term_start += 1.month
           end
@@ -148,6 +249,7 @@ class PolicyPremium < ApplicationRecord
     end
     return returned_errors
   end
+  
   
   def get_fees
 	  # Get CarrierPolicyTypeAvailability Fee for Region (we assume region is available if we've gotten this far)
@@ -201,7 +303,6 @@ class PolicyPremium < ApplicationRecord
       total_due: payments_total,
       proration_calculation: 'payment_term_exclusive',
       proration_refunds_allowed: false,
-      # MOOSE WARNING: preprocessed
       hidden: fee.hidden,
       recipient: recipient || fee.ownerable,
       collector: collector || self.carrier_agency_policy_type&.collector || ::PolicyPremium.default_collector,
@@ -227,7 +328,8 @@ class PolicyPremium < ApplicationRecord
     self.itemize_premium(amount, and_update_totals: and_update_totals, proratable: proratable, refundable: refundable, term_group: term_group, collector: collector, is_tax: true, recipient: recipient, first_payment_down_payment: first_payment_down_payment, first_payment_down_payment_override: first_payment_down_payment_override)
   end
 
-  def itemize_premium(amount, and_update_totals: true, proratable: nil, refundable: nil, term_group: nil, payment_terms: nil, collector: nil, is_tax: false, recipient: nil, first_payment_down_payment: false, first_payment_down_payment_override: nil)
+  def itemize_premium(amount, title: nil, and_update_totals: true, proratable: nil, refundable: nil, term_group: nil, payment_terms: nil, collector: nil, is_tax: false, recipient: nil, first_payment_down_payment: false, first_payment_down_payment_override: nil, metadata: nil) # pass a hash to metadata to get extra returned information
+    title ||= (is_tax ? "Tax" : "Premium")
     # get payment terms
     payment_terms ||= self.policy_premium_payment_terms.where(term_group: term_group).sort.select{|p| p.default_weight != 0 }
     if payment_terms.blank?
@@ -269,13 +371,12 @@ class PolicyPremium < ApplicationRecord
       unless down_payment_amount == 0 
         down_payment = ::PolicyPremiumItem.new(
           policy_premium: self,
-          title: is_tax ? "Tax" : "Premium Down Payment",
+          title: is_tax ? "#{title}" : "#{title} Down Payment",
           category: is_tax ? "tax" : "premium",
           rounding_error_distribution: "first_payment_simple",
           total_due: down_payment_amount,
           proration_calculation: 'no_proration',
           proration_refunds_allowed: false,
-          # MOOSE WARNING: preprocessed
           recipient: recipient || self.commission_strategy,
           collector: collector || self.carrier_agency_policy_type&.collector || ::PolicyPremium.default_collector,
           policy_premium_item_payment_terms: [payment_terms.first].map do |pt|
@@ -290,13 +391,12 @@ class PolicyPremium < ApplicationRecord
     unless amount == 0
       amortized_premium = ::PolicyPremiumItem.new(
         policy_premium: self,
-        title: is_tax ? "Tax" : "Premium",
+        title: is_tax ? "#{title}" : "#{title}",
         category: is_tax ? "tax" : "premium",
         rounding_error_distribution: "first_payment_multipass",
         total_due: amount,
         proration_calculation: proratable,
         proration_refunds_allowed: refundable,
-        # MOOSE WARNING: preprocessed
         recipient: recipient || self.commission_strategy,
         collector: collector || self.carrier_agency_policy_type&.collector || ::PolicyPremium.default_collector,
         policy_premium_item_payment_terms: payment_terms.map.with_index do |pt, index|
@@ -324,6 +424,9 @@ class PolicyPremium < ApplicationRecord
     end
     self.update_totals(persist: true) if save_error.nil? && and_update_totals
     # all done
+    if metadata.class == ::Hash
+      metadata.merge!({ down_payment: down_payment, amortized_premium: amortized_premium }.compact)
+    end
     return save_error
   end
 
@@ -362,7 +465,7 @@ class PolicyPremium < ApplicationRecord
       # prorate our terms
       self.policy_premium_payment_terms.order(id: :asc).lock.each do |pppt|
         unless pppt.update_proration(self.prorated_first_moment, self.prorated_last_moment)
-          to_return = "Applying proration to PolicyPremiumPaymentTerm ##{pppt.id} failed, errors: #{pppt.respond_to?(:errors) ? pppt.errors.to_h : '(return value did not respond to errors call)'}"
+          to_return = "Applying proration to PolicyPremiumPaymentTerm ##{pppt.id} failed, errors: #{pppt.respond_to?(:errors) ? pppt.errors.to_h : "(return value did not respond to errors call; type '#{pppt.class.name}')"}"
           raise ActiveRecord::Rollback
         end
       end

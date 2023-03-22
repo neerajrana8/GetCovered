@@ -450,6 +450,7 @@ class Policy < ApplicationRecord
   # Cancels a policy; returns nil if no errors, otherwise a string explaining the error
   def cancel(reason, last_active_moment = Time.current.to_date.end_of_day)
     last_active_moment = last_active_moment.end_of_day if last_active_moment.class == ::Date
+    reason = reason.to_s
     # Flee on invalid data
     return I18n.t('policy_model.cancellation_reason_invalid') unless self.class.cancellation_reasons.has_key?(reason)
     return I18n.t('policy_model.policy_is_already_cancelled') if self.status == 'CANCELLED'
@@ -619,24 +620,29 @@ class Policy < ApplicationRecord
     end
   end
 
-  def latest_lease(lease_status: 'current', user_matches: [:all, :primary, :any, :none], prefer_more_users: true)
+  def latest_lease(lease_status: 'current', user_matches: [:all, :primary, :any, :none], prefer_more_users: true, lessees_only: false, current_only: false)
     return nil if self.primary_insurable.blank?
+    lease_status = [lease_status] unless lease_status.class == ::Array
     user_matches = [:all, :primary, :any] if user_matches == true
-    found = self.primary_insurable.leases.where(status: lease_status).order(start_date: :desc).group_by do |lease|
-      case lease.users.count{|u| self.users.include?(u) }
+    found = self.primary_insurable.leases.where(status: lease_status).order(start_date: :desc).sort_by{|l| lease_status.find_index(l.status) }.group_by do |lease|
+      lease_users = lease.send(current_only ? :active_lease_users : :lease_users).send(*(lessees_only ? [:where, { lessee: true }] : [:itself]))
+      case lease_users.count{|lu| self.users.any?{|u| u.id == lu.user_id } }
         when self.users.count
           :all
         when 0
           :none
         else
-          lease.users.include?(self.primary_user) ? :primary : :any
+          lease_users.any?{|lu| lu.user_id == self.primary_user.id } ? :primary : :any
       end
     end
     (user_matches.class == ::Array ? user_matches : [user_matches]).each do |match_type|
       unless found[match_type].blank?
         return(
           (prefer_more_users && [:any, :primary].include?(match_type)) ?
-            found[match_type].sort_by{|lease| -lease.users.count{|u| self.users.include?(u) } }.first
+            found[match_type].sort_by do |lease|
+              lease_users = lease.send(current_only ? :active_lease_users : :lease_users).send(*(lessees_only ? [:where, { lessee: true }] : [:itself]))
+              -lease_users.count{|lu| self.users.any?{|u| u.id == lu.user_id } }
+            end.first
             : found[match_type].first
         )
       end
