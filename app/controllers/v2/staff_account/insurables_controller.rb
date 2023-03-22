@@ -13,7 +13,13 @@ module V2
       before_action :set_master_policies, only: :show
 
       def index
-        super_index(:@insurables, current_staff.organizable.insurables)
+        # NOTE: show only assigned insurables for property managers (communities, units and buildings)
+        assigned_communities_ids = Insurable.where(id: current_staff.assignments.where(assignable_type: 'Insurable').pluck(:assignable_id)).pluck(:id)
+        assigned_units_and_buildings_ids = Insurable.where(insurable_id: assigned_communities_ids).pluck(:id)
+
+        query = Insurable.where(id: (assigned_communities_ids + assigned_units_and_buildings_ids).uniq.compact)
+
+        super_index(:@insurables, query)
       end
 
       def communities
