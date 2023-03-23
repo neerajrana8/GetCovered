@@ -76,7 +76,7 @@ module Reporting
       luces = []
       auditable_luces = []
       begin
-        self.lease.active_lease_users(today, allow_future: true).each do |alu|
+        (self.lease&.active_lease_users(today, allow_future: true) || []).each do |alu|
           luce = (LeaseUserCoverageEntry.where(unit_coverage_entry: self, lease_user: alu).take || LeaseUserCoverageEntry.create!(unit_coverage_entry: self, lease_user: alu))
           if (self.lease.status == 'pending' || alu.is_current?(today))
             luces.push(luce)

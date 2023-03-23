@@ -51,7 +51,7 @@ module Reporting
       
       self.account_id = self.lease_user.lease.account_id
       self.lessee = self.lease_user.lessee
-      self.current = (lease.pending || self.lease_user.current?(self.report_time.to_date))
+      self.current = self.lease_user.is_current?(self.report_time.to_date)
       
       self.first_name = self.lease_user.user&.profile&.first_name || "Unknown"
       self.last_name = self.lease_user.user&.profile&.last_name || "Unknown"
@@ -67,7 +67,7 @@ module Reporting
       self.coverage_status_exact =
         if self.policy.nil?
           :none
-        elsif self.policy&.policy_type_id == ::MASTER_COVERAGE_ID
+        elsif self.policy&.policy_type_id == ::PolicyType::MASTER_COVERAGE_ID
           :master
         else
           if policies.any?{|p| p.policy_type_id == ::PolicyType::RESIDENTIAL_ID && p.policy_in_system }

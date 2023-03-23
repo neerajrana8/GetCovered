@@ -89,7 +89,7 @@ module Reporting
         self.reportable_category = "State"
         self.reportable_title = self.reportable.state
         self.reportable_description = nil
-        if self.reportable.state.nil? || !state.counties.blank?
+        if self.reportable.pure_state?
           raise StandardError.new("Only InsurableGeographicalCategories for entire states are supported!")
         end
       elsif self.reportable_type == 'Account'
