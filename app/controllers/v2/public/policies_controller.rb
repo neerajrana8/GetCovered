@@ -123,8 +123,8 @@ module V2
               #TODO: temp test need to remove according to GCVR2-1197
               if Rails.env.development? or ENV['RAILS_ENV'] == 'awsdev'
                 PolicyMailer.with(policy: @policy).coverage_proof_uploaded.deliver_now
-              else
-                PolicyMailer.with(policy: @policy).coverage_proof_uploaded.deliver_later
+              # else
+              #   PolicyMailer.with(policy: @policy).coverage_proof_uploaded.deliver_later
               end
 
               render :show, status: :ok
