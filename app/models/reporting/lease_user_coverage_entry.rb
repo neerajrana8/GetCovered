@@ -11,7 +11,9 @@ module Reporting
     belongs_to :account
     belongs_to :policy,
       optional: true
-      
+    
+    before_validation :set_account,
+      on: :create
     before_create :prepare
     
     enum coverage_status_exact: COVERAGE_STATUSES,
@@ -37,6 +39,10 @@ module Reporting
     end
     def covered_by_no_policy
       'none' == self.send("coverage_status_exact")
+    end
+    
+    def set_account
+      self.account_id ||= self.lease_user.lease.account_id
     end
 
     def prepare # only unit_coverage_entry and lease_user need to be provided
