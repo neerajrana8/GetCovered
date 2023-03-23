@@ -74,7 +74,7 @@ module Reporting
       today = self.report_time.to_date
       # get lease user entries ready
       luces = []
-      lessee_luces = []
+      auditable_luces = []
       begin
         self.lease.active_lease_users(today, allow_future: true).each do |alu|
           luce = (LeaseUserCoverageEntry.where(unit_coverage_entry: self, lease_user: alu).take || LeaseUserCoverageEntry.create!(unit_coverage_entry: self, lease_user: alu))
@@ -83,21 +83,22 @@ module Reporting
           end
         end
       rescue ActiveRecord::RecordInvalid => e
-        raise
+        raise # MOOSE WARNING: should respect bang probably...
       end
+      auditable_luces = luces.select{|luce| luce.lessee && luce.current }
       # coverage_status_any
       self.coverage_status_any = luces.sort_by{|luce| COVERAGE_STATUSES_ORDER.find_index(luce.coverage_status_exact) }.first&.coverage_status_exact || "none"
       # coverage_status_exact
       self.coverage_status_exact = (
-        if lessee_luces.all?{|luce| luce.coverage_status_exact == 'internal_or_external' }
+        if auditable_luces.all?{|luce| luce.coverage_status_exact == 'internal_or_external' }
           'internal_or_external'
-        elsif lessee_luces.all?{|luce| ['internal_or_external', 'internal'].include?(luce.coverage_status_exact) }
+        elsif auditable_luces.all?{|luce| ['internal_or_external', 'internal'].include?(luce.coverage_status_exact) }
           'internal'
-        elsif lessee_luces.all?{|luce| ['internal_or_external', 'external'].include?(luce.coverage_status_exact) }
+        elsif auditable_luces.all?{|luce| ['internal_or_external', 'external'].include?(luce.coverage_status_exact) }
           'external'
-        elsif lessee_luces.all?{|luce| ['internal_or_external', 'internal', 'external'].include?(luce.coverage_status_exact) }
+        elsif auditable_luces.all?{|luce| ['internal_or_external', 'internal', 'external'].include?(luce.coverage_status_exact) }
           'internal_and_external'
-        elsif lessee_luces.all?{|luce| ['master', 'internal_or_external', 'internal', 'external'].include?(luce.coverage_status_exact) }
+        elsif auditable_luces.all?{|luce| ['master', 'internal_or_external', 'internal', 'external'].include?(luce.coverage_status_exact) }
           'master'
         else
           'none'

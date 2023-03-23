@@ -12,6 +12,9 @@ scope module: :staff_reporting, path: "reporting" do
   post :unit_coverage_entries,
     to: "unit_coverage_entries#index",
     path: "coverage-reports/:coverage_report_id/unit-entries"
+  post :lease_user_coverage_entries,
+    to: "lease_user_coverage_entries#index",
+    path: "coverage-reports/:coverage_report_id/lease-user-entries"
   post :latest_coverage_report,
     to: "coverage_reports#latest",
     path: "latest/coverage-report"

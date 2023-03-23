@@ -34,6 +34,11 @@ module Reporting
       through: :links,
       source: :child
 
+    has_many :lease_user_coverage_entries,
+      class_name: "Reporting::LeaseUserCoverageEntry",
+      through: :unit_coverage_entries,
+      source: :lease_user_coverage_entries
+
     before_create :prepare
     before_save :set_derived_statistics
     

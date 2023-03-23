@@ -1,4 +1,5 @@
 json.extract! unit_coverage_entry,
+  :id,
   :insurable_id,
   :street_address, :unit_number,
   :yardi_id,

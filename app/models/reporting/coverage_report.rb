@@ -50,6 +50,11 @@ module Reporting
       class_name: "Reporting::UnitCoverageEntry",
       through: :coverage_entries,
       source: :unit_coverage_entries
+
+    has_many :lease_user_coverage_entries,
+      class_name: "Reporting::LeaseUserCoverageEntry",
+      through: :unit_coverage_entries,
+      source: :lease_user_coverage_entries
     
     before_create :set_coverage_determinant
     
@@ -189,13 +194,14 @@ module Reporting
             fixed_filters: {},
             unique: ["id"],
             columns: [
+              { title: "id", apiIndex: "id", invisible: true },
               show_yardi ? { title: "Yardi Code", sortable: true, apiIndex: "yardi_id", filters: ['scalar', 'vector', 'like'] } : nil,
               { title: "Email", sortable: true, apiIndex: "email", filters: ['scalar', 'vector', 'like'] },
               { title: "First Name", sortable: true, apiIndex: "first_name", filters: ['scalar', 'vector', 'like'] },
               { title: "Last Name", sortable: true, apiIndex: "last_name", filters: ['scalar', 'vector', 'like'] },
               { title: "Lessee", sortable: true, apiIndex: "lessee", filters: ['scalar'], data_type: 'boolean' },
               { title: "Current", sortable: true, apiIndex: "current", filters: ['scalar'], data_type: 'boolean' },
-              { title: "Coverage", sortable: true, apiIndex: "coverage_status_exact", data_type: "enum",
+              { title: "Coverage", sortable: true, apiIndex: "coverage_status", data_type: "enum",
                 enum_values: visible_enum_values,
                 format: visible_enum_values.map{|vev| vev.titlecase },
                 filters: ['scalar', 'vector']
@@ -209,6 +215,7 @@ module Reporting
             fixed_filters: {},
             unique: ["id"],
             columns: [
+              { title: "id", apiIndex: "id", invisible: true },
               { title: "Address", sortable: true, apiIndex: "street_address", filters: ['scalar', 'vector', 'like'] },
               { title: "Unit", sortable: true, apiIndex: "unit_number", filters: ['scalar', 'vector', 'like'] },
               { title: "Coverage", sortable: true, apiIndex: "coverage_status", data_type: "enum",
@@ -237,6 +244,7 @@ module Reporting
             fixed_filters: {},
             unique: ["id"],
             columns: [
+              { title: "id", apiIndex: "id", invisible: true },
               { title: "Address", sortable: true, apiIndex: "street_address", filters: ['scalar', 'like'] },
               { title: "Unit", sortable: true, apiIndex: "yardi_id", filters: ['scalar', 'vector', 'like'] },
               { title: "Coverage", sortable: true, apiIndex: "coverage_status", data_type: "enum",
