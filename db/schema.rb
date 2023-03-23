@@ -1812,6 +1812,26 @@ ActiveRecord::Schema.define(version: 2023_03_13_202623) do
     t.index ["owner_type", "owner_id", "status", "report_time"], name: "index_rcr_on_o_and_rt"
   end
 
+  create_table "reporting_lease_user_coverage_entries", force: :cascade do |t|
+    t.bigint "lease_user_id"
+    t.datetime "report_time", null: false
+    t.boolean "lessee", null: false
+    t.boolean "current", null: false
+    t.string "first_name", null: false
+    t.string "last_name", null: false
+    t.string "email"
+    t.string "yardi_id"
+    t.bigint "policy_id"
+    t.string "policy_number"
+    t.integer "coverage_status_exact", null: false
+    t.bigint "unit_coverage_entry_id"
+    t.bigint "account_id"
+    t.index ["account_id"], name: "index_reporting_lease_user_coverage_entries_on_account_id"
+    t.index ["lease_user_id"], name: "index_reporting_lease_user_coverage_entries_on_lease_user_id"
+    t.index ["policy_id"], name: "index_reporting_lease_user_coverage_entries_on_policy_id"
+    t.index ["unit_coverage_entry_id"], name: "index_luce_on_uce_id"
+  end
+
   create_table "reporting_policy_entries", force: :cascade do |t|
     t.string "account_title"
     t.string "number"
@@ -1859,18 +1879,15 @@ ActiveRecord::Schema.define(version: 2023_03_13_202623) do
     t.string "unit_number"
     t.string "yardi_id"
     t.integer "coverage_status_exact"
-    t.integer "coverage_status_numeric"
     t.integer "coverage_status_any"
     t.bigint "lease_id"
     t.integer "lessee_count", default: 0, null: false
     t.string "lease_yardi_id"
-    t.jsonb "ho4_coverages", default: {}, null: false
     t.jsonb "error_info"
     t.index ["insurable_id"], name: "index_reporting_unit_coverage_entries_on_insurable_id"
     t.index ["lease_id"], name: "index_reporting_unit_coverage_entries_on_lease_id"
     t.index ["report_time", "coverage_status_any"], name: "index_ruce_on_rt_and_css"
     t.index ["report_time", "coverage_status_exact"], name: "index_ruce_on_rt_and_cse"
-    t.index ["report_time", "coverage_status_numeric"], name: "index_ruce_on_rt_and_csn"
     t.index ["report_time", "insurable_id"], name: "index_ruce_on_rt_and_ii", unique: true
     t.index ["report_time", "lessee_count"], name: "index_ruce_on_rt_and_lc"
   end

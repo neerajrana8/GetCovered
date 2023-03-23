@@ -100,9 +100,10 @@ class CreateCoverageReportSystem < ActiveRecord::Migration[6.1]
       
       t.integer :coverage_status_exact, null: false
       
-      t.references :unit_coverage_entry
+      t.references :unit_coverage_entry, index: false # stupid BS about default index name length -__-
       t.references :account
     end
+    add_index :reporting_lease_user_coverage_entries, :unit_coverage_entry_id, name: "index_luce_on_uce_id", unique: false
     
   end
 end
