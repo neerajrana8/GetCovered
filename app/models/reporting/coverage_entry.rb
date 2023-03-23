@@ -314,6 +314,7 @@ module Reporting
           created.generate!
         rescue ActiveRecord::RecordInvalid => e
           raise unless (e.record.class == Reporting::UnitCoverageEntry && e.record.errors.to_hash.all?{|k,v| v == "has already been taken" } rescue false)
+          Reporting::UnitCoverageEntry.where(report_time: self.coverage_report.report_time, insurable: Insurable.find(id)).take&.generate!
           nil # we just ignore this error, we're apparently in what would with locks be a race condition and someone else created it first, but so what?
         end
       end

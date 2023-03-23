@@ -63,7 +63,7 @@ module Reporting
       self.lease_id ||= self.insurable.leases.current.order(start_date: :desc, created_at: :desc).first&.id
       self.lease_yardi_id ||= self.lease&.integration_profiles&.where(external_context: 'lease')&.take&.external_id
       lessee_ids = self.lease.nil? ? [] : self.lease.active_lease_users(lessee: true).pluck(:user_id).uniq
-      self.lessee_count ||= lessee_ids.count
+      self.lessee_count = lessee_ids.count
     end
 
     def generate!
@@ -71,6 +71,7 @@ module Reporting
     end
     
     def generate(bang: false)
+      return if !self.coverage_status_exact.nil? # MOOSE WARNING: should probably introduce a stupid status column or something
       today = self.report_time.to_date
       # get lease user entries ready
       luces = []
