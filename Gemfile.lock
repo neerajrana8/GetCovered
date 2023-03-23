@@ -1467,7 +1467,7 @@ GEM
     jbuilder (2.11.5)
       actionview (>= 5.0.0)
       activesupport (>= 5.0.0)
-    jmespath (1.5.0)
+    jmespath (1.6.2)
     json (2.6.1)
     json-schema (2.8.1)
       addressable (>= 2.4)
