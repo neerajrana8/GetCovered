@@ -54,6 +54,7 @@ module V2
             unit_coverage_entry_id: [:scalar, :array],
             account_id: [:scalar, :array]
           }
+        end
         
         def expand_coverage(det)
           return det if @expand_ho4 && !@simplify_status
