@@ -391,7 +391,7 @@ module Integrations
                 policy_type_id: [::PolicyType::RESIDENTIAL_ID], #, ::PolicyType::MASTER_COVERAGE_ID],
                 status: ::Policy.active_statuses + ['CANCELLED']
               ).send(*(exportable_ids.nil? ? [:itself] : [:where, { id: exportable_ids }]))
-            ).pluck(:id)
+            ).pluck(:id).uniq
             policy_ids.each do |pol_id|
               policy = Policy.where(id: pol_id).references(:policy_insurables, :policy_users, :integration_profiles).includes(:policy_insurables, :policy_users, :integration_profiles).take
               policy_ip = policy.integration_profiles.find{|ip| ip.integration_id == integration.id }
@@ -404,17 +404,19 @@ module Integrations
               )) # WARNING: ideally we would create the policy_hash and compare to the cached one instead of doing this... but for now this works
               next if !universal_export && (dunny_mcdonesters || (!policy_exported && !Policy.active_statuses.include?(policy.status)))
               # create the policy IP if needed
-              policy_ip ||= IntegrationProfile.create(
-                integration: integration,
-                profileable: policy,
-                external_context: "policy",
-                external_id: policy.number,
-                configuration: {
-                  'history' => 'not_exported',
-                  'synced_at' => (Time.current - 100.years).to_s,
-                  'exported_hash' => {}
-                }
-              )
+              if policy_ip.nil?
+                policy_ip = IntegrationProfile.create(
+                  integration: integration,
+                  profileable: policy,
+                  external_context: "policy",
+                  external_id: policy.number,
+                  configuration: {
+                    'history' => 'not_exported',
+                    'synced_at' => (Time.current - 100.years).to_s,
+                    'exported_hash' => {}
+                  }
+                )
+              end
               prior_configuration = policy_ip.configuration.dup
               export_setup = {
                 policy_exported: policy_exported,
@@ -458,8 +460,15 @@ module Integrations
               end
               used = []
               users_to_export = policy.policy_users.to_a.uniq.map do |pu|
-                found = lease_user_ips.find{|lup| !used.include?(lup.external_id) && lup.profileable.user_id == pu.user_id && !lup.external_id.start_with?("was") && (lup.profileable.moved_out_at.nil? || lup.profileable.moved_out_at > Time.current.to_date) } || lease_user_ips.find{|lup| !used.include?(lup.external_id) && lup.profileable.user_id == pu.user_id && (lup.profileable.moved_out_at.nil? || lup.profileable.moved_out_at > Time.current.to_date) } ||
-                        lease_user_ips.find{|lup| !used.include?(lup.external_id) && lup.profileable.user_id == pu.user_id && !lup.external_id.start_with?("was") } || lease_user_ips.find{|lup| !used.include?(lup.external_id) && lup.profileable.user_id == pu.user_id }
+                found = lease_user_ips.find do |lup|
+                  !used.include?(lup.external_id) && lup.profileable.user_id == pu.user_id && !lup.external_id.start_with?("was") && (lup.profileable.moved_out_at.nil? || lup.profileable.moved_out_at > Time.current.to_date)
+                end || lease_user_ips.find do |lup|
+                  !used.include?(lup.external_id) && lup.profileable.user_id == pu.user_id && (lup.profileable.moved_out_at.nil? || lup.profileable.moved_out_at > Time.current.to_date)
+                end || lease_user_ips.find do |lup|
+                  !used.include?(lup.external_id) && lup.profileable.user_id == pu.user_id && !lup.external_id.start_with?("was")
+                end || lease_user_ips.find do |lup|
+                  !used.include?(lup.external_id) && lup.profileable.user_id == pu.user_id
+                end
                 next nil if found.nil?
                 preexisting = integration.integration_profiles.where(external_context: "policy_user_for_policy_#{policy.number}", external_id: found.external_id).take
                 if preexisting.nil?
@@ -473,7 +482,7 @@ module Integrations
                   preexisting.update(profileable: pu, configuration: (preexisting.configuration || {}).merge({ 'old_profileable' => "#{preexisting.profileable_type}##{preexisting.profileable_id}" }))
                 end
                 used.push(found.external_id)
-                next {
+                next found.external_id.start_with?("was") ? nil : {
                   policy_user: pu,
                   lease_user: found.profileable,
                   external_id: found.external_id
@@ -524,14 +533,15 @@ module Integrations
                   EffectiveDate: policy.effective_date.to_s,
                   ExpirationDate: policy.expiration_date&.to_s, # WARNING: should we do something else for MPCs?
                   IsRenew: false, # MOOSE WARNING: mark true when renewal... policy.auto_renew,
-                  LiabilityAmount: '%.2f' % (policy.get_liability.nil? ? nil : (policy.get_liability.to_d / 100.to_d)) #,
+                  LiabilityAmount: '%.2f' % (policy.get_liability.nil? ? nil : (policy.get_liability.to_d / 100.to_d)),
                   #Notes: "GC Verified" #, DISALBRD CAUSSES BROKEENNN
+                  hvendorpolicy: (policy.policy_in_system ? "1" : "0")#,
                   #IsRequiredForMoveIn: "false",
                   #IsPMInterestedParty: "true"
                   # WARNING: are these weirdos required? LATER ANSWER: apparently not.
                 }.compact
               }
-              if policy.status == 'CANCELLED' && !policy.cancellation_date.nil?
+              if policy.status == 'CANCELLED'
                 cd = policy.cancellation_date || policy.status_changed_on
                 if !cd.nil?
                   cd = policy.effective_date if cd < policy.effective_date
@@ -565,6 +575,10 @@ module Integrations
                 #end
                 # try to add id to hash
                 policy_hash[:PolicyDetails][:PolicyId] = yardi_id if yardi_id
+                # fix hash horder because Yardi is insane
+                policy_hash[:PolicyDetails] = policy_hash[:PolicyDetails].to_a.sort_by do |x|
+                  [:EffectiveDate, :ExpirationDate, :IsRenew, :CancelDate, :LiabilityAmount, :Notes, :hvendorpolicy, :PolicyId].find_index(x[0])
+                end.to_h
                 # export attempt
                 if fake_export
                   policy_ip.save
@@ -666,9 +680,12 @@ module Integrations
                 policy_ip.save
                 next nil
               end
-              if !policy_document_exported && integration.configuration.dig('sync', 'policy_push', 'push_document')
+              if integration.configuration.dig('sync', 'policy_push', 'push_document')
+                # revisit policy_document_exported now that we know the priu it should be exported to
                 priu = integration.configuration['sync']['policy_push']['force_primary_lessee_for_documents'] ? lease_priu : policy_priu
                 next if priu.nil?
+                policy_document_exported = policy_ip.configuration['exported_documents_to']&.[](priu[:external_id])&.[]('success')
+                next if policy_document_exported
                 # upload document
                 export_problem = export_policy_document(property_id: property_id, policy: policy, resident_id: priu[:external_id], policy_ip: policy_ip)
                 if export_problem.nil?
