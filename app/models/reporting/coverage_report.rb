@@ -190,7 +190,7 @@ module Reporting
         subreports: [
           {
             title: "Residents",
-            endpoint: "/v2/reportiong/coverage-reports/#{self.id}/lease-user-entries",
+            endpoint: "/v2/reporting/coverage-reports/#{self.id}/lease-user-entries",
             fixed_filters: {},
             unique: ["id"],
             columns: [
