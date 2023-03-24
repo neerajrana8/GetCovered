@@ -150,11 +150,7 @@ module Compliance
     def set_variables
       @organization = set_organization
       @address = @organization.addresses.where(primary: true).nil? ? Address.find(1) : @organization.primary_address()
-<<<<<<< Updated upstream
-      @branding_profile = @organization.branding_profiles.where(default: true)&.take || BrandingProfile.global_default
-=======
       @branding_profile = set_branding_profile
->>>>>>> Stashed changes
       @GC_ADDRESS = Agency.get_covered.primary_address.nil? ? Address.find(1) : Agency.get_covered.primary_address
     end
 
