@@ -247,6 +247,7 @@ module Reporting
               { title: "id", apiIndex: "id", invisible: true },
               { title: "Address", sortable: true, apiIndex: "street_address", filters: ['scalar', 'like'] },
               { title: "Unit", sortable: true, apiIndex: "yardi_id", filters: ['scalar', 'vector', 'like'] },
+              { title: "Yardi Lease", sortable: true, apiIndex: "lease_yardi_id", filters: ['scalar', 'vector', 'like'] },
               { title: "Coverage", sortable: true, apiIndex: "coverage_status", data_type: "enum",
                 enum_values: visible_enum_values,
                 format: visible_enum_values.map{|vev| vev.titlecase },
