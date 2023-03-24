@@ -27,7 +27,7 @@ module V2
         end
       
         def set_parent
-          @parent = params[:parent_id].nil? ? nil : access_model(Reporting::CoverageEntry, params[:parent_id].to_i)
+          @parent = (params[:filter].blank? || params[:filter][:parent_id].nil?) ? nil : access_model(Reporting::CoverageEntry, params[:filter][:parent_id].to_i)
         end
         
         def fixed_filters
