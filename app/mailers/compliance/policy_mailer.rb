@@ -172,7 +172,8 @@ module Compliance
       if @second_nature_condition
         @pm_account.branding_profiles.blank? ? @pm_account.agency.branding_profiles.where(default: true).take : @pm_account.branding_profiles.where(default: true).take
       else
-        branding_profile_to_use
+        @organization.branding_profiles.where(default: true)&.take || BrandingProfile.global_default
+        #branding_profile_to_use
       end
     end
 
