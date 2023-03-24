@@ -105,6 +105,7 @@ module Reporting
           'none'
         end
       )
+      bang ? self.save! : self.save
     end # end generate()
 
 
