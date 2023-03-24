@@ -701,9 +701,15 @@ class Policy < ApplicationRecord
         end
 
         begin
-          Compliance::PolicyMailer.with(organization: (account || agency))
-                                  .external_policy_status_changed(policy: self)
-                                  .deliver_later(wait: 5.minutes) unless in_system?
+          if Rails.env.development? or ENV['RAILS_ENV'] == 'awsdev'
+            Compliance::PolicyMailer.with(organization: policy.account.nil? ? policy.agency : policy.account)
+                                    .external_policy_status_changed(policy: policy)
+                                    .deliver_now unless self.in_system?
+          else
+            Compliance::PolicyMailer.with(organization: self.account.nil? ? self.agency : self.account)
+                                    .external_policy_status_changed(policy: self)
+                                    .deliver_later(wait: 5.minutes) unless self.in_system?
+          end
         rescue Exception => e
           @error = ModelError.create!(
             kind: "external_policy_status_change_notification_error",

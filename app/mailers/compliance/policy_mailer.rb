@@ -78,12 +78,6 @@ module Compliance
 
       set_locale(@user.profile&.language || "en")
 
-      #TODO: need to move hardcoded id to env dependant logic
-      @second_nature_condition = false
-      @second_nature_condition = true if @organization.is_a?(Agency) && (@organization.id == 416 || @organization.id == 11)
-      @second_nature_condition = true if @organization.is_a?(Account) && (@organization.agency_id == 416 || @organization.agency_id == 11)
-      puts @second_nature_condition
-
       @community = @policy.primary_insurable.parent_community
       @pm_account = @community.account || @policy.account
 
@@ -169,12 +163,20 @@ module Compliance
     end
 
     def set_branding_profile
-      if @second_nature_condition
+      if is_second_nature?
         @pm_account.branding_profiles.blank? ? @pm_account.agency.branding_profiles.where(default: true).take : @pm_account.branding_profiles.where(default: true).take
       else
         @organization.branding_profiles.where(default: true)&.take || BrandingProfile.global_default
         #branding_profile_to_use
       end
+    end
+
+    def is_second_nature?
+      #TODO: need to move hardcoded id to env dependant logic
+      @second_nature_condition = false
+      @second_nature_condition = true if @organization.is_a?(Agency) && (@organization.id == 416 || @organization.id == 11)
+      @second_nature_condition = true if @organization.is_a?(Account) && (@organization.agency_id == 416 || @organization.agency_id == 11)
+      @second_nature_condition
     end
 
   end
