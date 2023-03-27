@@ -2,7 +2,7 @@ module V2
   module StaffReporting
     class PolicyEntriesController < StaffReportingController
       
-      before_action :set_account, only: %i[index]
+      before_action :set_account, only: %i[index fake_report]
       
       SUPPORTED_FILTERS = (
         [
