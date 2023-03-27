@@ -67,7 +67,7 @@ class CreateCoverageReportSystem < ActiveRecord::Migration[6.1]
       t.string :lease_yardi_id, null: true
       t.boolean :occupied, null: true
       
-      t.references :primary_lease_coverage_entry, null: true
+      t.references :primary_lease_coverage_entry, null: true, index: false # stupid name nonsense
       
       t.jsonb :error_info, null: true
       # no timestamps
@@ -75,7 +75,8 @@ class CreateCoverageReportSystem < ActiveRecord::Migration[6.1]
     add_index :reporting_unit_coverage_entries, [:report_time, :insurable_id], name: "index_ruce_on_rt_and_ii", unique: true
     add_index :reporting_unit_coverage_entries, [:report_time, :coverage_status_exact], name: "index_ruce_on_rt_and_cse", unique: false
     add_index :reporting_unit_coverage_entries, [:report_time, :coverage_status_any], name: "index_ruce_on_rt_and_css", unique: false
-    add_index :reporting_unit_coverage_entries, [:report_time, :lessee_count], name: "index_ruce_on_rt_and_lc", unique: false
+    add_index :reporting_unit_coverage_entries, [:report_time, :occupied], name: "index_ruce_on_o", unique: false
+    add_index :reporting_unit_coverage_entries, :primary_lease_coverage_entry_id, name: "index_ruce_on_plcei", unique: false
     
     create_table :reporting_coverage_entry_links do |t| # links from entries to unit entries
       t.references :parent
@@ -85,7 +86,8 @@ class CreateCoverageReportSystem < ActiveRecord::Migration[6.1]
     add_index :reporting_coverage_entry_links, [:parent_id, :child_id], name: "index_rcel_on_pi_and_ci", unique: true
 
     create_table :reporting_lease_coverage_entries do |t|
-      t.references :unit_coverage_entry, null: false
+      t.references :coverage_report, null: false, index: false # too long
+      t.references :unit_coverage_entry, null: false, index: false # too long
       t.references :lease, null: false
       t.integer :status, null: false
       t.integer :lessee_count, null: false, default: 0
@@ -93,9 +95,12 @@ class CreateCoverageReportSystem < ActiveRecord::Migration[6.1]
       t.integer :coverage_status_exact
       t.integer :coverage_status_any
     end
+    add_index :reporting_lease_coverage_entries, :coverage_report_id, name: "index_lce_on_cri", unique: false
+    add_index :reporting_lease_coverage_entries, :unit_coverage_entry_id, name: "index_lce_on_ucei", unique: false
 
     create_table :reporting_lease_user_coverage_entries do |t|
-      t.references :lease_user
+      t.references :coverage_report, null: false, index: false # too long
+      t.references :lease_user, index: false, index: false # too long
       t.datetime :report_time, null: false
       
       t.boolean :lessee, null: false
@@ -111,10 +116,13 @@ class CreateCoverageReportSystem < ActiveRecord::Migration[6.1]
       t.integer :coverage_status_exact, null: false
       
       t.references :lease_coverage_entry, index: false # stupid BS about default index name length -__-
-      t.references :account
+      t.references :account, index: false # too long
     end
+    add_index :reporting_lease_user_coverage_entries, :coverage_report_id, name: "index_luce_on_cri", unique: false
     add_index :reporting_lease_user_coverage_entries, :lease_coverage_entry_id, name: "index_luce_on_lce_id", unique: false
-    add_index :reporting_lease_user_coverage_entries, :unit_coverage_entry_id, name: "index_luce_on_uce_id", unique: false
+    add_index :reporting_lease_user_coverage_entries, :account_id, name: "index_luce_on_uce_ai", unique: false
+    add_index :reporting_lease_user_coverage_entries, :lease_user_id, name: "index_luce_on_uce_lui", unique: false
+    
     
   end
 end
