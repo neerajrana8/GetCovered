@@ -119,7 +119,7 @@ class CreateCoverageReportSystem < ActiveRecord::Migration[6.1]
       
       t.references :lease_coverage_entry, index: false # too long
     end
-    add_index :reporting_lease_coverage_entries, [:report_time, :lease_user_id], name: "index_rluce_on_rt_and_lui", unique: true
+    add_index :reporting_lease_user_coverage_entries, [:report_time, :lease_user_id], name: "index_rluce_on_rt_and_lui", unique: true
     add_index :reporting_lease_user_coverage_entries, :lease_coverage_entry_id, name: "index_rluce_on_lce_id", unique: false
     add_index :reporting_lease_user_coverage_entries, [:account_id, :report_time], name: "index_rluce_on_uce_ai)and_rt", unique: false
     add_index :reporting_lease_user_coverage_entries, :lease_user_id, name: "index_rluce_on_uce_lui", unique: false

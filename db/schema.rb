@@ -1814,7 +1814,8 @@ ActiveRecord::Schema.define(version: 2023_03_13_202623) do
   end
 
   create_table "reporting_lease_coverage_entries", force: :cascade do |t|
-    t.bigint "coverage_report_id", null: false
+    t.datetime "report_time", null: false
+    t.bigint "account_id"
     t.bigint "unit_coverage_entry_id", null: false
     t.bigint "lease_id", null: false
     t.integer "status", null: false
@@ -1822,15 +1823,16 @@ ActiveRecord::Schema.define(version: 2023_03_13_202623) do
     t.string "yardi_id"
     t.integer "coverage_status_exact"
     t.integer "coverage_status_any"
-    t.index ["coverage_report_id"], name: "index_lce_on_cri"
+    t.index ["account_id", "report_time"], name: "index_rlce_on_a_and_rt"
     t.index ["lease_id"], name: "index_reporting_lease_coverage_entries_on_lease_id"
+    t.index ["report_time", "lease_id"], name: "index_rlce_on_rt_and_li", unique: true
     t.index ["unit_coverage_entry_id"], name: "index_lce_on_ucei"
   end
 
   create_table "reporting_lease_user_coverage_entries", force: :cascade do |t|
-    t.bigint "coverage_report_id", null: false
-    t.bigint "lease_user_id"
     t.datetime "report_time", null: false
+    t.bigint "account_id"
+    t.bigint "lease_user_id"
     t.boolean "lessee", null: false
     t.boolean "current", null: false
     t.string "first_name", null: false
@@ -1841,12 +1843,11 @@ ActiveRecord::Schema.define(version: 2023_03_13_202623) do
     t.string "policy_number"
     t.integer "coverage_status_exact", null: false
     t.bigint "lease_coverage_entry_id"
-    t.bigint "account_id"
-    t.index ["account_id"], name: "index_luce_on_uce_ai"
-    t.index ["coverage_report_id"], name: "index_luce_on_cri"
-    t.index ["lease_coverage_entry_id"], name: "index_luce_on_lce_id"
-    t.index ["lease_user_id"], name: "index_luce_on_uce_lui"
+    t.index ["account_id", "report_time"], name: "index_rluce_on_uce_ai)and_rt"
+    t.index ["lease_coverage_entry_id"], name: "index_rluce_on_lce_id"
+    t.index ["lease_user_id"], name: "index_rluce_on_uce_lui"
     t.index ["policy_id"], name: "index_reporting_lease_user_coverage_entries_on_policy_id"
+    t.index ["report_time", "lease_user_id"], name: "index_rluce_on_rt_and_lui", unique: true
   end
 
   create_table "reporting_policy_entries", force: :cascade do |t|
