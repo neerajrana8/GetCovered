@@ -4,9 +4,9 @@ module Reporting
     include Reporting::CoverageDetermining # provides COVERAGE_STATUSES enum setup
     
     belongs_to :lease_user
-    belongs_to :unit_coverage_entry,
-      class_name: "Reporting::UnitCoverageEntry",
-      foreign_key: :unit_coverage_entry_id,
+    belongs_to :lease_coverage_entry,
+      class_name: "Reporting::LeaseCoverageEntry",
+      foreign_key: :lease_coverage_entry_id,
       inverse_of: :lease_user_coverage_entries
     belongs_to :account
     belongs_to :policy,
@@ -45,8 +45,8 @@ module Reporting
       self.account_id ||= self.lease_user.lease.account_id
     end
 
-    def prepare # only unit_coverage_entry and lease_user need to be provided
-      self.report_time = self.unit_coverage_entry.report_time
+    def prepare # only lease_coverage_entry and lease_user need to be provided
+      self.report_time = self.lease_coverage_entry.unit_coverage_entry.report_time
       lease = self.lease_user.lease
       
       self.account_id = self.lease_user.lease.account_id

@@ -8,6 +8,9 @@ module Reporting
     
     belongs_to :insurable
     belongs_to :lease, optional: true
+    belongs_to :primary_lease_coverage_entry, optional: true,
+      class_name: "Reporting::LeaseCoverageEntry",
+      foreign_key: :primary_lease_coverage_entry_id
     
     has_many :links,
       class_name: "Reporting::CoverageEntryLink",
@@ -17,16 +20,18 @@ module Reporting
       class_name: "Reporting::CoverageEntry",
       through: :links,
       source: :parent
+    has_many :lease_coverage_entries,
+      class_name: "Reporting::LeaseCoverageEntry",
+      inverse_of: :lease_coverage_entry,
+      foreign_key: :lease_coverage_entry_id
     has_many :lease_user_coverage_entries,
       class_name: "Reporting::LeaseUserCoverageEntry",
-      inverse_of: :unit_coverage_entry,
-      foreign_key: :unit_coverage_entry_id
+      through: :lease_coverage_entries,
+      source: :lease_user_coverage_entries
       
     before_create :prepare
     
     enum coverage_status_any: COVERAGE_STATUSES,
-      _prefix: true
-    enum coverage_status_numeric: COVERAGE_STATUSES,
       _prefix: true
     enum coverage_status_exact: COVERAGE_STATUSES,
       _prefix: true
@@ -60,10 +65,6 @@ module Reporting
       self.street_address ||= self.insurable.primary_address&.full || ""
       self.unit_number ||= self.insurable.title
       self.yardi_id ||= self.insurable.integration_profiles.where("external_context ILIKE '%unit_in_community_%'").take&.external_id
-      self.lease_id ||= self.insurable.leases.current.order(start_date: :desc, created_at: :desc).first&.id
-      self.lease_yardi_id ||= self.lease&.integration_profiles&.where(external_context: 'lease')&.take&.external_id
-      lessee_ids = self.lease.nil? ? [] : self.lease.active_lease_users(lessee: true).pluck(:user_id).uniq
-      self.lessee_count = lessee_ids.count
     end
 
     def generate!
@@ -71,40 +72,24 @@ module Reporting
     end
     
     def generate(bang: false)
-      return if !self.coverage_status_exact.nil? # MOOSE WARNING: should probably introduce a stupid status column or something
+      return if !self.coverage_status_exact.nil? # means we haven't run generate! yet
       today = self.report_time.to_date
-      # get lease user entries ready
-      luces = []
-      auditable_luces = []
-      begin
-        (self.lease&.active_lease_users(today, allow_future: true) || []).each do |alu|
-          luce = (LeaseUserCoverageEntry.where(unit_coverage_entry: self, lease_user: alu).take || LeaseUserCoverageEntry.create!(unit_coverage_entry: self, lease_user: alu))
-          if (self.lease.status == 'pending' || alu.is_current?(today))
-            luces.push(luce)
-          end
+      # get lease entries ready
+      self.insurable.leases.where(defunct: false).where.not(status: 'expired').where.not(id: self.lease_coverage_entries.pluck(:lease_id)).each do |mister_lease|
+        begin
+          lce = self.lease_coverage_entries.create!(unit_coverage_entry: self, lease: mister_lease)
+          lce.generate!
+        rescue StandardError => e
+          raise # MOOSE WARNING: respect the bang, fool!
         end
-      rescue ActiveRecord::RecordInvalid => e
-        raise # MOOSE WARNING: should respect bang probably...
       end
-      auditable_luces = luces.select{|luce| luce.lessee && luce.current }
-      # coverage_status_any
-      self.coverage_status_any = luces.sort_by{|luce| COVERAGE_STATUSES_ORDER.find_index(luce.coverage_status_exact) }.first&.coverage_status_exact || "none"
-      # coverage_status_exact
-      self.coverage_status_exact = (
-        if auditable_luces.all?{|luce| luce.coverage_status_exact == 'internal_or_external' }
-          'internal_or_external'
-        elsif auditable_luces.all?{|luce| ['internal_or_external', 'internal'].include?(luce.coverage_status_exact) }
-          'internal'
-        elsif auditable_luces.all?{|luce| ['internal_or_external', 'external'].include?(luce.coverage_status_exact) }
-          'external'
-        elsif auditable_luces.all?{|luce| ['internal_or_external', 'internal', 'external'].include?(luce.coverage_status_exact) }
-          'internal_and_external'
-        elsif auditable_luces.all?{|luce| ['master', 'internal_or_external', 'internal', 'external'].include?(luce.coverage_status_exact) }
-          'master'
-        else
-          'none'
-        end
-      )
+      # set stuff
+      self.primary_lease_coverage_entry = self.lease_coverage_entries.reload.where(lease_id: self.latest_lease&.id).take
+      self.lease_yardi_id = self.primary_lease_coverage_entry&.yardi_id
+      self.coverage_status_exact = self.primary_lease_coverage_entry&.coverage_status_exact
+      self.coverage_status_any = self.primary_lease_coverage_entry&.coverage_status_any
+      self.occupied = (!self.primary_lease_coverage_entry.nil? && self.primary_lease_coverage_entry.lessee_count != 0)
+      # done!
       bang ? self.save! : self.save
     end # end generate()
 

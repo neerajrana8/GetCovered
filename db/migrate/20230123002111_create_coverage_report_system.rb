@@ -64,10 +64,10 @@ class CreateCoverageReportSystem < ActiveRecord::Migration[6.1]
       
       t.integer :coverage_status_exact # :none, :internal, :external, :master, :internal_and_external, :internal_or_external
       t.integer :coverage_status_any # :none, :internal, :external, :master, :internal_and_external, :internal_or_external
-      
-      t.references :lease, null: true
-      t.integer :lessee_count, null: false, default: 0
       t.string :lease_yardi_id, null: true
+      t.boolean :occupied, null: true
+      
+      t.references :primary_lease_coverage_entry, null: true
       
       t.jsonb :error_info, null: true
       # no timestamps
@@ -83,7 +83,17 @@ class CreateCoverageReportSystem < ActiveRecord::Migration[6.1]
       t.boolean :direct, null: false, default: true
     end
     add_index :reporting_coverage_entry_links, [:parent_id, :child_id], name: "index_rcel_on_pi_and_ci", unique: true
-    
+
+    create_table :reporting_lease_coverage_entries do |t|
+      t.references :unit_coverage_entry, null: false
+      t.references :lease, null: false
+      t.integer :status, null: false
+      t.integer :lessee_count, null: false, default: 0
+      t.string :yardi_id
+      t.integer :coverage_status_exact
+      t.integer :coverage_status_any
+    end
+
     create_table :reporting_lease_user_coverage_entries do |t|
       t.references :lease_user
       t.datetime :report_time, null: false
@@ -100,9 +110,10 @@ class CreateCoverageReportSystem < ActiveRecord::Migration[6.1]
       
       t.integer :coverage_status_exact, null: false
       
-      t.references :unit_coverage_entry, index: false # stupid BS about default index name length -__-
+      t.references :lease_coverage_entry, index: false # stupid BS about default index name length -__-
       t.references :account
     end
+    add_index :reporting_lease_user_coverage_entries, :lease_coverage_entry_id, name: "index_luce_on_lce_id", unique: false
     add_index :reporting_lease_user_coverage_entries, :unit_coverage_entry_id, name: "index_luce_on_uce_id", unique: false
     
   end

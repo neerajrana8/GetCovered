@@ -3,9 +3,9 @@ json.extract! unit_coverage_entry,
   :insurable_id, :report_time,
   :street_address, :unit_number,
   :yardi_id,
-  :lease_id,
+  :occupied,
   :lease_yardi_id,
-  :lessee_count
+  :primary_lease_coverage_id
 
 
 if @determinant

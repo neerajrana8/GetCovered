@@ -46,12 +46,9 @@ module V2
             street_address: [:scalar, :array, :like],
             unit_number: [:scalar, :array, :like],
             yardi_id: [:scalar, :array, :like],
-            lease_id: [:scalar, :array],
-            lessee_count: [:scalar, :array, :interval],
             lease_yardi_id: [:scalar, :array, :like],
-            
+            occupied: [:scalar],
             coverage_status_exact: [:scalar, :array],
-            coverage_status_numeric: [:scalar, :array],
             coverage_status_any: [:scalar, :array]
           }
         end

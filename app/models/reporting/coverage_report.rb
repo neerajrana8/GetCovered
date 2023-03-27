@@ -50,10 +50,15 @@ module Reporting
       class_name: "Reporting::UnitCoverageEntry",
       through: :coverage_entries,
       source: :unit_coverage_entries
+      
+    has_many :lease_coverage_entries,
+      class_name: "Reporting::LeaseCoverageEntry",
+      through: :unit_coverage_entries,
+      source: :lease_coverage_entries
 
     has_many :lease_user_coverage_entries,
       class_name: "Reporting::LeaseUserCoverageEntry",
-      through: :unit_coverage_entries,
+      through: :lease_coverage_entries,
       source: :lease_user_coverage_entries
     
     before_create :set_coverage_determinant
@@ -209,6 +214,29 @@ module Reporting
               { title: "Policy", sortable: true, apiIndex: "policy_number" }
             ].compact
           },
+          {
+            title: "Leases",
+            endpoint: "/v2/reporting/coverage-reports/#{self.id}/lease-entries",
+            fixed_filters: {},
+            unique: ["id"],
+            columns: [
+              { title: "id", apiIndex: "id", invisible: true },
+              { title: "unit_coverage_entry_id", apiIndex: "unit_coverage_entry_id", invisible: true },
+              { title: "lease_id", apiIndex: "lease_id", invisible: true },
+              show_yardi ? { title: "Yardi ID", sortable: true, apiIndex: "yardi_id", filters: ['scalar', 'vector', 'like'] } : nil,
+              { title: "Status", apiIndex: "status", data_type: "enum",
+                enum_values: ::Lease.statuses.keys,
+                format: ::Lease.statuses.keys.map{|s| s.titlecase },
+                filters: ['scalar', 'vector']
+              },
+              { title: "# Lessees", sortable: true, apiIndex: "lessee_count", data_type: "integer", filters: ['scalar', 'vector', 'interval'] },
+              { title: "Coverage", sortable: true, apiIndex: "coverage_status", data_type: "enum",
+                enum_values: visible_enum_values,
+                format: visible_enum_values.map{|vev| vev.titlecase },
+                filters: ['scalar', 'vector']
+              }
+            ]
+          },
           !show_insurables ? nil : {
             title: "Units",
             endpoint: "/v2/reporting/coverage-reports/#{self.id}/unit-entries",
@@ -216,6 +244,7 @@ module Reporting
             unique: ["id"],
             columns: [
               { title: "id", apiIndex: "id", invisible: true },
+              { title: "primary_lease_coverage_entry_id", apiIndex: "primary_lease_coverage_entry_id", invisible: true },
               { title: "Address", sortable: true, apiIndex: "street_address", filters: ['scalar', 'vector', 'like'] },
               { title: "Unit", sortable: true, apiIndex: "unit_number", filters: ['scalar', 'vector', 'like'] },
               { title: "Coverage", sortable: true, apiIndex: "coverage_status", data_type: "enum",
@@ -223,7 +252,7 @@ module Reporting
                 format: visible_enum_values.map{|vev| vev.titlecase },
                 filters: ['scalar', 'vector']
               },
-              { title: "# Lessees", sortable: true, apiIndex: "lessee_count", data_type: "integer", filters: ['scalar', 'vector', 'interval'] }
+              { title: "Occupied", sortable: true, apiIndex: "occupied", data_type: "boolean", filters: ['scalar'] }
             ].compact
           },
           !show_insurables ? nil : {
@@ -245,6 +274,7 @@ module Reporting
             unique: ["id"],
             columns: [
               { title: "id", apiIndex: "id", invisible: true },
+              { title: "primary_lease_coverage_entry_id", apiIndex: "primary_lease_coverage_entry_id", invisible: true },
               { title: "Address", sortable: true, apiIndex: "street_address", filters: ['scalar', 'like'] },
               { title: "Unit", sortable: true, apiIndex: "yardi_id", filters: ['scalar', 'vector', 'like'] },
               { title: "Yardi Lease", sortable: true, apiIndex: "lease_yardi_id", filters: ['scalar', 'vector', 'like'] },
@@ -253,7 +283,7 @@ module Reporting
                 format: visible_enum_values.map{|vev| vev.titlecase },
                 filters: ['scalar', 'vector']
               },
-              { title: "# Lessees", sortable: true, apiIndex: "lessee_count", data_type: "integer", filters: ['scalar', 'interval'] }
+              { title: "Occupied", sortable: true, apiIndex: "occupied", data_type: "boolean", filters: ['scalar'] }
             ].compact
           },
           !show_yardi ? nil : {
@@ -302,13 +332,13 @@ module Reporting
             direct_access: true
           }
         ].compact,
-        subreport_links: [
+        subreport_links: (['Units', 'Yardi Units'].map do |orig|
           {
             title: "Residents",
-            origin: "Units",
+            origin: orig,
             destination: "Residents",
             fixed_filters: {
-              parent_id: "id"
+              lease_coverage_entry_id: "primary_lease_coverage_entry_id"
             },
             copied_columns: [
               "Address",
@@ -316,11 +346,24 @@ module Reporting
             ]
           },
           {
+            title: "Leases",
+            origin: orig,
+            destination: "Leases",
+            fixed_filters: {
+              unit_coverage_entry_id: "id"
+            },
+            copied_columns: [
+              "Address",
+              "Unit"
+            ]
+          },
+        ] + [
+          {
             title: "Residents",
-            origin: "Yardi Units",
+            origin: "Leases",
             destination: "Residents",
             fixed_filters: {
-              parent_id: "id"
+              lease_coverage_entry_id: "id"
             },
             copied_columns: [
               "Address",
@@ -396,8 +439,9 @@ module Reporting
             },
             copied_columns: []
           }
-        ]
+        ])
       }
+      # filter out links to/from any pages we didn't make available
       dat_manifest[:subreport_links].select!{|link| dat_manifest[:subreports].any?{|sr| sr[:title] == link[:origin] } && dat_manifest[:subreports].any?{|sr| sr[:title] == link[:destination] } }
       return(dat_manifest)
     end

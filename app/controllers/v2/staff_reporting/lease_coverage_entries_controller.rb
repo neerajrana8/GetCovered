@@ -3,13 +3,13 @@
 
 module V2
   module StaffReporting
-    class LeaseUserCoverageEntriesController < StaffReportingController
+    class LeaseCoverageEntriesController < StaffReportingController
       
       before_action :set_coverage_report, only: [:index]
       before_action :set_parent, only: [:index]
     
       def index
-        super(:@lease_user_coverage_entries, @parent.nil? ? @coverage_report.lease_user_coverage_entries : @parent.lease_user_coverage_entries)
+        super(:@lease_coverage_entries, @coverage_report.lease_coverage_entries)
       end
       
       
@@ -22,13 +22,13 @@ module V2
           ).take || (raise StandardError.new("Invalid Reporting::CoverageReport ##{params[:coverage_report_id].to_i} request by Account ##{@organizable ? @organizable.id : "N/A (EMPEROR)"}, Staff ID ##{current_staff.id}!"))
           # these are used in the views
           @expand_ho4 = @coverage_report.expand_ho4?
-          @determinant = 'exact'
+          @determinant = @coverage_report.coverage_determinant
           @simplify_status = !@organizable.nil? && !params[:client_view]
         end
-      
+        
         def set_parent
           # just makes things a bit more efficient
-          @parent = (params[:filter].blank? || params[:filter][:lease_coverage_entry_id].nil?) ? nil : access_model(Reporting::LeaseCoverageEntry, params[:filter][:lease_coverage_entry_id].to_i)
+          @parent = (params[:filter].blank? || params[:filter][:unit_coverage_entry_id].nil?) ? nil : access_model(Reporting::UnitCoverageEntry, params[:filter][:unit_coverage_entry_id].to_i)
         end
         
         def fixed_filters
@@ -41,19 +41,14 @@ module V2
         
         def supported_filters
           {
-            lease_user_id: [:scalar, :array],
-            lessee: [:scalar],
-            current: [:scalar],
-            report_time: [:scalar, :array, :interval],
-            first_name: [:scalar, :array, :like],
-            last_name: [:scalar, :array, :like],
-            email: [:scalar, :array, :like],
+            id: [:scalar, :array],
+            unit_coverage_entry_id: [:scalar, :array],
             yardi_id: [:scalar, :array, :like],
-            policy_id: [:scalar, :array],
-            policy_number: [:scalar, :array, :like],
+            lease_id: [:scalar, :array],
+            lessee_count: [:scalar, :array, :interval],
+            status: [:scalar, :array],
             coverage_status_exact: [:scalar, :array],
-            lease_coverage_entry_id: [:scalar, :array],
-            account_id: [:scalar, :array]
+            coverage_status_any: [:scalar, :array]
           }
         end
         
@@ -83,7 +78,7 @@ module V2
             if k == 'coverage_status'
               ["coverage_status_#{@determinant}", v]
             else
-              if !@organizable.nil? && ['coverage_status_exact', 'coverage_status_numeric', 'coverage_status_any'].include?(k)
+              if !@organizable.nil? && ['coverage_status_exact', 'coverage_status_any'].include?(k)
                 nil
               else
                 [k,v]
@@ -106,7 +101,7 @@ module V2
         end
         
         def view_path
-          'v2/shared/reporting/lease_user_coverage_entries'
+          'v2/shared/reporting/lease_coverage_entries'
         end
         
         def v2_should_render

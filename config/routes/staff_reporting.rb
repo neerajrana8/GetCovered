@@ -12,12 +12,24 @@ scope module: :staff_reporting, path: "reporting" do
   post :unit_coverage_entries,
     to: "unit_coverage_entries#index",
     path: "coverage-reports/:coverage_report_id/unit-entries"
+  post :unit_coverage_entries,
+    to: "lease_coverage_entries#index",
+    path: "coverage-reports/:coverage_report_id/lease-entries"
   post :lease_user_coverage_entries,
     to: "lease_user_coverage_entries#index",
     path: "coverage-reports/:coverage_report_id/lease-user-entries"
   post :latest_coverage_report,
     to: "coverage_reports#latest",
     path: "latest/coverage-report"
+
+  # for fake coverage reports
+
+  post :latest_lease_report,
+    to: "lease_coverage_entries#fake_report",
+    path: "latest/lease-report"
+  post :latest_lease_user_report,
+    to: "lease_user_coverage_entries#fake_report",
+    path: "latest/resident-report"
 
   # for policy reports
   
