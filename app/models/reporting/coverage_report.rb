@@ -333,31 +333,33 @@ module Reporting
           }
         ].compact,
         subreport_links: (['Units', 'Yardi Units'].map do |orig|
-          {
-            title: "Residents",
-            origin: orig,
-            destination: "Residents",
-            fixed_filters: {
-              lease_coverage_entry_id: "primary_lease_coverage_entry_id"
+          [
+            {
+              title: "Residents",
+              origin: orig,
+              destination: "Residents",
+              fixed_filters: {
+                lease_coverage_entry_id: "primary_lease_coverage_entry_id"
+              },
+              copied_columns: [
+                "Address",
+                "Unit"
+              ]
             },
-            copied_columns: [
-              "Address",
-              "Unit"
-            ]
-          },
-          {
-            title: "Leases",
-            origin: orig,
-            destination: "Leases",
-            fixed_filters: {
-              unit_coverage_entry_id: "id"
-            },
-            copied_columns: [
-              "Address",
-              "Unit"
-            ]
-          },
-        ] + [
+            {
+              title: "Leases",
+              origin: orig,
+              destination: "Leases",
+              fixed_filters: {
+                unit_coverage_entry_id: "id"
+              },
+              copied_columns: [
+                "Address",
+                "Unit"
+              ]
+            }
+          ]
+        end.flatten + [
           {
             title: "Residents",
             origin: "Leases",
