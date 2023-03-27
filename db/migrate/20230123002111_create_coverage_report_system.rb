@@ -105,8 +105,6 @@ class CreateCoverageReportSystem < ActiveRecord::Migration[6.1]
       t.references :account, index: false # too long
       
       t.references :lease_user, index: false, index: false # too long
-      t.datetime :report_time, null: false
-      
       t.boolean :lessee, null: false
       t.boolean :current, null: false
       t.string :first_name, null: false
