@@ -134,7 +134,7 @@ module V2
           end
 
         else
-          render json: standard_error(:policy_in_system_violation, 'Policy in system violation'), status: 401
+          render json: standard_error(:policy_in_system_violation, 'Policy in system violation'), status: 400
         end
       end
 
