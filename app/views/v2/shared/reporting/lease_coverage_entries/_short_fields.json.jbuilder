@@ -4,6 +4,7 @@ json.extract! lease_coverage_entry,
   :lease_id,
   :status,
   :lessee_count,
-  :yardi_id
+  :yardi_id,
+  :account_id
 
 json.coverage_status lease_coverage_entry.coverage_status(@determinant, expand_ho4: @expand_ho4, simplify: @simplify_status)

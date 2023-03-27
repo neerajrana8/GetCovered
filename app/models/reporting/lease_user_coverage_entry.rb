@@ -46,8 +46,9 @@ module Reporting
     end
 
     def prepare # only lease_coverage_entry and lease_user need to be provided
-      self.report_time = self.lease_coverage_entry.unit_coverage_entry.report_time
+      self.report_time = self.lease_coverage_entry.report_time
       lease = self.lease_user.lease
+      self.account_id = lease.account_id
       
       self.account_id = self.lease_user.lease.account_id
       self.lessee = self.lease_user.lessee

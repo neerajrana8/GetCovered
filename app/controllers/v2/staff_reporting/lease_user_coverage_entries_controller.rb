@@ -41,6 +41,8 @@ module V2
         
         def supported_filters
           {
+            report_time: [:scalar, :array, :interval],
+            account_id: [:scalar, :array],
             lease_user_id: [:scalar, :array],
             lessee: [:scalar],
             current: [:scalar],
@@ -52,8 +54,7 @@ module V2
             policy_id: [:scalar, :array],
             policy_number: [:scalar, :array, :like],
             coverage_status_exact: [:scalar, :array],
-            lease_coverage_entry_id: [:scalar, :array],
-            account_id: [:scalar, :array]
+            lease_coverage_entry_id: [:scalar, :array]
           }
         end
         

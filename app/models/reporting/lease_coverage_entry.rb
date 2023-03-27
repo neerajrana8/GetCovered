@@ -46,6 +46,8 @@ module Reporting
     
     # only :unit_coverage_entry_id and :lease_id need to be provided by the user
     def prepare
+      self.report_time = self.unit_coverage_entry.report_time
+      self.account_id = self.lease.account_id
       self.yardi_id = self.lease.integration_profiles.references(:integrations).includes(:integration).where(
         integrations: { integratable_type: "Account", integratable_id: self.lease.account_id },
         external_context: "lease"

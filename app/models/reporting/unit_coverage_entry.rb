@@ -22,7 +22,7 @@ module Reporting
       source: :parent
     has_many :lease_coverage_entries,
       class_name: "Reporting::LeaseCoverageEntry",
-      inverse_of: :lease_coverage_entry,
+      inverse_of: :unit_coverage_entry,
       foreign_key: :unit_coverage_entry_id
     has_many :lease_user_coverage_entries,
       class_name: "Reporting::LeaseUserCoverageEntry",

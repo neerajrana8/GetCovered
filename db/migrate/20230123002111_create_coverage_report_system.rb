@@ -86,7 +86,8 @@ class CreateCoverageReportSystem < ActiveRecord::Migration[6.1]
     add_index :reporting_coverage_entry_links, [:parent_id, :child_id], name: "index_rcel_on_pi_and_ci", unique: true
 
     create_table :reporting_lease_coverage_entries do |t|
-      t.references :coverage_report, null: false, index: false # too long
+      t.datetime :report_time, null: false
+      t.references :account, null: true, index: false # too long
       t.references :unit_coverage_entry, null: false, index: false # too long
       t.references :lease, null: false
       t.integer :status, null: false
@@ -95,11 +96,14 @@ class CreateCoverageReportSystem < ActiveRecord::Migration[6.1]
       t.integer :coverage_status_exact
       t.integer :coverage_status_any
     end
-    add_index :reporting_lease_coverage_entries, :coverage_report_id, name: "index_lce_on_cri", unique: false
+    add_index :reporting_lease_coverage_entries, [:report_time, :lease_id], name: "index_rlce_on_rt_and_li", unique: true
+    add_index :reporting_lease_coverage_entries, [:account, :report_time], name: "index_rlce_on_a_and_rt", unique: false
     add_index :reporting_lease_coverage_entries, :unit_coverage_entry_id, name: "index_lce_on_ucei", unique: false
 
     create_table :reporting_lease_user_coverage_entries do |t|
-      t.references :coverage_report, null: false, index: false # too long
+      t.datetime :report_time, null: false
+      t.references :account, index: false # too long
+      
       t.references :lease_user, index: false, index: false # too long
       t.datetime :report_time, null: false
       
@@ -115,13 +119,12 @@ class CreateCoverageReportSystem < ActiveRecord::Migration[6.1]
       
       t.integer :coverage_status_exact, null: false
       
-      t.references :lease_coverage_entry, index: false # stupid BS about default index name length -__-
-      t.references :account, index: false # too long
+      t.references :lease_coverage_entry, index: false # too long
     end
-    add_index :reporting_lease_user_coverage_entries, :coverage_report_id, name: "index_luce_on_cri", unique: false
-    add_index :reporting_lease_user_coverage_entries, :lease_coverage_entry_id, name: "index_luce_on_lce_id", unique: false
-    add_index :reporting_lease_user_coverage_entries, :account_id, name: "index_luce_on_uce_ai", unique: false
-    add_index :reporting_lease_user_coverage_entries, :lease_user_id, name: "index_luce_on_uce_lui", unique: false
+    add_index :reporting_lease_coverage_entries, [:report_time, :lease_user_id], name: "index_rluce_on_rt_and_lui", unique: true
+    add_index :reporting_lease_user_coverage_entries, :lease_coverage_entry_id, name: "index_rluce_on_lce_id", unique: false
+    add_index :reporting_lease_user_coverage_entries, [:account_id, :report_time], name: "index_rluce_on_uce_ai)and_rt", unique: false
+    add_index :reporting_lease_user_coverage_entries, :lease_user_id, name: "index_rluce_on_uce_lui", unique: false
     
     
   end
