@@ -77,7 +77,7 @@ module Reporting
       # get lease entries ready
       self.insurable.leases.where(defunct: false).where.not(status: 'expired').where.not(id: self.lease_coverage_entries.pluck(:lease_id)).each do |mister_lease|
         begin
-          lce = self.lease_coverage_entries.create!(unit_coverage_entry: self, lease: mister_lease)
+          lce = self.lease_coverage_entries.where(lease: mister_lease).take || self.lease_coverage_entries.create!(lease: mister_lease)
           lce.generate!
         rescue StandardError => e
           raise # MOOSE WARNING: respect the bang, fool!

@@ -66,13 +66,13 @@ module Reporting
       # get lease user entries ready
       luces = []
       auditable_luces = []
-      begin
-        (self.lease.active_lease_users(today, allow_future: true) || []).each do |alu|
-          luce = (LeaseUserCoverageEntry.where(lease_coverage_entry: self, lease_user: alu).take || LeaseUserCoverageEntry.create!(lease_coverage_entry: self, lease_user: alu))
+      (self.lease.active_lease_users(today, allow_future: true) || []).each do |alu|
+        begin
+          luce = (LeaseUserCoverageEntry.where(lease_coverage_entry: self, lease_user: alu).take || LeaseUserCoverageEntry.create!(lease_coverage_entry: self, lease_user: alu))          
           luces.push(luce)
+        rescue ActiveRecord::RecordInvalid => e
+          raise # MOOSE WARNING: should respect bang probably...
         end
-      rescue ActiveRecord::RecordInvalid => e
-        raise # MOOSE WARNING: should respect bang probably...
       end
       auditable_luces = luces.select{|luce| luce.lessee && (self.status == 'pending' || luce.current) }
       # coverage_status_any
