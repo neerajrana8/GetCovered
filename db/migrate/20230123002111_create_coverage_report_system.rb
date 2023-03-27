@@ -97,7 +97,7 @@ class CreateCoverageReportSystem < ActiveRecord::Migration[6.1]
       t.integer :coverage_status_any
     end
     add_index :reporting_lease_coverage_entries, [:report_time, :lease_id], name: "index_rlce_on_rt_and_li", unique: true
-    add_index :reporting_lease_coverage_entries, [:account, :report_time], name: "index_rlce_on_a_and_rt", unique: false
+    add_index :reporting_lease_coverage_entries, [:account_id, :report_time], name: "index_rlce_on_a_and_rt", unique: false
     add_index :reporting_lease_coverage_entries, :unit_coverage_entry_id, name: "index_lce_on_ucei", unique: false
 
     create_table :reporting_lease_user_coverage_entries do |t|
