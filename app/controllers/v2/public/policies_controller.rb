@@ -118,6 +118,8 @@ module V2
             @policy.policy_coverages.where.not(id: @policy.policy_coverages.order(id: :asc).last.id).each do |coverage|
               coverage.destroy
             end
+            result = ::Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes]&.values)
+            @policy.reload
 
             #TODO: temp test need to remove according to GCVR2-1197
             if Rails.env.development? or ENV['RAILS_ENV'] == 'awsdev'
