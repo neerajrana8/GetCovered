@@ -389,7 +389,7 @@ class Insurable < ApplicationRecord
             return { error_type: :invalid_community, message: "The requested residential building/community does not exist" }
           end
           community = (results.parent_community || results)
-          community.primary_addres.update(neighborhood: neighborhood) if !neighborhood.blank? && community.primary_address.neighborhood.blank?
+          community.primary_address.update(neighborhood: neighborhood) if !neighborhood.blank? && community.primary_address.neighborhood.blank?
           unit = results.insurables.new(
             title: unit_title == :titleless ? nil : unit_title,
             insurable_type: ::InsurableType.where(title: "Residential Unit").take,
