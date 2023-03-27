@@ -8,7 +8,8 @@ module Reporting
       class_name: "Reporting::LeaseCoverageEntry",
       foreign_key: :lease_coverage_entry_id,
       inverse_of: :lease_user_coverage_entries
-    belongs_to :account
+    belongs_to :account,
+      optional: true
     belongs_to :policy,
       optional: true
     

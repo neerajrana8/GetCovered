@@ -6,14 +6,23 @@ module Reporting
     self.table_name = "reporting_lease_coverage_entries"
     include Reporting::CoverageDetermining # provides COVERAGE_STATUSES enum setup
       
+    belongs_to :lease
+    
+    belongs_to :account,
+      optional: true
+    
     belongs_to :unit_coverage_entry,
       class_name: "Reporting::UnitCoverageEntry",
       inverse_of: :lease_coverage_entries,
       foreign_key: :unit_coverage_entry_id
-
-    belongs_to :lease
-      
-    before_create :prepare
+    
+    has_many :lease_user_coverage_entries,
+      class_name: "Reporting::LeaseUserCoverageEntry",
+      inverse_of: :lease_coverage_entry,
+      foreign_key: :lease_coverage_entry_id
+    
+    before_validation :prepare,
+      on: :create
     
     enum status: ::Lease.statuses,
       _prefix: true
@@ -53,7 +62,7 @@ module Reporting
         external_context: "lease"
       ).take&.external_id
       self.status = self.lease.status
-      self.lessee_count = self.lease.active_lease_users(self.unit_coverage_entry.report_time.to_date, lessee: true)
+      self.lessee_count = self.lease.active_lease_users(self.unit_coverage_entry.report_time.to_date, lessee: true).count || 0
     end
 
     def generate!
