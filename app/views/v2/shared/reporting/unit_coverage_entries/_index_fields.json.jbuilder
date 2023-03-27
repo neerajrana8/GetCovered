@@ -5,7 +5,7 @@ json.extract! unit_coverage_entry,
   :yardi_id,
   :occupied,
   :lease_yardi_id,
-  :primary_lease_coverage_id
+  :primary_lease_coverage_entry_id
 
 
 if @determinant

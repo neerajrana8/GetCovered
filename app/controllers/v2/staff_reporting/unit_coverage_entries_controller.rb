@@ -49,7 +49,8 @@ module V2
             lease_yardi_id: [:scalar, :array, :like],
             occupied: [:scalar],
             coverage_status_exact: [:scalar, :array],
-            coverage_status_any: [:scalar, :array]
+            coverage_status_any: [:scalar, :array],
+            primary_lease_coverage_entry_id: [:scalar, :array]
           }
         end
         

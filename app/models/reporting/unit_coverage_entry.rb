@@ -84,7 +84,7 @@ module Reporting
         end
       end
       # set stuff
-      self.primary_lease_coverage_entry = self.lease_coverage_entries.reload.where(lease_id: self.latest_lease&.id).take
+      self.primary_lease_coverage_entry = self.lease_coverage_entries.reload.where(lease_id: self.insurable.latest_lease&.id).take
       self.lease_yardi_id = self.primary_lease_coverage_entry&.yardi_id
       self.coverage_status_exact = self.primary_lease_coverage_entry&.coverage_status_exact
       self.coverage_status_any = self.primary_lease_coverage_entry&.coverage_status_any

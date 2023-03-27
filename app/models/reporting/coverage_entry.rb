@@ -338,7 +338,7 @@ module Reporting
       unit_entries = Reporting::UnitCoverageEntry.references(:reporting_coverage_entry_links).includes(:links).send(*(direct.nil? ? [:itself] : [:where, { reporting_coverage_entry_links: { direct: direct } }]))
       self.total_units += unit_entries.count
       unit_entries.each do |ue|
-        self.total_units_unoccupied += 1 if ue.lessee_count.nil? || ue.lessee_count == 0
+        self.total_units_unoccupied += 1 if !ue.occupied
         case ue.send("coverage_status_#{self.coverage_report.coverage_determinant}")
           when 'none'
             self.total_units_with_no_policy += 1
