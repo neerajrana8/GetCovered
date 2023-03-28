@@ -55,9 +55,10 @@ class CreateCoverageReportSystem < ActiveRecord::Migration[6.1]
     
     
     create_table :reporting_unit_coverage_entries do |t|
-      t.references :insurable
       t.datetime :report_time, null: false
+      t.references :account, null: true, index: false # too bigg
       
+      t.references :insurable
       t.string :street_address, null: false
       t.string :unit_number, null: true
       t.string :yardi_id, null: true

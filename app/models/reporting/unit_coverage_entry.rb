@@ -62,6 +62,7 @@ module Reporting
     def prepare
       # basic setup
       today = self.report_time.to_date
+      self.account_id = self.insurable.account_id
       self.street_address ||= self.insurable.primary_address&.full || ""
       self.unit_number ||= self.insurable.title
       self.yardi_id ||= self.insurable.integration_profiles.where("external_context ILIKE '%unit_in_community_%'").take&.external_id

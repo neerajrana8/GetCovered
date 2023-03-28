@@ -45,7 +45,7 @@ module Reporting
       class_name: "Reporting::CoverageEntry",
       inverse_of: :coverage_report,
       foreign_key: :coverage_report_id
-      
+
     has_many :unit_coverage_entries,
       class_name: "Reporting::UnitCoverageEntry",
       through: :coverage_entries,
