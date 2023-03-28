@@ -128,7 +128,8 @@ module MasterPolicy
     end
 
     def notify_users(policy, insurable)
-      @users.each do |user|
+      users = User.where(id: policy_users.map{ |x| x[:user_id]})
+      users.each do |user|
         Compliance::PolicyMailer.with(organization: policy.account ? policy.account : policy.agency)
           .enrolled_in_master(user: user,
                               community: insurable.parent_community(),
