@@ -11,9 +11,10 @@ module V2
         @insurable = Insurable.find(enrollment_params[:insurable_id])
         users = enrollment_users
 
-        if unit_affordable?(@insurable)
-          raise_error "This is affordable unit, child policy is not required; Insurable ID=#{@insurable.id}"
-        end
+        # NOTE: Disabled, look into #GCVR2-1347
+        # if unit_affordable?(@insurable)
+        #  raise_error "This is affordable unit, child policy is not required; Insurable ID=#{@insurable.id}"
+        # end
 
         if users.count.zero?
           raise_error "No users found in system matched for Insurable #{@insurable.id}" \
