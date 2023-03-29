@@ -82,7 +82,7 @@ module V2
             if k == 'coverage_status'
               ["coverage_status_#{@determinant}", v]
             else
-              if !@organizable.nil? && ['coverage_status_exact', 'coverage_status_numeric', 'coverage_status_any'].include?(k)
+              if !@organizable.nil? && ['coverage_status_exact', 'coverage_status_any'].include?(k)
                 nil
               else
                 [k,v]
@@ -92,6 +92,7 @@ module V2
         end
         
         def transform_orders(hash)
+          return nil if hash.nil?
           if hash[:column].class == ::Array
             hash[:column].map!{|k| k == 'coverage_status' ? "coverage_status_#{@determinant}" : k }
           elsif hash[:column] == 'coverage_status'

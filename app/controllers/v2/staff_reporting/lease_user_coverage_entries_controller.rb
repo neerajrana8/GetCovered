@@ -95,6 +95,7 @@ module V2
         end
         
         def transform_orders(hash)
+          return nil if hash.nil?
           if hash[:column].class == ::Array
             hash[:column].map!{|k| k == 'coverage_status' ? "coverage_status_#{@determinant}" : k }
           elsif hash[:column] == 'coverage_status'
