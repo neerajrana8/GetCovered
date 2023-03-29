@@ -1307,6 +1307,7 @@ ActiveRecord::Schema.define(version: 2023_03_13_202623) do
     t.integer "document_status", default: 0
     t.boolean "force_placed"
     t.date "cancellation_date"
+    t.integer "master_policy_configuration_id"
     t.index ["account_id"], name: "index_policies_on_account_id"
     t.index ["agency_id"], name: "index_policies_on_agency_id"
     t.index ["carrier_id"], name: "index_policies_on_carrier_id"
@@ -1891,8 +1892,9 @@ ActiveRecord::Schema.define(version: 2023_03_13_202623) do
   end
 
   create_table "reporting_unit_coverage_entries", force: :cascade do |t|
-    t.bigint "insurable_id"
     t.datetime "report_time", null: false
+    t.bigint "account_id"
+    t.bigint "insurable_id"
     t.string "street_address", null: false
     t.string "unit_number"
     t.string "yardi_id"
