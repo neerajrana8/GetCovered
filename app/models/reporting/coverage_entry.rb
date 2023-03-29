@@ -335,7 +335,7 @@ module Reporting
     
     # accumulate values from linked UnitCoverageEntry objects
     def accumulate_units(direct: nil)
-      unit_entries = Reporting::UnitCoverageEntry.references(:reporting_coverage_entry_links).includes(:links).send(*(direct.nil? ? [:itself] : [:where, { reporting_coverage_entry_links: { direct: direct } }]))
+      unit_entries = self.unit_coverage_entries.references(:reporting_coverage_entry_links).includes(:links).send(*(direct.nil? ? [:itself] : [:where, { reporting_coverage_entry_links: { direct: direct } }]))
       self.total_units += unit_entries.count
       unit_entries.each do |ue|
         self.total_units_unoccupied += 1 if !ue.occupied
