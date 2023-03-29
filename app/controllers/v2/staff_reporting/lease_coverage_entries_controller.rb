@@ -9,7 +9,7 @@ module V2
       before_action :set_parent, only: [:index]
     
       def index
-        super(:@lease_coverage_entries, @coverage_report.lease_coverage_entries)
+        super(:@lease_coverage_entries, @parent.lease_coverage_entries)
       end
       
       
@@ -28,7 +28,7 @@ module V2
         
         def set_parent
           # just makes things a bit more efficient
-          @parent = (params[:filter].blank? || params[:filter][:unit_coverage_entry_id].nil?) ? nil : access_model(Reporting::UnitCoverageEntry, params[:filter][:unit_coverage_entry_id].to_i)
+          @parent = (params[:filter].blank? || params[:filter][:unit_coverage_entry_id].nil?) ? @coverage_report : access_model(Reporting::UnitCoverageEntry, params[:filter][:unit_coverage_entry_id].to_i)
         end
         
         def fixed_filters

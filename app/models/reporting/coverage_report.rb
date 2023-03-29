@@ -46,6 +46,57 @@ module Reporting
       inverse_of: :coverage_report,
       foreign_key: :coverage_report_id
 
+    def unit_coverage_entries
+      if owner.nil?
+        Reporting::UnitCoverageEntry.where(report_time: self.report_time)
+      elsif owner.class == ::Account
+        Reporting::UnitCoverageEntry.where(
+          report_time: self.report_time,
+          account_id: owner.id
+        )
+      else
+        Reporting::UnitCoverageEntry.where(
+          report_time: self.report_time,
+          account_id: owner.accounts.select(:id)
+        )
+      end
+    end
+    
+    def lease_coverage_entries
+      if owner.nil?
+        Reporting::LeaseCoverageEntry.where(report_time: self.report_time)
+      elsif owner.class == ::Account
+        Reporting::LeaseCoverageEntry.where(
+          report_time: self.report_time,
+          account_id: owner.id
+        )
+      else
+        Reporting::LeaseCoverageEntry.where(
+          report_time: self.report_time,
+          account_id: owner.accounts.select(:id)
+        )
+      end
+    end
+    
+    def lease_user_coverage_entries
+      if owner.nil?
+        Reporting::LeaseUserCoverageEntry.where(report_time: self.report_time)
+      elsif owner.class == ::Account
+        Reporting::LeaseUserCoverageEntry.where(
+          report_time: self.report_time,
+          account_id: owner.id
+        )
+      else
+        Reporting::LeaseUserCoverageEntry.where(
+          report_time: self.report_time,
+          account_id: owner.accounts.select(:id)
+        )
+      end
+    end
+
+    # using methods instead because otherwise we get duplicate unit entries and have a lot of unneeded joins...
+    # left this here in case someone comes up with a nice way to customize the assocs instead
+=begin
     has_many :unit_coverage_entries,
       class_name: "Reporting::UnitCoverageEntry",
       through: :coverage_entries,
@@ -60,6 +111,7 @@ module Reporting
       class_name: "Reporting::LeaseUserCoverageEntry",
       through: :lease_coverage_entries,
       source: :lease_user_coverage_entries
+=end
     
     before_create :set_coverage_determinant
     

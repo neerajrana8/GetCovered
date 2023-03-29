@@ -41,6 +41,7 @@ module V2
         
         def supported_filters
           {
+            id: [:scalar, :array],
             report_time: [:scalar, :array, :interval],
             account_id: [:scalar, :array],
             lease_user_id: [:scalar, :array],

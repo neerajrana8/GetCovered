@@ -9,7 +9,7 @@ module V2
       before_action :set_parent, only: [:index]
     
       def index
-        super(:@unit_coverage_entries, @parent.nil? ? @coverage_report.unit_coverage_entries : @parent.unit_coverage_entries)
+        super(:@unit_coverage_entries, @parent.unit_coverage_entries)
       end
       
       
@@ -27,7 +27,7 @@ module V2
         end
       
         def set_parent
-          @parent = (params[:filter].blank? || params[:filter][:parent_id].nil?) ? nil : access_model(Reporting::CoverageEntry, params[:filter][:parent_id].to_i)
+          @parent = (params[:filter].blank? || params[:filter][:parent_id].nil?) ? @coverage_report : access_model(Reporting::CoverageEntry, params[:filter][:parent_id].to_i)
         end
         
         def fixed_filters
@@ -40,9 +40,11 @@ module V2
         
         def supported_filters
           {
+            id: [:scalar, :array],
             insurable_type: [:scalar, :array],
             insurable_id: [:scalar, :array],
             report_time: [:scalar, :array, :interval],
+            account_id: [:scalar, :array],
             street_address: [:scalar, :array, :like],
             unit_number: [:scalar, :array, :like],
             yardi_id: [:scalar, :array, :like],
