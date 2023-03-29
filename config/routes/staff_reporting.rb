@@ -1,6 +1,12 @@
 # StaffReporting
 scope module: :staff_reporting, path: "reporting" do
 
+  # general utilities
+  
+  get :auth_check,
+    to: "utilities#auth_check",
+    path: "verify-login"
+
   # for coverage reports
 
   post :coverage_reports,
