@@ -130,12 +130,10 @@ module V2
               # else
               #   PolicyMailer.with(policy: @policy).coverage_proof_uploaded.deliver_later
             end
-
             render :show, status: :ok
           else
             render json: @policy.errors, status: 422
           end
-
         else
           render json: standard_error(:policy_in_system_violation, 'Policy in system violation'), status: 400
         end
