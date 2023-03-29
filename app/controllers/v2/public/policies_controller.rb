@@ -114,27 +114,28 @@ module V2
       def external_unverified_proof(params)
         @policy = Policy.find_by_number params[:number]
         if !@policy.nil? && @policy.policy_in_system == false
-          if self.external_policy_status_check(@policy)
-            if @policy.update(params)
-              @policy.policy_coverages.where.not(id: @policy.policy_coverages.order(id: :asc).last.id).each do |coverage|
-                coverage.destroy
-              end
+          # NOTE: This is not proper way to update documetns and insurable address attached to policy
+          @policy.documents.purge
+          @policy.insurables.delete_all
+          if @policy.update(params)
+            @policy.policy_coverages.where.not(id: @policy.policy_coverages.order(id: :asc).last.id).each do |coverage|
+              coverage.destroy
+            end
+            result = ::Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes]&.values)
+            @policy.reload
 
-              #TODO: temp test need to remove according to GCVR2-1197
-              if Rails.env.development? or ENV['RAILS_ENV'] == 'awsdev'
-                PolicyMailer.with(policy: @policy).coverage_proof_uploaded.deliver_now
+            #TODO: temp test need to remove according to GCVR2-1197
+            if Rails.env.development? or ENV['RAILS_ENV'] == 'awsdev'
+              PolicyMailer.with(policy: @policy).coverage_proof_uploaded.deliver_now
               # else
               #   PolicyMailer.with(policy: @policy).coverage_proof_uploaded.deliver_later
-              end
-
-              render :show, status: :ok
-            else
-              render json: @policy.errors, status: 422
             end
-            
+            render :show, status: :ok
           else
-            render json: standard_error(:update_time_violation, '30 days update violation'), status: 401
+            render json: @policy.errors, status: 422
           end
+        else
+          render json: standard_error(:policy_in_system_violation, 'Policy in system violation'), status: 400
         end
       end
 
