@@ -426,6 +426,10 @@ en:
       cip_save_error: "Carrier error occurred"
       invalid_county_selection_error: "Invalid county selection"
       no_counties_available: "The carrier is unable to provide a county list for this address"
+  user_coverage_mailer:
+    policy_number: Policy Number
+    effective_date: Effective Date
+    expiration_date: Expiration Date
 
 # I18n.t('agency_model.no_branding')
 # I18n.t('policy_application_contr.new.unit_not_found')

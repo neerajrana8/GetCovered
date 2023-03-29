@@ -4,7 +4,11 @@
 scope module: :sdk, path: "sdk" do
 
   resources :addresses,
-            only: [:index]
+            only: [:index] do
+    collection do
+      post '/search', to: 'addresses#search', as: :sdk_address_search
+    end
+  end
 
   resources :billing_strategies,
             path: "billing-strategies",

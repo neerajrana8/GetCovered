@@ -13,7 +13,7 @@ module V2
       def enroll_master_policy
         master_policy = @community.policies.where(policy_type_id: 2).take
 
-        @users = access_model(::User).where(email: enrollment_params[:user_attributes].map{|el| el[:email]})
+        @users = access_model(::User).where(email: enrollment_params[:user_attributes].map { |el| el[:email] })
 
         if @users.blank?
           # return render json: { message: 'Users not found' }, status: :ok if @users.blank?
@@ -22,21 +22,21 @@ module V2
           enrollment_params[:user_attributes].each do |user|
             secure_tmp_password = SecureRandom.base64(12)
             new_user = ::User.create(
-                           email: user[:email],
-                           password: secure_tmp_password,
-                           password_confirmation: secure_tmp_password,
-                           profile_attributes: {
-                             first_name: user[:first_name],
-                             last_name: user[:last_name]
-                           }
-                         )
+              email: user[:email],
+              password: secure_tmp_password,
+              password_confirmation: secure_tmp_password,
+              profile_attributes: {
+                first_name: user[:first_name],
+                last_name: user[:last_name]
+              }
+            )
             @users << new_user
           end
 
         end
 
         if master_policy.present?
-          start_coverage =  master_policy.effective_date
+          start_coverage = master_policy.effective_date
           # render json: { message: 'Users not found' }, status: :ok if @users.blank?
 
           #TODO: need to add invitation uesr.invite! but how to determine to which user? primary?
@@ -47,21 +47,21 @@ module V2
             render json: { message: 'Insurable was added to master policy coverage' }, status: :ok
           else
             render json: standard_error(
-                :insurable_not_added_to_master_policy,
-                'Insurable wasn\'t added to master policy coverage'
+              :insurable_not_added_to_master_policy,
+              'Insurable wasn\'t added to master policy coverage'
             ), status: :unprocessable_entity
           end
         else
           render json: standard_error(
-              :master_policy_not_founded_for_current_insurable,
-              'Master policy wasn\'t found for current insurable'
+            :master_policy_not_founded_for_current_insurable,
+            'Master policy wasn\'t found for current insurable'
           ), status: :unprocessable_entity
         end
       end
 
       def master_policy_unit_coverage
         if params[:community_id].blank?
-          render json: standard_error(:community_id_param_blank,'Community parameter can\'t be blank'),
+          render json: standard_error(:community_id_param_blank, 'Community parameter can\'t be blank'),
                  status: :unprocessable_entity
         else
           @community = Insurable.communities.find_by_id(params[:community_id])
@@ -71,7 +71,7 @@ module V2
 
             res = V2::Public::InsurablesController.dispatch(:show, request, response)
           else
-            render json: standard_error(:community_not_found,'Community with this id not found'),
+            render json: standard_error(:community_not_found, 'Community with this id not found'),
                    status: :unprocessable_entity
           end
 
@@ -113,23 +113,36 @@ module V2
 
       def external_unverified_proof(params)
         @policy = Policy.find_by_number params[:number]
-        if !@policy.nil? && @policy.policy_in_system == false && self.external_policy_status_check(@policy)
-          if @policy.update(params)
-            @policy.policy_coverages.where.not(id: @policy.policy_coverages.order(id: :asc).last.id).each do |coverage|
-              coverage.destroy
+        if !@policy.nil? && @policy.policy_in_system == false
+          if self.external_policy_status_check(@policy)
+            if @policy.update(params)
+              @policy.policy_coverages.where.not(id: @policy.policy_coverages.order(id: :asc).last.id).each do |coverage|
+                coverage.destroy
+              end
+
+              #TODO: temp test need to remove according to GCVR2-1197
+              if Rails.env.development? or ENV['RAILS_ENV'] == 'awsdev'
+                PolicyMailer.with(policy: @policy).coverage_proof_uploaded.deliver_now
+                # else
+                #   PolicyMailer.with(policy: @policy).coverage_proof_uploaded.deliver_later
+              end
+
+              PolicyMailer.with(policy: @policy).coverage_proof_uploaded.deliver_later
+              render :show, status: :ok
+            else
+              render json: @policy.errors, status: 422
             end
-            PolicyMailer.with(policy: @policy).coverage_proof_uploaded.deliver_later
-            render :show, status: :ok
           else
-            render json: @policy.errors, status: 422
+            render json: standard_error(:update_time_violation, '30 days update violation'), status: 401
           end
         end
       end
 
       def apply_proof(params)
-        @policy                  = Policy.new(params)
+        @policy = Policy.new(params)
         @policy.policy_in_system = false
-        @policy.status           = 'EXTERNAL_UNVERIFIED' if params[:status].blank?
+        @policy.status = 'EXTERNAL_UNVERIFIED' if params[:status].blank?
+        @policy.number = @policy.number.strip
         add_error_master_types(@policy.policy_type_id)
         if @policy.errors.blank? && @policy.save
           result = ::Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes]&.values)
@@ -157,7 +170,7 @@ module V2
         if ["EXTERNAL_UNVERIFIED", "EXTERNAL_REJECTED"].include?(policy.status)
           to_return = true
         elsif policy.status == "EXTERNAL_VERIFIED"
-          if (Time.now .. (Time.now + 30.days)) === policy.expiration_date
+          if (Time.now..(Time.now + 30.days)) === policy.expiration_date
             to_return = true
           end
         end

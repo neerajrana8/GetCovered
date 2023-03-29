@@ -9,4 +9,9 @@ module MailerHelper
 
     "#{from_date} - #{rr_text}"
   end
+
+  # 04/15/2022
+  def formatted_date(date)
+    date&.strftime("%m/%d/%Y")
+  end
 end

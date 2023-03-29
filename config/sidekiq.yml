@@ -116,11 +116,18 @@ production:
   yardi_sync_job:
     cron: '0 1 * * *' # Every day at 1:00 AM
     class: YardiSyncJob
+  # User merge
+  user_merge_job:
+    cron: '0 22 * * *' # Every day at 10:00 PM
+    class: UserMergeJob
   # Generic Actions
   perform_scheduled_actions_job:
     cron: '45 * * * *' # every hour, 45 minutes in
     class: PerformScheduledActionsJob
   # Update covered status Job
-#  update_statuses_job:
-#    cron: '0 6 * * *' # Daily , 06:00 AM
-#    class: UpdateStatusesJob
+  update_statuses_job:
+    cron: '0 6 * * *' # Daily , 06:00 AM
+    class: UpdateStatusesJob
+  master_policy_issue_job:
+    cron: '0 5 * * *'
+    class: MasterPolicies::IssueJob

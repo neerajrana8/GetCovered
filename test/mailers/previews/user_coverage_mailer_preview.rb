@@ -86,6 +86,7 @@ class UserCoverageMailerPreview < ActionMailer::Preview
     UserCoverageMailer.with(policy: policy, user: policy.primary_user).proof_of_coverage
   end
 
+  # http://localhost:3000/rails/mailers/user_coverage_mailer/qbe_proof_of_coverage
   def qbe_proof_of_coverage
     #policy = Policy.where(status: "EXTERNAL_VERIFIED").first
     policy = Policy.find(2484)

@@ -179,7 +179,7 @@ module Integrations
           
           if efficiency_mode && all_units.keys.count > 1
             all_units.keys.each do |k|
-              Integrations::Yardi::Sync::Insurables.run!(integration: integration.reload, property_ids: [k], insurables_only: only_sync_insurables(k), efficiency_mode: true)
+              Integrations::Yardi::Sync::Insurables.run!(integration: integration.reload, property_ids: [k], insurables_only: only_sync_insurables(k), efficiency_mode: true, update_old_leases: update_old_leases, skip_roommate_sync: skip_roommate_sync, skip_lease_sync: skip_lease_sync, skip_leases_on_roommate_error: skip_leases_on_roommate_error)
             end
             return to_return # empty
           end
@@ -587,8 +587,7 @@ module Integrations
               comm[:buildings].each do |bldg|
                 bldg[:units].each do |unit|
                   unless skip_lease_sync
-                    next if unit[:yardi_data]["Resident"].blank?
-                    result = Integrations::Yardi::Sync::Leases.run!(integration: integration, update_old: update_old_leases, unit: unit[:insurable], resident_data: unit[:yardi_data]["Resident"].class == ::Array ? unit[:yardi_data]["Resident"] : [unit[:yardi_data]["Resident"]])
+                    result = Integrations::Yardi::Sync::Leases.run!(integration: integration, update_old: update_old_leases, unit: unit[:insurable], resident_data: unit[:yardi_data]["Resident"].class == ::Array ? unit[:yardi_data]["Resident"] : [unit[:yardi_data]["Resident"]].compact)
                     unless result[:lease_update_errors].blank?
                       to_return[:lease_update_errors][comm[:yardi_id]] ||= {}
                       to_return[:lease_update_errors][comm[:yardi_id]][unit[:yardi_id]] = result[:lease_update_errors]
