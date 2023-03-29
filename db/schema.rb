@@ -10,6 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
+
 ActiveRecord::Schema.define(version: 2023_03_13_202623) do
 
   # These are extensions that must be enabled in order to support this database
