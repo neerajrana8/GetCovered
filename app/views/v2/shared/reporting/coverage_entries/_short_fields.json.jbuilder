@@ -3,6 +3,8 @@ json.extract! coverage_entry,
   :reportable_title, :reportable_description,
   
   :total_units,
+  :total_units_unoccupied,
+  :percent_units_unoccupied,
 
   :total_units_with_master_policy,
   :total_units_with_ho4_policy,
