@@ -1,0 +1,31 @@
+<div class="text-left" style="font-family: 'Roboto';">
+  <p>Hello <%= @user.profile.full_name %>,</p>
+  <p>Good News, you're still covered for a <b><%= @product_type %></b> from <b><%= @agency.title %></b>.</p>
+  <p>Your invoice was successfully paid on  <b><%= (@invoice.status_changed || @invoice.due_date).to_date.to_s %></b>
+    for Policy <b><%= @product_identifier %></b> in the amount of <b>$<%= "#{(@invoice.total_due/100).floor}.#{(@invoice.total_due % 100)}" %></b>.</p>
+  <p>To review your policy information, please visit the following link:</p>
+  <p>
+    <a href="https://www.getcoveredinsurance.com/user/policies">https://www.getcoveredinsurance.com/user/policies</a>
+  </p>
+  <p>If you have any questions, please contact us at <a href="mailto:support@getcoveredinsurance.com">support@getcoveredinsurance.com</a>.</p>
+  <p>Thank you,</p>
+  <p>The Get Covered Team</p>
+  <p><a href="mailto:support@getcoveredinsurance.com">support@getcoveredinsurance.com</a></p>
+  <div style="border: 1px solid black;
+    margin: 2% 8%;
+    padding: 1%;">
+    <div style="margin-top: 10px">
+      <b>Get to know your Carrier: QBE</b><br>
+      <ul>
+        <li>
+          Founded in 1886, QBE is one of the oldest insurance carriers in the world
+        </li>
+        <li>QBE holds an AM Best rating of A (Excellent)</li>
+        <li>Customer Satisfaction index 92.7%</li>
+        <li>QBE Response rate is 2X the industry average</li>
+        <li>QBE does business in 27 different countries with over 11,000 employees globally</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
