@@ -230,16 +230,18 @@ module Reporting
       standard_columns = [ # we reuse these a lot so centralizing them here
         { title: "id", apiIndex: "id", invisible: true },
         { title: "# Units", sortable: true, apiIndex: "total_units", data_type: "integer", filters: ['scalar', 'interval'] },
-        { title: "# Master Policy Units", sortable: true, apiIndex: "total_units_with_master_policy", data_type: "integer", filters: ['scalar', 'interval'] },
-        { title: "# HO4 Policy Units", sortable: true, apiIndex: "total_units_with_ho4_policy", data_type: "integer", filters: ['scalar', 'interval'] },
-        hide_internal_vs_external ? nil : { title: "# GC Policy Units", sortable: true, apiIndex: "total_units_with_internal_policy", data_type: "integer", filters: ['scalar', 'interval'] },
-        hide_internal_vs_external ? nil : { title: "# Uploaded Policy Units", sortable: true, apiIndex: "total_units_with_external_policy", data_type: "integer", filters: ['scalar', 'interval'] },
-        { title: "# No Policy Units", sortable: true, apiIndex: "total_units_with_no_policy", data_type: "integer", filters: ['scalar', 'interval'] },
-        { title: "% Master Policy Units", sortable: true, apiIndex: "percent_units_with_master_policy", data_type: "number", format: "percent", filters: ['scalar', 'interval'] },
-        { title: "% HO4 Policy Units", sortable: true, apiIndex: "percent_units_with_ho4_policy", data_type: "number", format: "percent", filters: ['scalar', 'interval'] },
-        hide_internal_vs_external ? nil : { title: "% GC Policy Units", sortable: true, apiIndex: "percent_units_with_internal_policy", data_type: "number", format: "percent", filters: ['scalar', 'interval'] },
-        hide_internal_vs_external ? nil : { title: "% Uploaded Policy Units", sortable: true, apiIndex: "percent_units_with_external_policy", data_type: "number", format: "percent", filters: ['scalar', 'interval'] },
-        { title: "% No Policy Units", sortable: true, apiIndex: "percent_units_with_no_policy", data_type: "number", format: "percent", filters: ['scalar', 'interval'] }
+        { title: "# Master Policy", sortable: true, apiIndex: "total_units_with_master_policy", data_type: "integer", filters: ['scalar', 'interval'] },
+        { title: "# HO4 Policy", sortable: true, apiIndex: "total_units_with_ho4_policy", data_type: "integer", filters: ['scalar', 'interval'] },
+        hide_internal_vs_external ? nil : { title: "# GC Policy", sortable: true, apiIndex: "total_units_with_internal_policy", data_type: "integer", filters: ['scalar', 'interval'] },
+        hide_internal_vs_external ? nil : { title: "# Uploaded Policy", sortable: true, apiIndex: "total_units_with_external_policy", data_type: "integer", filters: ['scalar', 'interval'] },
+        { title: "# No Policy", sortable: true, apiIndex: "total_units_with_no_policy", data_type: "integer", filters: ['scalar', 'interval'] },
+        { title: "# Unoccupied", sortable: true, apiIndex: "total_units_unoccupied", data_type: "integer", filters: ['scalar', 'interval'] },
+        { title: "% Master Policy", sortable: true, apiIndex: "percent_units_with_master_policy", data_type: "number", format: "percent", filters: ['scalar', 'interval'] },
+        { title: "% HO4 Policy", sortable: true, apiIndex: "percent_units_with_ho4_policy", data_type: "number", format: "percent", filters: ['scalar', 'interval'] },
+        hide_internal_vs_external ? nil : { title: "% GC Policy", sortable: true, apiIndex: "percent_units_with_internal_policy", data_type: "number", format: "percent", filters: ['scalar', 'interval'] },
+        hide_internal_vs_external ? nil : { title: "% Uploaded Policy", sortable: true, apiIndex: "percent_units_with_external_policy", data_type: "number", format: "percent", filters: ['scalar', 'interval'] },
+        { title: "% No Policy", sortable: true, apiIndex: "percent_units_unoccupied", data_type: "number", format: "percent", filters: ['scalar', 'interval'] },
+        { title: "% Unoccupied", sortable: true, apiIndex: "percent_units_unoccupied", data_type: "number", format: "percent", filters: ['scalar', 'interval'] }
       ].compact
       dat_manifest = {
         title: "Coverage",
