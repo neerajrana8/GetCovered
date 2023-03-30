@@ -12,12 +12,12 @@ module V2
         # so the user can't do any magic with .. or whatever
         file = Dir.glob("app/views/v2/shared/reporting/web/**/*")
                   .reject{|f| File.directory?(f) }
-                  .find{|f| f == "app/views/v2/shared/reporting/web/#{params[:file]}" }
-        if f.nil?
-          render text: "404",
+                  .find{|f| f == "app/views/v2/shared/reporting/web/#{params[:file]}.#{params[:format]}" }
+        if file.nil?
+          render plain: "404",
             status: 404
         else
-          render file: f,
+          render file: file,
             layout: false,
             status: :ok
         end

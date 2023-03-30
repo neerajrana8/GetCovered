@@ -7,7 +7,7 @@ scope module: :staff_reporting, path: "reporting" do
 
   get :web_file,
     to: "web#serve",
-    path: "web/:file"
+    path: "web/*file"
 
   # general utilities
   
