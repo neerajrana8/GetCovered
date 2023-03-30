@@ -98,12 +98,12 @@ module V2
           case params[:special]
             when "expiring"
               {
-                expiration_date: { 'start' => (Time.current.to_date), 'before' => (Time.current.to_date + 30.days) },
+                expiration_date: { 'start' => (Time.current.to_date).to_s, 'before' => (Time.current.to_date + 30.days).to_s },
                 applies_to_lessee: @organizable.nil? ? [true, false] : [true]
               }
             when "expired"
               {
-                expiration_date: { 'start' => (Time.current.to_date - 30.days), 'before' => (Time.current.to_date) },
+                expiration_date: { 'start' => (Time.current.to_date - 30.days).to_s, 'before' => (Time.current.to_date).to_s },
                 applies_to_lessee: @organizable.nil? ? [true, false] : [true]
               }
             else

@@ -213,7 +213,7 @@ module Reporting
       self.coverage_entries.delete_all
     end
     
-    def manifest
+    def manifest(with_root = nil)
       # determine what aspects of the manifest to make visible
       show_yardi = self.owner_type == "Account" && !self.owner.integrations.where(provider: 'yardi').blank? ? true : false
       show_insurables = !show_yardi
@@ -245,7 +245,7 @@ module Reporting
       ].compact
       dat_manifest = {
         title: "Coverage",
-        root_subreport: show_universe ? "Universe" : "PM Accounts",
+        root_subreport: with_root || (show_universe ? "Universe" : "PM Accounts"),
         subreports: [
           {
             title: "Residents",
@@ -278,7 +278,7 @@ module Reporting
               { title: "unit_coverage_entry_id", apiIndex: "unit_coverage_entry_id", invisible: true },
               { title: "lease_id", apiIndex: "lease_id", invisible: true },
               show_yardi ? { title: "Yardi ID", sortable: true, apiIndex: "yardi_id", filters: ['scalar', 'vector', 'like'] } : nil,
-              { title: "Status", apiIndex: "status", data_type: "enum",
+              { title: "Status", sortable: true, apiIndex: "status", data_type: "enum",
                 enum_values: ::Lease.statuses.keys,
                 format: ::Lease.statuses.keys.map{|s| s.titlecase },
                 filters: ['scalar', 'vector']
