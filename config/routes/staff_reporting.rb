@@ -1,5 +1,13 @@
 # StaffReporting
+
+
 scope module: :staff_reporting, path: "reporting" do
+
+  # website
+
+  get :web_file,
+    to: "web#serve",
+    path: "web/:file"
 
   # general utilities
   
