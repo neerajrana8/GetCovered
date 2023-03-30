@@ -254,16 +254,16 @@ module Reporting
             unique: ["id"],
             columns: [
               { title: "id", apiIndex: "id", invisible: true },
-              show_yardi ? { title: "Yardi Code", sortable: true, apiIndex: "yardi_id", filters: ['scalar', 'vector', 'like'] } : nil,
-              { title: "Email", sortable: true, apiIndex: "email", filters: ['scalar', 'vector', 'like'] },
-              { title: "First Name", sortable: true, apiIndex: "first_name", filters: ['scalar', 'vector', 'like'] },
-              { title: "Last Name", sortable: true, apiIndex: "last_name", filters: ['scalar', 'vector', 'like'] },
+              show_yardi ? { title: "Yardi Code", sortable: true, apiIndex: "yardi_id", filters: ['scalar', 'array', 'like'] } : nil,
+              { title: "Email", sortable: true, apiIndex: "email", filters: ['scalar', 'array', 'like'] },
+              { title: "First Name", sortable: true, apiIndex: "first_name", filters: ['scalar', 'array', 'like'] },
+              { title: "Last Name", sortable: true, apiIndex: "last_name", filters: ['scalar', 'array', 'like'] },
               { title: "Lessee", sortable: true, apiIndex: "lessee", filters: ['scalar'], data_type: 'boolean' },
               { title: "Current", sortable: true, apiIndex: "current", filters: ['scalar'], data_type: 'boolean' },
               { title: "Coverage", sortable: true, apiIndex: "coverage_status", data_type: "enum",
                 enum_values: visible_enum_values,
                 format: visible_enum_values.map{|vev| vev.titlecase },
-                filters: ['scalar', 'vector']
+                filters: ['scalar', 'array']
               },
               { title: "Policy", sortable: true, apiIndex: "policy_number" }
             ].compact
@@ -277,19 +277,19 @@ module Reporting
               { title: "id", apiIndex: "id", invisible: true },
               { title: "unit_coverage_entry_id", apiIndex: "unit_coverage_entry_id", invisible: true },
               { title: "lease_id", apiIndex: "lease_id", invisible: true },
-              show_yardi ? { title: "Yardi ID", sortable: true, apiIndex: "yardi_id", filters: ['scalar', 'vector', 'like'] } : nil,
+              show_yardi ? { title: "Yardi ID", sortable: true, apiIndex: "yardi_id", filters: ['scalar', 'array', 'like'] } : nil,
               { title: "Status", sortable: true, apiIndex: "status", data_type: "enum",
                 enum_values: ::Lease.statuses.keys,
                 format: ::Lease.statuses.keys.map{|s| s.titlecase },
-                filters: ['scalar', 'vector']
+                filters: ['scalar', 'array']
               },
               { title: "Start", sortable: true, apiIndex: "start_date", data_type: "date" },
               { title: "End", sortable: true, apiIndex: "end_date", data_type: "date" },
-              { title: "# Lessees", sortable: true, apiIndex: "lessee_count", data_type: "integer", filters: ['scalar', 'vector', 'interval'] },
+              { title: "# Lessees", sortable: true, apiIndex: "lessee_count", data_type: "integer", filters: ['scalar', 'array', 'interval'] },
               { title: "Coverage", sortable: true, apiIndex: "coverage_status", data_type: "enum",
                 enum_values: visible_enum_values,
                 format: visible_enum_values.map{|vev| vev.titlecase },
-                filters: ['scalar', 'vector']
+                filters: ['scalar', 'array']
               }
             ]
           },
@@ -301,12 +301,12 @@ module Reporting
             columns: [
               { title: "id", apiIndex: "id", invisible: true },
               { title: "primary_lease_coverage_entry_id", apiIndex: "primary_lease_coverage_entry_id", invisible: true },
-              { title: "Address", sortable: true, apiIndex: "street_address", filters: ['scalar', 'vector', 'like'] },
-              { title: "Unit", sortable: true, apiIndex: "unit_number", filters: ['scalar', 'vector', 'like'] },
+              { title: "Address", sortable: true, apiIndex: "street_address", filters: ['scalar', 'array', 'like'] },
+              { title: "Unit", sortable: true, apiIndex: "unit_number", filters: ['scalar', 'array', 'like'] },
               { title: "Coverage", sortable: true, apiIndex: "coverage_status", data_type: "enum",
                 enum_values: visible_enum_values,
                 format: visible_enum_values.map{|vev| vev.titlecase },
-                filters: ['scalar', 'vector']
+                filters: ['scalar', 'array']
               },
               { title: "Occupied", sortable: true, apiIndex: "occupied", data_type: "boolean", filters: ['scalar'] }
             ].compact
@@ -319,8 +319,8 @@ module Reporting
             },
             unique: ["id"],
             columns: [
-              { title: "Address", sortable: true, apiIndex: "street_address", filters: ['scalar', 'vector', 'like'] },
-              { title: "Community", sortable: true, apiIndex: "reportable_title", filters: ['scalar', 'vector', 'like'] }
+              { title: "Address", sortable: true, apiIndex: "reportable_description", filters: ['scalar', 'array', 'like'] },
+              { title: "Community", sortable: true, apiIndex: "reportable_title", filters: ['scalar', 'array', 'like'] }
             ].compact + standard_columns
           },
           !show_yardi ? nil : {
@@ -332,12 +332,12 @@ module Reporting
               { title: "id", apiIndex: "id", invisible: true },
               { title: "primary_lease_coverage_entry_id", apiIndex: "primary_lease_coverage_entry_id", invisible: true },
               { title: "Address", sortable: true, apiIndex: "street_address", filters: ['scalar', 'like'] },
-              { title: "Unit", sortable: true, apiIndex: "yardi_id", filters: ['scalar', 'vector', 'like'] },
-              { title: "Yardi Lease", sortable: true, apiIndex: "lease_yardi_id", filters: ['scalar', 'vector', 'like'] },
+              { title: "Unit", sortable: true, apiIndex: "yardi_id", filters: ['scalar', 'array', 'like'] },
+              { title: "Yardi Lease", sortable: true, apiIndex: "lease_yardi_id", filters: ['scalar', 'array', 'like'] },
               { title: "Coverage", sortable: true, apiIndex: "coverage_status", data_type: "enum",
                 enum_values: visible_enum_values,
                 format: visible_enum_values.map{|vev| vev.titlecase },
-                filters: ['scalar', 'vector']
+                filters: ['scalar', 'array']
               },
               { title: "Occupied", sortable: true, apiIndex: "occupied", data_type: "boolean", filters: ['scalar'] }
             ].compact
