@@ -62,6 +62,8 @@ module Reporting
         external_context: "lease"
       ).take&.external_id
       self.status = self.lease.status
+      self.start_date = self.lease.start_date
+      self.end_date = self.lease.end_date
       self.lessee_count = self.lease.active_lease_users(self.unit_coverage_entry.report_time.to_date, lessee: true).count || 0
     end
 

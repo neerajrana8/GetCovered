@@ -49,6 +49,8 @@ module V2
             lease_id: [:scalar, :array],
             lessee_count: [:scalar, :array, :interval],
             status: [:scalar, :array],
+            start_date: [:scalar, :array, :interval],
+            end_date: [:scalar, :array, :interval],
             coverage_status_exact: [:scalar, :array],
             coverage_status_any: [:scalar, :array]
           }

@@ -92,6 +92,8 @@ class CreateCoverageReportSystem < ActiveRecord::Migration[6.1]
       t.references :unit_coverage_entry, null: false, index: false # too long
       t.references :lease, null: false
       t.integer :status, null: false
+      t.date :start_date
+      t.date :end_date
       t.integer :lessee_count, null: false, default: 0
       t.string :yardi_id
       t.integer :coverage_status_exact

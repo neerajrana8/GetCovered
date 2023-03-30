@@ -283,6 +283,8 @@ module Reporting
                 format: ::Lease.statuses.keys.map{|s| s.titlecase },
                 filters: ['scalar', 'vector']
               },
+              { title: "Start", sortable: true, apiIndex: "start_date", data_type: "date" },
+              { title: "End", sortable: true, apiIndex: "end_date", data_type: "date" },
               { title: "# Lessees", sortable: true, apiIndex: "lessee_count", data_type: "integer", filters: ['scalar', 'vector', 'interval'] },
               { title: "Coverage", sortable: true, apiIndex: "coverage_status", data_type: "enum",
                 enum_values: visible_enum_values,
