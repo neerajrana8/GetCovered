@@ -90,9 +90,13 @@ Rails.application.routes.draw do
     draw :carriers
     draw :coverage_requirements
 
-    # GC TOOL
     if Rails.env.development? or ENV['RAILS_ENV'] == 'awsdev'
+      # GC TOOL
       match '/stats/:action', via: [:get, :post], controller: :stats
+
+      scope module: :reports, path: 'reports' do
+        get :charge_push_report, controller: :charge_push_reports, action: :show
+      end
     end
   end
 
