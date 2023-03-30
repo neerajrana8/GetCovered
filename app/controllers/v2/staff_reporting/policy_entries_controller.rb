@@ -14,14 +14,14 @@ module V2
           :primary_lessee_last_name, :primary_lessee_email, :any_lessee_email
         ].map{|x| [x, [:scalar, :array, :like]] } + [
           :id, :account_id, :policy_id, :lease_id, :community_id, :unit_id
-        ].map{|x| [x, [:scalar, :array, :interval]] } + [
+        ].map{|x| [x, [:scalar, :array]] } + [
           :expiration_date, :effective_date
-        ].map{|x| [x, [:scalar]] } + [
+        ].map{|x| [x, [:scalar, :array, :interval]] } + [
           :expires_before_lease, :applies_to_lessee
         ].map{|x| [x, [:scalar, :array]] } + [
           [:lease_status, [:scalar, :array]]
         ]
-      ).to_h.freeze
+      ).to_h
     
       def index
         super(:@policy_entries, @account.nil? ? ::Reporting::PolicyEntry.all : @account.reporting_policy_entries)
@@ -48,30 +48,30 @@ module V2
                 { title: "account_id", apiIndex: "account_id", invisible: true },
                 { title: "policy_id", apiIndex: "policy_id", invisible: true },
                 { title: "lease_id", apiIndex: "lease_id", invisible: true },
-                !show_account ? nil : { title: "Account", apiIndex: "account_title", sortable: true, filters: ["scalar", "vector", "like"] },
-                { title: "Carrier", apiIndex: "carrier_title", sortable: true, filters: ["scalar", "vector", "like"] },
-                !yardi_mode ? nil : { title: "Yardi Lease", apiIndex: "yardi_lease", sortable: true, filters: ["scalar", "vector", "like"] },
+                !show_account ? nil : { title: "Account", apiIndex: "account_title", sortable: true, filters: ["scalar", "array", "like"] },
+                { title: "Carrier", apiIndex: "carrier_title", sortable: true, filters: ["scalar", "array", "like"] },
+                !yardi_mode ? nil : { title: "Yardi Lease", apiIndex: "yardi_lease", sortable: true, filters: ["scalar", "array", "like"] },
                 !yardi_mode ? nil : { title: "Lease Status", apiIndex: "lease_status", sortable: true,
                   data_type: "enum",
                   enum_values: ::Lease.statuses.keys,
                   format: ::Lease.statuses.keys.map{|k| k.titlecase }
                 },
-                { title: "Community", apiIndex: "community_title", sortable: true, filters: ["scalar", "vector", "like"] },
-                !yardi_mode ? nil : { title: "Yardi Property", apiIndex: "yardi_property", sortable: true, filters: ["scalar", "vector", "like"] },
-                !yardi_mode ? nil : { title: "Unit", apiIndex: "yardi_unit", sortable: true, filters: ["scalar", "vector", "like"] },
-                yardi_mode ? nil : { title: "Unit", apiIndex: "unit_title", sortable: true, filters: ["scalar", "vector", "like"] },
-                { title: "Street Address", apiIndex: "street_address", sortable: true, filters: ["scalar", "vector", "like"] },
-                { title: "City", apiIndex: "city", sortable: true, filters: ["scalar", "vector", "like"] },
-                { title: "State", apiIndex: "state", sortable: true, filters: ["scalar", "vector", "like"] },
-                { title: "Zip", apiIndex: "zip", sortable: true, filters: ["scalar", "vector", "like"] },
-                { title: "Policy", apiIndex: "number", sortable: true, filters: ["scalar", "vector", "like"] },
+                { title: "Community", apiIndex: "community_title", sortable: true, filters: ["scalar", "array", "like"] },
+                !yardi_mode ? nil : { title: "Yardi Property", apiIndex: "yardi_property", sortable: true, filters: ["scalar", "array", "like"] },
+                !yardi_mode ? nil : { title: "Unit", apiIndex: "yardi_unit", sortable: true, filters: ["scalar", "array", "like"] },
+                yardi_mode ? nil : { title: "Unit", apiIndex: "unit_title", sortable: true, filters: ["scalar", "array", "like"] },
+                { title: "Street Address", apiIndex: "street_address", sortable: true, filters: ["scalar", "array", "like"] },
+                { title: "City", apiIndex: "city", sortable: true, filters: ["scalar", "array", "like"] },
+                { title: "State", apiIndex: "state", sortable: true, filters: ["scalar", "array", "like"] },
+                { title: "Zip", apiIndex: "zip", sortable: true, filters: ["scalar", "array", "like"] },
+                { title: "Policy", apiIndex: "number", sortable: true, filters: ["scalar", "array", "like"] },
                 !@organizable.nil? ? nil : { title: "Applies to Lessee", apiIndex: "applies_to_lessee", sortable: true, filters: ["scalar"], data_type: "boolean", format: "YN" },
-                { title: "Effective", apiIndex: "effective_date", sortable: true, filters: ["interval"], data_type: "date" },
-                { title: "Expiration", apiIndex: "expiration_date", sortable: true, filters: ["interval"], data_type: "date" },
+                { title: "Effective", apiIndex: "effective_date", sortable: true, filters: ["scalar", "array", "interval"], data_type: "date" },
+                { title: "Expiration", apiIndex: "expiration_date", sortable: true, filters: ["scalar", "array", "interval"], data_type: "date" },
                 { title: "Expires Before Lease", apiIndex: "expires_before_lease", sortable: true, filters: ["scalar"], data_type: "boolean", format: "YN" },
-                { title: "First Name", apiIndex: "primary_policyholder_first_name", sortable: true, filters: ["scalar", "vector", "like"] },
-                { title: "Last Name", apiIndex: "primary_policyholder_last_name", sortable: true, filters: ["scalar", "vector", "like"] },
-                { title: "Email", apiIndex: "any_email", sortable: true, filters: ["scalar", "vector", "like"] },
+                { title: "First Name", apiIndex: "primary_policyholder_first_name", sortable: true, filters: ["scalar", "array", "like"] },
+                { title: "Last Name", apiIndex: "primary_policyholder_last_name", sortable: true, filters: ["scalar", "array", "like"] },
+                { title: "Email", apiIndex: "any_email", sortable: true, filters: ["scalar", "array", "like"] },
               ].compact
             }
           end,
