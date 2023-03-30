@@ -245,7 +245,7 @@ module Reporting
       ].compact
       dat_manifest = {
         title: "Coverage",
-        root_subreport: with_root || (show_universe ? "Universe" : "PM Accounts"),
+        root_subreport: show_universe ? "Universe" : "PM Accounts",
         subreports: [
           {
             title: "Residents",
