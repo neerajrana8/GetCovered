@@ -3,6 +3,8 @@ json.extract! lease_coverage_entry,
   :unit_coverage_entry_id,
   :lease_id,
   :status,
+  :start_date,
+  :end_date,
   :lessee_count,
   :yardi_id,
   :account_id
