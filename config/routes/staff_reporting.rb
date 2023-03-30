@@ -6,6 +6,10 @@ scope module: :staff_reporting, path: "reporting" do
   get :auth_check,
     to: "utilities#auth_check",
     path: "verify-login"
+    
+  get :owner_list
+    to: "utilities#owner_list",
+    path: "owner-list"
 
   # for coverage reports
 

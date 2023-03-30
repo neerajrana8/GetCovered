@@ -14,9 +14,9 @@ module V2
           :primary_lessee_last_name, :primary_lessee_email, :any_lessee_email
         ].map{|x| [x, [:scalar, :array, :like]] } + [
           :id, :account_id, :policy_id, :lease_id, :community_id, :unit_id
-        ].map{|x| [x, [:scalar, :array]] } + [
-          :expiration_date, :effective_date
         ].map{|x| [x, [:scalar, :array, :interval]] } + [
+          :expiration_date, :effective_date
+        ].map{|x| [x, [:scalar]] } + [
           :expires_before_lease, :applies_to_lessee
         ].map{|x| [x, [:scalar, :array]] } + [
           [:lease_status, [:scalar, :array]]
