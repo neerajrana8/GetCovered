@@ -24,7 +24,7 @@ module V2
       ).to_h
     
       def index
-        super(:@policy_entries, hacky_thing(@account.nil? ? ::Reporting::PolicyEntry.all : @account.reporting_policy_entries))
+        super(:@policy_entries, hacky_thing(@account.nil? ? ::Reporting::PolicyEntry.all : ::Reporting::PolicyEntry.where(account_id: @account.id)))
       end
       
       def hacky_thing(base_request)
