@@ -24,7 +24,18 @@ module V2
       ).to_h
     
       def index
-        super(:@policy_entries, @account.nil? ? ::Reporting::PolicyEntry.all : @account.reporting_policy_entries)
+        super(:@policy_entries, hacky_thing(@account.nil? ? ::Reporting::PolicyEntry.all : @account.reporting_policy_entries))
+      end
+      
+      def hacky_thing(base_request)
+        case params[:special]
+          when "expiring"
+            base_request.where(expiration_date: (Time.current.to_date)...(Time.current.to_date + 30.days))
+          when "expired"
+            base_request.where(expiration_date: (Time.current.to_date - 30.days)...(Time.current.to_date)
+          else
+            base_request
+        end
       end
       
       def fake_report
@@ -95,6 +106,8 @@ module V2
         end
         
         def fixed_filters
+        # doesn't work for some reason
+=begin
           case params[:special]
             when "expiring"
               {
@@ -111,6 +124,7 @@ module V2
                 applies_to_lessee: @organizable.nil? ? [true, false] : [true]
               }
           end
+=end
         end
         
         def default_filters
