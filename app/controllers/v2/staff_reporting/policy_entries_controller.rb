@@ -104,10 +104,10 @@ module V2
             nil
           end
         end
-        
+
+=begin
         def fixed_filters
         # doesn't work for some reason
-=begin
           case params[:special]
             when "expiring"
               {
@@ -124,9 +124,8 @@ module V2
                 applies_to_lessee: @organizable.nil? ? [true, false] : [true]
               }
           end
-=end
         end
-        
+=end
         def default_filters
           {}
         end
