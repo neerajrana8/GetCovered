@@ -32,7 +32,7 @@ module V2
           when "expiring"
             base_request.where(expiration_date: (Time.current.to_date)...(Time.current.to_date + 30.days))
           when "expired"
-            base_request.where(expiration_date: (Time.current.to_date - 30.days)...(Time.current.to_date)
+            base_request.where(expiration_date: (Time.current.to_date - 30.days)...(Time.current.to_date))
           else
             base_request
         end

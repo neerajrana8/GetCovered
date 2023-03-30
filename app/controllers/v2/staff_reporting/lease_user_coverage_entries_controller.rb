@@ -47,7 +47,6 @@ module V2
             lease_user_id: [:scalar, :array],
             lessee: [:scalar],
             current: [:scalar],
-            report_time: [:scalar, :array, :interval],
             first_name: [:scalar, :array, :like],
             last_name: [:scalar, :array, :like],
             email: [:scalar, :array, :like],
