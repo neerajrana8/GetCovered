@@ -82,7 +82,7 @@ module Reporting
       # get basic params
       params = {
         account_title: account.title,
-        account_id: account.id,
+        account_id: policy.primary_insurable&.account_id || policy.account_id,
         number: policy.number,
         yardi_property: unit_ip&.external_context&.split("_")&.last,
         community_title: policy.primary_insurable.parent_community.title,
