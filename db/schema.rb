@@ -1168,7 +1168,6 @@ ActiveRecord::Schema.define(version: 2023_03_13_202623) do
     t.datetime "updated_at", precision: 6, null: false
     t.boolean "enabled", default: false
     t.string "integration_account_number"
-    t.boolean "lease_violation_only", default: true
     t.integer "admin_fee", default: 0
     t.integer "force_admin_fee"
     t.boolean "prorate_admin_fee", default: false
@@ -1820,6 +1819,8 @@ ActiveRecord::Schema.define(version: 2023_03_13_202623) do
     t.bigint "unit_coverage_entry_id", null: false
     t.bigint "lease_id", null: false
     t.integer "status", null: false
+    t.date "start_date"
+    t.date "end_date"
     t.integer "lessee_count", default: 0, null: false
     t.string "yardi_id"
     t.integer "coverage_status_exact"

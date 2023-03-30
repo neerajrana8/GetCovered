@@ -7,7 +7,7 @@ scope module: :staff_reporting, path: "reporting" do
     to: "utilities#auth_check",
     path: "verify-login"
     
-  get :owner_list
+  get :owner_list,
     to: "utilities#owner_list",
     path: "owner-list"
 
