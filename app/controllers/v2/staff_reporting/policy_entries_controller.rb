@@ -12,14 +12,14 @@ module V2
           :primary_policyholder_first_name, :primary_policyholder_last_name,
           :primary_policyholder_email, :primary_lessee_first_name,
           :primary_lessee_last_name, :primary_lessee_email, :any_lessee_email
-        ].map{|x| [x, [:scalar, :vector, :like]] } + [
+        ].map{|x| [x, [:scalar, :array, :like]] } + [
           :id, :account_id, :policy_id, :lease_id, :community_id, :unit_id
-        ].map{|x| [x, [:scalar, :vector]] } + [
+        ].map{|x| [x, [:scalar, :array]] } + [
           :expiration_date, :effective_date
-        ].map{|x| [x, [:scalar, :vector, :interval]] } + [
+        ].map{|x| [x, [:scalar, :array, :interval]] } + [
           :expires_before_lease, :applies_to_lessee
-        ].map{|x| [x, [:scalar, :vector]] } + [
-          [:lease_status, [:scalar, :vector]]
+        ].map{|x| [x, [:scalar, :array]] } + [
+          [:lease_status, [:scalar, :array]]
         ]
       ).to_h.freeze
     
@@ -98,12 +98,12 @@ module V2
           case params[:special]
             when "expiring"
               {
-                expiration_date: ((Time.current.to_date)...(Time.current.to_date + 30.days)),
+                expiration_date: { 'begin' => (Time.current.to_date), 'before' => (Time.current.to_date + 30.days) },
                 applies_to_lessee: @organizable.nil? ? [true, false] : [true]
               }
             when "expired"
               {
-                expiration_date: ((Time.current.to_date - 30.days)...(Time.current.to_date)),
+                expiration_date: { 'begin' => (Time.current.to_date - 30.days), 'before' => (Time.current.to_date) },
                 applies_to_lessee: @organizable.nil? ? [true, false] : [true]
               }
             else
