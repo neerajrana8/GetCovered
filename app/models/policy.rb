@@ -751,8 +751,8 @@ class Policy < ApplicationRecord
         event = Event.new(verb: 'post', process: 'policy_status_update_webhook', started: DateTime.current, request: request.to_json.to_s, eventable: self,
                           endpoint: url)
         result = HTTParty.post(url, :body => request.to_json, :headers => { 'Content-Type' => 'application/json' })
-        event.response = result.parsed_response
-        event.status = result.code == 200 ? "success" : "error"
+        event.response = result.parsed_response.nil? ? "BLANK" : result.parsed_response.to_json.to_s
+        event.status = [200, 202, 204].include?(result.code) ? "success" : "error"
         event.save
       end
     #end
