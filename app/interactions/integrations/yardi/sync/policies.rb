@@ -587,7 +587,7 @@ module Integrations
                   policy_updated = (policy_exported || yardi_id) ? true : false
                   must_cancel = !policy_hash[:PolicyDetails]&.[](:CancelDate).blank?
                   result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: policy_updated, cancel: must_cancel)
-                  if result[:request].response&.body&.index("Policy already exists in database")
+                  if result[:request].response&.body&.index("Policy already exists in database") || result[:request].response&.body&.index("Found duplicate insurance policy")
                     event_sequence.push(result[:event].id)
                     policy_updated = true
                     result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: true, cancel: must_cancel)
