@@ -9,8 +9,12 @@ module Policies
         unless essex_webhook_check.nil?
           if policy.account_id == essex_webhook_check
             url = "https://webhooks-chuck-mirror-resapp-a.nestiostaging.com/getcovered-webhooks/policy-status/"
-            request = { :number => policy.number, :status => policy.status, :user_email => policy.primary_user().nil? ? nil : policy.primary_user().email,
-                        :tcode => policy.primary_user().nil? ? nil : policy.primary_user().integration_profiles.nil? ? nil : policy.primary_user()&.integration_profiles&.first&.external_id }
+            request = { :number => policy.number,
+                        :status => policy.status,
+                        :user_email => policy.primary_user().nil? ? nil : policy.primary_user().email,
+                        :tcode => policy.primary_user().nil? ? nil : policy.primary_user().integration_profiles.nil? ? nil : policy.primary_user()&.integration_profiles&.first&.external_id,
+                        :community_yardi_id => policy.primary_insurable.parent_community.integration_profiles.nil? ? nil : policy.primary_insurable.parent_community.integration_profiles.first.external_id
+            }
             event = Event.new(verb: 'post', process: 'policy_status_update_webhook', started: DateTime.current, request: request.to_json.to_s, eventable: policy,
                               endpoint: url)
             result = HTTParty.post(url, :body => request.to_json, :headers => { 'Content-Type' => 'application/json' })
