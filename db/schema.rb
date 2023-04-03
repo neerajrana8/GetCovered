@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2023_03_13_202623) do
+ActiveRecord::Schema.define(version: 2023_04_02_134843) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -1933,6 +1933,9 @@ ActiveRecord::Schema.define(version: 2023_03_13_202623) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "type"
+    t.string "reportable2_type"
+    t.bigint "reportable2_id"
+    t.index ["reportable2_type", "reportable2_id"], name: "index_reports_on_reportable2"
     t.index ["reportable_type", "reportable_id", "created_at"], name: "reports_index"
     t.index ["reportable_type", "reportable_id"], name: "index_reports_on_reportable"
   end

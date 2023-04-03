@@ -2,26 +2,34 @@
 #
 # Table name: reports
 #
-#  id              :bigint           not null, primary key
-#  duration        :integer
-#  range_start     :datetime
-#  range_end       :datetime
-#  data            :jsonb
-#  reportable_type :string
-#  reportable_id   :bigint
-#  created_at      :datetime         not null
-#  updated_at      :datetime         not null
-#  type            :string
+#  id               :bigint           not null, primary key
+#  duration         :integer
+#  range_start      :datetime
+#  range_end        :datetime
+#  data             :jsonb
+#  reportable_type  :string
+#  reportable_id    :bigint
+#  created_at       :datetime         not null
+#  updated_at       :datetime         not null
+#  type             :string
+#  reportable2_id   :bigint
+#  reportable2_type :string
 #
 module Reports
-  # NOTE: this reports shows charge amounts for corresponding child policy by account ID and date (month and year)
+  # NOTE: this reports shows charge amounts for corresponding child policy by account ID and date (month and year);
+  #       reportable is account and reportable2 is community
   class ChargePushReport < ::Report
     NAME = 'Charge Push Report'.freeze
 
     after_initialize :validate_dates
 
     def generate
-      data['rows'] = policies.map { |policy| build_row(policy) }
+      # NOTE: can't filter by community in #policies cause of chosen arch, so do it here
+      data['rows'] = policies.filter_map do |policy|
+        row = build_row(policy)
+        row if row['community_id'] == reportable2_id || reportable2_id.nil?
+      end
+
       self
     end
 
@@ -60,11 +68,14 @@ module Reports
     end
 
     def policies
-      Policy
+      query = Policy
         .includes(:policy, :insurables, :users, :agency, :account, policy: :insurables)
         .master_policy_coverages
         .where(range_sql_condition, range_start: range_start.utc, range_end: range_end.utc)
-        .where(account: reportable)
+
+      query = query.where(account: reportable) if reportable
+
+      query
     end
 
     def range_sql_condition
