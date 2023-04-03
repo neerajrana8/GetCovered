@@ -32,11 +32,15 @@ module V2
 
         report.save
 
+        ::Reports::GenerateChargePushReportJob.perform_later(report.id)
+
         render json: { id: report.id, created_at: report.created_at }, status: 201
       end
 
       def show
-        @report.generate.save unless @report.data['rows']&.any?
+        unless @report.data['generated_at'].present?
+          return render json: { message: 'Report is not ready yet, it is being generated.' }, status: 200
+        end
 
         send_data @report.to_csv, filename: file_name('csv')
       end

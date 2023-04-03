@@ -30,6 +30,8 @@ module Reports
         row if row['community_id'] == reportable2_id || reportable2_id.nil?
       end
 
+      data['generated_at'] = DateTime.now
+
       self
     end
 
