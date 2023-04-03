@@ -696,11 +696,12 @@ class Policy < ApplicationRecord
     if previous_changes.has_key?('status') && %w[EXTERNAL_UNVERIFIED EXTERNAL_VERIFIED EXTERNAL_REJECTED].include?(status)
       unless integration_profiles.count.positive?
 
-        if account_id == 0 || agency_id == 0
-          reload() if inline_fix_external_policy_relationships
-        end
+        #if account_id == 0 || agency_id == 0
+        #  reload() if inline_fix_external_policy_relationships
+        #end
 
         begin
+          reload()
           if Rails.env.development? or ENV['RAILS_ENV'] == 'awsdev'
             Compliance::PolicyMailer.with(organization: policy.account.nil? ? policy.agency : policy.account)
                                     .external_policy_status_changed(policy: policy)
