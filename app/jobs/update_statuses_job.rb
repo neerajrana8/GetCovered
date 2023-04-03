@@ -29,9 +29,11 @@ class UpdateStatusesJob < ApplicationJob
     skip = false
     unless skip
 
-      all_units.each do |insurable|
-        next if insurable.account.nil?
-        Insurables::StatusUpdater.call(insurable, check_date)
+      all_units.in_batches.each do |batch|
+        batch.each do |insurable|
+          next if insurable.account.nil?
+          Insurables::StatusUpdater.call(insurable, check_date)
+        end
         # per_user_tracking = insurable.account.per_user_tracking
         # # Iterate over leases on insurable
         # insurable_leases(insurable).each do |lease|
