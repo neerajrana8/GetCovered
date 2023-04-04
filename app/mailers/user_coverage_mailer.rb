@@ -130,7 +130,8 @@ class UserCoverageMailer < ApplicationMailer
           }
         end
       @policy.documents.each do |doc|
-        file_url = Rails.application.routes.url_helpers.rails_blob_url(doc, host: Rails.application.credentials[:uri][ENV['RAILS_ENV'].to_sym][:api]).to_s
+        # file_url = Rails.application.routes.url_helpers.rails_blob_url(doc, host: Rails.application.credentials[:uri][ENV['RAILS_ENV'].to_sym][:api]).to_s
+        file_url = doc.url
         attachments[doc.filename.to_s] = open(file_url).read
       end
       mail(:subject => @content[:subject])
