@@ -40,6 +40,8 @@ module Integrations
           addr = addr.gsub(/\s(A|\a)(P|p)(T|t)([\d]+)([^\s^,]+)/, ' \1\2\3 \4\5')
           # correct comma-separated suffixes
           addr = addr.gsub(/(\s|\A)(N|S)\.(E|W)\.(,|\s)/, '\1\2\3\4').gsub(/,\s(N|S)(E|W)(,|\s)/, ' \1\2\3')
+          # correct missing comma after street if number follows
+          addr = addr.gsub(/(Ave|Avenue|Street|St|Rd|Road|Cir|Circle)\s+(\d)/, '\1, Apt \2')
           # special essex property 144 fix
           if integration.id == 7 && markname == "Palisades, The" && addr.index("NE 12TH ST")
             addr = addr.gsub(" ST, ", " ST, APT ")
@@ -50,7 +52,7 @@ module Integrations
           uid_lasto = "#{uid_parts.last}"
           uid_lasto = uid_lasto[1..-1] while uid_lasto[0] && uid_lasto[0] == "0"
           splat = addr.split(" ")
-          if splat[-2] && ["Apt", "Apr", "Apartment", "Unit", "Apt.", "Apr.", "Ste.", "Ste", "Suite", "Room", "Rm", "Rm."].include?(splat[-2])
+          if splat[-2] && ["Apt", "Apr", "Apartment", "Unit", "Apt.", "Apr.", "Ste.", "Ste", "Suite", "Room", "Rm", "Rm.", "Loft"].include?(splat[-2])
             if splat[-3]
               if !splat[-3].end_with?(",")
                 splat[-3] += ","
@@ -68,20 +70,20 @@ module Integrations
           
           gombo = addr.split(" ")
           if !gombo.blank? && (gombo.last == unitid.strip || gombo.last == uid_parts.last || gombo.last == uid_lasto)
-            if gombo[-2] && !["Apt", "Apr", "Apartment", "Unit", "Apt.", "Apr.", "Ste.", "Ste", "Suite", "Room", "Rm", "Rm.", "#", "No", "Num"].any?{|wut| gombo[-2].downcase.end_with?(wut.downcase) }
+            if gombo[-2] && !["Apt", "Apr", "Apartment", "Unit", "Apt.", "Apr.", "Ste.", "Ste", "Suite", "Room", "Rm", "Rm.", "#", "No", "Num", "Loft"].any?{|wut| gombo[-2].downcase.end_with?(wut.downcase) }
               gombo[-1] = "Apt #{gombo.last}"
               if gombo[-2] && !gombo[gombo.length-2].end_with?(',')
                 gombo[-2] += ','
               end
               addr = gombo.join(" ")
-            elsif gombo[-2] && gombo[-2] == "#" && gombo[-3] && !["Apt", "Apr", "Apartment", "Unit", "Apt.", "Apr.", "Ste.", "Ste", "Suite", "Room", "Rm", "Rm."].any?{|x| gombo[-3].downcase == x.downcase }
+            elsif gombo[-2] && gombo[-2] == "#" && gombo[-3] && !["Apt", "Apr", "Apartment", "Unit", "Apt.", "Apr.", "Ste.", "Ste", "Suite", "Room", "Rm", "Rm.", "Loft"].any?{|x| gombo[-3].downcase == x.downcase }
               gombo[-2] = "Apt"
               gombo[-3] += ','
               addr = gombo.join(" ")
             end
           end
           
-          uabbrevs = ['Apt', 'Apr', 'Apartment', 'Unit', 'Ste', 'Suite', 'Room', 'Rm']
+          uabbrevs = ['Apt', 'Apr', 'Apartment', 'Unit', 'Ste', 'Suite', 'Room', 'Rm', 'Loft']
           addr = addr.gsub(/(#{uabbrevs.join('|')})\./, '\1')           # get rid of periods after abbrevs
                      .gsub(/(#{uabbrevs.join('|')}) #([\s]*)/, '\1 ')   # get rid of # after abbrevs
                      .gsub(/\A#/, '').gsub(/\s#\s/, ' Apt ').gsub(/([^,])\sApt\s/, '\1, Apt ').gsub(/Apt\s([a-zA-Z\d]+)\s([a-zA-Z\d]+),/, 'Apt \1\2,') # do nice magic
@@ -275,7 +277,9 @@ module Integrations
                   to_return[:unit_errors][k][u["UnitId"]] = "Unable to parse address (#{u[:gc_addr]}, #{u["City"]}, #{u["State"]} #{u["PostalCode"]})"
                   nil
                 else
+                  puts "Unit pre-address: #{addr.full} (street: #{addr.street_name})"
                   addr = after_address_hacks(addr)
+                  puts "Unit post-address: #{addr.full} (street: #{addr.street_name})"
                   u[:gc_addr_obj] = addr
                   u
                 end
@@ -308,7 +312,7 @@ module Integrations
                   next u if u[:gc_addr_obj].street_number == u["UnitId"].gsub(/\A0/, '').gsub(/\A10/, '16')
                 end
                 # essex has a bunch of XX113A for things like "113 A Westinghouse..." (which the parser should covert into "113A", hence a perfect match except the XX
-                next u if u[:gc_addr_obj].street_name = u["UnitId"][2...]
+                next u if u[:gc_addr_obj].street_name == u["UnitId"][2...]
                 # hacky nonsense for essex san1100
                 if u[:gc_addr_obj].street_number.end_with?("1/2")
                   cleanuid = u["UnitId"].strip
@@ -386,20 +390,14 @@ module Integrations
               ip = local_unmatched_ips.find do |ip|
                 addr = ip.profileable.primary_address
                 caddr = comm[:gc_addr_obj]
-#puts "!!!!!!!!!!!!! The comm is:"
-#puts comm
-#puts "!!!!!!!!!!!!! The unmatched IP is:"
-#puts "#{ip.to_json}"
-#puts "!!!!!!!!!!!!! and addr is #{addr ? "not null" : "null"}"
-#puts "!!!!!!!!!!!!! and caddr is #{caddr ? "not null" : "null"}"
                 next if caddr.nil?
                 next "#{addr.combined_street_address}, #{addr.city}, #{addr.state} #{addr.zip_code}" == "#{caddr.combined_street_address}, #{caddr.city}, #{caddr.state} #{caddr.zip_code}"
               end
               if !ip.nil?
                 # we found a match... they've changed the id -_-
+                old_id = ip.external_id
                 ip.update(external_id: comm[:yardi_id])
-                IntegrationProfile.where(integration: integration, profileable_type: "Insurable", profileable_id: ip.profileable.units.map{|u| u.id }).update_all(external_context: "unit_in_community_#{comm[:yardi_id]}")
-                # MOOSE WARNING: need to change anything else?
+                IntegrationProfile.where(integration: integration, external_context: "unit_in_community_#{old_id}").update_all(external_context: "unit_in_community_#{comm[:yardi_id]}")
               else
                 # look for/create a matching community
                 community = ::Insurable.get_or_create(
@@ -434,9 +432,6 @@ module Integrations
                   to_return[:community_errors][comm[:yardi_id]] = "Community is registered to another account (community id ##{community.id}, account id ##{account_id})"
                 end
                 next if comm[:errored]
-                # fix matching community fields if necessary
-                community.update(title: comm[:title], account_id: account_id, confirmed: true) if community.account_id != account_id && !community.confirmed
-                community.qbe_mark_preferred unless community.preferred_ho4
                 # create the ip
                 ip = IntegrationProfile.create(
                   integration: integration,
@@ -452,6 +447,9 @@ module Integrations
                   to_return[:community_errors][comm[:yardi_id]] = "Encountered an error while saving IntegrationProfile: #{ip.errors.to_h}"
                   next
                 end
+                # fix matching community fields if necessary
+                community.update(title: comm[:title], account_id: account_id, confirmed: true) if community.account_id != account_id && !community.confirmed
+                community.qbe_mark_preferred unless community.preferred_ho4
               end
             end
             # last line of defense against missing IP
@@ -471,10 +469,13 @@ module Integrations
 
           output_array.each do |comm|
             comm[:buildings].each do |bldg|
+puts "Building address params: #{ { street_name: bldg[:street_name], street_number: bldg[:street_number], city: bldg[:city], state: bldg[:state], zip_code: bldg[:zip_code] } }"
               addr = ::Address.new(street_name: bldg[:street_name], street_number: bldg[:street_number], city: bldg[:city], state: bldg[:state], zip_code: bldg[:zip_code])
               addr.standardize_case; addr.set_full; addr.set_full_searchable; addr.from_full; addr.standardize
+puts "Building final address: #{addr.full}"
               building = (comm[:buildings].length == 1 && bldg[:is_community] ? comm[:insurable] : comm[:insurable].buildings.confirmed.find{|b| b.primary_address.street_name.downcase == addr.street_name.downcase && b.primary_address.street_number.downcase == addr.street_number.downcase })
               building ||= comm[:insurable].buildings.confirmed.find{|b| b.title == "#{bldg[:street_number]} #{bldg[:street_name]}" && b.primary_address.zip_code[0...5] == bldg[:zip_code][0...5] }
+puts "Building found: #{building&.id || 'nil'} (#{building&.primary_address&.full || 'no address'})"
               if building.nil?
                 building = Insurable.create(
                   insurable_id: comm[:insurable].id,
@@ -562,12 +563,12 @@ module Integrations
                 u[:integration_profile] = ip
               end # end unit loop
               bldg[:units].select!{|u| !u[:errored] }
-              # kill if empty
-              if building.reload.insurables.reload.blank?
-                building.addresses.delete_all
-                building.delete
-              end
+              # move units in case some of them were on a different building for some reason
+              Insurable.where(id: bldg[:units].map{|u| u[:insurable].id }).update_all(insurable_id: bldg[:insurable].id)
             end # end building loop
+            # delete building that have no units
+            condemned_ids = comm[:insurable].insurables.where(insurable_type_id: 7, confirmed: true).reload.pluck(:id) - comm[:insurable].units.reload.pluck(:insurable_id).uniq
+            Insurable.where(id: condemned_ids).each{|i| i.primary_address&.delete; i.delete }
             comm[:buildings].select!{|b| !b[:errored] }
           end # end community loop
           
