@@ -19,7 +19,7 @@ default: &default
   encoding: unicode
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 10 } %>
   password: password
-  
+
 production_default: &production_default
   adapter: postgresql
   encoding: utf8
@@ -55,7 +55,7 @@ awsdev:
   password: <%= Rails.application.credentials.postgres[:awsdev][:password] %>
   host: <%= Rails.application.credentials.postgres[:awsdev][:host] %>
   port: <%= Rails.application.credentials.postgres[:awsdev][:port] %>
-  
+
 aws_staging:
   <<: *production_default
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 150 } %>
@@ -64,7 +64,7 @@ aws_staging:
   password: <%= Rails.application.credentials.postgres[:aws_staging][:password] %>
   host: <%= Rails.application.credentials.postgres[:aws_staging][:host] %>
   port: <%= Rails.application.credentials.postgres[:aws_staging][:port] %>
-  
+
 production:
   <<: *default
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 400 } %>
