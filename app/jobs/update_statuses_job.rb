@@ -28,11 +28,16 @@ class UpdateStatusesJob < ApplicationJob
 
     skip = false
     unless skip
-
-      all_units.in_batches.each do |batch|
+      puts stats_as_table
+      all_units.where.not(account_id: nil).in_batches.each do |batch|
         batch.each do |insurable|
-          next if insurable.account.nil?
-          Insurables::StatusUpdater.call(insurable, check_date)
+          next unless insurable.account_id
+
+          begin
+            Insurables::StatusUpdater.call(insurable, check_date)
+          rescue StandardError
+            next
+          end
         end
         # per_user_tracking = insurable.account.per_user_tracking
         # # Iterate over leases on insurable
