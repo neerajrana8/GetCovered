@@ -90,6 +90,10 @@ class Carrier < ApplicationRecord
     return self.commission_strategy
   end
 
+  def out_of_system?
+    integration_designation == 'out_of_system'
+  end
+
   private
 
   def initialize_carrier
