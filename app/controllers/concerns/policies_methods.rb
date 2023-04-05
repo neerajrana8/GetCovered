@@ -38,6 +38,7 @@ module PoliciesMethods
       add_error_master_types(@policy.policy_type_id)
       if @policy.errors.blank? && @policy.save
         result = Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes])
+        @policy.reload
         if result.failure?
           render json: result.failure, status: 422
         else
@@ -82,8 +83,15 @@ module PoliciesMethods
       ActiveRecord::Base.transaction do
         result = Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes])
         selected_insurable = Insurable.find(update_coverage_params[:policy_insurables_attributes].first[:insurable_id])
+        @policy.reload
+        # @policy.primary_insurable = selected_insurable
+        # @policy.primary_insurable.save!
+
+        # Delete all except last for this policy
+        PolicyInsurable.where(policy_id: @policy.id).delete_all
         @policy.primary_insurable = selected_insurable
         @policy.primary_insurable.save!
+
         @policy.save!
         @policy.policy_coverages.delete_all
         @policy.policy_coverages.create!(update_coverage_params[:policy_coverages_attributes])

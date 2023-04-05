@@ -20,7 +20,6 @@
 #  updated_at                 :datetime         not null
 #  enabled                    :boolean          default(FALSE)
 #  integration_account_number :string
-#  lease_violation_only       :boolean          default(TRUE)
 #
 # Master Policy Configuration model
 # file: app/models/master_policy_configuration.rb

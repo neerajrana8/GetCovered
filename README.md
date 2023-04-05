@@ -206,6 +206,9 @@ Next steps needed if you want automatically open email files in browser (please 
 You must see message : "- INFO - Guard is now watching at '/YOU_PROJECT_DIRECTORY/GetCovered-V2'"
 Try to send email and check it in your default browser
 
+#### Annotate
+Annotate models after running new migrations by running `bundle exec annotate --models`
+
 ## Errors 
 All new errors and if possible old must use the next format:
 ```ruby
