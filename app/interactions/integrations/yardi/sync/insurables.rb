@@ -277,9 +277,9 @@ module Integrations
                   to_return[:unit_errors][k][u["UnitId"]] = "Unable to parse address (#{u[:gc_addr]}, #{u["City"]}, #{u["State"]} #{u["PostalCode"]})"
                   nil
                 else
-                  puts "Unit pre-address: #{addr.full} (street: #{addr.street_name})"
+                  #puts "Unit pre-address: #{addr.full} (street: #{addr.street_name})"
                   addr = after_address_hacks(addr)
-                  puts "Unit post-address: #{addr.full} (street: #{addr.street_name})"
+                  #puts "Unit post-address: #{addr.full} (street: #{addr.street_name})"
                   u[:gc_addr_obj] = addr
                   u
                 end
@@ -469,13 +469,13 @@ module Integrations
 
           output_array.each do |comm|
             comm[:buildings].each do |bldg|
-puts "Building address params: #{ { street_name: bldg[:street_name], street_number: bldg[:street_number], city: bldg[:city], state: bldg[:state], zip_code: bldg[:zip_code] } }"
+#puts "Building address params: #{ { street_name: bldg[:street_name], street_number: bldg[:street_number], city: bldg[:city], state: bldg[:state], zip_code: bldg[:zip_code] } }"
               addr = ::Address.new(street_name: bldg[:street_name], street_number: bldg[:street_number], city: bldg[:city], state: bldg[:state], zip_code: bldg[:zip_code])
               addr.standardize_case; addr.set_full; addr.set_full_searchable; addr.from_full; addr.standardize
-puts "Building final address: #{addr.full}"
+#puts "Building final address: #{addr.full}"
               building = (comm[:buildings].length == 1 && bldg[:is_community] ? comm[:insurable] : comm[:insurable].buildings.confirmed.find{|b| b.primary_address.street_name.downcase == addr.street_name.downcase && b.primary_address.street_number.downcase == addr.street_number.downcase })
               building ||= comm[:insurable].buildings.confirmed.find{|b| b.title == "#{bldg[:street_number]} #{bldg[:street_name]}" && b.primary_address.zip_code[0...5] == bldg[:zip_code][0...5] }
-puts "Building found: #{building&.id || 'nil'} (#{building&.primary_address&.full || 'no address'})"
+#puts "Building found: #{building&.id || 'nil'} (#{building&.primary_address&.full || 'no address'})"
               if building.nil?
                 building = Insurable.create(
                   insurable_id: comm[:insurable].id,
