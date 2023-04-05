@@ -620,7 +620,7 @@ class Policy < ApplicationRecord
     end
   end
 
-  def latest_lease(lease_status: ['current', 'pending'], user_matches: [:all, :primary, :any, :none], prefer_more_users: true, lessees_only: false, current_only: false, future_users: true)
+  def latest_lease(lease_status: ['current', 'pending'], user_matches: [:all, :primary, :any, :none], prefer_more_users: true, lessees_only: false, current_only: false, future_users: true, fake_now: nil)
     return nil if self.primary_insurable.blank?
     lease_status = [lease_status] unless lease_status.class == ::Array
     user_matches = [:all, :primary, :any] if user_matches == true
@@ -630,7 +630,7 @@ class Policy < ApplicationRecord
       lease_users = if current_only
           lease.lease_users.send(*(lessees_only ? [:where, { lessee: true }] : [:itself]))
         else
-          lease.active_lease_users(**({ lessee: (lessees_only || nil), allow_future: future_users }.compact))
+          lease.active_lease_users(fake_now || Time.current.to_date, **({ lessee: (lessees_only || nil), allow_future: future_users }.compact))
       end
       case lease_users.count{|lu| self.users.any?{|u| u.id == lu.user_id } }
         when self.users.count
@@ -649,7 +649,7 @@ class Policy < ApplicationRecord
               lease_users = if current_only
                   lease.lease_users.send(*(lessees_only ? [:where, { lessee: true }] : [:itself]))
                 else
-                  lease.active_lease_users(**({ lessee: (lessees_only || nil), allow_future: future_users }.compact))
+                  lease.active_lease_users(fake_now || Time.current.to_date, **({ lessee: (lessees_only || nil), allow_future: future_users }.compact))
               end
               -lease_users.count{|lu| self.users.any?{|u| u.id == lu.user_id } }
             end.first
