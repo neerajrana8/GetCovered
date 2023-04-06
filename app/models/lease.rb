@@ -92,6 +92,7 @@ class Lease < ApplicationRecord
     range === Time.current
   end
   
+  
   def active_lease_users(present_date = Time.current.to_date, lessee: [true, false], allow_future: nil, lease_user_where: nil)
     allow_future = (self.status == 'pending') if allow_future.nil?
     if allow_future

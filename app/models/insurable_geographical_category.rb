@@ -87,6 +87,10 @@ class InsurableGeographicalCategory < ApplicationRecord
   
   # instance methods
   
+  def pure_state?
+    !state.nil? && VARCHAR_ARRAYS.inject(true){|b,va| b && self.send(va).blank? }
+  end
+  
   def query_for_parents(include_self: true)
     to_return = ::InsurableGeographicalCategory.where(state: nil)
     unless self.state.nil?

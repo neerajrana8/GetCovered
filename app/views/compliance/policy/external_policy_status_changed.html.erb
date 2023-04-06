@@ -6,7 +6,7 @@
   ----
   --->
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-    <span style="font-size: 16px;">Hi <%= @user.profile.full_name %>,</span>
+    <span style="font-size: 16px;">Hi <%= @user&.profile&.full_name %>,</span>
   </p>
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
     <span style="font-size: 16px;">
@@ -30,7 +30,7 @@
   ----
   --->
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-    <span style="font-size: 16px;">Hello <%= @user.profile.full_name %>,</span>
+    <span style="font-size: 16px;">Hello <%= @user&.profile.full_name %>,</span>
   </p>
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
     <span style="font-size: 16px;">This email is to confirm we have received, verified, and approved your insurance policy.
@@ -51,7 +51,7 @@
   ----
   --->
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-    <span style="font-size: 16px;">Hello <%= @user.profile.full_name %>,</span>
+    <span style="font-size: 16px;">Hello <%= @user&.profile.full_name %>,</span>
   </p>
 
   <% if @final %>

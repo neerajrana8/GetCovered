@@ -3,5 +3,7 @@ scope module: :carriers, path: 'carriers' do
     post :list,  action: :list
   end
 
+  post '/:id/merge', controller: :carriers, action: :merge
+
   get '/', controller: :carriers, action: :index
 end

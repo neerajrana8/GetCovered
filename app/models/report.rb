@@ -2,19 +2,19 @@
 #
 # Table name: reports
 #
-#  id              :bigint           not null, primary key
-#  duration        :integer
-#  range_start     :datetime
-#  range_end       :datetime
-#  data            :jsonb
-#  reportable_type :string
-#  reportable_id   :bigint
-#  created_at      :datetime         not null
-#  updated_at      :datetime         not null
-#  type            :string
+#  id               :bigint           not null, primary key
+#  duration         :integer
+#  range_start      :datetime
+#  range_end        :datetime
+#  data             :jsonb
+#  reportable_type  :string
+#  reportable_id    :bigint
+#  created_at       :datetime         not null
+#  updated_at       :datetime         not null
+#  type             :string
+#  reportable2_id   :bigint
+#  reportable2_type :string
 #
-# Report model
-# file: +app/models/report.rb+
 
 class Report < ApplicationRecord
   # Active Record Callbacks
@@ -26,9 +26,13 @@ class Report < ApplicationRecord
              polymorphic: true,
              optional: true
 
+  belongs_to :reportable2,
+    polymorphic: true,
+    optional: true
+
   enum duration: %w[day range]
 
-  # Validations             
+  # Validations
   validates_presence_of :data
 
   def name

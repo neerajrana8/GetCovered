@@ -191,6 +191,10 @@ en:
       please_click: "Please click below to finish activating your account."
       the_gc_portal_will_allow: "The Get Covered portal will allow you to access your policy documents, update your personal information and review your billing details."
   policy_mailer:
+    coverage_proof_uploaded:
+      subject: 'Policy Submission Received'
+    notify_new_child_policy:
+      subject: 'Master Policy Enrollment Confirmation'
     policy_expiring_soon:
       subject: "Your insurance will expire soon!"
       content: "Hello, %{first_name}!\n

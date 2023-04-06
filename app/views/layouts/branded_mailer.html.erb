@@ -432,12 +432,12 @@
                                     <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-top: 2em; padding-bottom: 2em;">
                                       <span style="font-size: 12px;">
                                         <% if defined?(@second_nature_condition).nil? %>
-                                          <%= @from %> - ©<%=  Date.current.strftime('%Y') %> Get Covered, All Rights Reserved
+                                          <%= all_rights_reserved(@from, Date.current, 'Get Covered, All Rights Reserved') %>
                                         <% else %>
                                           <% if @second_nature_condition %>
-                                            <%= @from %> - ©<%=  Date.current.strftime('%Y') %> Second Nature, All Rights Reserved
+                                            <%= all_rights_reserved(@from, Date.current, 'Second Nature, All Rights Reserved') %>
                                           <% else %>
-                                            <%= @from %> - ©<%=  Date.current.strftime('%Y') %> Get Covered, All Rights Reserved
+                                            <%= all_rights_reserved(@from, Date.current, 'Get Covered, All Rights Reserved') %>
                                           <% end %>
                                         <% end %>
                                       </span>
