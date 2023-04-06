@@ -202,11 +202,20 @@ class Lease < ApplicationRecord
     lease_users.where(primary: true).take&.user
   end
   
-  def matching_policies(users: nil, policy_type_id: 1, policy_status: Policy.active_statuses)
+  def matching_policies(users: nil, policy_type_id: 1, policy_status: Policy.active_statuses, active_at: nil)
+    # support all weird user types
     user_set ||= self.users
     user_set = [users] if users.class == ::User || users.class == ::Integer
     user_set = user_set.map{|u| u.class == ::Integer ? u : u.id }
-    self.insurable.policies.where(policy_type_id: policy_type_id, status: policy_status, id: PolicyUser.where(user_id: user_set).select(:policy_id))
+    # do it bro
+    to_return = self.insurable.policies
+    unless active_at.nil?
+      to_return = to_return.where(expiration_date: nil).or(to_return.where("expiration_date >= ?", active_at))
+      to_return = to_return.where(cancellation_date:  nil).or(to_return.where("cancellation_date >= ?", active_at))
+      to_return = to_return.where("effective_date <= ?", active_at)
+    end
+    to_return = to_return.where(policy_type_id: policy_type_id, status: policy_status, id: PolicyUser.where(user_id: user_set).select(:policy_id))
+    return to_return
   end
 
   private
