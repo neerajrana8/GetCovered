@@ -62,7 +62,11 @@ module Reporting
         integrations: { integratable_type: "Account", integratable_id: self.account_id, provider: 'yardi' }
       ).take&.external_id
       
-      policies = lease.matching_policies(users: self.lease_user.user_id, policy_type_id: [::PolicyType::RESIDENTIAL_ID, ::PolicyType::MASTER_COVERAGE_ID]).order("expiration_date desc")
+      policies = lease.matching_policies(
+        active_at: [Time.current.to_date, lease.start_date].compact.max,
+        users: self.lease_user.user_id,
+        policy_type_id: [::PolicyType::RESIDENTIAL_ID, ::PolicyType::MASTER_COVERAGE_ID]
+      ).order("expiration_date desc")
       self.policy = policies.find{|p| p.policy_type_id == ::PolicyType::RESIDENTIAL_ID } || policies.find{|p| p.policy_type_id == ::PolicyType::MASTER_COVERAGE_ID }
       self.policy_number = policy&.number
       
