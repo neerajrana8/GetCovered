@@ -218,7 +218,7 @@ module Reporting
       show_yardi = self.owner_type == "Account" && !self.owner.integrations.where(provider: 'yardi').blank? ? true : false
       show_insurables = !show_yardi
       show_universe = false
-      hide_internal_vs_external = true
+      hide_internal_vs_external = false
       if self.owner_type.nil? # superadmin view
         show_insurables = true
         show_yardi = true
