@@ -43,6 +43,10 @@ module PolicyRenewal
     def valid_for_renewal?
       #ensure that the status and billing status show the policy as being
       #in good standing
+      # carrier_id: 1
+      # policy_type_id: 1
+      # policy_in_system: true
+      # billing_status: 'current' or 'rescinded'
     end
 
   end
