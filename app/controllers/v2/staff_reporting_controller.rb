@@ -10,7 +10,7 @@ module V2
       organizable_class = [Account, Agency].find{|c| c.name == params[:organizable_type] }
       organizable_id = params[:organizable_id].to_i
       @organizable =
-        if current_staff.getcovered_agent?
+        if current_staff.getcovered_agent? || current_staff.role == 'super_admin'
           if organizable_class.nil?
             :EMPEROR
           else
