@@ -186,3 +186,7 @@ es:
   renewal_mailer:
     policy_renewing_soon:
       subject: "Your insurance policy is renewing soon"
+    policy_renewal_success:
+      subject: "Your insurance policy has been renewed"
+    policy_renewal_failed:
+      subject: "Your insurance policy renewal has failed"
