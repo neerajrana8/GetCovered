@@ -1,0 +1,18 @@
+Dear <%= @policy.primary_user.profile.full_name %>
+
+We are writing to inform you that your insurance policy is due for renewal soon.
+Your policy, <%= @policy.number %>, will renew on <%= @renew_on_date %>.
+This policy provides you with:
+
+<% @policy.coverages.each do |coverage|  %>
+    <%= coverage.title %>
+<% end %>
+
+To avoid any gap in coverage, we would recommend renewing your policy well in advance.
+You can easily renew your policy online by logging into your account on our website or contacting our customer service team for assistance.
+If you have any questions or would like to discuss your policy options, our team of insurance experts would be happy to assist you.
+You can reach us at <%= t('support_email') %>
+
+Thank you for choosing us as your insurance provider. We look forward to serving you for another year.
+
+Best regards, Get Covered

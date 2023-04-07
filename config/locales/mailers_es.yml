@@ -183,3 +183,6 @@ es:
                   Please submit your new insurance policy or renewal documents before the expiration date.Thank you!"
     enrolled_in_master:
       subject: "Default Policy Enrollment"
+  renewal_mailer:
+    policy_renewing_soon:
+      subject: "Your insurance policy is renewing soon"
