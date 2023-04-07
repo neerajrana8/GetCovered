@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<head>
+  <title>Get Covered Reporting</title>
+  
+  <link rel="stylesheet" href="style.css">
+  <script type="text/javascript">
+    
+    var SITE_ROOT = "file:///home/brinsfield/devel/REPORTING/frontend/frontend.html";
+    var DASHBOARD_ROOT = "https://admin-dev-v2.getcoveredinsurance.com";
+    var API_ROOT = "https://api-dev-v2.getcoveredinsurance.com";
+    
+  </script>
+  
+</head>
+<body>
+  <script src="js/dialog.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/navbar.js"></script>
+  <script src="js/page.js"></script>
+  <script src="js/pages/home.js"></script>
+  <script src="js/views/report_view.js"></script>
+  <script src="js/pages/abstract/report.js"></script>
+  <script src="js/pages/coverage_report.js"></script>
+  <script src="js/pages/policy_report.js"></script>
+  <script type="text/javascript">
+    new App(API_ROOT);
+    App.current.show();
+  </script>
+</body>
+</html>

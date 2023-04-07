@@ -37,7 +37,7 @@ module V2
         # end
 
         # super(:@master_policies, master_policies_relation)
-        @master_policies = master_policies_relation
+        @master_policies = paginator(master_policies_relation)
         render template: 'v2/shared/master_policies/index', status: :ok
       end
 

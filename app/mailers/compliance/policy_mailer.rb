@@ -8,7 +8,7 @@ module Compliance
       @user = policy.primary_user
       @pm_account = policy.account
       #TODO: it missed spanish translation
-      @content = t('policy_mailer.policy_expiring_soon.content', first_name: @user.profile.first_name, policy_expiration_date: policy.expiration_date.strftime('%B %d, %Y')  )
+      @content = t('policy_mailer.policy_expiring_soon.content', first_name: @user&.profile&.first_name, policy_expiration_date: policy&.expiration_date.strftime('%B %d, %Y')  )
 
       @from = @pm_account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] : t('policy_verify_email')
 
@@ -59,9 +59,9 @@ module Compliance
 
       @user = user
       @community = community
-      @pm_account = @community.account
+      @pm_account = @community.account || @policy.account
       @placement_cost = @configuration.nil? ? 0 : @configuration.total_placement_amount(force).to_f / 100
-      @onboarding_url = tokenized_url(@user.id, @community)
+      @onboarding_url = tokenized_url(@user.id, @community, @branding_profile)
 
       @from = @pm_account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] : t('policy_verify_email')
 
@@ -76,18 +76,12 @@ module Compliance
       @policy = policy
       @user = @policy.primary_user
 
-      set_locale(@user.profile&.language || "en")
-
-      #TODO: need to move hardcoded id to env dependant logic
-      @second_nature_condition = false
-      @second_nature_condition = true if @organization.is_a?(Agency) && @organization.id == 416
-      @second_nature_condition = true if @organization.is_a?(Account) && @organization.agency_id == 416
-      puts @second_nature_condition
+      set_locale(@user&.profile&.language || "en")
 
       @community = @policy.primary_insurable.parent_community
-      @pm_account = @community.account
+      @pm_account = @community.account || @policy.account
 
-      @onboarding_url = tokenized_url(@user.id, @community, "upload-coverage-proof")
+      @onboarding_url = tokenized_url(@user.id, @community, "upload-coverage-proof", @branding_profile)
 
       @from = nil
       unless @pm_account.nil?
@@ -117,7 +111,10 @@ module Compliance
 
       bcc_emails = [t('system_email')]
 
-      @policy.account.staffs.each do |staff|
+      #TODO: need to figure out across the mailers logic what need to be shown in case when no relation with account or with agency
+      @pm_account = @policy.account if @pm_account.nil?
+
+      @pm_account.staffs.each do |staff|
         bcc_emails << staff.email if need_to_add_staff_to_bcc?(staff)
       end
 
@@ -145,15 +142,41 @@ module Compliance
     end
 
     def set_variables
-      @organization = params[:organization].blank? ? Agency.find(1) : params[:organization]
+      @organization = set_organization
       @address = @organization.addresses.where(primary: true).nil? ? Address.find(1) : @organization.primary_address()
-      @branding_profile = @organization.branding_profiles.where(default: true)&.take || BrandingProfile.global_default
+      @branding_profile = set_branding_profile
       @GC_ADDRESS = Agency.get_covered.primary_address.nil? ? Address.find(1) : Agency.get_covered.primary_address
     end
 
     def set_master_policy_and_configuration(community, carrier_id, cutoff_date = nil)
       @master_policy = community.policies.where(policy_type_id: 2, carrier_id: carrier_id).take
       @configuration = @master_policy&.find_closest_master_policy_configuration(community, cutoff_date)
+    end
+    #  .branding_profiles&.take&.url
+    #TODO: need to confirm logic and move to ApplicationMailer to make possible to use for all
+    def set_organization
+      if params[:organization].blank?
+        @policy.account || @policy.agency || Agency.get_covered
+      else
+        params[:organization]
+      end
+    end
+
+    def set_branding_profile
+      if is_second_nature?
+        @organization.branding_profiles.blank? ? @organization.agency.branding_profiles.where(default: true).take : @organization.branding_profiles.where(default: true).take
+      else
+        @organization.branding_profiles.where(default: true)&.take || BrandingProfile.global_default
+        #branding_profile_to_use
+      end
+    end
+
+    def is_second_nature?
+      #TODO: need to move hardcoded id to env dependant logic
+      @second_nature_condition = false
+      @second_nature_condition = true if @organization.is_a?(Agency) && (@organization.id == 416 || @organization.id == 11)
+      @second_nature_condition = true if @organization.is_a?(Account) && (@organization.agency_id == 416 || @organization.agency_id == 11)
+      @second_nature_condition
     end
 
   end

@@ -491,7 +491,7 @@ module Integrations
           resident_datas = resident_data.group_by{|td| td["Status"] }
           future_tenants = (
             (RESIDENT_STATUSES['future'] || []).map{|s| resident_datas[s] || [] } +
-            ((integration.id == 6 || integration.id == 14) ? (resident_datas['Applicant'] || []) : [])
+            ((integration.id == 14) ? (resident_datas['Applicant'] || []) : [])
           ).flatten
           present_tenants = (
             (RESIDENT_STATUSES['present'] || []).map{|s| resident_datas[s] || [] } +
@@ -499,7 +499,7 @@ module Integrations
           ).flatten
           past_tenants = (
             (RESIDENT_STATUSES['past'] || []).map{|s| resident_datas[s] || [] } +
-            ((integration.id == 6 || integration.id == 14) ? (resident_datas['Denied'] || []) : []) +
+            ((integration.id == 14) ? (resident_datas['Denied'] || []) : []) +
             (RESIDENT_STATUSES['nonfuture'] || []).map{|s| (resident_datas[s] || []).select{|td| !td['MoveOut'].blank? && (Date.parse(td['MoveOut']) rescue nil)&.<(Time.current.to_date) } }
           ).flatten
           # grab some variables we shall require in the execution of our noble purpose
@@ -512,7 +512,7 @@ module Integrations
           # mark defunct those leases which the horrific architecture of Yardi's database requires to be removed from their system when they have been superseded
           # MOOSE WARNING: the 'defunct' boolean is a placeholder architectural solution just to get the feature working. ultimately we should be giving these leases a special status and doing something to their IPs...
           IntegrationProfile.where(integration: integration, external_context: 'lease', profileable: unit.leases.where(defunct: false)).where.not(external_id: in_system).each do |lip|
-            lip.profileable.update(defunct: true, status: 'expired') 
+            lip.profileable.update(defunct: true, status: 'expired', end_date: Time.current.to_date) 
           end
           # update leases to expired
           in_system_lips = IntegrationProfile.references(:leases).includes(:lease).where(integration: integration, external_context: 'lease', external_id: past_tenants.map{|l| l['Id'] }, profileable_type: "Lease", leases: { status: ['current', 'pending'] })
