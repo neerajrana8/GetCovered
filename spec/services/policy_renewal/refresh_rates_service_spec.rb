@@ -29,6 +29,12 @@ describe 'PolicyRenewal::RefreshRatesService' do
       renewal_status = PolicyRenewal::RefreshRatesService.call(policy.number)
 
     end
+
+    it 'raise exception during refreshing rates' do
+      #TBD
+      renewal_status = PolicyRenewal::RefreshRatesService.call(policy.number)
+
+    end
   end
 
 end
