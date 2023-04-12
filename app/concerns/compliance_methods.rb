@@ -4,7 +4,8 @@ module ComplianceMethods
     branding_profile_url = branding_profile.present? ? branding_profile.url : community&.account&.branding_profiles.where(default: true)&.take&.url
     str_to_encrypt = "user #{user_id} community #{community&.id}" #user 1443 community 10035
     auth_token_for_email = EncryptionService.encrypt(str_to_encrypt)
-    return "https://#{branding_profile_url}/#{form_url}?token=#{ERB::Util.url_encode(auth_token_for_email)}"
+    #return "https://#{branding_profile_url}/#{form_url}?token=#{ERB::Util.url_encode(auth_token_for_email)}"
+    return "https://#{branding_profile_url}/#{form_url}?token=#{CGI.escape(auth_token_for_email)}"
   end
 
   def get_insurable_liability_range(insurable)
