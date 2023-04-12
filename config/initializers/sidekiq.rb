@@ -8,7 +8,7 @@ sidekiq_config = {
 Sidekiq.configure_server do |config|
   config.redis = sidekiq_config
   config.on(:startup) do
-    Sidekiq.schedule = YAML.load_file(File.expand_path('../../../config/sidekiq.yml',__FILE__))
+    #Sidekiq.schedule = YAML.load_file("config/sidekiq.yml")
     SidekiqScheduler::Scheduler.instance.reload_schedule!
   end
 end
