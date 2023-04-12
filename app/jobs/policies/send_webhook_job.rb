@@ -15,12 +15,20 @@ module Policies
                       else
                         "http://0.0.0.0:300"
                       end
-            request = { :number => policy.number,
-                        :status => policy.status,
-                        :user_email => policy.primary_user().nil? ? nil : policy.primary_user().email,
-                        :tcode => policy.primary_user().nil? ? nil : policy.primary_user().integration_profiles.nil? ? nil : policy.primary_user()&.integration_profiles&.first&.external_id,
-                        :community_yardi_id => policy.primary_insurable.parent_community.integration_profiles.nil? ? nil : policy.primary_insurable.parent_community.integration_profiles.first.external_id
+
+            request = {
+              :number => policy.number,
+              :status => policy.status,
+              :effective_date => policy.effective_date,
+              :community_yardi_id => policy.primary_insurable.parent_community.integration_profiles.nil? ? nil : policy.primary_insurable.parent_community.integration_profiles.first.external_id,
+              :users => Array.new
             }
+
+            policy.users.each do |user|
+              tcode = IntegrationProfile.exists?(profileable_type: "User", profileable_id: user.id) ? user.integration_profiles.first.external_id : nil
+              request[:users] << tcode
+            end
+
             event = Event.new(verb: 'post', process: 'policy_status_update_webhook', started: DateTime.current, request: request.to_json.to_s, eventable: policy,
                               endpoint: env_url)
             result = HTTParty.post(env_url, :body => request.to_json, :headers => { 'Content-Type' => 'application/json' })
