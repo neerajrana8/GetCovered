@@ -76,7 +76,7 @@ module Compliance
       @policy = policy
       @user = @policy.primary_user
 
-      set_locale(@user.profile&.language || "en")
+      set_locale(@user&.profile&.language || "en")
 
       @community = @policy.primary_insurable.parent_community
       @pm_account = @community.account || @policy.account
@@ -149,7 +149,7 @@ module Compliance
     end
 
     def set_master_policy_and_configuration(community, carrier_id, cutoff_date = nil)
-      @master_policy = community.policies.where(policy_type_id: 2, carrier_id: carrier_id).take
+      @master_policy = community&.policies&.where(policy_type_id: 2, carrier_id: carrier_id)&.take
       @configuration = @master_policy&.find_closest_master_policy_configuration(community, cutoff_date)
     end
     #  .branding_profiles&.take&.url
@@ -164,7 +164,7 @@ module Compliance
 
     def set_branding_profile
       if is_second_nature?
-        @organization.branding_profiles.blank? ? @organization.agency.branding_profiles.where(default: true).take : @organization.branding_profiles.where(default: true).take
+        @organization.branding_profiles.blank? ? @organization.agency.branding_profiles.where(enabled: true).take : @organization.branding_profiles.where(default: true).take
       else
         @organization.branding_profiles.where(default: true)&.take || BrandingProfile.global_default
         #branding_profile_to_use
