@@ -7,7 +7,7 @@ module ComplianceMethods
     auth_token_for_email = Base64.encode64(str_to_encrypt)
     auth_token_for_email.chomp!
     #return "https://#{branding_profile_url}/#{form_url}?token=#{ERB::Util.url_encode(auth_token_for_email)}"
-    return "https://#{branding_profile_url}/#{form_url}?token=#{auth_token_for_email}"
+    return "https://#{branding_profile_url}/#{form_url}?token=#{ERB::Util.url_encode(auth_token_for_email)}"
   end
 
   def get_insurable_liability_range(insurable)
