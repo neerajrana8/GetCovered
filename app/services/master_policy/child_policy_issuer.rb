@@ -37,7 +37,7 @@ module MasterPolicy
         new_child_policy = create_child_policy
         cover_unit
         cover_lease
-        notify_users(new_child_policy, @unit) if @mpc.program_type == :opt_out
+        notify_users(new_child_policy, @unit) if @mpc.program_type == 2
         new_child_policy
       end
     end
