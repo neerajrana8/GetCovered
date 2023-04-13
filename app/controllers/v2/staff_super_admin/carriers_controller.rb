@@ -232,7 +232,9 @@ module V2
         {
           carrier_policy_types: {
             policy_type_id: %i[scalar array]
-          }
+          },
+          title: %i[scalar like],
+          integration_designation: %i[scalar]
         }
       end
 

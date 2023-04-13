@@ -16,8 +16,16 @@ module V2
         # NOTE: show only assigned insurables for property managers (communities, units and buildings)
         assigned_communities_ids = Insurable.where(id: current_staff.assignments.where(assignable_type: 'Insurable').pluck(:assignable_id)).pluck(:id)
         assigned_units_and_buildings_ids = Insurable.where(insurable_id: assigned_communities_ids).pluck(:id)
+        assigned_units_ids = Insurable.where(insurable_id: assigned_units_and_buildings_ids).pluck(:id)
+        assigned_ids = (assigned_communities_ids + assigned_units_and_buildings_ids + assigned_units_ids).uniq.compact
 
-        query = Insurable.where(id: (assigned_communities_ids + assigned_units_and_buildings_ids).uniq.compact)
+        # NOTE: in case there are no assigned insurables, show all of them
+        query =
+          if assigned_ids.any?
+            Insurable.where(id: assigned_ids)
+          else
+            current_staff.organizable.insurables
+          end
 
         super_index(:@insurables, query)
       end

@@ -17,9 +17,9 @@ production:
   - mailers
 
 :schedule:
-  configuration_sweep_job:
-    cron: '0 2 * * *'   # Every day at 2:00 AM
-    class: Compliance::Policies::MasterCoverageSweepJob
+#  configuration_sweep_job:
+#    cron: '0 2 * * *'   # Every day at 2:00 AM
+#    class: Compliance::Policies::MasterCoverageSweepJob
   first_contact_job:
     cron: '0 3 * * *' # Every Day at 3:00 AM
     class: Compliance::Audit::FirstContactJob

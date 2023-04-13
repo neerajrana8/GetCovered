@@ -21,25 +21,11 @@ class V2Controller < ApplicationController
   around_action :set_timezone
 
   def index(instance_symbol, data_source, *includes)
-#puts data_source.to_sql
-#exit
-    prequery = build_prequery(data_source, includes, (params[:filter].nil? ? {} : params[:filter].to_unsafe_h).deep_merge(fixed_filters), params[:sort].nil? ? nil : params[:sort].to_unsafe_h)
-#ap "Prequery: #{prequery}"
+    prequery = build_prequery(data_source, includes, transform_filters((default_filters.deep_merge(params[:filter].nil? ? {} : params[:filter].to_unsafe_h)).deep_merge(fixed_filters)), transform_orders(params[:sort].nil? ? nil : params[:sort].to_unsafe_h))
     query = build_query(data_source, prequery)
-
-#print "\nQuery: #{query.to_sql}\n"
-
-=begin
-puts ''
-puts params
-puts ''
-puts prequery
-puts ''
-puts query.to_sql
-exit
-=end
     last_id = nil
-    if params[:short]
+    show_short =  params[:short]
+    if show_short
       instance_variable_set(instance_symbol, pseudodistinct ? query.select{|m| if m.id == last_id then next(false) else last_id = m.id end; next(true) } : query)
       render template: (view_path + '/short.json.jbuilder') if v2_should_render[:short]
     else
@@ -56,12 +42,12 @@ exit
       response.headers['total-pages'] = page_count.to_s
       response.headers['total-entries'] = count.to_s
       instance_variable_set(instance_symbol, pseudodistinct ? query.page(page + 1).per(per).select{|m| if m.id == last_id then next(false) else last_id = m.id end; next(true) } : query.page(page + 1).per(per)) # pagination starts at page 1 with kaminary -____-
-      render template: (view_path + '/index.json.jbuilder') if v2_should_render[:index]
+      render template: (view_path + (v2_default_to_short ? '/short.json.jbuilder' : '/index.json.jbuilder')) if v2_should_render[:index]
     end
   end
 
   def apply_filters(instance_symbol, data_source, *includes)
-    prequery = build_prequery(data_source, includes, (params[:filter].nil? ? {} : params[:filter].to_unsafe_h).deep_merge(fixed_filters), params[:sort].nil? ? nil : params[:sort].to_unsafe_h)
+    prequery = build_prequery(data_source, includes, transform_filters((default_filters.deep_merge(params[:filter].nil? ? {} : params[:filter].to_unsafe_h)).deep_merge(fixed_filters)), transform_orders(params[:sort].nil? ? nil : params[:sort].to_unsafe_h))
     query = build_query(data_source, prequery)
     instance_variable_set(instance_symbol, query)
   end
@@ -69,7 +55,7 @@ exit
   #private
 
   def paginator(data_source, *includes)
-    prequery = build_prequery(data_source, includes, (params[:filter].nil? ? {} : params[:filter].to_unsafe_h).deep_merge(fixed_filters), params[:sort].nil? ? nil : params[:sort].to_unsafe_h)
+    prequery = build_prequery(data_source, includes, transform_filters((default_filters.deep_merge(params[:filter].nil? ? {} : params[:filter].to_unsafe_h)).deep_merge(fixed_filters)), transform_orders(params[:sort].nil? ? nil : params[:sort].to_unsafe_h))
     query = build_query(data_source, prequery)
     count = query.count
     per = (params.has_key?(:pagination) && params[:pagination].has_key?(:per)) ? params[:pagination][:per].to_i : default_pagination_per
@@ -98,6 +84,11 @@ exit
   def maximum_pagination_per
     1000
   end
+  
+  # default to short unless short: false is provided
+  def v2_default_to_short
+    false
+  end
 
   # The filters allowed to be use: format is { property_name: type },
   # where either property_type is a data member of the model overriding it
@@ -124,6 +115,22 @@ exit
   def fixed_filters
     {}
   end
+  
+  # Override this to return a hash of filters which should apply unless the user overrides them
+  def default_filters
+    {}
+  end
+  
+  # Override this to post-transform a filter hash
+  def transform_filters(hash)
+    hash
+  end
+  
+  # Override this to post-transform a sort hash
+  def transform_orders(hash)
+    hash
+  end
+  
 
   # Override this to turn on pseudodistinct querying (verifies primary ids are unique after query)
   def pseudodistinct
