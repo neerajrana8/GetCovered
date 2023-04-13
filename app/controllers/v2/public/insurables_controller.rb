@@ -21,7 +21,8 @@ module V2
       end
 
       def decode_auth_params
-        _, @user_id, _, @community_id = EncryptionService.decrypt(CGI.unescape(insurable_encoded_params)).split
+        #_, @user_id, _, @community_id = EncryptionService.decrypt(CGI.unescape(insurable_encoded_params)).split
+        _, @user_id, _, @community_id = Base64.decode64(insurable_encoded_params).split
       end
 
       def additional_interest_name_usage
