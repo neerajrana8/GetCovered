@@ -1,7 +1,7 @@
 module ComplianceMethods
   # method for returning a tokenized url for the PMA onboarding flow
   def tokenized_url(user_id, community, form_url = "pma-tenant-onboarding", branding_profile = nil) #upload-coverage-proof
-    branding_profile_url = branding_profile.present? ? branding_profile.url : community&.account&.branding_profiles.where(default: true)&.take&.url
+    branding_profile_url = branding_profile.present? ? branding_profile.url : community&.account&.branding_profiles.where(enabled: true)&.take&.url
     str_to_encrypt = "user #{user_id} community #{community&.id}" #user 1443 community 10035
     #auth_token_for_email = EncryptionService.encrypt(str_to_encrypt)
     auth_token_for_email = Base64.encode64(str_to_encrypt)

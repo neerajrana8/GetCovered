@@ -64,10 +64,10 @@ module Compliance
     def set_variables
       @organization = params[:organization]
       @address = @organization.primary_address()
-      @branding_profile = @organization.branding_profiles.where(default: true).take
+      @branding_profile = @organization.branding_profiles.where(enabled: true).take
       #TODO: need to be removed after mergin GCVR2-643 but retested as it bug fix from GCVR2-1209
       if @branding_profile.blank?
-        @branding_profile = @organization.is_a?(Account) ? @organization.agency.branding_profiles.where(default: true).take : Agency.get_covered.branding_profiles.where(default: true).take
+        @branding_profile = @organization.is_a?(Account) ? @organization.agency.branding_profiles.where(enabled: true).take : Agency.get_covered.branding_profiles.where(enabled: true).take
       end
       @GC_ADDRESS = Agency.get_covered.primary_address()
     end

@@ -164,9 +164,9 @@ module Compliance
 
     def set_branding_profile
       if is_second_nature?
-        @organization.branding_profiles.blank? ? @organization.agency.branding_profiles.where(enabled: true).take : @organization.branding_profiles.where(default: true).take
+        @organization.branding_profiles.blank? ? @organization.agency.branding_profiles.where(enabled: true).take : @organization.branding_profiles.where(enabled: true).take
       else
-        @organization.branding_profiles.where(default: true)&.take || BrandingProfile.global_default
+        @organization.branding_profiles.where(enabled: true)&.take || BrandingProfile.global_default
         #branding_profile_to_use
       end
     end
