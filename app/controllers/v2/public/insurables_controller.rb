@@ -17,7 +17,8 @@ module V2
         request.params[:id] = @community_id
         request.params[:user_id] = @user_id
 
-        res = V2::Public::InsurablesController.dispatch(:show, request, response)
+        render template: 'v2/public/insurables/show', status: :ok
+        #res = V2::Public::InsurablesController.dispatch(:show, request, response)
       end
 
       def decode_auth_params

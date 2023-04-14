@@ -3,9 +3,9 @@ module InsurablesMethods
 
   included do
     before_action :set_insurable,
-                  only: [:show, :get_qbe_county_options, :set_qbe_county]
-    before_action :set_master_policies, only: :show
-    before_action :set_user_from_auth_token, only: :show, if: :user_param_presented?
+                  only: [:show, :get_qbe_county_options, :set_qbe_county, :insurable_by_auth_token]
+    before_action :set_master_policies, only: [:show, :insurable_by_auth_token]
+    before_action :set_user_from_auth_token, only: [:show, :insurable_by_auth_token], if: :user_param_presented?
 
     before_action :set_substrate,
                   only: [:index]
