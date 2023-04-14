@@ -110,6 +110,10 @@ end
 
 json.branding_profile_url policy.branding_profile&.url
 
-if policy.integration_profiles.present?
-  json.tcode policy&.integration_profiles&.first&.external_id
+#if policy.integration_profiles.present?
+#  json.tcode policy&.integration_profiles&.first&.external_id
+#end
+
+if policy&.primary_user&.integration_profiles.present?
+  json.tcode policy&.primary_user&.integration_profiles&.first&.external_id
 end
