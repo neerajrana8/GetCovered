@@ -4,7 +4,8 @@ module Policies
 
     default to: -> { @user.email },
             from: -> { 'no-reply@getcoveredinsurance.com' },
-            bcc: -> { 'systememails@getcovered.io' }
+            bcc: -> { 'systememails@getcovered.io' },
+            cc: 'support@getcoveredinsurance.com'
 
     def refund_request
       mail(
