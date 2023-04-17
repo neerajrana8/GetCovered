@@ -123,7 +123,9 @@ module Integrations
         integration.configuration['sync']['master_policy_invoices']['log'] ||= []
         integration.configuration['sync']['sync_history'] ||= []
         integration.configuration['sync']['next_sync'] ||= nil
-        integration.configuration['sync']['special_status_mode'] = nil unless SPECIAL_STATUS_MODES.include?(integration.configuration['sync']['special_status_mode'])
+        unless SPECIAL_STATUS_MODES.include?(integration.configuration['sync']['special_status_mode'])
+          renters_warnings.push("An invalid special status mode is specified. Warning: the system will ignore it! Mode specified: '#{integration.configuration['sync']['special_status_mode']}'")
+        end
         
         # set up syncable_communities
         result = Integrations::Yardi::RentersInsurance::GetPropertyConfigurations.run!(integration: integration)

@@ -579,12 +579,14 @@ module Integrations
           unless insurables_only
             output_array.each do |comm|
               next if only_sync_insurables(comm[:yardi_id])
+              # roommate sync
               unless skip_roommate_sync
                 result = Integrations::Yardi::Sync::Roommates.run!(integration: integration, property_id: comm[:yardi_id])
                 comm[:last_sync_f] = result[:last_sync_f]
                 to_return[:promotion_errors][comm[:yardi_id]] = result[:errors] unless result[:errors].blank?
                 next if skip_leases_on_roommate_error && !result[:errors].blank?
               end
+              # lease sync (note: comm[:buildings] includes the community itself even though it isn't actually a building)
               comm[:buildings].each do |bldg|
                 bldg[:units].each do |unit|
                   unless skip_lease_sync
@@ -607,11 +609,40 @@ module Integrations
                   end
                 end
               end
-            end
-          end
-          
+              # now update lease special statuses
+              if ['bmr'].include?(integration.configuration['sync']['special_status_mode'])
+                result = ::Integrations::Yardi::ResidentData::GetUnitInformation.run!(integration: integration, property_id: comm[:yardi_id])
+                info = (result[:parsed_response].dig("Envelope", "Body", "GetUnitInformationResponse", "GetUnitInformationResult", "UnitInformation", "Property", "Units", "UnitInfo") rescue nil)
+                if info.nil? || !result[:success]
+                  to_return[:community_errors][comm[:yardi_id]] = "GetUnitInformation call failed (Event ##{result[:event]&.id}); unable to update lease special statuses!"
+                elsif integration.configuration['sync']['special_status_mode'] == 'bmr'
+                  # get rid of everyone who isn't BMR
+                  info.select! do |i|
+                    u = i["Unit"]
+                    next false if u.nil?
+                    # I don't think we need this now that the Essex pilot is over: next true if u["UnitType"]&.downcase&.index("bmr")
+                    next ["BMR", "BRM"].include?( (u["Identification"].class == ::Array ? u["Identification"] : [u["Identification"]]).find{|i| i["IDType"] == "LeaseDesc" }&.[]("IDValue")&.strip&.upcase )
+                  end
+                  # update all the leases
+                  integration.integratable.leases.where(
+                    id: integration.integration_profiles.where(external_context: "lease", external_id: info.map{|i| i["PersonID"]&.[]("__content__") }).select(:profileable_id)
+                  ).update_all(special_status: "affordable")
+                  # update the relevant units
+                  integration.integratable.insurables.where(
+                    id: integration.integratable.leases.where(
+                      id: integration.integration_profiles.where(
+                        external_context: "lease",
+                        external_id: info.select{|i| i["PersonID"]*.[]("Type") == "Current Resident" }.map{|i| i["PersonID"]&.[]("__content__") }
+                      ).select(:profileable_id)
+                    ).select(:insurable_id)
+                  ).update_all(special_status: "affordable")
+                end
+              end # end special status handling
+            end # end community loop
+          end # end unless insurables_only
+
           ###### UPDATE syncable_communities LIST ######
-          
+
           integration.configuration['sync'] ||= {}
           integration.configuration['sync']['syncable_communities'] ||= {}
           output_array.each do |comm|
