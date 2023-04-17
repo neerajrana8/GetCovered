@@ -627,15 +627,15 @@ module Integrations
                   integration.integratable.leases.where(
                     id: integration.integration_profiles.where(external_context: "lease", external_id: info.map{|i| i["PersonID"]&.[]("__content__") }).select(:profileable_id)
                   ).update_all(special_status: "affordable")
-                  # update the relevant units
-                  integration.integratable.insurables.where(
-                    id: integration.integratable.leases.where(
-                      id: integration.integration_profiles.where(
-                        external_context: "lease",
-                        external_id: info.select{|i| i["PersonID"]*.[]("Type") == "Current Resident" }.map{|i| i["PersonID"]&.[]("__content__") }
-                      ).select(:profileable_id)
-                    ).select(:insurable_id)
-                  ).update_all(special_status: "affordable")
+                  # update all the units
+                  affordable_unit_ids = integration.integratable.leases.where(
+                    id: integration.integration_profiles.where(
+                      external_context: "lease",
+                      external_id: info.select{|i| i["PersonID"]*.[]("Type") == "Current Resident" }.map{|i| i["PersonID"]&.[]("__content__") }
+                    ).select(:profileable_id)
+                  ).select(:insurable_id)
+                  comm[:insurable].units.where.not(id: affordable_unit_ids).update_all(special_status: "none")
+                  integration.integratable.insurables.where(id: affordable_unit_ids).update_all(special_status: "affordable")
                 end
               end # end special status handling
             end # end community loop

@@ -10,7 +10,7 @@ module Compliance
           master_policies.each do |master|
             master.insurables.communities.each do |community|
               #TODO: not the best option because seems that we do not update covered flags anymore for Lease & Insurable properly
-              unit_ids = community.units.confirmed.where(enabled: true).where.not(special_status: 'affordable').pluck(:id)
+              unit_ids = community.units.confirmed.where(enabled: true).pluck(:id)
               excluded_leases = Lease.joins(insurable: :policies).where(insurable_id: unit_ids,
                                                                         created_at: created_at_search_range,
                                                                         defunct: false,
@@ -18,12 +18,14 @@ module Compliance
                                                                           policy_type_id: [PolicyType::RESIDENTIAL_ID, PolicyType::MASTER_COVERAGE_ID],
                                                                           status: %i[BOUND BOUND_WITH_WARNING EXTERNAL_VERIFIED WITHOUT_STATUS]
                                                                         },
-                                                                        start_date: start_date_search_range).pluck(:id)
+                                                                        start_date: start_date_search_range).select(:id)
 
               community_lease_ids = Lease.where(status: %w[current pending],
                                                 insurable_id: unit_ids,
                                                 created_at: created_at_search_range,
                                                 start_date: start_date_search_range)
+                                         .where.not(defunct: true)
+                                         .where.not(special_status: 'affordable')
                                          .where.not(id: excluded_leases).pluck(:id)
 
               @lease_ids = @lease_ids + community_lease_ids
