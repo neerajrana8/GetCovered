@@ -55,7 +55,7 @@ gem 'devise_token_auth', '>= 1.2.0'
 gem 'omniauth'
 
 # Getting some knowledge
-gem 'newrelic_rpm'
+gem 'newrelic_rpm', ">= 9.1.0"
 
 # Stripe Gem For Payments
 gem 'stripe'
