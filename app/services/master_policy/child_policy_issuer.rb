@@ -124,7 +124,7 @@ module MasterPolicy
     end
 
     def lease_valid?
-      @lease.start_date <= Time.current.to_date && !@lease.defunct
+      @lease.special_status != 'affordable' && @lease.start_date <= Time.current.to_date && !@lease.defunct
     end
   end
 end

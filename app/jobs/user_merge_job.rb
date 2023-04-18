@@ -16,12 +16,14 @@ class UserMergeJob < ApplicationJob
     user_ids.each do |user_id|
       user = User.where(id: user_id).take
       next if user.nil?
+      matchez = []
       email = (user.email || user.profile.contact_email)
-      next if email.blank?
       # grab generic systemwide matches
-      matchez = Profile.where(profileable_type: "User", contact_email: email, first_name: user.profile.first_name, last_name: user.profile.last_name).where.not(profileable_id: user.id).pluck(:profileable_id)
-      found = User.where(email: email).where.not(id: user.id).take
-      matchez.push(found.id) if !found.nil? && found.profile.first_name == user.profile.first_name && found.profile.last_name == user.profile.last_name
+      unless email.blank?
+        matchez = Profile.where(profileable_type: "User", contact_email: email, first_name: user.profile.first_name, last_name: user.profile.last_name).where.not(profileable_id: user.id).pluck(:profileable_id)
+        found = User.where(email: email).where.not(id: user.id).take
+        matchez.push(found.id) if !found.nil? && found.profile.first_name == user.profile.first_name && found.profile.last_name == user.profile.last_name
+      end
       # grab first/last name matches from among residents on the appropriate policies
       LeaseUser.references(:leases).includes(:lease).where(
         leases: { insurable_id: PolicyInsurable.where(policy: user.policies.where(policy_type_id: 1), primary: true).select(:insurable_id) }

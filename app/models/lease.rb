@@ -23,6 +23,7 @@ class Lease < ApplicationRecord
   # Concerns
   include RecordChange
   include ExpandedCovered
+  include SpecialStatusable
 
   RESIDENTIAL_ID = 1
   COMMERCIAL_ID = 2
@@ -83,6 +84,9 @@ class Lease < ApplicationRecord
   self.inheritance_column = nil
 
   enum status: %i[pending current expired]
+
+  enum special_status: SPECIAL_STATUSES,
+    _prefix: true
 
   scope :current, -> { where(status: 'current') }
 
