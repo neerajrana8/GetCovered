@@ -36,7 +36,7 @@ class Lease < ApplicationRecord
   before_validation :set_reference, if: proc { |lease| lease.reference.nil? }
 
   after_commit :update_status,
-               if: Proc.new{ saved_change_to_start_date? || saved_change_to_end_date? }
+               if: Proc.new{|ls| (ls.saved_change_to_start_date? || ls.saved_change_to_end_date?) && ls.status != 'expired' }
 
   after_commit :update_unit_occupation
   after_commit :update_users_status
@@ -62,7 +62,7 @@ class Lease < ApplicationRecord
   accepts_nested_attributes_for :lease_users, :users
 
   # Validations
-  validates_presence_of :start_date, :end_date
+  validates_presence_of :start_date
 
   validate :start_date_precedes_end_date
 
@@ -129,7 +129,7 @@ class Lease < ApplicationRecord
 
   # Lease.activate
   def activate
-    if status != 'current' && (start_date..end_date === Time.zone.now)
+    if status != 'current' && (start_date..end_date === Time.current)
       update status: 'current'
       # update covered: true if unit.covered
 
@@ -175,11 +175,11 @@ class Lease < ApplicationRecord
   def update_status
 
     new_status =
-      if (start_date..end_date) === Time.zone.now.to_date
+      if (start_date..end_date) === Time.current.to_date
         'current'
-      elsif Time.zone.now.to_date < start_date
+      elsif Time.current.to_date < start_date
         'pending'
-      elsif Time.zone.now.to_date > end_date
+      elsif end_date && Time.current.to_date > end_date
         'expired'
       end
 
