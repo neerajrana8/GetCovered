@@ -10,7 +10,9 @@ module Compliance
           master_policies.each do |master|
             master.insurables.communities.each do |community|
               #TODO: not the best option because seems that we do not update covered flags anymore for Lease & Insurable properly
-              unit_ids = community.units.confirmed.where(enabled: true).pluck(:id)
+              unit_ids = community.units.confirmed.where(enabled: true)
+              unit_ids = unit_ids.where.not(special_status: 'affordable') if master.account&.integrations&.where(provider: 'yardi')&.take&.configuration&.[]('sync')&.[]('special_status_mode').nil?
+              unit_ids = unit_ids.pluck(:id)
               excluded_leases = Lease.joins(insurable: :policies).where(insurable_id: unit_ids,
                                                                         created_at: created_at_search_range,
                                                                         defunct: false,

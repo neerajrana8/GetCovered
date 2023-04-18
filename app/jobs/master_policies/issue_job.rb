@@ -14,12 +14,13 @@ module MasterPolicies
     def perform
       child_policies = []
 
-      leases = Lease.where(status: 1)
+      leases = Lease.where(status: 1).where.not(special_status: 'affordable')
 
       leases.each do |lease|
         insurable = lease.insurable
         community = insurable.parent_community
         account = insurable.account
+        integration = account&.integrations.where(provider: 'yardi')&.take
         next unless account
 
         per_user_tracking = account.per_user_tracking
@@ -30,7 +31,7 @@ module MasterPolicies
         mpo = Policy.find(pi_mpo.policy_id)
 
         next unless mpo
-        next if unit_affordable?(insurable)
+        next if unit_affordable?(insurable) && integration&.configuration&.[]('sync')&.[]('special_status_mode').nil?
 
         next unless lease_started_after_master_policy_started?(lease, mpo)
 
