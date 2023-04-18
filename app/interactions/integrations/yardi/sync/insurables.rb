@@ -631,7 +631,7 @@ module Integrations
                   affordable_unit_ids = integration.integratable.leases.where(
                     id: integration.integration_profiles.where(
                       external_context: "lease",
-                      external_id: info.select{|i| i["PersonID"]*.[]("Type") == "Current Resident" }.map{|i| i["PersonID"]&.[]("__content__") }
+                      external_id: info.select{|i| i["PersonID"]&.[]("Type") == "Current Resident" }.map{|i| i["PersonID"]&.[]("__content__") }
                     ).select(:profileable_id)
                   ).select(:insurable_id)
                   comm[:insurable].units.where.not(id: affordable_unit_ids).update_all(special_status: "none")
