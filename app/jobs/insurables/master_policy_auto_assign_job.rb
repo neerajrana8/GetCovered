@@ -14,7 +14,7 @@ module Insurables
         policy_insurable.insurable&.units&.each do |unit|
 
           # NOTE: Check of existing valid lease, if exists then continue to issue MPC (master policy child, or child policy)
-          lease = Lease.where('end_date > ?', Time.current.to_date).find_by(insurable_id: unit.id, status: 'current')
+          lease = Lease.where(end_date: nil).or(Lease.where('end_date > ?', Time.current.to_date)).find_by(insurable_id: unit.id, status: 'current')
           next unless lease
 
           # NOTE: removed check for occupied because when lease is create unit is already occupied
