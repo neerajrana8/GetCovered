@@ -2,6 +2,7 @@ class YardiSyncJob < ApplicationJob
   queue_as :default # call it gordo
 
   def perform(account_or_integration = nil, resync: false)
+    # get integration ids from whatever params were or were not provided
     ids = case account_or_integration
       when nil
         ::Integration.where(provider: 'yardi', enabled: true).order("updated_at asc").map{|i| i.id }
@@ -13,6 +14,14 @@ class YardiSyncJob < ApplicationJob
       else
         nil
     end
+    # split things out to run parallel if there are multiple
+    if ids.count > 1
+      ids.each do |id|
+        YardiSyncJob.perform_later(Integration.find(id))
+      end
+      return
+    end
+    # if there aren't multiple, run dat shizzle
     ids&.each do |integration_id|
       integration = Integration.where(id: integration_id).take
       next if integration.nil?
