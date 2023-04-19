@@ -17,13 +17,8 @@ module V2
         request.params[:id] = @community_id
         request.params[:user_id] = @user_id
 
-        render template: 'v2/public/insurables/show', status: :ok
-        #res = V2::Public::InsurablesController.dispatch(:show, request, response)
-      end
-
-      def decode_auth_params
-        #_, @user_id, _, @community_id = EncryptionService.decrypt(CGI.unescape(insurable_encoded_params)).split
-        _, @user_id, _, @community_id = Base64.decode64(insurable_encoded_params).split
+        #render template: 'v2/public/insurables/show', status: :ok
+        res = V2::Public::InsurablesController.dispatch(:show, request, response)
       end
 
       def additional_interest_name_usage
@@ -36,11 +31,6 @@ module V2
         end
       end
 
-      def insurable_encoded_params
-        if params[:token].present?
-          params.require(:token)
-        end
-      end
     end
 
   end # module Public

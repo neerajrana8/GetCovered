@@ -151,6 +151,13 @@ module InsurablesMethods
     end
   end
 
+  def decode_auth_params
+    #_, @user_id, _, @community_id = EncryptionService.decrypt(CGI.unescape(insurable_encoded_params)).split
+    _, @user_id, _, @community_id = Base64.decode64(insurable_encoded_params).split
+    params[:id] = @community_id
+    params[:user_id] = @user_id
+  end
+
   private
 
   def view_path
@@ -158,11 +165,12 @@ module InsurablesMethods
   end
 
   def set_insurable
+    decode_auth_params if insurable_encoded_params.present?
     @insurable = access_model(::Insurable, params[:id])
   end
 
   def set_master_policies
-    if @insurable.unit?
+    if @insurable.is_a?(Insurable) && @insurable.unit?
       @master_policy_coverage =
           @insurable.policies.current.where(policy_type_id: PolicyType::MASTER_COVERAGES_IDS).take
       @master_policy = @master_policy_coverage&.policy
@@ -170,6 +178,12 @@ module InsurablesMethods
       @master_policy =
           @insurable.policies.current.where(policy_type_id: PolicyType::MASTER_IDS).take
       @master_policy_coverage = nil
+    end
+  end
+
+  def insurable_encoded_params
+    if params[:token].present?
+      params.require(:token)
     end
   end
 
