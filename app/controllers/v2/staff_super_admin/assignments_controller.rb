@@ -13,7 +13,7 @@ module V2
       # NOTE: copy from staff_account
       def create
         if create_allowed?
-          @assignment = Assignment.new(create_params)
+          @assignment = Assignment.new(create_params.except("notification_settings_attributes"))
           if @assignment.errors.none? && @assignment.save
             switch_email_notification
             render :show,
@@ -104,7 +104,7 @@ module V2
 
         to_return = params.require(:assignment).permit(
           :assignable_id, :assignable_type, :primary, :staff_id,
-          notification_settings_attributes: [:external_policy_emails_copy])
+          notification_settings_attributes: {})
         to_return
       end
 
