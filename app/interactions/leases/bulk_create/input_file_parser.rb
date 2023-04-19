@@ -3,6 +3,8 @@ module Leases
     class InputFileParser < ActiveInteraction::Base
       file :input_file
       integer :insurable_id, default: nil
+      
+      # WARNING: no support for Lease#end_date being nil
 
       HEADERS = %w[start_date end_date status lease_type unit
                    tenant_one_email tenant_one_first_name tenant_one_last_name tenant_one_birthday

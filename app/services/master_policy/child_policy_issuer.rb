@@ -113,7 +113,11 @@ module MasterPolicy
         policy_users_attributes: policy_users,
         master_policy_configuration_id: @mpc&.id
       }
-      @unit.policies.create(new_child_policy_params)
+      created = @unit.policies.create(new_child_policy_params)
+      if created.id
+        @lease.update(master_policy_coverage_ids: @lease.master_policy_coverage_ids + [created.id])
+      end
+      return created
     end
 
     def assign_lease_users_to_policy(policy)
