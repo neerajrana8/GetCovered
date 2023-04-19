@@ -46,3 +46,7 @@ dump.rdb
 
 /public/pex-rex
 /public/pex-rex/*
+/public/ftp_cp
+/public/ftp_cp/*
+/public/ftp_fail
+/public/ftp_fail/*
