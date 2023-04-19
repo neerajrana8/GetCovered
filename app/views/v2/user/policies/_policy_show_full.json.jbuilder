@@ -68,6 +68,14 @@ json.change_requests do
   end
 end
 
+json.invoices do
+  if policy.invoices.any?
+    json.array! policy.invoices.order(due_date: :asc),
+                partial: 'v2/shared/invoices/full.json.jbuilder',
+                as: :invoice
+  end
+end
+
 json.documents policy.documents do |document|
   json.id document.id
   json.filename document.filename

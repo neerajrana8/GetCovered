@@ -34,6 +34,10 @@ class LeaseUser < ApplicationRecord
   def related_records_list
     %w[lease user]
   end
+  
+  def is_current?(as_of = Time.current.to_date)
+    (self.moved_in_at.nil? || self.moved_in_at <= as_of) && (self.moved_out_at.nil? || self.moved_out_at >= as_of)
+  end
 
   private
 

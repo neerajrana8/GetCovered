@@ -106,8 +106,22 @@ class Account < ApplicationRecord
   has_many :insurable_rate_configurations,
            as: :configurer
 
-
   has_many :coverage_requirements
+  
+  has_many :reporting_coverage_reports,
+    class_name: "Reporting::CoverageReport",
+    as: :owner
+  
+  has_many :reporting_coverage_entries,
+    class_name: "Reporting::CoverageEntry",
+    through: :reporting_coverage_reports,
+    source: :coverage_entries
+    
+  has_many :reporting_unit_coverage_entries,
+    class_name: "Reporting::UnitCoverageEntry",
+    through: :reporting_coverage_reports,
+    source: :unit_coverage_entries
+
 
   scope :enabled, -> { where(enabled: true) }
 

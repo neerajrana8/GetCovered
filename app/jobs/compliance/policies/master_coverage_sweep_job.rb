@@ -35,6 +35,7 @@ module Compliance
           leases.each do |lease|
             begin
               master.qbe_specialty_issue_coverage(lease.insurable, lease.users, lease.start_date, true, primary_user: lease.primary_user)
+              # MasterPolicy::ChildPolicyIssuer.call(master, lease)
             rescue Exception => e
               notify_of_issue(master: master, account: master.account, issue: :coverage_failure, error: e)
             end

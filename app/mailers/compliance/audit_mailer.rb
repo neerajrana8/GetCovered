@@ -50,7 +50,7 @@ module Compliance
       if sending_condition
         mail(from: @from,
              to: @user.contact_email,
-             bcc: "systememails@getcovered.io",
+             bcc: t('system_email'),
              subject: subject,
              template_path: 'compliance/audit',
              template_name: template)
@@ -65,7 +65,11 @@ module Compliance
       @organization = params[:organization]
       @address = @organization.primary_address()
       @branding_profile = @organization.branding_profiles.where(default: true).take
-      @GC_ADDRESS = Agency.find(1).primary_address()
+      #TODO: need to be removed after mergin GCVR2-643 but retested as it bug fix from GCVR2-1209
+      if @branding_profile.blank?
+        @branding_profile = @organization.is_a?(Account) ? @organization.agency.branding_profiles.where(default: true).take : Agency.get_covered.branding_profiles.where(default: true).take
+      end
+      @GC_ADDRESS = Agency.get_covered.primary_address()
     end
 
     def set_master_policy_and_configuration(community, carrier_id, cutoff_date = nil)

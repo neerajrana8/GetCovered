@@ -73,7 +73,8 @@ class User
               email: email,
               phone: profile&.contact_phone,
               agency: policy&.agency&.title,
-              product: policy&.product_type&.title
+              # product: policy&.product_type&.title
+              product: policy&.policy_type&.title
             }
           )
 

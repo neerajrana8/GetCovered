@@ -69,7 +69,10 @@ module V2
         response.headers['total-entries'] = total
       end
 
-      def show; end
+      def show
+        # NOTE: show master_policy_configurations for policies which are covered by master policies
+        @master_policy_configuration = @policy.master_policy_configuration if @policy.policy_type&.master_coverage
+      end
 
       def search
         @policies = Policy.search(params[:query]).records

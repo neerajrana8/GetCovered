@@ -38,6 +38,7 @@ module PoliciesMethods
       add_error_master_types(@policy.policy_type_id)
       if @policy.errors.blank? && @policy.save
         result = Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes])
+        @policy.reload
         if result.failure?
           render json: result.failure, status: 422
         else
@@ -82,8 +83,15 @@ module PoliciesMethods
       ActiveRecord::Base.transaction do
         result = Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes])
         selected_insurable = Insurable.find(update_coverage_params[:policy_insurables_attributes].first[:insurable_id])
+        @policy.reload
+        # @policy.primary_insurable = selected_insurable
+        # @policy.primary_insurable.save!
+
+        # Delete all except last for this policy
+        PolicyInsurable.where(policy_id: @policy.id).delete_all
         @policy.primary_insurable = selected_insurable
         @policy.primary_insurable.save!
+
         @policy.save!
         @policy.policy_coverages.delete_all
         @policy.policy_coverages.create!(update_coverage_params[:policy_coverages_attributes])
@@ -153,6 +161,9 @@ module PoliciesMethods
   def set_optional_coverages
     if ![::MsiService.carrier_id, ::QbeService.carrier_id].include?(@policy.carrier_id) || @policy.primary_insurable.nil? || @policy.primary_insurable.primary_address.nil?
       @optional_coverages = nil
+    elsif @policy.policy_premiums.blank? || @policy.policy_premiums.last&.billing_strategy.nil?
+      # NOTE: don't return optional coverages in case billing strategy is empty
+      @optional_coverages = nil
     else
       results = ::InsurableRateConfiguration.get_coverage_options(
         ::CarrierPolicyType.where(carrier_id: @policy.carrier_id, policy_type_id: @policy.policy_type_id).take,
@@ -210,7 +221,7 @@ module PoliciesMethods
 
     permitted_params =
       params.require(:policy).permit(
-        :account_id, :agency_id, :policy_type_id, :insurable_id,
+        :account_id, :agency_id, :policy_type_id, :insurable_id, :carrier_id,
         :effective_date, :expiration_date, :number, :status, :out_of_system_carrier_title,
         documents: [],
         policy_insurables_attributes: [:insurable_id],

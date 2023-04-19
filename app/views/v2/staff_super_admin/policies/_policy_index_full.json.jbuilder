@@ -48,7 +48,6 @@ json.primary_insurable do
   end
 end
 
-
 # json.primary_insurable do
 #   unless policy.primary_insurable.nil?
 #     json.partial! "v2/staff_agency/insurables/insurable_short_fields.json.jbuilder",

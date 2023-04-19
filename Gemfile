@@ -55,7 +55,7 @@ gem 'devise_token_auth', '>= 1.2.0'
 gem 'omniauth'
 
 # Getting some knowledge
-gem 'newrelic_rpm'
+gem 'newrelic_rpm', ">= 9.1.0"
 
 # Stripe Gem For Payments
 gem 'stripe'
@@ -67,6 +67,7 @@ gem 'rack-timeout'
 # Sidekiq for background job processing
 gem 'sidekiq'
 gem 'sidekiq-scheduler'
+gem 'sidekiq-failures'
 
 # Timezone for automatic timezones
 gem 'timezone', '~> 1.0'

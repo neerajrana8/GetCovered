@@ -23,6 +23,7 @@ class Lease < ApplicationRecord
   # Concerns
   include RecordChange
   include ExpandedCovered
+  include SpecialStatusable
 
   RESIDENTIAL_ID = 1
   COMMERCIAL_ID = 2
@@ -34,8 +35,11 @@ class Lease < ApplicationRecord
 
   before_validation :set_reference, if: proc { |lease| lease.reference.nil? }
 
+  after_save :set_mpc_expirations,
+    if: Proc.new{|ls| ls.month_to_month && ls.saved_change_to_status? && ls.status == 'expired' }
+
   after_commit :update_status,
-               if: Proc.new{ saved_change_to_start_date? || saved_change_to_end_date? }
+     if: Proc.new{|ls| (ls.saved_change_to_start_date? || ls.saved_change_to_end_date?) && ls.status != 'expired' }
 
   after_commit :update_unit_occupation
   after_commit :update_users_status
@@ -61,7 +65,7 @@ class Lease < ApplicationRecord
   accepts_nested_attributes_for :lease_users, :users
 
   # Validations
-  validates_presence_of :start_date, :end_date
+  validates_presence_of :start_date
 
   validate :start_date_precedes_end_date
 
@@ -84,6 +88,9 @@ class Lease < ApplicationRecord
 
   enum status: %i[pending current expired]
 
+  enum special_status: SPECIAL_STATUSES,
+    _prefix: true
+
   scope :current, -> { where(status: 'current') }
 
   # Lease.active?
@@ -91,10 +98,41 @@ class Lease < ApplicationRecord
     range = start_date..end_date
     range === Time.current
   end
+  
+  
+  def active_lease_users(present_date = Time.current.to_date, lessee: [true, false], allow_future: nil, lease_user_where: nil)
+    allow_future = (self.status == 'pending') if allow_future.nil?
+    if allow_future
+      return(
+        self.lease_users.where(moved_out_at: nil)
+          .or(self.lease_users.where(moved_out_at: (present_date...)))
+          .send(*(lease_user_where ? [:where, lease_user_where] : [:itself]))
+          .where(lessee: lessee) 
+      )
+    end
+    self.lease_users.where(moved_out_at: nil, moved_in_at: nil)
+        .or(self.lease_users.where(moved_out_at: nil).where("moved_in_at <= ?", present_date))
+        .or(self.lease_users.where(moved_out_at: (present_date...), moved_in_at: nil))
+        .or(self.lease_users.where(moved_out_at: (present_date...)).where("moved_in_at <= ?", present_date))
+        .send(*(lease_user_where ? [:where, lease_user_where] : [:itself]))
+        .where(lessee: lessee) 
+  end
+  
+  def active_users(present_date = Time.current.to_date, lessee: [true, false], allow_future: nil, lease_user_where: nil)
+    User.where(id: self.active_lease_users(present_date, lessee: lessee, allow_future: allow_future, lease_user_where: lease_user_where).select(:user_id))
+  end
+  
+  def current_lease_users(*linear, **keyword)
+    active_lease_users(*linear, **keyword)
+  end
+  
+  def current_users(*linear, **keyword)
+    active_users(*linear, **keyword)
+  end
 
   # Lease.activate
   def activate
-    if status != 'current' && (start_date..end_date === Time.zone.now)
+    if status != 'current' && (start_date..end_date === Time.current)
       update status: 'current'
       # update covered: true if unit.covered
 
@@ -140,11 +178,11 @@ class Lease < ApplicationRecord
   def update_status
 
     new_status =
-      if (start_date..end_date) === Time.zone.now.to_date
+      if (start_date..end_date) === Time.current.to_date
         'current'
-      elsif Time.zone.now.to_date < start_date
+      elsif Time.current.to_date < start_date
         'pending'
-      elsif Time.zone.now.to_date > end_date
+      elsif end_date && Time.current.to_date > end_date
         'expired'
       end
 
@@ -170,6 +208,26 @@ class Lease < ApplicationRecord
   def primary_user
     lease_users.where(primary: true).take&.user
   end
+  
+  def matching_policies(users: nil, policy_type_id: 1, policy_status: Policy.active_statuses, active_at: nil)
+    # support all weird user types
+    user_set ||= self.users
+    user_set = [users] if users.class == ::User || users.class == ::Integer
+    user_set = user_set.map{|u| u.class == ::Integer ? u : u.id }
+    # do it bro
+    to_return = self.insurable.policies
+    unless active_at.nil?
+      to_return = to_return.where(expiration_date: nil).or(to_return.where("expiration_date >= ?", active_at))
+      to_return = to_return.where(cancellation_date:  nil).or(to_return.where("cancellation_date >= ?", active_at))
+      to_return = to_return.where("effective_date <= ?", active_at)
+    end
+    to_return = to_return.where(policy_type_id: policy_type_id, status: policy_status, id: PolicyUser.where(user_id: user_set).select(:policy_id))
+    return to_return
+  end
+  
+  def set_mpc_expirations
+    Policy.where(id: self.master_policy_coverage_ids).each{|mpc| mpc.update(expiration_date: self.end_date) }
+  end
 
   private
 
@@ -183,7 +241,7 @@ class Lease < ApplicationRecord
   end
 
   def start_date_precedes_end_date
-    errors.add(:end_date, 'must come after start date') if start_date >= end_date
+    errors.add(:end_date, 'must come after start date') if !end_date.nil? && start_date >= end_date
   end
 
   def lease_type_insurable_type
