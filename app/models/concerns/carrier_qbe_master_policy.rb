@@ -21,6 +21,7 @@ module CarrierQbeMasterPolicy
         { title: "Automatic Coverage", designation: "automatic_coverage", limit: 0, occurrence_limit: 0, deductible: 0, enabled: false },
         { title: "Intentional Damage", designation: "intentional_damage", limit: 0, occurrence_limit: 0, deductible: 0, enabled: false },
         { title: "Break in Damage", designation: "break_in_damage", limit: 0, occurrence_limit: 0, deductible: 0, enabled: false }
+        # NOTE: Animal Liability can be added here, see https://getcoveredllc.atlassian.net/browse/GCVR2-808?focusedCommentId=41625
       ].each do |coverage|
         self.policy_coverages.new(coverage)
       end

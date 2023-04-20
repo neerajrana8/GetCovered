@@ -490,7 +490,8 @@ module Integrations
           # group resident leases
           resident_datas = resident_data.group_by{|td| td["Status"] }
           future_tenants = (
-            (RESIDENT_STATUSES['future'] || []).map{|s| resident_datas[s] || [] }
+            (RESIDENT_STATUSES['future'] || []).map{|s| resident_datas[s] || [] } +
+            ((integration.id == 14) ? (resident_datas['Applicant'] || []) : [])
           ).flatten
           present_tenants = (
             (RESIDENT_STATUSES['present'] || []).map{|s| resident_datas[s] || [] } +
@@ -498,6 +499,7 @@ module Integrations
           ).flatten
           past_tenants = (
             (RESIDENT_STATUSES['past'] || []).map{|s| resident_datas[s] || [] } +
+            ((integration.id == 14) ? (resident_datas['Denied'] || []) : []) +
             (RESIDENT_STATUSES['nonfuture'] || []).map{|s| (resident_datas[s] || []).select{|td| !td['MoveOut'].blank? && (Date.parse(td['MoveOut']) rescue nil)&.<(Time.current.to_date) } }
           ).flatten
           # grab some variables we shall require in the execution of our noble purpose
@@ -510,7 +512,7 @@ module Integrations
           # mark defunct those leases which the horrific architecture of Yardi's database requires to be removed from their system when they have been superseded
           # MOOSE WARNING: the 'defunct' boolean is a placeholder architectural solution just to get the feature working. ultimately we should be giving these leases a special status and doing something to their IPs...
           IntegrationProfile.where(integration: integration, external_context: 'lease', profileable: unit.leases.where(defunct: false)).where.not(external_id: in_system).each do |lip|
-            lip.profileable.update(defunct: true, status: 'expired') 
+            lip.profileable.update(defunct: true, status: 'expired', end_date: Time.current.to_date) 
           end
           # update leases to expired
           in_system_lips = IntegrationProfile.references(:leases).includes(:lease).where(integration: integration, external_context: 'lease', external_id: past_tenants.map{|l| l['Id'] }, profileable_type: "Lease", leases: { status: ['current', 'pending'] })
@@ -537,9 +539,11 @@ module Integrations
               lease.start_date = Date.parse(tenant["LeaseFrom"]) unless tenant["LeaseFrom"].blank?
               lease.end_date = Date.parse(tenant["LeaseTo"]) unless tenant["LeaseTo"].blank?
               lease.defunct = false # just in case it was once missing from yardi and now is magically back, for example if it got moved to a different unit. likewise, update statuses in case someone defuncted and expired us previously because we jumped units
-              lease.status = 'current' if (lease.end_date.nil? || lease.end_date > Time.current.to_date) && RESIDENT_STATUSES['present'].include?(tenant["Status"])
-              lease.status = 'pending' if (lease.end_date.nil? || lease.end_date > Time.current.to_date) && RESIDENT_STATUSES['future'].include?(tenant["Status"]) || RESIDENT_STATUSES['potential'].include?(tenant["Status"])
               lease.sign_date = Date.parse(tenant["LeaseSign"]) unless tenant["LeaseSign"].blank?
+              lease.month_to_month = ( lease.end_date && lease.end_date < Time.current.to_date && (RESIDENT_STATUSES['present'].include?(tenant['Status']) || RESIDENT_STATUSES['future'].include?(tenant['Status'])) )
+              lease.end_date = nil if lease.month_to_month
+              lease.status = 'current' if (lease.month_to_month || lease.end_date.nil? || lease.end_date > Time.current.to_date) && RESIDENT_STATUSES['present'].include?(tenant["Status"])
+              lease.status = 'pending' if (lease.month_to_month || lease.end_date.nil? || lease.end_date > Time.current.to_date) && RESIDENT_STATUSES['future'].include?(tenant["Status"]) || RESIDENT_STATUSES['potential'].include?(tenant["Status"])
               lease.save if lease.changed?
               fmr = fix_missing(lease, tenant, da_tenants)
               update_errors[tenant["Id"]] = fmr[:errors] unless fmr[:errors].blank?
@@ -550,11 +554,11 @@ module Integrations
                 ten = da_tenants.find{|t| t["Id"] == lu.integration_profiles.where(integration: integration).take&.external_id }
                 next if ten.nil? # can't happen but just in case
                 moved_in_at = (Date.parse(ten["MoveIn"]) rescue nil)
-                moved_out_at = (Date.parse(ten["MoveOut"]) rescue nil)
+                moved_out_at = (Date.parse(ten["MoveOut"]) rescue :broken)
                 primary = (tenant["Id"] == ten["Id"])
                 lessee = primary || (ten["Lessee"] == "Yes")
-                if (lu.moved_in_at != moved_in_at && !moved_in_at.blank?) || (lu.moved_out_at != moved_out_at && !moved_out_at.blank?) || (lu.primary != primary) || (lu.lessee != lessee)
-                  lu.update(moved_in_at: moved_in_at, moved_out_at: moved_out_at, primary: primary, lessee: lessee)
+                if (lu.moved_in_at != moved_in_at && !moved_in_at.blank?) || (lu.moved_out_at != moved_out_at && moved_out_at != :broken) || (lu.primary != primary) || (lu.lessee != lessee)
+                  lu.update({ moved_in_at: moved_in_at, moved_out_at: moved_out_at, primary: primary, lessee: lessee }.select{|k,v| v != :broken })
                 end
               end
               # handle ridiculous swaps
@@ -569,11 +573,13 @@ module Integrations
               next
             end
             # create the lease
+            month_to_month = (!tenant["LeaseTo"].blank? && ((Date.parse(tenant["LeaseTo"]) rescue nil) || Time.current.to_date) < Time.current.to_date && (RESIDENT_STATUSES['present'].include?(tenant['Status']) || RESIDENT_STATUSES['future'].include?(tenant['Status'])))
             ActiveRecord::Base.transaction(requires_new: true) do
               lease = unit.leases.create(
                 start_date: Date.parse(tenant["LeaseFrom"]),
-                end_date: tenant["LeaseTo"].blank? ? nil : Date.parse(tenant["LeaseTo"]),
+                end_date: tenant["LeaseTo"].blank? || month_to_month ? nil : Date.parse(tenant["LeaseTo"]),
                 sign_date: tenant["LeaseSign"].blank? ? nil : Date.parse(tenant["LeaseSign"]),
+                month_to_month: month_to_month,
                 lease_type_id: LeaseType.residential_id,
                 account: integration.integratable
               )

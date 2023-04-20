@@ -51,14 +51,7 @@ module V2
         available_lease_date = @lease.nil? ? DateTime.current.to_date : @lease.sign_date.nil? ? @lease.start_date : @lease.sign_date
         @coverage_requirements = @policy.primary_insurable&.parent_community&.coverage_requirements_by_date(date: available_lease_date)
 
-        # NOTE This is architectural flaw and bs way to get master policy
-        begin
-          master_policy = @policy.primary_insurable.parent_community.policies.current.where(policy_type_id: PolicyType::MASTER_IDS).take
-          config = MasterPolicy::ConfigurationFinder.call(master_policy, insurable, available_lease_date)
-          @master_policy_configurations = [config]
-        rescue StandardError => e
-          render json: {error: e}, status: 400
-        end
+        @master_policy_configuration = @policy.master_policy_configuration
       end
 
       def update
@@ -72,6 +65,7 @@ module V2
             policies.each do |policy|
               active_policy_types[policy.policy_type_id] = policy
             end
+            ::Insurables::StatusUpdater.call(insurable)
           end
 
           active_policy_types.each do |policy_type, policy|

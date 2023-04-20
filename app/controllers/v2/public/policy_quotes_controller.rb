@@ -210,8 +210,9 @@ module V2
               insurables_ids = @policy_quote.policy.insurables.where(insurable_type_id: InsurableType::UNITS_IDS).pluck(:id)
               leases = Lease
                          .where(insurable_id: insurables_ids, status: 'current')
-                         .where('end_date > ?', Time.current.to_date)
                          .where('start_date <= ?', Time.current.to_date)
+              leases = leases.where(end_date: nil)
+                   .or(leases.where('end_date > ?', Time.current.to_date))
               leases.each do |lease|
                 policies = lease.policies.where(policy_type_id: PolicyType::MASTER_COVERAGES_IDS)
                 policies.each do |policy|

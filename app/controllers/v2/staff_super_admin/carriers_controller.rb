@@ -13,6 +13,7 @@ module V2
       def index
 
         super(:@carriers, @substrate)
+        @carriers = @carriers.order(title: :asc)
         render template: 'v2/shared/carriers/index', status: :ok
       end
 
@@ -231,7 +232,9 @@ module V2
         {
           carrier_policy_types: {
             policy_type_id: %i[scalar array]
-          }
+          },
+          title: %i[scalar like],
+          integration_designation: %i[scalar]
         }
       end
 

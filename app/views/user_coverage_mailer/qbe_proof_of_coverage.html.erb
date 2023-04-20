@@ -385,9 +385,14 @@
                                       padding-left: 50px;
                                       padding-right: 50px;
                                   ">
-                                    <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+                                    <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 1em;">
                                       <span style="font-size: 16px;"><%= t('user_coverage_mailer.qbe_proof_of_coverage.thank_you_for_purchase', agency_account_name: @agency_account_name)%></span>
                                     </p>
+                                    <div style="padding-bottom: 1em;">
+                                      <strong><%= t('user_coverage_mailer.policy_number') %>: </strong> <%= @policy.number %><br>
+                                      <strong><%= t('user_coverage_mailer.effective_date') %>: </strong> <%= formatted_date(@policy.effective_date) %><br>
+                                        <strong><%= t('user_coverage_mailer.expiration_date') %>: </strong> <%= formatted_date(@policy.expiration_date) %><br>
+                                    </div>
                                     <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
                                                   <span style="font-size: 16px;">
                                                     <b><%= t('user_coverage_mailer.qbe_proof_of_coverage.attached')%></b><br>
@@ -504,7 +509,7 @@
                                   ">
                                     <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-top: 2em; padding-bottom: 2em;">
                                                   <span style="font-size: 12px;">
-                                                    © 2022 Get Covered. All Rights Reserved.
+                                                    © <%= Time.now.year %> Get Covered. All Rights Reserved.
                                                   </span>
                                     </p>
                                   </td>

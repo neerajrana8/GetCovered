@@ -6,7 +6,7 @@
   ----
   --->
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-    <span style="font-size: 16px;">Hi <%= @user.profile.full_name %>,</span>
+    <span style="font-size: 16px;">Hi <%= @user&.profile&.full_name %>,</span>
   </p>
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
     <span style="font-size: 16px;">
@@ -16,7 +16,8 @@
   </p>
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
     <span style="font-size: 16px;">
-      <%= @inline_display_title %> is reviewing your policy to ensure that it meets the requirements of <%= @pm_account&.title %>
+      <%= @inline_display_title %>
+      is reviewing your policy to ensure that it meets the requirements of <%= @pm_account&.title %>
     </span>
   </p>
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
@@ -29,7 +30,7 @@
   ----
   --->
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-    <span style="font-size: 16px;">Hello <%= @user.profile.full_name %>,</span>
+    <span style="font-size: 16px;">Hello <%= @user&.profile.full_name %>,</span>
   </p>
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
     <span style="font-size: 16px;">This email is to confirm we have received, verified, and approved your insurance policy.
@@ -38,7 +39,8 @@
   </p>
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
     <span style="font-size: 16px;">
-      If you decide to switch carriers, please make sure to upload your new policy information in the <%= @inline_display_title %> portal at
+      If you decide to switch carriers, please make sure to upload your new policy information in the <%= @inline_display_title %>
+      portal at
       <a href="<%= @onboarding_url %>" target="_blank"><%= @branding_profile.url %></a>
     </span>
   </p>
@@ -49,61 +51,78 @@
   ----
   --->
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-    <span style="font-size: 16px;">Hello <%= @user.profile.full_name %>,</span>
+    <span style="font-size: 16px;">Hello <%= @user&.profile.full_name %>,</span>
   </p>
 
   <% if @final %>
     <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
       <span style="font-size: 16px;">Please be advised we still have not received a compliant insurance policy as referenced in your
-        lease agreement. Failure to meet the minimum insurance requirements will result in <%= @community.title %> assessing a
+        lease agreement. Failure to meet the minimum insurance requirements will result in <%= @community.title %>
+        assessing a
         non-compliance fee of $8.00 per month  until requirements outlined in our previous communications are
         met. </span>
     </p>
   <% else %>
-    <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+    <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0;">
     <span style="font-size: 16px;">While evaluating your insurance policy submitted to <%= @inline_display_title %>, we have found the policy does
       not meet the requirements specified by <%= @community.title %>.</span>
     </p>
 
     <% if @policy.system_data.has_key?("rejection_reasons") && @policy.system_data["rejection_reasons"].length >= 1 %>
-      <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+      <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0;">
         <span style="font-size: 16px;">Please resolve the following error(s) listed below:</span>
       </p>
 
       <span style="padding-left: 20px; list-style-type: circle;">
       <% @policy.system_data["rejection_reasons"].each do |reason| %>
       <li>
-        <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-            <span style="font-size: 16px;"><%= reason %></span>
-        </p>
+        <% if reason.present? %>
+          <span style="font-size: 16px;"><%= reason %></span>
+        <% end %>
+
         <% if reason == Policy.rejection_reasons["pm_not_additional_interest"] %>
-        <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-          <p style="font-size: 16px;">Contact your insurance agent and request the additional interest on your
+        <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0;">
+          <p style="font-size: 16px;margin: 0;">Contact your insurance agent and request the additional interest on your
                             policy is updated to the below then resubmit your policy for approval.</p>
-                <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em; padding-left: 3em">
-                   <span style="font-size: 16px;"><%= @policy&.account&.additional_interest ? (@policy&.account&.additional_interest_name || @policy&.account&.title) : (@policy.primary_insurable&.parent_community&.additional_interest_name || @policy.primary_insurable&.parent_community&.title) %></span>
-                </p>
-                <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em; padding-left: 3em">
-                  <span style="font-size: 16px;"><%= @policy&.account&.additional_interest ? @policy&.account&.primary_address&.combined_street_address : @policy&.primary_insurable&.parent_community&.primary_address&.combined_street_address %></span>
-                  <span style="font-size: 16px;"><%= @policy&.account&.additional_interest ? @policy&.account&.primary_address&.street_two : @policy&.primary_insurable&.parent_community&.primary_address&.street_two %></span>
-                </p>
-                <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em; padding-left: 3em">
-                  <span style="font-size: 16px;"><%= @policy&.account&.additional_interest ? @policy&.account&.primary_address&.city : @policy&.primary_insurable&.parent_community&.primary_address&.city %>, <%= @policy&.account&.additional_interest ? @policy&.account&.primary_address&.state : @policy&.primary_insurable&.parent_community&.primary_address&.state %>, <%= @policy&.account&.additional_interest ? @policy&.account&.primary_address&.zip_code : @policy&.primary_insurable&.parent_community&.primary_address&.zip_code %></span>
-                </p>
+
+          <% policy_interest_name = (@policy&.account&.additional_interest ? (@policy&.account&.additional_interest_name || @policy&.account&.title) : (@policy.primary_insurable&.parent_community&.additional_interest_name || @policy.primary_insurable&.parent_community&.title)) %>
+
+          <% if policy_interest_name.present? %>
+            <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-left: 3em">
+              <span style="font-size: 16px;"><%= policy_interest_name %></span>
+            </p>
+          <% end %>
+
+          <% combined_street_address = (@policy&.account&.additional_interest ? @policy&.account&.primary_address&.combined_street_address : @policy&.primary_insurable&.parent_community&.primary_address&.combined_street_address) %>
+          <% street_two = (@policy&.account&.additional_interest ? @policy&.account&.primary_address&.street_two : @policy&.primary_insurable&.parent_community&.primary_address&.street_two) %>
+
+          <% if combined_street_address.present? || street_two.present?  %>
+            <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-left: 3em">
+              <span style="font-size: 16px;"><%= combined_street_address %></span>
+              <span style="font-size: 16px;"><%= street_two %></span>
+            </p>
+          <% end %>
+
+          <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-left: 3em">
+            <span style="font-size: 16px;"><%= @policy&.account&.additional_interest ? @policy&.account&.primary_address&.city : @policy&.primary_insurable&.parent_community&.primary_address&.city %>
+              , <%= @policy&.account&.additional_interest ? @policy&.account&.primary_address&.state : @policy&.primary_insurable&.parent_community&.primary_address&.state %>
+              , <%= @policy&.account&.additional_interest ? @policy&.account&.primary_address&.zip_code : @policy&.primary_insurable&.parent_community&.primary_address&.zip_code %></span>
+          </p>
           </p>
       <% end %>
 
         <% if reason == Policy.rejection_reasons["tenants_not_listed"] %>
-        <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-          <p style="font-size: 16px;">Thank you for submitting your policy! While reviewing your policy we noticed that the additional lease holder(s) is not listed as named insured(s).
-                          Your management company requires that all leaseholders have insurance on either a shared policy or on a policy of their own. Please re-upload an updated policy with all leaseholders listed.</p>
+          <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0;">
+            <p style="font-size: 16px;margin: 0;">While reviewing your policy we noticed that the additional lease holder(s) is not listed as named insured(s).
+                            Your management company requires that all leaseholders have insurance on either a shared policy or on a policy of their own. Please re-upload an updated policy with all leaseholders listed.</p>
           </p>
-      <% end %>
+        <% end %>
 
         <% if reason == Policy.rejection_reasons["am_requirement_not_met"] %>
-        <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-          <p style="font-size: 16px;"> <%= @policy&.out_of_system_carrier_title %> policies do not meet your Property Managements requirements. Your Property Manager requires residents to obtain and maintain a renters insurance policy from a carrier with an AM Best Rating of A-VII. To ensure your account complies with the insurance requirements,
-                          you may submit an updated policy from an AM Best rated carrier of your choice or purchase a policy through our preferred partner <%= @inline_display_title %>.</p>
+        <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; ">
+          <p style="font-size: 16px;margin: 0;"> <%= @policy&.out_of_system_carrier_title %> policies do not meet your Property Managements requirements. Your Property Manager requires residents to obtain and maintain a renters insurance policy from a carrier with an AM Best Rating of A-VII. To ensure your account complies with the insurance requirements,
+                          you may submit an updated policy from an AM Best rated carrier of your choice or purchase a policy through our preferred partner <%= @inline_display_title %>
+            .</p>
           </p>
       <% end %>
       </li>
@@ -114,14 +133,16 @@
 
     <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
       <span style="font-size: 16px;">Upload your updated insurance policy on <a href="<%= @onboarding_url %>">our portal</a>. Once
-        verified, <%= @community.title %> will be notified of your active policy and no further action is needed.<br><br>
+        verified, <%= @community.title %>
+        will be notified of your active policy and no further action is needed.<br><br>
         We appreciate your prompt attention to the above insurance requirement. If you have any questions, please reply
         to this email.</span>
     </p>
   <% end %>
 <% end %>
+
 <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-  <% @bottom_inline_display = @second_nature_condition == true ? "Second Nature" : "#{ @pm_account&.title } & Get Covered"%>
+  <% @bottom_inline_display = @second_nature_condition == true ? "Second Nature" : "#{ @pm_account&.title } & Get Covered" %>
   <span style="font-size: 16px;">Thank you,<br> <%= @bottom_inline_display %>
     <% unless @second_nature_condition %><br>
       <a href="mailto:<%= @from %>"><%= @from %></a></span>

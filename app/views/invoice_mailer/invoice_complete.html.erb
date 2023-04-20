@@ -1,14 +1,1 @@
-<p><%=
-
-  raw(I18n.t('invoice_mailer.invoice_complete.body',
-    recipient_name: @user.profile.full_name,
-    product_type: @product_type,
-    product_identifier: @product_identifier,
-    agency_title: @agency.title,
-    invoice_total: "#{(@invoice.total_due/100).floor}.#{(@invoice.total_due % 100)}",
-    invoice_date: (@invoice.status_changed || @invoice.due_date).to_date.to_s,
-    url: '<a href="https://www.getcoveredinsurance.com/user/policies">https://www.getcoveredinsurance.com/user/policies</a>',
-    support_email: "support@getcoveredinsurance.com"
-  ).split("\n").join('</p><p>'))
-
-%></p>
+<%= render "invoice_mailer/invoice_complete/invoice_complete_#{(I18n.locale || 'en').downcase}" %>

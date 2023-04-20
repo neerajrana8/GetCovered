@@ -50,7 +50,7 @@ module Compliance
       if sending_condition
         mail(from: @from,
              to: @user.contact_email,
-             bcc: "systememails@getcovered.io",
+             bcc: t('system_email'),
              subject: subject,
              template_path: 'compliance/audit',
              template_name: template)

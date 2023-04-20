@@ -3,10 +3,12 @@ module MasterPolicy
   class ChildPolicyIssuer < ApplicationService
     attr_accessor :master_policy
     attr_accessor :lease
+    attr_accessor :users
 
-    def initialize(master_policy, lease)
+    def initialize(master_policy, lease, users = nil)
       @master_policy = master_policy
       @lease = lease
+      @users = users
     end
 
     def call
@@ -81,8 +83,11 @@ module MasterPolicy
     end
 
     def policy_users
+      users_source = @lease.users
+      users_source = @users unless @users.nil?
+
       users = []
-      @lease.users.each do |u|
+      users_source.each do |u|
         users << { user_id: u.id }
       end
       users
@@ -103,11 +108,16 @@ module MasterPolicy
         policy_type_id: PolicyType::MASTER_COVERAGE_ID,
         policy: @master_policy,
         effective_date: effective_date,
-        expiration_date: @master_policy.expiration_date,
+        expiration_date: @lease.end_date,
         system_data: @master_policy.system_data,
-        policy_users_attributes: policy_users
+        policy_users_attributes: policy_users,
+        master_policy_configuration_id: @mpc&.id
       }
-      @unit.policies.create(new_child_policy_params)
+      created = @unit.policies.create(new_child_policy_params)
+      if created.id
+        @lease.update(master_policy_coverage_ids: @lease.master_policy_coverage_ids + [created.id])
+      end
+      return created
     end
 
     def assign_lease_users_to_policy(policy)
@@ -118,7 +128,7 @@ module MasterPolicy
     end
 
     def lease_valid?
-      @lease.start_date <= Time.current.to_date && !@lease.defunct
+      @lease.special_status != 'affordable' && @lease.start_date <= Time.current.to_date && !@lease.defunct
     end
   end
 end
