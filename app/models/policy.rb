@@ -707,7 +707,7 @@ class Policy < ApplicationRecord
   def notify_users
     # TODO: ADD GUARD STATEMENTS AND REMOVE NESTED CONDITIONS
     if previous_changes.has_key?('status') && %w[EXTERNAL_UNVERIFIED EXTERNAL_VERIFIED EXTERNAL_REJECTED].include?(status)
-      unless integration_profiles.count.positive?
+      unless integration_profiles.count.positive? && status == 'EXTERNAL_UNVERIFIED'
 
         if account_id == 0 || agency_id == 0
           reload() if inline_fix_external_policy_relationships
