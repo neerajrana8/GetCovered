@@ -713,10 +713,11 @@ class Policy < ApplicationRecord
           reload() if inline_fix_external_policy_relationships
         end
 
+        #TODO: temp test need to remove according to GCVR2-1197
         begin
           if Rails.env.development? or ENV['RAILS_ENV'] == 'awsdev'
-            Compliance::PolicyMailer.with(organization: policy.account.nil? ? policy.agency : policy.account)
-                                    .external_policy_status_changed(policy: policy)
+            Compliance::PolicyMailer.with(organization: self.account.nil? ? self.agency : self.account)
+                                    .external_policy_status_changed(policy: self)
                                     .deliver_now unless self.in_system?
           else
             Compliance::PolicyMailer.with(organization: self.account.nil? ? self.agency : self.account)
