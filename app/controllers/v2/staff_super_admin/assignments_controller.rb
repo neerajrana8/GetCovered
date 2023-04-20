@@ -71,7 +71,7 @@ module V2
       end
 
       def set_staff
-        @staff = Staff.find_by(id: create_params[:staff_id])
+        @staff = ::Staff.find_by(id: create_params[:staff_id])
       end
 
       def set_email_notification
