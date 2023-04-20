@@ -37,6 +37,7 @@ module MasterPolicy
         new_child_policy = create_child_policy
         cover_unit
         cover_lease
+        notify_users(new_child_policy, @unit) if @mpc.program_type == 2
         new_child_policy
       end
     end
@@ -129,6 +130,16 @@ module MasterPolicy
 
     def lease_valid?
       @lease.special_status != 'affordable' && @lease.start_date <= Time.current.to_date && !@lease.defunct
+    end
+
+    def notify_users(policy, insurable)
+      users = User.where(id: policy_users.map{ |x| x[:user_id]})
+      users.each do |user|
+        Compliance::PolicyMailer.with(organization: policy.account ? policy.account : policy.agency)
+          .enrolled_in_master(user: user,
+                              community: insurable.parent_community(),
+                              force: true).deliver_now
+      end
     end
   end
 end
