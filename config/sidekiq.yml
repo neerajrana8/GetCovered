@@ -120,6 +120,10 @@ production:
   user_merge_job:
     cron: '0 22 * * *' # Every day at 10:00 PM
     class: UserMergeJob
+  # Unmatched user emails
+  unmatched_user_email_job:
+    cron: '15 0 * * *' # Every day at 12:15 AM
+    class: UnmatchedUserEmailJob
   # Generic Actions
   perform_scheduled_actions_job:
     cron: '45 * * * *' # every hour, 45 minutes in
