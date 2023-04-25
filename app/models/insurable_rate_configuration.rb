@@ -594,6 +594,31 @@ class InsurableRateConfiguration < ApplicationRecord
     @max_overridability ||= self.class.get_overridability_ceiling(self.configuration)
   end
   
+  def with_date(date)
+    cutoffs = self.get_state_igc&.irc_cutoffs&.[](self.carrier_policy_type_id&.to_s)
+    unless cutoffs.blank?
+      date_string = date.to_s
+      index = 0
+      index += 1 while index < cutoffs.length && cutoffs[index] <= date_string # index is now the index of the greater endpoint of our interval
+      self.start_date = (index == 0 ? date : Date.parse(cutoffs[index-1]))
+      self.end_date = (index == cutoffs.length ? (cutoffs.last + 1.year).at_beginning_of_year : Date.parse(cutoffs[index]))
+    end
+    return self
+  end
+  
+  def get_state_igc
+    case self.configurable_type
+      when 'Insurable'
+        state = self.configurable&.primary_address&.state
+        return state.nil? ? nil : ::InsurableGeographicalCategory.get_for(state: state)
+      when 'InsurableGeographicalCategory'
+        state = self.configurable&.state
+        return state.nil? ? nil : ::InsurableGeographicalCategory.get_for(state: state)
+      else
+        return nil
+    end
+  end
+  
   def annotate_options(
     coverage_selections,
     coverage_options = self.configuration['coverage_options'], rules = self.configuration['rules'], rule_overridabilities = self.configuration['overridabilities_']&.[]('rules') || {}, deserialize_selections: true)
