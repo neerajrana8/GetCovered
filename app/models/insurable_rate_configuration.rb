@@ -38,7 +38,7 @@ class InsurableRateConfiguration < ApplicationRecord
   
   # Validations
   
-  validates_presend_of :start_date
+  validates_presence_of :start_date
   
   validate :validate_configuration
   
