@@ -36,6 +36,7 @@ class Insurable < ApplicationRecord
   include RecordChange
   include SetSlug
   include ExpandedCovered
+  include SpecialStatusable
 
   before_validation :set_confirmed_automatically
   before_save :flush_parent_insurable_id, :if => Proc.new { |ins| ::InsurableType::COMMUNITIES_IDS.include?(ins.insurable_type_id) }
@@ -91,10 +92,8 @@ class Insurable < ApplicationRecord
 
   enum category: %w[property entity]
 
-  enum special_status: {
-    none: 0,
-    affordable: 1
-  }, _prefix: true
+  enum special_status: SPECIAL_STATUSES,
+    _prefix: true
 
   #validates_presence_of :title, :slug WARNING: THIS IS DISABLED TO ALLOW TITLELESS NONPREFERRED UNITS!
 

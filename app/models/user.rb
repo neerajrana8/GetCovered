@@ -430,8 +430,9 @@ class User < ApplicationRecord
   end
 
   #TODO: seems that we still can create multiple leases for one insurable for the same dates. need to figure out is it correct ot not
+  # MOOSE WARNING: should we be constraining here to prevent future leases from being returned?
   def latest_lease
-    leases&.order(end_date: :desc)&.first
+    leases&.order(end_date: :desc, start_date: :desc)&.first
   end
 
   private

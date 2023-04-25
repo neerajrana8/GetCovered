@@ -1525,7 +1525,7 @@ GEM
       net-ssh (>= 5.0.0, < 7.0.0)
     net-ssh (6.1.0)
     netrc (0.11.0)
-    newrelic_rpm (8.4.0)
+    newrelic_rpm (9.1.0)
     nio4r (2.5.8)
     nokogiri (1.13.10-arm64-darwin)
       racc (~> 1.4)
@@ -1575,8 +1575,8 @@ GEM
     puma (5.6.4)
       nio4r (~> 2.0)
     raabro (1.4.0)
-    rack (2.2.6.3)
     racc (1.6.2)
+    rack (2.2.6.3)
     rack-attack (6.5.0)
       rack (>= 1.0, < 3)
     rack-cors (1.1.1)
@@ -1816,7 +1816,7 @@ DEPENDENCIES
   mini_magick
   money
   net-sftp (~> 3.0.0)
-  newrelic_rpm
+  newrelic_rpm (>= 9.1.0)
   nokogiri (>= 1.12.5)
   omniauth
   pdf-reader

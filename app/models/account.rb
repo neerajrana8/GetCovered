@@ -116,12 +116,14 @@ class Account < ApplicationRecord
     class_name: "Reporting::CoverageEntry",
     through: :reporting_coverage_reports,
     source: :coverage_entries
-    
+  
   has_many :reporting_unit_coverage_entries,
     class_name: "Reporting::UnitCoverageEntry",
-    through: :reporting_coverage_reports,
-    source: :unit_coverage_entries
+    foreign_key: :account_id
 
+  has_many :reporting_lease_user_coverage_entries,
+    class_name: "Reporting::LeaseUserCoverageEntry",
+    foreign_key: :account_id
 
   scope :enabled, -> { where(enabled: true) }
 
