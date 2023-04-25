@@ -183,7 +183,7 @@ module InsurablesMethods
       carrier_id = account.agency.providing_carrier_id(PolicyType::RESIDENTIAL_ID, insurable){|cid| (insurable.get_carrier_status(carrier_id) == :preferred) ? true : nil }
       carrier_policy_type = CarrierPolicyType.where(carrier_id: carrier_id, policy_type_id: PolicyType::RESIDENTIAL_ID).take
       uid = (carrier_id == ::MsiService.carrier_id ? '1005' : carrier_id == ::QbeService.carrier_id ? 'liability' : nil)
-      liability_options = ::InsurableRateConfiguration.get_inherited_irc(carrier_policy_type, account, insurable).configuration['coverage_options']&.[](uid)&.[]('options')
+      liability_options = ::InsurableRateConfiguration.get_inherited_irc(carrier_policy_type, account, insurable, Time.current.to_date).configuration['coverage_options']&.[](uid)&.[]('options')
       @max_liability = liability_options&.map{|opt| opt['value'].to_i }&.max
       @min_liability = liability_options&.map{|opt| opt['value'].to_i }&.min
     end
