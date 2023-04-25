@@ -6,12 +6,10 @@ module V2
   module User
     class PoliciesController < UserController
 
-      skip_before_action :authenticate_user!, only: %i[bulk_decline render_eoi bulk_accept refund_policy cancel_policy]
+      skip_before_action :authenticate_user!, only: %i[bulk_decline render_eoi bulk_accept refund_policy cancel_policy cancel_auto_renewal]
 
       before_action :user_from_invitation_token, only: %i[bulk_decline render_eoi bulk_accept]
-
-      before_action :set_policy, only: %i[show refund_policy cancel_policy]
-
+      before_action :set_policy, only: %i[show refund_policy cancel_policy cancel_auto_renewal]
       before_action :set_substrate, only: %i[index add_coverage_proof]
 
       def index
@@ -112,6 +110,14 @@ module V2
         }
       end
 
+      def cancel_auto_renewal
+        if @policy.update(auto_renew: renewal_params[:auto_renew])
+          render json: { message: I18n.t('user_policies_controller.auto_renewal_change') }, status: :ok
+        else
+          render json: standard_error(:autorenewal_policy_error, I18n.t('user_policies_controller.auto_renewal_change_not_successfull'), @policy.errors.full_messages),
+                 status: :unprocessable_entity
+        end
+      end
 
       private
 
@@ -120,7 +126,11 @@ module V2
       end
 
       def set_policy
-        @policy = access_model(::Policy, params[:id])
+        @policy = if current_user.blank?
+                    Policy.find_by(id: params[:id])
+                  else
+                    access_model(::Policy, params[:id])
+                  end
       end
 
       def set_substrate
@@ -152,6 +162,10 @@ module V2
 
       def add_error_master_types(type_id)
         @policy.errors.add(:policy_type_id,  I18n.t('user_policies_controller.you_cannot_add_coverage_with_master')) if [2,3].include?(type_id)
+      end
+
+      def renewal_params
+        params.require(:policy).permit(:id, :auto_renew, :token)
       end
 
     end

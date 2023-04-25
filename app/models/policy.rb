@@ -407,6 +407,10 @@ class Policy < ApplicationRecord
     self.expiration_date.end_of_day
   end
 
+  def renewal_date
+    self.expiration_date&.tomorrow
+  end
+
   def update_leases
     if BOUND? || RENEWED? || REINSTATED?
       insurables.each do |insurable|

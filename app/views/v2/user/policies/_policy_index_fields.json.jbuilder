@@ -3,4 +3,4 @@ json.extract! policy, :account_id, :agency_id, :auto_pay, :auto_renew,
   :cancellation_date, :effective_date, :expiration_date, :id,
   :last_renewed_on, :number, :policy_in_system, :policy_type_id,
   :renew_count, :updated_at, :status, :out_of_system_carrier_title,
-  :address, :refund_available_days, :created_at
+  :address, :refund_available_days, :created_at, :renewal_date
