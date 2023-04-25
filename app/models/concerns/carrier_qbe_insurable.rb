@@ -512,15 +512,8 @@ module CarrierQbeInsurable
               configurer: @carrier,
               configurable: irc_configurable_override || self,
               configuration: { 'coverage_options' => {}, "rules" => {} },
-              rates: { 'rates' => [nil, {}, {}, {}, {}, {}] },
-              start_date: effective_date || Time.current.to_date,
-              end_date: ::InsurableRateConfiguration.where(carrier_policy_type: carrier_policy_type, configurer: @carrier, configurable: irc_configurable_override || self)
-                                                    .where("start_date > ?", effective_date || Time.current.to_date)
-                                                    .where("start_date < ?", ((effective_date || Time.current.to_date) + 1.year).at_beginning_of_year)
-                                                    .order(start_date: :asc)
-                                                    .first&.start_date || ( ((effective_date || Time.current.to_date) + 1.year).at_beginning_of_year )
-              # WARNING: we set end_date to 1st of next year, unless there is an IRC defined in the meantime, in which case we use its start_date
-            )
+              rates: { 'rates' => [nil, {}, {}, {}, {}, {}] }
+            ).with_date(effective_date || Time.current.to_date)
             irc.rates['applicability'] = applicability unless irc_configurable_override
             
 	          if rates

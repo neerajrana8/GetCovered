@@ -22,7 +22,8 @@ module V2
         # get our target entity's options
         entity_covopts = ::InsurableRateConfiguration.remove_overridability_data!(
           (
-            ::InsurableRateConfiguration.for_date(Time.current.to_date).where(carrier_policy_type: @carrier_policy_type, configurer: configurer, configurable: @configurable).take || ::InsurableRateConfiguration.new(configuration: { 'coverage_options' => {} }) # don't need start or end date, we aren't saving this
+            ::InsurableRateConfiguration.for_date(Time.current.to_date).where(carrier_policy_type: @carrier_policy_type, configurer: configurer, configurable: @configurable).take ||
+            ::InsurableRateConfiguration.new(configuration: { 'coverage_options' => {} }) # don't need start or end date, we aren't saving this
           ).configuration['coverage_options']
         )
         # annotate with our stuff
@@ -55,7 +56,7 @@ module V2
         # grab models
         configurer = @account || @agency # WARNING: no carrier option, because we don't want people screwing up the carrier configurations
         entity_irc = ::InsurableRateConfiguration.for_date(Time.current.to_date).where(carrier_policy_type: @carrier_policy_type, configurer: configurer, configurable: @configurable).take ||
-                     ::InsurableRateConfiguration.new(start_date: Time.current.to_date, carrier_policy_type: @carrier_policy_type, configurer: configurer, configurable: @configurable, configuration: { 'coverage_options' => {} })
+                     ::InsurableRateConfiguration.new(carrier_policy_type: @carrier_policy_type, configurer: configurer, configurable: @configurable, configuration: { 'coverage_options' => {} }).with_date(Time.current.to_date)
         entity_covopts = entity_irc.configuration['coverage_options']
         # update options
         covopts.each do |uid, opt|

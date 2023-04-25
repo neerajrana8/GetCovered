@@ -449,11 +449,11 @@ class InsurableRateConfiguration < ApplicationRecord
   #   configurer:             an account/agency/carrier
   #   configurable:           an InsurableGeographicalCategory or an insurable
   #   agency:                 (optional) if configurer is an account, you can provide an agency to use instead of configurer.agency if desired
-  #   cull_broad_times:       (optional) pass true to only allow one IRC for each (configurer, configurable) pair, keeping the one with the most specific time interval
+  #   cull_repeated_times:    (optional) pass false to not remove duplicate configurer/configurable pair IRCs with overlapping time intervals (by default removes them, keeping the most recently created in each case)
   #   blck:                   (optional) a block for extra culling; will be called with IRC as parameter, returns true to keep, false to discard
   # returns:
   #   an array (ordered from least to most specific configurer) of arrays (ordered from least to most specific configurable) of IRCs
-  def self.get_hierarchy(carrier_policy_type, configurer, configurable, effective_date, agency: nil, exclude: nil, union_mode: false, cull_broad_times: false, &blck)
+  def self.get_hierarchy(carrier_policy_type, configurer, configurable, effective_date, agency: nil, exclude: nil, union_mode: false, cull_repeated_times: true, &blck)
     # get configurer and configurable hierarchies
     configurers = get_configurer_hierarchy(configurer, carrier_policy_type.carrier, agency: agency)
     configurables = get_configurable_hierarchy(configurable, union_mode: union_mode)
@@ -465,7 +465,7 @@ class InsurableRateConfiguration < ApplicationRecord
       .sort_by{|configurable_index, ircs| configurable_index } # makes it into an array of [k,v] pairs
       .map{|val| val[1].sort_by{|irc| configurables.find_index{|c| irc.configurable_id == c.id && irc.configurable_type == c.class.name } } }
     # remove any duplicate entries by time
-    if cull_broad_times
+    if cull_repeated_times
       to_return.each do |configurable_index, data|
         condemned = []
         last = 0
@@ -475,35 +475,12 @@ class InsurableRateConfiguration < ApplicationRecord
             last = ind
             next
           end
-          # otherwise, keep only the configurable with the best time interval
-          if data[last].end_date.nil? || data[ind].end_date.nil?
-            if !data[last].end_date.nil?
-              condemned.push(ind)
-            elsif !data[ind].end_date.nil?
-              condemned.push(last)
-              last = ind
-            else
-              if data[last].start_date <= data[ind].start_date
-                condemned.push(last)
-                last = ind
-              else
-                condemned.push(ind)
-              end
-            end
-          elsif data[last].start_date == data[ind].start_date
-            if data[last].end_date >= data[ind].start_date
-              condemned.push(last)
-              last = ind
-            else
-              condemned.push(ind)
-            end
+          # otherwise, keep only the most recent configurable
+          if data[last].created_at > data[ind].created_at
+            condemned.push(ind)
           else
-            if data[last].start_date <= data[ind].start_date
-              condemned.push(last)
-              last = ind
-            else
-              condemned.push(ind)
-            end
+            condemned.push(last)
+            last = ind
           end
         end
       end
@@ -602,6 +579,9 @@ class InsurableRateConfiguration < ApplicationRecord
       index += 1 while index < cutoffs.length && cutoffs[index] <= date_string # index is now the index of the greater endpoint of our interval
       self.start_date = (index == 0 ? date : Date.parse(cutoffs[index-1]))
       self.end_date = (index == cutoffs.length ? (cutoffs.last + 1.year).at_beginning_of_year : Date.parse(cutoffs[index]))
+    else
+      self.start_date = date
+      self.end_date = date + 1.day
     end
     return self
   end
@@ -612,6 +592,7 @@ class InsurableRateConfiguration < ApplicationRecord
         state = self.configurable&.primary_address&.state
         return state.nil? ? nil : ::InsurableGeographicalCategory.get_for(state: state)
       when 'InsurableGeographicalCategory'
+        return self.configurable if self.configurable.pure_state?
         state = self.configurable&.state
         return state.nil? ? nil : ::InsurableGeographicalCategory.get_for(state: state)
       else
