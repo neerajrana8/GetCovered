@@ -5,7 +5,7 @@ class UnmatchedUserEmailJob < ApplicationJob
   queue_as :default
 
   def perform(force_test = false)
-    to_ignore = [38949,144027,46064,46963,38015,60618] # PU ids to ignore; hard-coded for now, will upgrade to use DBwas j
+    to_ignore = [38949,144027,46064,46963,38015,60618,129427,124098,53188,147449,124107,144608,145851,137354] # PU ids to ignore; hard-coded for now, will upgrade to use DB
 
     account = Account.find(33) #lcor
     integration = account.integrations.where(provider: 'yardi').take
@@ -86,7 +86,7 @@ class UnmatchedUserEmailJob < ApplicationJob
 
     mailer = ActionMailer::Base.new
     to = (force_test ? "josh@getcovered.io" : "getcovered@lcor.com")
-    cc = (force_test ? [] : ["COestreicher@lcor.com", "dwise@lcor.com", "brandon@getcovered.io", "jared@getcovered.io", "josh@getcovered.io"])
+    cc = (force_test ? [] : ["brandon@getcovered.io", "jared@getcovered.io", "josh@getcovered.io", "eylon@getcovered.io"])
     if were_there_any
       mailer.attachments[filename] = File.read("tmp/#{filename}")
       mailer.mail(
