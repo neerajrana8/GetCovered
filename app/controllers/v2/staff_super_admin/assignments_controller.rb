@@ -2,6 +2,7 @@ module V2
   module StaffSuperAdmin
     class AssignmentsController < StaffSuperAdminController
       before_action :set_assignment, only: %i[update destroy show]
+      before_action :set_staff, :set_email_notification, only: %i[create]
 
       def index
         super(:@assignments, Assignment.communities)
@@ -12,8 +13,9 @@ module V2
       # NOTE: copy from staff_account
       def create
         if create_allowed?
-          @assignment = Assignment.new(create_params)
+          @assignment = Assignment.new(create_params.except("notification_settings_attributes"))
           if @assignment.errors.none? && @assignment.save
+            switch_email_notification
             render :show,
                    status: :created
           else
@@ -68,6 +70,23 @@ module V2
         @assignment = Assignment.communities.find_by(id: params[:id])
       end
 
+      def set_staff
+        @staff = ::Staff.find_by(id: create_params[:staff_id])
+      end
+
+      def set_email_notification
+        @email_notification = @staff.notification_settings.find_by(action: 'external_policy_emails_copy')
+      end
+
+      def switch_email_notification
+        if @email_notification.blank?
+          render json: { success: false, errors: ['Notification setting not updated'] },
+                 status: :unprocessable_entity
+        else
+          @email_notification.update(enabled: create_params['notification_settings_attributes']['external_policy_emails_copy']) if create_params['notification_settings_attributes'].present?
+        end
+      end
+
       def create_allowed?
         true
       end
@@ -84,8 +103,8 @@ module V2
         return({}) if params[:assignment].blank?
 
         to_return = params.require(:assignment).permit(
-          :assignable_id, :assignable_type, :primary, :staff_id
-        )
+          :assignable_id, :assignable_type, :primary, :staff_id,
+          notification_settings_attributes: {})
         to_return
       end
 

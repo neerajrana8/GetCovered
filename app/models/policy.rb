@@ -707,16 +707,17 @@ class Policy < ApplicationRecord
   def notify_users
     # TODO: ADD GUARD STATEMENTS AND REMOVE NESTED CONDITIONS
     if previous_changes.has_key?('status') && %w[EXTERNAL_UNVERIFIED EXTERNAL_VERIFIED EXTERNAL_REJECTED].include?(status)
-      unless integration_profiles.count.positive?
+      unless integration_profiles.count.positive? && status == 'EXTERNAL_UNVERIFIED'
 
         if account_id == 0 || agency_id == 0
           reload() if inline_fix_external_policy_relationships
         end
 
+        #TODO: temp test need to remove according to GCVR2-1197
         begin
           if Rails.env.development? or ENV['RAILS_ENV'] == 'awsdev'
-            Compliance::PolicyMailer.with(organization: policy.account.nil? ? policy.agency : policy.account)
-                                    .external_policy_status_changed(policy: policy)
+            Compliance::PolicyMailer.with(organization: self.account.nil? ? self.agency : self.account)
+                                    .external_policy_status_changed(policy: self)
                                     .deliver_now unless self.in_system?
           else
             Compliance::PolicyMailer.with(organization: self.account.nil? ? self.agency : self.account)
