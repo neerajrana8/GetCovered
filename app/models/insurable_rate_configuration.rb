@@ -38,6 +38,8 @@ class InsurableRateConfiguration < ApplicationRecord
   
   # Validations
   
+  validates_presend_of :start_date
+  
   validate :validate_configuration
   
   # Structurable structures used in this model (and a helpful rule-to-text method)
