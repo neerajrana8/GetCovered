@@ -468,7 +468,7 @@ class InsurableRateConfiguration < ApplicationRecord
       .map{|val| val[1].sort_by{|irc| configurables.find_index{|c| irc.configurable_id == c.id && irc.configurable_type == c.class.name } } }
     # remove any duplicate entries by time
     if cull_repeated_times
-      to_return.each do |configurable_index, data|
+      to_return.map! do |data|
         condemned = []
         last = 0
         (1...(data.length)).each do |ind|
@@ -485,6 +485,7 @@ class InsurableRateConfiguration < ApplicationRecord
             last = ind
           end
         end
+        data.map.with_index{|d,i| condemned.include?(i) ? nil : d }.compact
       end
     end
     # handle exclusions
