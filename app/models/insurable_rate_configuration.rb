@@ -579,9 +579,9 @@ class InsurableRateConfiguration < ApplicationRecord
     unless cutoffs.blank?
       date_string = date.to_s
       index = 0
-      index += 1 while index < cutoffs.length && cutoffs[index] <= date_string # index is now the index of the greater endpoint of our interval
+      index += 1 while index < cutoffs.length && cutoffs[index] <= date_string # index is now the index of the greater endpoint of our interval (alphabetical order works fine w date strings)
       self.start_date = (index == 0 ? date : Date.parse(cutoffs[index-1]))
-      self.end_date = (index == cutoffs.length ? (cutoffs.last + 1.year).at_beginning_of_year : Date.parse(cutoffs[index]))
+      self.end_date = (index == cutoffs.length ? (Date.parse(cutoffs.last) + 1.year).at_beginning_of_year : Date.parse(cutoffs[index]))
     else
       self.start_date = date
       self.end_date = date + 1.day
