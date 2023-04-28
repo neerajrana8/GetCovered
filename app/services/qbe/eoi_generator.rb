@@ -26,8 +26,7 @@ module Qbe
       save_file(pdf) if options[:save]
       upload_file() if options[:save] && options[:upload]
       build_public_url() if options[:save] && options[:upload]
-      response = options[:save] && options[:upload] ? @public_url : nil
-      return response
+      return options[:save] && options[:upload] ? @public_url : pdf
     end
 
     private
