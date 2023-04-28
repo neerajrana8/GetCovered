@@ -17,6 +17,10 @@ module PolicyRenewal
       return "Policy with POLICY_NUMBER=#{policy_number} not valid for renewal." unless valid_for_renewal?
 
       renewal_status_complete = false
+
+      refresh_rates_status = PolicyRenewal::RefreshRatesService.call(policy.number)
+
+
       #policy.renew_count is incremented by 1 (if nil, treat as 0 and set to 1)
       renewal_count = policy.renewal_count + 1
       #policy.last_renewed_on is set to the date after the effective date
@@ -25,7 +29,7 @@ module PolicyRenewal
       policy_status = Policy.statuses.values_at('RENEWED')
 
       #update the policy
-      if policy.update_attributes(renewal_count: renewal_count, renewed_on: renewed_on, status: policy_status )
+      if refresh_rates_status && policy.update_attributes(renewal_count: renewal_count, renewed_on: renewed_on, status: policy_status )
         #Once the update is successful we will need to regenerate the policy document using policy.qbe_issue_policy
         # This will regenerate the policy document and send it to the customer.
         policy.qbe_issue_policy
@@ -41,12 +45,11 @@ module PolicyRenewal
     private
 
     def valid_for_renewal?
-      #ensure that the status and billing status show the policy as being
-      #in good standing
-      # carrier_id: 1
-      # policy_type_id: 1
-      # policy_in_system: true
-      # billing_status: 'current' or 'rescinded'
+      return false if policy.carrier_id.blank? || policy.billing_status.blank?
+      policy.carrier_id == 1 &&
+        policy.policy_type_id == ::PolicyType::RESIDENTIAL_ID &&
+        policy.policy_in_system == true &&
+        policy.billing_status.any?([Policy.billing_statuses["CURRENT"],Policy.billing_statuses["RESCINDED"]])
     end
 
   end
