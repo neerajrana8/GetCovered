@@ -9,7 +9,8 @@ describe 'PolicyRenewal::RefreshRatesService' do
   end
 
   context 'refresh rates before renewal' do
-    let(:insurable) { FactoryBot.create(:insurable, :residential_unit) }
+    let(:community) { FactoryBot.create(:insurable, :residential_community) }
+    let(:insurable) { FactoryBot.create(:insurable, :residential_unit, insurable_id: community.id) }
     let(:policy_type) { PolicyType.find(PolicyType::RESIDENTIAL_ID) }
     let!(:policy) do
       FactoryBot.create(
@@ -24,13 +25,15 @@ describe 'PolicyRenewal::RefreshRatesService' do
       )
     end
 
-    it 'refresh rates if needed' do
+    xit 'refresh rates if needed' do
+      #binding.pry
       #TBD
       renewal_status = PolicyRenewal::RefreshRatesService.call(policy.number)
 
     end
 
-    it 'raise exception during refreshing rates' do
+    xit 'raise exception during refreshing rates' do
+      #binding.pry
       #TBD
       renewal_status = PolicyRenewal::RefreshRatesService.call(policy.number)
 

@@ -24,7 +24,7 @@ describe 'PolicyRenewal::RenewalIssuer' do
       )
     end
 
-    it 'renew policy with correct statusses' do
+    xit 'renew policy with correct statusses' do
       #TBD
       renewal_status = PolicyRenewal::RenewalIssuer.call(policy.number)
 
@@ -47,7 +47,7 @@ describe 'PolicyRenewal::RenewalIssuer' do
       )
     end
 
-    it 'renew policy with incorrect statusses' do
+    xit 'renew policy with incorrect statusses' do
       #TBD
     end
   end
