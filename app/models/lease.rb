@@ -23,6 +23,7 @@ class Lease < ApplicationRecord
   # Concerns
   include RecordChange
   include ExpandedCovered
+  include SpecialStatusable
 
   RESIDENTIAL_ID = 1
   COMMERCIAL_ID = 2
@@ -34,8 +35,11 @@ class Lease < ApplicationRecord
 
   before_validation :set_reference, if: proc { |lease| lease.reference.nil? }
 
+  after_save :set_mpc_expirations,
+    if: Proc.new{|ls| !ls.master_policy_coverage_ids.blank? && ls.saved_change_to_status? && ls.status == 'expired' }
+
   after_commit :update_status,
-               if: Proc.new{ saved_change_to_start_date? || saved_change_to_end_date? }
+     if: Proc.new{|ls| (ls.saved_change_to_start_date? || ls.saved_change_to_end_date?) && ls.status != 'expired' }
 
   after_commit :update_unit_occupation
   after_commit :update_users_status
@@ -61,7 +65,7 @@ class Lease < ApplicationRecord
   accepts_nested_attributes_for :lease_users, :users
 
   # Validations
-  validates_presence_of :start_date, :end_date
+  validates_presence_of :start_date
 
   validate :start_date_precedes_end_date
 
@@ -83,6 +87,9 @@ class Lease < ApplicationRecord
   self.inheritance_column = nil
 
   enum status: %i[pending current expired]
+
+  enum special_status: SPECIAL_STATUSES,
+    _prefix: true
 
   scope :current, -> { where(status: 'current') }
 
@@ -125,7 +132,7 @@ class Lease < ApplicationRecord
 
   # Lease.activate
   def activate
-    if status != 'current' && (start_date..end_date === Time.zone.now)
+    if status != 'current' && (start_date..end_date === Time.current)
       update status: 'current'
       # update covered: true if unit.covered
 
@@ -171,11 +178,11 @@ class Lease < ApplicationRecord
   def update_status
 
     new_status =
-      if (start_date..end_date) === Time.zone.now.to_date
+      if (start_date..end_date) === Time.current.to_date
         'current'
-      elsif Time.zone.now.to_date < start_date
+      elsif Time.current.to_date < start_date
         'pending'
-      elsif Time.zone.now.to_date > end_date
+      elsif end_date && Time.current.to_date > end_date
         'expired'
       end
 
@@ -216,6 +223,10 @@ class Lease < ApplicationRecord
     end
     to_return = to_return.where(policy_type_id: policy_type_id, status: policy_status, id: PolicyUser.where(user_id: user_set).select(:policy_id))
     return to_return
+  end
+  
+  def set_mpc_expirations
+    Policy.where(id: self.master_policy_coverage_ids).each{|mpc| mpc.update(expiration_date: self.end_date) unless mpc.expiration_date && mpc.expiration_date < self.end_date }
   end
 
   private

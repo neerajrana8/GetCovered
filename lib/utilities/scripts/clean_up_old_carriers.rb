@@ -10,24 +10,30 @@ module Utilities
           end
         end
 
-        Policy.filter_by_status('EXTERNAL_VERIFIED').where.not(out_of_system_carrier_title: nil).find_in_batches(batch_size: 100) do |policies|
-          Policy.transaction do
-            policies.each do |policy|
-              corrected_title = carriers_data[policy.out_of_system_carrier_title]
+        Policy.filter_by_status('EXTERNAL_VERIFIED').where.not(out_of_system_carrier_title: nil).each do |policy|
+          corrected_title = carriers_data[policy.out_of_system_carrier_title]
 
-              if corrected_title
-                carrier = Carrier.find_by(title: corrected_title)
+          if corrected_title
+            carrier = Carrier.find_by(title: corrected_title)
 
-                # NOTE: replace incorrect title with correct one and link the corresponding carrier
-                policy.update!(out_of_system_carrier_title: corrected_title, carrier_id: carrier&.id)
-              elsif carriers_data.value?(policy.out_of_system_carrier_title)
-                carrier = Carrier.find_by(title: policy.out_of_system_carrier_title)
+            # NOTE: replace incorrect title with correct one and link the corresponding carrier
+            policy.assign_attributes(out_of_system_carrier_title: corrected_title, carrier_id: carrier&.id)
+          elsif carriers_data.value?(policy.out_of_system_carrier_title)
+            carrier = Carrier.find_by(title: policy.out_of_system_carrier_title)
 
-                # NOTE: link the corresponding carrier (out_of_system_carrier_title is already correct)
-                policy.update!(carrier_id: carrier&.id)
-              end
-            end
+            # NOTE: link the corresponding carrier (out_of_system_carrier_title is already correct)
+            policy.assign_attributes(carrier_id: carrier&.id)
           end
+
+          unless policy.save
+            Rails.logger.info(
+              "Error while running CleanUpOldCarriers script: #{policy.errors.full_messages.join(', ')}, policy ID: #{policy.id}"
+            )
+          end
+        rescue StandardError => e
+          Rails.logger.info(
+            "Error while running CleanUpOldCarriers script: #{e}, policy ID: #{policy.id}"
+          )
         end
       end
 

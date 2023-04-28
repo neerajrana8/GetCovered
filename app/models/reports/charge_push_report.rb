@@ -27,8 +27,11 @@ module Reports
       # NOTE: can't filter by community in #policies cause of chosen arch, so do it here
       data['rows'] = policies.filter_map do |policy|
         row = build_row(policy)
+
+        next unless row
+
         row if row['community_id'] == reportable2_id || reportable2_id.nil?
-      end
+      end.compact
 
       data['generated_at'] = DateTime.now
 
@@ -110,6 +113,9 @@ module Reports
         'community_id' => parent_community&.id,
         'charge' => format_monetary_field(calculate_charge_amount(policy, mpc))
       }
+    rescue StandardError => e
+      Rails.logger.info "Row error while generating charge push report: #{e}"
+      nil
     end
 
     def calculate_charge_amount(coverage, mpc)

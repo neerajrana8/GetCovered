@@ -109,7 +109,7 @@ module Reporting
         primary_lessee_last_name: lease&.primary_user&.profile&.last_name,
         primary_policyholder_email: policy.primary_user&.email || policy.primary_user&.profile&.contact_email,
         primary_lessee_email: lease&.primary_user&.email || lease&.primary_user&.profile&.contact_email,
-        expires_before_lease: !lease.nil? && policy.expiration_date <= lease.end_date,
+        expires_before_lease: !lease.nil? && (lease.end_date ? policy.expiration_date <= lease.end_date : policy.expiration_date < lease.start_date),
         applies_to_lessee: !lease.nil?
       }
       # get any_email
