@@ -19,17 +19,22 @@ module PolicyRenewal
       renewal_status_complete = false
 
       refresh_rates_status = PolicyRenewal::RefreshRatesService.call(policy.number)
+      invoices_generation_status = PolicyRenewal::RenewedInvoicesGeneratorService.call(policy.number)
 
 
       #policy.renew_count is incremented by 1 (if nil, treat as 0 and set to 1)
-      renewal_count = policy.renewal_count + 1
+      renewal_count = policy.renew_count.blank? ? 1 : policy.renew_count + 1
       #policy.last_renewed_on is set to the date after the effective date
-      renewed_on = policy.effective_date + 1.day
+      new_effective_date = policy.renewal_date
+      renewed_on = new_effective_date + 1.day
+      new_expiration_date = new_effective_date + 1.year
       #policy.status is set to RENEWED
-      policy_status = Policy.statuses.values_at('RENEWED')
+      policy_status = Policy.statuses.values_at('RENEWED').first
 
       #update the policy
-      if refresh_rates_status && policy.update_attributes(renewal_count: renewal_count, renewed_on: renewed_on, status: policy_status )
+      if refresh_rates_status && invoices_generation_status && policy.update(renew_count: renewal_count, last_renewed_on: renewed_on,
+                                                                             status: policy_status, expiration_date: new_expiration_date,
+                                                                             effective_date: new_effective_date )
         #Once the update is successful we will need to regenerate the policy document using policy.qbe_issue_policy
         # This will regenerate the policy document and send it to the customer.
         policy.qbe_issue_policy
@@ -49,6 +54,7 @@ module PolicyRenewal
       policy.carrier_id == 1 &&
         policy.policy_type_id == ::PolicyType::RESIDENTIAL_ID &&
         policy.policy_in_system == true &&
+        policy.auto_renew ==true &&
         policy.billing_status.any?([Policy.billing_statuses["CURRENT"],Policy.billing_statuses["RESCINDED"]])
     end
 

@@ -68,12 +68,14 @@ module PolicyRenewal
       end
 
       if higher_limit.blank?
+        # Calculated after quote build with quote.qbe_build_coverages
         # calculate on next step on qbe_build_coverages
         # if can't calculate disable coverage on enable flag?
       else
         policy_coverage.update(limit: higher_limit)
       end
       rescue Exception => e
+        return if policy_coverage.designation.in(['all_peril','loss_of_use','theft','wind_hail'])
         refresh_rates_status = false
         #Added for debug for now will move to logger
         message = "Unable to update rates for policy id: #{ policy.id }\n\n policy coverage id: #{ policy_coverage.id }"

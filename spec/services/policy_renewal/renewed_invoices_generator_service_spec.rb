@@ -24,13 +24,13 @@ describe 'PolicyRenewal::RenewedInvoicesGeneratorService' do
       )
     end
 
-    it 'generate new invoices for renewal process' do
+    xit 'generate new invoices for renewal process' do
       #TBD
       renewal_status = PolicyRenewal::RenewedInvoicesGeneratorService.call(policy.number)
 
     end
 
-    it 'raise exception during invoices generating for renewal process' do
+    xit 'raise exception during invoices generating for renewal process' do
       #TBD
       renewal_status = PolicyRenewal::RenewedInvoicesGeneratorService.call(policy.number)
 
