@@ -65,5 +65,5 @@ json.cache! policy do
     json.tcode policy&.primary_user&.integration_profiles&.first&.external_id
   end
 
-  json.master_policy_configuration policy.master_policy_configuration
+  json.master_policy_configuration policy.primary_insurable&.parent_community&.master_policy_configuration
 end
