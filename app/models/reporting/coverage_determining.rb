@@ -4,7 +4,8 @@ module Reporting
     
     COVERAGE_DETERMINANTS = { # are we counting units whose lessees are all covered based on exact User matches, equivalent numbers, or just any active policy?
       any: 0,
-      exact: 1
+      exact: 1,
+      mixed: 2
     }.freeze
     
     COVERAGE_STATUSES = {
