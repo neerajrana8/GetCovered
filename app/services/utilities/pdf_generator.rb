@@ -9,12 +9,10 @@ module Utilities
     attr_accessor :file_name
 
     def initialize(template_path, locales, file_name, save_path)
-      save_path_formatted = save_path.sub!(/\//, '').chomp('/')
       @template_path = template_path
       @locales = locales
       @file_name = file_name
-      @save_dir = "#{ Rails.root }/#{ save_path_formatted }"
-      @save_dir_array = save_path_formatted.split('/')
+      @save_dir_array = save_path.sub!(/\//, '').chomp('/').split('/')
       @save_path = Rails.root.join(save_path, @file_name)
     end
 

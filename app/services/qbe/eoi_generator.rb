@@ -14,7 +14,7 @@ module Qbe
       @document_title = document_title
       @template_path = template_path
       @local_save_path = "#{ Rails.root }/#{ local_save_path }"
-      @s3_save_path = s3_save_path.sub!(/\//, '').chomp('/')
+      @s3_save_path = s3_save_path
       @locales = locales
       @bucket = Rails.env == 'production' ? 'gc-public-prod' : 'gc-public-dev'
     end
