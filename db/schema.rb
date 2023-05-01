@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2023_04_18_234225) do
+ActiveRecord::Schema.define(version: 2023_04_25_185927) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -804,6 +804,7 @@ ActiveRecord::Schema.define(version: 2023_04_18_234225) do
     t.integer "special_usage"
     t.string "special_designation"
     t.jsonb "special_settings"
+    t.jsonb "irc_cutoffs", default: {"1"=>[]}, null: false
     t.index ["insurable_id"], name: "index_insurable_geographical_categories_on_insurable_id"
   end
 
@@ -818,6 +819,8 @@ ActiveRecord::Schema.define(version: 2023_04_18_234225) do
     t.jsonb "configuration", default: {}, null: false
     t.jsonb "rates", default: {}, null: false
     t.bigint "carrier_policy_type_id", null: false
+    t.date "start_date", null: false
+    t.date "end_date"
     t.index ["carrier_policy_type_id"], name: "index_irc_on_cpt"
     t.index ["configurable_type", "configurable_id"], name: "index_irc_configurable"
     t.index ["configurer_type", "configurer_id"], name: "index_irc_configurer"

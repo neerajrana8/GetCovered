@@ -9,7 +9,7 @@ module V2
         return unless unpack_params(default_carrier_policy_type: CarrierPolicyType.where(carrier_id: 5, policy_type_id: 1).take)
         # grab our boyo
         configurer = (@account || @agency || @carrier)
-        irc = ::InsurableRateConfiguration.get_inherited_irc(@carrier_policy_type, configurer, @configurable, agency: @agency, exclude: :children_inclusive, union_mode: true) # WARNING: DOES UNION_MODE WORK???
+        irc = ::InsurableRateConfiguration.get_inherited_irc(@carrier_policy_type, configurer, @configurable, Time.current.to_date, agency: @agency, exclude: :children_inclusive, union_mode: true) # WARNING: DOES UNION_MODE WORK???
         coverage_options = ::InsurableRateConfiguration.remove_overridability_data!(
           irc.configuration['coverage_options'].select do |uid, co|
             co['options_type'] == 'multiple_choice' &&
@@ -22,7 +22,8 @@ module V2
         # get our target entity's options
         entity_covopts = ::InsurableRateConfiguration.remove_overridability_data!(
           (
-            ::InsurableRateConfiguration.where(carrier_policy_type: @carrier_policy_type, configurer: configurer, configurable: @configurable).take || ::InsurableRateConfiguration.new(configuration: { 'coverage_options' => {} })
+            ::InsurableRateConfiguration.for_date(Time.current.to_date).where(carrier_policy_type: @carrier_policy_type, configurer: configurer, configurable: @configurable).take ||
+            ::InsurableRateConfiguration.new(configuration: { 'coverage_options' => {} }) # don't need start or end date, we aren't saving this
           ).configuration['coverage_options']
         )
         # annotate with our stuff
@@ -54,8 +55,8 @@ module V2
         end
         # grab models
         configurer = @account || @agency # WARNING: no carrier option, because we don't want people screwing up the carrier configurations
-        entity_irc = ::InsurableRateConfiguration.where(carrier_policy_type: @carrier_policy_type, configurer: configurer, configurable: @configurable).take ||
-                     ::InsurableRateConfiguration.new(carrier_policy_type: @carrier_policy_type, configurer: configurer, configurable: @configurable, configuration: { 'coverage_options' => {} })
+        entity_irc = ::InsurableRateConfiguration.for_date(Time.current.to_date).where(carrier_policy_type: @carrier_policy_type, configurer: configurer, configurable: @configurable).take ||
+                     ::InsurableRateConfiguration.new(carrier_policy_type: @carrier_policy_type, configurer: configurer, configurable: @configurable, configuration: { 'coverage_options' => {} }).with_date(Time.current.to_date)
         entity_covopts = entity_irc.configuration['coverage_options']
         # update options
         covopts.each do |uid, opt|
@@ -65,7 +66,7 @@ module V2
             entity_covopts[uid] = nil unless found.nil?
           elsif opt['options'].blank?
             if found.nil?
-              entity_covopts[uid] = { 'requirement' => 'forbidden' } # MOOSE WARNING: rules from carrier that set requirement to optional will still override this... which should NOT be the case. Only setting req to 'required' should override this. Fix it to work that way.
+              entity_covopts[uid] = { 'requirement' => 'forbidden' } # MOOSE WARNING: rules from carrier that set requirement to optional will still override this... which should NOT be the case. Only setting requirement to 'required' should override this. Fix it to work that way.
             else
               found['requirement'] = 'forbidden'
             end

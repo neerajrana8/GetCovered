@@ -904,7 +904,7 @@ class MsiService
   
   
   def extract_insurable_rate_configuration(product_definition_response, configurer: nil, configurable: nil, carrier_policy_type: nil, use_default_rules_for: nil)
-    irc = InsurableRateConfiguration.new(configurer: configurer, configurable: configurable, carrier_policy_type: carrier_policy_type)
+    irc = InsurableRateConfiguration.new(configurer: configurer, configurable: configurable, carrier_policy_type: carrier_policy_type, start_date: Time.current.to_date, end_date: nil)
     irc.configuration = { 'coverage_options' => {}, 'rules' => {} }
     unless product_definition_response.nil?
       # grab relevant bois from out da hood
