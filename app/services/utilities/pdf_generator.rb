@@ -9,10 +9,12 @@ module Utilities
     attr_accessor :file_name
 
     def initialize(template_path, locales, file_name, save_path)
+      save_path_formatted = save_path.sub!(/\//, '').chomp('/')
       @template_path = template_path
       @locales = locales
       @file_name = file_name
-      @save_dir = "#{ Rails.root }/#{ save_path }"
+      @save_dir = "#{ Rails.root }/#{ save_path_formatted }"
+      @save_dir_array = save_path_formatted.split('/')
       @save_path = Rails.root.join(save_path, @file_name)
     end
 
@@ -44,8 +46,11 @@ module Utilities
     end
 
     def create_dir_unless_exists
-      unless File.directory?(@save_dir)
-        FileUtils.mkdir_p(@save_dir)
+      @save_dir_array.length.times do |i|
+        dir = Rails.root.join(@save_dir_array.take(i + 1).join('/'))
+        unless File.directory?(dir)
+          FileUtils.mkdir(dir, mode: 0777)
+        end
       end
     end
   end
