@@ -51,9 +51,20 @@ module V2
         render @master_policy.as_json(include: :policy_coverages)
       end
 
+      def upload_coverage_list
+
+      end
+
       def set_policy
         @master_policy = Policy.find_by(policy_type_id: PolicyType::MASTER_IDS, id: params[:id])
         render(json: { error: :not_found, message: 'Master policy not found' }, status: :not_found) if @master_policy.blank?
+      end
+
+      private
+
+      def upload_coverage_list_params
+        params.require(:coverage_list).permit(:account_id, :tpp, :tpp_limit, :tpp_aggregate, :tpl, :tpl_limit,
+                                              :tpl_aggregate, :file)
       end
     end
   end
