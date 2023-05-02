@@ -52,10 +52,12 @@ module V2
       end
 
       def upload_coverage_list
-        @account = Account.find(params[:account_id])
-        @file = Utilities::S3Uploader.call(params[:file], build_upload_file_name(@account.slug),
-                                         '/eois/qbe-specialty/master/', nil)
-        render json: { success: true, file_url: @file }.to_json, status: :ok
+        logger.debug params.to_json
+        render json: { success: true, message: "The owl flies tonight" }.to_json, status: :ok
+        # @account = Account.find(params[:account_id])
+        # @file = Utilities::S3Uploader.call(params[:file], build_upload_file_name(@account.slug),
+        #                                  '/eois/qbe-specialty/master/', nil)
+        # render json: { success: true, file_url: @file }.to_json, status: :ok
       end
 
       def set_policy
