@@ -52,12 +52,11 @@ module V2
       end
 
       def upload_coverage_list
-        logger.debug params.to_json
         @account = Account.find(params["account_id"])
         @file = Utilities::S3Uploader.call(params["file"], build_upload_file_name(@account.slug), '/eois/qbe-specialty/master/', nil)
 
         job_config = {
-          document: file,
+          document: @file,
           account: @account.title,
           tpp: params["tpp"],
           tpp_limit: params["tpp_limit"],
