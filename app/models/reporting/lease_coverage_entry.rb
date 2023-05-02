@@ -30,6 +30,8 @@ module Reporting
       _prefix: true
     enum coverage_status_exact: COVERAGE_STATUSES,
       _prefix: true
+    enum coverage_status: COVERAGE_STATUSES,
+      _prefix: true
 
     def get_coverage_status(determinant: nil, expand_ho4: false, simplify: true)
       tr = determinant.nil? || determinant == 'mixed' ? self.coverage_status : self.send("coverage_status_#{determinant}")

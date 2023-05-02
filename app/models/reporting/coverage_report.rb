@@ -127,6 +127,7 @@ module Reporting
       _prefix: false, _suffix: false
     
     def self.generate_all!(report_time)
+      return # MOOSE WARNING: this method isn't ready for prime-time after the recent determinant changes
       reports = Reporting::CoverageReport.where(report_time: report_time, owner_type: [nil, "Account"]).pluck(:owner_id, :coverage_determinant, :status, :id)
       # generate root reports
       puts "[Reporting::CoverageReport.generate_all!] Generating #{Reporting::CoverageReport.coverage_determinants.count} root reports..."
