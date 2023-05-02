@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2023_04_25_185927) do
+ActiveRecord::Schema.define(version: 2023_05_02_232404) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -1830,6 +1830,7 @@ ActiveRecord::Schema.define(version: 2023_04_25_185927) do
     t.string "yardi_id"
     t.integer "coverage_status_exact"
     t.integer "coverage_status_any"
+    t.integer "coverage_status"
     t.index ["account_id", "report_time"], name: "index_rlce_on_a_and_rt"
     t.index ["lease_id"], name: "index_reporting_lease_coverage_entries_on_lease_id"
     t.index ["report_time", "lease_id"], name: "index_rlce_on_rt_and_li", unique: true
@@ -1910,6 +1911,7 @@ ActiveRecord::Schema.define(version: 2023_04_25_185927) do
     t.boolean "occupied"
     t.bigint "primary_lease_coverage_entry_id"
     t.jsonb "error_info"
+    t.integer "coverage_status"
     t.index ["insurable_id"], name: "index_reporting_unit_coverage_entries_on_insurable_id"
     t.index ["primary_lease_coverage_entry_id"], name: "index_ruce_on_plcei"
     t.index ["report_time", "coverage_status_any"], name: "index_ruce_on_rt_and_css"
