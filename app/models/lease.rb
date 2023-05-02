@@ -211,6 +211,7 @@ class Lease < ApplicationRecord
   
   def matching_policies(users: nil, policy_type_id: 1, policy_status: Policy.active_statuses, active_at: nil)
     # support all weird user types
+    user_set = users
     user_set ||= self.users
     user_set = [users] if users.class == ::User || users.class == ::Integer
     user_set = user_set.map{|u| u.class == ::Integer ? u : u.id }
