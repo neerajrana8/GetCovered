@@ -39,7 +39,7 @@ module CarrierQBE
   
     def create_policy(file_name)
       file_path = "#{Rails.root}/public/ftp_cp/#{file_name}"
-  
+
       doc = File.open(file_path) { |f| Nokogiri::XML(f) }
       insurance_service_requests = doc.xpath('//InsuranceSvcRs')
       @output = []
@@ -180,9 +180,7 @@ module CarrierQBE
           for_output[:policy_valid_with_current_data] = policy.valid?
         end
         for_output[:transaction] = transaction
-        a = 1
         for_output[:transaction_reason] = transaction_translation(code: transaction)
-        a = 1
         for_output[:policy_number] = number
         for_output[:effective_date] = start_date
         for_output[:expiration_date] = expiration_date

@@ -23,7 +23,7 @@ module CarrierQBE
             remote_file_path = "/Outbound/#{file}"
             file_path = "#{Rails.root}/public/ftp_cp/#{file}"
             # Need to download file for checksum GETCVR_DownloadTransOutput.xml
-            sftp.download_file(remote_file_path, file_path)
+            downloaded_file = sftp.download_file(remote_file_path, file_path)
             # Downloaded file's checksum
             checksum = Digest::SHA256.file(file_path).hexdigest
 
@@ -44,6 +44,13 @@ module CarrierQBE
             end
             # We move files to processed folder so we don't keep downloading same files
             sftp.mkdir('/Processed') unless sftp.rename("/Outbound/#{file}", "/Processed/#{file}")
+            begin
+              bucket = Rails.application.credentials.aws[ENV['RAILS_ENV'].to_sym][:bucket]
+              target = s3.bucket(bucket).object('accord/' + file)
+              target.upload_file(downloaded_file)
+            rescue => e
+              Rails.logger.debug(e)
+            end
           end
         end
         sftp.disconnect
