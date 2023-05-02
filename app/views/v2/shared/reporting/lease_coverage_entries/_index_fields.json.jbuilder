@@ -10,6 +10,4 @@ json.extract! lease_coverage_entry,
   :account_id,
   :report_time
 
-if @determinant
-  json.coverage_status lease_coverage_entry.coverage_status(@determinant, expand_ho4: @expand_ho4, simplify: @simplify_status)
-end
+json.coverage_status lease_coverage_entry.get_coverage_status(determinant: @determinant, expand_ho4: @expand_ho4, simplify: @simplify_status)

@@ -339,7 +339,7 @@ module Reporting
       self.total_units += unit_entries.count
       unit_entries.each do |ue|
         self.total_units_unoccupied += 1 if !ue.occupied
-        case ue.send("coverage_status_#{self.coverage_report.coverage_determinant}")
+        case(self.coverage_report.coverage_determinant == 'mixed' ? ue.coverage_determinant : ue.send("coverage_status_#{self.coverage_report.coverage_determinant}"))
           when 'none'
             self.total_units_with_no_policy += 1
           when 'internal'

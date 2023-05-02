@@ -509,7 +509,11 @@ module Reporting
     private
 
       def set_coverage_determinant
-        self.coverage_determinant ||= (self.owner.reporting_coverage_reports_settings || {})['coverage_determinant'] || 'any' if self.owner_type == "Account"
+        if self.owner_type == "Account"
+          self.coverage_determinant ||= (self.owner.reporting_coverage_reports_settings || {})['coverage_determinant'] || 'any'
+        elsif self.owner_type.nil?
+          self.coverage_determinant ||= 'mixed'
+        end
       end
         
   end # end class

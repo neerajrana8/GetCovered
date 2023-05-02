@@ -31,26 +31,11 @@ module Reporting
     enum coverage_status_exact: COVERAGE_STATUSES,
       _prefix: true
 
-    def coverage_status(determinant, expand_ho4: false, simplify: true)
-      tr = self.send("coverage_status_#{determinant}")
+    def get_coverage_status(determinant: nil, expand_ho4: false, simplify: true)
+      tr = determinant.nil? || determinant == 'mixed' ? self.coverage_status : self.send("coverage_status_#{determinant}")
       tr = 'internal' if (simplify || !expand_ho4) && (tr == 'internal_and_external' || tr == 'internal_or_external')
       tr = 'ho4' if !expand_ho4 && (tr == 'internal' || tr == 'external')
       return tr
-    end
-    def covered_by_master_policy(determinant)
-      'master' == self.send("coverage_status_#{determinant}")
-    end
-    def covered_by_ho4_policy(determinant)
-      ['internal', 'external', 'internal_and_external', 'internal_or_external'].include?(self.send("coverage_status_#{determinant}"))
-    end
-    def covered_by_internal_policy(determinant)
-      ['internal', 'internal_and_external', 'internal_or_external'].include?(self.send("coverage_status_#{determinant}"))
-    end
-    def covered_by_external_policy(determinant)
-      'external' == self.send("coverage_status_#{determinant}")
-    end
-    def covered_by_no_policy(determinant)
-      'none' == self.send("coverage_status_#{determinant}")
     end
     
     # only :unit_coverage_entry_id and :lease_id need to be provided by the user
@@ -104,6 +89,9 @@ module Reporting
           'none'
         end
       )
+      # coverage_status
+      self.coverage_status = self.send("coverage_status_#{self.account&.reporting_coverage_reports_settings&.[]('coverage_determinant') || 'any'}")
+      # done
       bang ? self.save! : self.save
     end # end generate()
 
