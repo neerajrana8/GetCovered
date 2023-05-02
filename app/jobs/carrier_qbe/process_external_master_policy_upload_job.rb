@@ -1,7 +1,19 @@
-class CarrierQbe::ProcessExternalMasterPolicyUploadJob < ApplicationJob
-  queue_as :default
+module CarrierQbe
+  class ProcessExternalMasterPolicyUploadJob < ApplicationJob
+    require 'csv'
+    require 'open-uri'
 
-  def perform(*args)
-    # Do something later
+    queue_as :default
+
+    def perform(config = nil)
+      unless config.nil?
+        URI.open(config[:document]).each do |row|
+          data = row.split(',')
+          CarrierQbe::SendExternalMasterPolicyEoiJob.perform_later(data, config)
+        end
+      end
+    end
+
   end
 end
+

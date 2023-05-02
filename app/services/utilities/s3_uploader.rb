@@ -15,8 +15,12 @@ module Utilities
     end
 
     def call
-      upload()
-      return build_public_url()
+      raise ArgumentError.new("Document must be specified") if @document.nil?
+      raise ArgumentError.new("Document Title must be specified") if @document_title.nil?
+      raise ArgumentError.new("Remote Save Path must be specified") if @save_path.nil?
+
+      attempt = upload()
+      return attempt ? build_public_url() : nil
     end
 
     private
@@ -32,9 +36,19 @@ module Utilities
     end
 
     def upload
-      File.open(@document.path, 'rb') do |file|
-        s3().put_object(bucket: @bucket, acl: 'public-read', key: "#{ @save_path }/#{ @document_title }", body: file)
+      success = true
+      unless s3_credentials.nil? || s3.nil?
+        begin
+          File.open(@document.path, 'rb') do |file|
+            s3().put_object(bucket: @bucket, acl: 'public-read', key: "#{ @save_path }/#{ @document_title }", body: file)
+          end
+        rescue Aws::S3::Errors::ServiceError
+          success = false
+        end
+      else
+        success = false
       end
+      return success
     end
 
     def build_public_url

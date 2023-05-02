@@ -54,8 +54,21 @@ module V2
       def upload_coverage_list
         logger.debug params.to_json
         @account = Account.find(params["account_id"])
-        @file = Utilities::S3Uploader.call(params["file"], build_upload_file_name(@account.slug),
-                                         '/eois/qbe-specialty/master/', nil)
+        @file = Utilities::S3Uploader.call(params["file"], build_upload_file_name(@account.slug), '/eois/qbe-specialty/master/', nil)
+
+        job_config = {
+          document: file,
+          account: @account.title,
+          tpp: params["tpp"],
+          tpp_limit: params["tpp_limit"],
+          tpp_aggregate: params["tpp_aggregate"],
+          tpl: params["tpl"],
+          tpl_limit: params["tpl_limit"],
+          tpl_aggregate: params["tpl_aggregate"]
+        }
+
+        CarrierQbe::ProcessExternalMasterPolicyUploadJob.perform_later(job_config)
+
         render json: { success: true, file_url: @file }.to_json, status: :ok
       end
 

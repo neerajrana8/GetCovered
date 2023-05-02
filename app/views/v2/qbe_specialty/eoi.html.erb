@@ -75,29 +75,29 @@
                 <table cellpadding="0" cellspacing="0" class="even">
                     <tr>
                         <td><p><span class="bold">Insurer</span><br>QBE Specialty Insurance Company</p></td>
-                        <td class="no-border-right"><p><span class="bold">Policy Number</span><br>{{ policy.number }}</p></td>
+                        <td class="no-border-right"><p><span class="bold">Policy Number</span><br><%= policy_number %></p></td>
                     </tr>
                     <tr>
-                        <td class="no-border-bottom"><p><span class="bold">Named Insured</span><br>{{ account.title }}</p></td>
+                        <td class="no-border-bottom"><p><span class="bold">Named Insured</span><br><%= account %></p></td>
                         <td class="no-border-bottom no-border-right"></td>
                     </tr>
                 </table>
                 <p class="center bold">Tenant’s Schedule</p>
                 <table cellpadding="0" cellspacing="0">
                     <tr>
-                        <td><p><span class="bold">Tenant</span><br>{{ user.profile.full_name }}</p></td>
-                        <td><p><span class="bold">Coverage Effective Date</span><br>{{ policy.effective_date }}</p></td>
-                        <td class="no-border-right"><p><span class="bold">Address</span><br>{{ address }}</p></td>
+                        <td><p><span class="bold">Tenant</span><br><%= user_name %></p></td>
+                        <td><p><span class="bold">Coverage Effective Date</span><br><%= effective_date %></p></td>
+                        <td class="no-border-right"><p><span class="bold">Address</span><br><%= address %></p></td>
                     </tr>
                     <tr>
-                        <td><p><span class="bold">Tenant's Personal Property Coverage</span><br>YES / NO</p></td>
-                        <td><p><span class="bold">Tenant’s Personal Property Coverage Limit</span><br>$10,000 per claim</p></td>
-                        <td class="no-border-right"><p><span class="bold">Tenant’s Personal Property Aggregate Limit of Liability</span><br>$10,000 Aggregate for all Claims per Tenant per 12 month period</p></td>
+                        <td><p><span class="bold">Tenant's Personal Property Coverage</span><br><% tpp ? "YES" : "NO" %></p></td>
+                        <td><p><span class="bold">Tenant’s Personal Property Coverage Limit</span><br><%= number_to_currency(tpp_limit) %> per claim</p></td>
+                        <td class="no-border-right"><p><span class="bold">Tenant’s Personal Property Aggregate Limit of Liability</span><br><%= number_to_currency(tpp_aggregate) %> Aggregate for all Claims per Tenant per 12 month period</p></td>
                     </tr>
                     <tr>
-                        <td class="no-border-bottom"><p><span class="bold">Tenant's Premises Liability Coverage</span><br>YES / NO</p></td>
-                        <td class="no-border-bottom"><p><span class="bold">Tenant’s Premises Liability Coverage Limit</span><br>$100,000 per “occurrence”</p></td>
-                        <td class="no-border-bottom no-border-right"><p><span class="bold">Tenant’s Premises Liability Aggregate Limit</span><br>$100,000 per 12 month period</p></td>
+                        <td class="no-border-bottom"><p><span class="bold">Tenant's Premises Liability Coverage</span><br><% tpl ? "YES" : "NO" %></p></td>
+                        <td class="no-border-bottom"><p><span class="bold">Tenant’s Premises Liability Coverage Limit</span><br><%= number_to_currency(tpl_limit) %> per “occurrence”</p></td>
+                        <td class="no-border-bottom no-border-right"><p><span class="bold">Tenant’s Premises Liability Aggregate Limit</span><br><%= number_to_currency(tpl_aggregate) %> per 12 month period</p></td>
                     </tr>
                 </table>
             </div>
