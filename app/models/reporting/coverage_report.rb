@@ -127,27 +127,10 @@ module Reporting
       _prefix: false, _suffix: false
     
     def self.generate_all!(report_time)
-      return # MOOSE WARNING: this method isn't ready for prime-time after the recent determinant changes
+      failed_creations = []
+      failed_generations = []
       reports = Reporting::CoverageReport.where(report_time: report_time, owner_type: [nil, "Account"]).pluck(:owner_id, :coverage_determinant, :status, :id)
-      # generate root reports
-      puts "[Reporting::CoverageReport.generate_all!] Generating #{Reporting::CoverageReport.coverage_determinants.count} root reports..."
-      Reporting::CoverageReport.coverage_determinants.keys.each.with_index do |cd, ind|
-        found = reports.find{|r| r[0].nil? && r[1] == cd }
-        case found&.[](2)
-          when 'ready'
-            # do nothing
-            puts "[Reporting::CoverageReport.generate_all!]   (#{ind+1} / #{Reporting::CoverageReport.coverage_determinants.count}) Root '#{cd}' report already generated."
-          when 'preparing', 'errored'
-            # try to regenerate
-            puts "[Reporting::CoverageReport.generate_all!]   (#{ind+1} / #{Reporting::CoverageReport.coverage_determinants.count}) Root '#{cd}' report exists but has not been fully generated; attempting generation."
-            Reporting::CoverageReport.find(found[3]).generate!
-          when nil
-            # try to create
-            puts "[Reporting::CoverageReport.generate_all!]   (#{ind+1} / #{Reporting::CoverageReport.coverage_determinants.count}) Generating root '#{cd}' report."
-            Reporting::CoverageReport.create!(owner: nil, report_time: report_time, coverage_determinant: cd).generate!
-        end
-      end
-      # generate account reports
+      # generate PM reports
       account_ids = ::Account.where(reporting_coverage_reports_generate: true).order(id: :asc).pluck(:id)
       puts "[Reporting::CoverageReport.generate_all!] Generating #{account_ids.count} PM account reports..."
       account_ids.each.with_index do |account_id, ind|
@@ -157,18 +140,74 @@ module Reporting
         case found&.[](2)
           when 'ready'
             # do nothing
-            puts "[Reporting::CoverageReport.generate_all!]   (#{ind+1}/#{account_ids.count}) Report for PM '#{account.title}' already generated."
+            puts "[Reporting::CoverageReport.generate_all!]   (#{ind+1}/#{account_ids.count}) Report for PM '#{account.title}' already generated (id: #{found[3]})."
           when 'preparing', 'errored'
             # try to regenerate
-            puts "[Reporting::CoverageReport.generate_all!]   (#{ind+1}/#{account_ids.count}) Report for PM '#{account.title}' exists but has not been fully generated; attempting generation."
-            Reporting::CoverageReport.find(found[3]).generate!
+            puts "[Reporting::CoverageReport.generate_all!]   (#{ind+1}/#{account_ids.count}) Report for PM '#{account.title}' exists but has not been fully generated (id: #{found[3]}); attempting regeneration."
+            report = Reporting::CoverageReport.find(found[3])
+            result = report.generate!
+            if result.nil?
+              puts "[Reporting::CoverageReport.generate_all!]     Report generated successfully."
+            else
+              puts "[Reporting::CoverageReport.generate_all!]     Report generation failed: #{result[:class]}: #{result[:message]}"
+              failed_generations.push(report.id)
+            end
           when nil
             # try to create
-            puts "[Reporting::CoverageReport.generate_all!]   (#{ind+1}/#{account_ids.count}) Generating report for PM '#{account.title}'."
-            Reporting::CoverageReport.create!(owner: account, report_time: report_time, coverage_determinant: cd).generate!
+            puts "[Reporting::CoverageReport.generate_all!]   (#{ind+1}/#{account_ids.count}) Generating new report for PM '#{account.title}'."
+            report = Reporting::CoverageReport.create!(owner: account, report_time: report_time, coverage_determinant: cd)
+            if report.id
+              puts "[Reporting::CoverageReport.generate_all!]     Report created (id #{report.id}); beginning generation."
+              result = report.generate!
+              if result.nil?
+                puts "[Reporting::CoverageReport.generate_all!]     Report generated successfully."
+              else
+                puts "[Reporting::CoverageReport.generate_all!]     Report generation failed: #{result[:class]}: #{result[:message]}"
+                failed_generations.push(report.id)
+              end
+            else
+              puts "[Reporting::CoverageReport.generate_all!]     Failed to create report: #{report.errors.to_h}"
+              failed_creations.push(account_id)
+            end
         end
       end
+      # generate root report
+      puts "[Reporting::CoverageReport.generate_all!] Generating root report..."
+      found = reports.find{|r| r[0].nil? && r[1] == 'mixed' }
+      case found&.[](2)
+        when 'ready'
+          puts "[Reporting::CoverageReport.generate_all!]   Root report already generated (id: #{found[3]})."
+        when 'preparing', 'errored'
+          puts "[Reporting::CoverageReport.generate_all!]   Root report exists but has not been fully generated (id: #{found[3]}); attempting regeneration."
+          report = Reporting::CoverageReport.find(found[3])
+          result = report.generate!
+          if result.nil?
+            puts "[Reporting::CoverageReport.generate_all!]     Report generated successfully."
+          else
+            puts "[Reporting::CoverageReport.generate_all!]     Report generation failed: #{result[:class]}: #{result[:message]}"
+            failed_generations.push(report.id)
+          end
+        when nil
+          puts "[Reporting::CoverageReport.generate_all!]   Generating new root report."
+          report = Reporting::CoverageReport.create!(owner: nil, report_time: report_time, coverage_determinant: 'mixed')
+          if report.id
+            puts "[Reporting::CoverageReport.generate_all!]     Report created (id #{report.id}); beginning generation."
+            result = report.generate!
+            if result.nil?
+              puts "[Reporting::CoverageReport.generate_all!]     Report generated successfully."
+            else
+              puts "[Reporting::CoverageReport.generate_all!]     Report generation failed: #{result[:class]}: #{result[:message]}"
+              failed_generations.push(report.id)
+            end
+          else
+            puts "[Reporting::CoverageReport.generate_all!]     Failed to create report: #{report.errors.to_h}"
+            failed_creations.push(nil)
+          end
+      end
       puts "[Reporting::CoverageReport.generate_all!] Report generation complete."
+      puts "[Reporting::CoverageReport.generate_all!]   Account ids for which report creation failed: #{failed_creations}"
+      puts "[Reporting::CoverageReport.generate_all!]   Report ids for which report generation failed: #{failed_generations}"
+      puts "[Reporting::CoverageReport.generate_all!] Have a nice day."
       return true
     end
     
