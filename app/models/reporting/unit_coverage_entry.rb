@@ -7,6 +7,7 @@ module Reporting
     include Reporting::CoverageDetermining # provides COVERAGE_STATUSES enum setup
     
     belongs_to :insurable
+    belongs_to :account
     belongs_to :lease, optional: true
     belongs_to :primary_lease_coverage_entry, optional: true,
       class_name: "Reporting::LeaseCoverageEntry",
@@ -28,34 +29,22 @@ module Reporting
       class_name: "Reporting::LeaseUserCoverageEntry",
       through: :lease_coverage_entries,
       source: :lease_user_coverage_entries
-      
-    before_create :prepare
+
+    before_validation :prepare,
+      on: :create
     
     enum coverage_status_any: COVERAGE_STATUSES,
       _prefix: true
     enum coverage_status_exact: COVERAGE_STATUSES,
       _prefix: true
+    enum coverage_status: COVERAGE_STATUSES,
+      _prefix: true
 
-    def coverage_status(determinant, expand_ho4: false, simplify: true)
-      tr = self.send("coverage_status_#{determinant}")
+    def get_coverage_status(determinant: nil, expand_ho4: false, simplify: true)
+      tr = determinant.nil? || determinant == 'mixed' ? self.coverage_status : self.send("coverage_status_#{determinant}")
       tr = 'internal' if (simplify || !expand_ho4) && (tr == 'internal_and_external' || tr == 'internal_or_external')
       tr = 'ho4' if !expand_ho4 && (tr == 'internal' || tr == 'external')
       return tr
-    end
-    def covered_by_master_policy(determinant)
-      'master' == self.send("coverage_status_#{determinant}")
-    end
-    def covered_by_ho4_policy(determinant)
-      ['internal', 'external', 'internal_and_external', 'internal_or_external'].include?(self.send("coverage_status_#{determinant}"))
-    end
-    def covered_by_internal_policy(determinant)
-      ['internal', 'internal_and_external', 'internal_or_external'].include?(self.send("coverage_status_#{determinant}"))
-    end
-    def covered_by_external_policy(determinant)
-      'external' == self.send("coverage_status_#{determinant}")
-    end
-    def covered_by_no_policy(determinant)
-      'none' == self.send("coverage_status_#{determinant}")
     end
     
     # only :report_time and :insurable need to be provided by the user
@@ -89,6 +78,7 @@ module Reporting
       self.lease_yardi_id = self.primary_lease_coverage_entry&.yardi_id
       self.coverage_status_exact = self.primary_lease_coverage_entry ? self.primary_lease_coverage_entry.coverage_status_exact : 'none'
       self.coverage_status_any = self.primary_lease_coverage_entry ? self.primary_lease_coverage_entry.coverage_status_any : 'none'
+      self.coverage_status = self.send("coverage_status_#{self.account&.reporting_coverage_reports_settings&.[]('coverage_determinant') || 'any'}")
       self.occupied = (!self.primary_lease_coverage_entry.nil? && self.primary_lease_coverage_entry.lessee_count != 0)
       # done!
       bang ? self.save! : self.save

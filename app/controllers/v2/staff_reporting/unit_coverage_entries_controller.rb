@@ -52,6 +52,7 @@ module V2
             occupied: [:scalar],
             coverage_status_exact: [:scalar, :array],
             coverage_status_any: [:scalar, :array],
+            coverage_status: [:scalar, :array],
             primary_lease_coverage_entry_id: [:scalar, :array]
           }
         end
@@ -76,10 +77,10 @@ module V2
             next d
           end.flatten # we don't bother to uniq because it'd take cpu time for no reason, I think
         end
-        
+
         def transform_filters(hash)
           return(hash.map do |k,v|
-            if k == 'coverage_status'
+            if k == 'coverage_status' && !@determinant.nil? && @determinant != 'mixed'
               ["coverage_status_#{@determinant}", v]
             else
               if !@organizable.nil? && ['coverage_status_exact', 'coverage_status_any'].include?(k)
@@ -94,13 +95,13 @@ module V2
         def transform_orders(hash)
           return nil if hash.nil?
           if hash[:column].class == ::Array
-            hash[:column].map!{|k| k == 'coverage_status' ? "coverage_status_#{@determinant}" : k }
-          elsif hash[:column] == 'coverage_status'
+            hash[:column].map!{|k| k == 'coverage_status' ? "coverage_status_#{@determinant}" : k } if !@determinant.nil? && @determinant != 'mixed'
+          elsif hash[:column] == 'coverage_status' && !@determinant.nil? && @determinant != 'mixed'
             hash[:column] = "coverage_status_#{@determinant}"
           end
           return hash
         end
-      
+
         def default_pagination_per
           50
         end
