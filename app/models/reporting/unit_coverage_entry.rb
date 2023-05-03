@@ -7,6 +7,7 @@ module Reporting
     include Reporting::CoverageDetermining # provides COVERAGE_STATUSES enum setup
     
     belongs_to :insurable
+    belongs_to :account
     belongs_to :lease, optional: true
     belongs_to :primary_lease_coverage_entry, optional: true,
       class_name: "Reporting::LeaseCoverageEntry",

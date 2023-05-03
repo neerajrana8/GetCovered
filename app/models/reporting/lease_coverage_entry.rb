@@ -8,8 +8,7 @@ module Reporting
       
     belongs_to :lease
     
-    belongs_to :account,
-      optional: true
+    belongs_to :account
     
     belongs_to :unit_coverage_entry,
       class_name: "Reporting::UnitCoverageEntry",
