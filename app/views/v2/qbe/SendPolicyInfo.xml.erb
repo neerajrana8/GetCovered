@@ -8,7 +8,7 @@ def sanitize(str)
        .gsub(/\*|@|#|\$|%|\(|\)|<|>|\?|\/|\\|\{|\}|\[|\]|\||;|:|\+|’|`|\'|"|\~|\,|\^/, '')
 end
 
-%><soapenv:Envelope 
+%><soapenv:Envelope
   xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
   xmlns:proc="<%= Rails.application.credentials.qbe[:uri][ENV['RAILS_ENV'].to_sym] %>">
   <soapenv:Header/>
@@ -43,7 +43,7 @@ end
                   <LOBCd>TENAN</LOBCd>
                   <NAICCd>37257</NAICCd>
                   <ControllingStateProvCd><%= request[:data][:address].state %></ControllingStateProvCd>
-                  
+
                   <ContractTerm>
                     <EffectiveDt><%= request[:data][:application].effective_date.strftime('%m/%d/%Y') %></EffectiveDt>
                     <ExpirationDt><%= request[:data][:application].expiration_date.strftime('%m/%d/%Y') %></ExpirationDt>
@@ -52,25 +52,25 @@ end
                       <UnitMeasurementCd>MON</UnitMeasurementCd>
                     </DurationPeriod>
                   </ContractTerm>
-                  
+
                   <QBE_BillingSystem>Q</QBE_BillingSystem>
-                  
+
                   <CurrentTermAmt>
                     <Amt><%= '%.2f' % ((request[:data][:quote].carrier_payment_data['policy_fee'] + request[:data][:premium].total_premium + request[:data][:premium].total_tax).to_d / 100) %></Amt>
                   </CurrentTermAmt>
-                  
+
                   <PayorCd>PD</PayorCd>
-                  
+
                   <PaymentOption id="0">
-                  	
+
                     <PaymentPlanCd><%= request[:data][:billing_strategy].carrier_code %></PaymentPlanCd>
-                    
+
                     <DayMonthDue><%= request[:data][:application].effective_date.strftime('%d') %></DayMonthDue>
-                    
+
                     <CollectedByAgentAmt>
                       <Amt>0.00</Amt>
                     </CollectedByAgentAmt>
-                    
+
                     <MethodPaymentCd>IN</MethodPaymentCd>
 
                     <ElectronicFundsTransfer>
@@ -79,7 +79,7 @@ end
                           <EmployeeId><%= request[:data][:quote].external_reference %></EmployeeId>
                         </PayrollDeductionInfo>
                       </FromAcct>
-                    </ElectronicFundsTransfer> 
+                    </ElectronicFundsTransfer>
                   </PaymentOption>
                   <% if request[:data][:account] %>
                   <AdditionalInterest>
@@ -149,16 +149,16 @@ end
                         <City><%= sanitize(request[:data][:address].city) %></City>
                         <StateProvCd><%= request[:data][:address].state %></StateProvCd>
                         <PostalCode><%= request[:data][:address].zip_code %></PostalCode>
-                      </Addr>                      
+                      </Addr>
                     </GeneralPartyInfo>
                     <AdditionalInterestInfo>
                       <NatureInterestCd>ADDIN</NatureInterestCd>
                     </AdditionalInterestInfo>
-                  </AdditionalInterest>                 
+                  </AdditionalInterest>
                   <% end %>
                   <% end %>
                   <% end %>
-                  
+
                   <QBE_BusinessSource>NP</QBE_BusinessSource>
                   <QBE_BusinessType><%= request[:data][:carrier_profile].traits["pref_facility"] %></QBE_BusinessType>
                   <QBE_MDU_CommName><%= sanitize(request[:data][:community].title) %></QBE_MDU_CommName>
@@ -167,7 +167,7 @@ end
                   <QBE_MDU_ProfManagedDt><%= request[:data][:prof_managed_year] %></QBE_MDU_ProfManagedDt>
                   <% end %>
                 </PersPolicy>
-                
+
                 <InsuredOrPrincipal>
                   <ItemIdInfo>
                     <OtherIdentifier>
@@ -212,7 +212,7 @@ end
                     <% end %>
                   </InsuredOrPrincipalInfo>
                 </InsuredOrPrincipal>
-                  
+
                 <% unless request[:data][:users].nil? %>
                 <% request[:data][:users].each do |policy_user| %>
                 <% if policy_user.spouse == true %>
@@ -232,13 +232,13 @@ end
                     <InsuredOrPrincipalRoleCd>Coinsured</InsuredOrPrincipalRoleCd>
                     <PersonInfo>
                       <TitleRelationshipCd>SP</TitleRelationshipCd>
-                    </PersonInfo> 
+                    </PersonInfo>
                   </InsuredOrPrincipalInfo>
-                </InsuredOrPrincipal>                   
+                </InsuredOrPrincipal>
                 <% end %>
                 <% end %>
                 <% end %>
-                
+
                 <Location id="0">
                   <Addr>
                     <AddrTypeCd>InsuredsAddress</AddrTypeCd>
@@ -255,7 +255,7 @@ end
                     <TaxTypeCd>CountyProp</TaxTypeCd>
                   </TaxCodeInfo>
                 </Location>
-                
+
                 <HomeLineBusiness>
                   <Dwell LocationRef="0">
                     <PolicyTypeCd>04</PolicyTypeCd>
@@ -274,30 +274,30 @@ end
                       <% if request[:data][:address].state == 'FL' %>
                       <FireProtectionClassCd><%= request[:data][:carrier_profile].traits["ppc"] %></FireProtectionClassCd>
                       <OtherProtectionDesc><%= request[:data][:carrier_profile].traits["protection_device_cd"] %></OtherProtectionDesc>
-                      <% end %>    
+                      <% end %>
                     </BldgProtection>
-                    
+
                     <Coverage>
                       <CoverageCd>DED</CoverageCd>
                       <Deductible>
                         <FormatInteger><%= ((request[:data][:coverage_selections]['all_peril']&.[]('selection')&.[]('value') || 0).to_d / 100).to_i %></FormatInteger>
                       </Deductible>
                     </Coverage>
-                    
+
                     <Coverage>
                       <CoverageCd>PP</CoverageCd>
                       <Limit>
                         <FormatInteger><%= ((request[:data][:coverage_selections]['coverage_c']&.[]('selection')&.[]('value') || 0).to_d / 100).to_i %></FormatInteger>
                       </Limit>
                     </Coverage>
-                    
+
                     <Coverage>
                       <CoverageCd>LOU</CoverageCd>
                       <Limit>
                         <FormatInteger><%= ((request[:data][:coverage_selections]['coverage_c']&.[]('selection')&.[]('value') || 0).to_d * (request[:data][:address].state == 'CT' ? 0.3 : 0.2) / 100).to_i %></FormatInteger>
                       </Limit>
                     </Coverage>
-                    
+
                     <% request[:data][:coverage_selections].select{|k,cs| cs['category'] == 'option' && ['pet_damage','water_backup','bedbug','equip','earthquake_coverage'].include?(k) }.each do |subschedule, covopt| %>
                     <Coverage>
                       <CoverageCd><%= { 'pet_damage' => 'QBE_PetDam', 'water_backup' => 'SEWER_Sump', 'bedbug' => 'BEDBUG', 'equip' => 'EQUIP', 'earthquake_coverage' => 'ERQK' }[subschedule] %></CoverageCd>
@@ -306,23 +306,23 @@ end
                       </Limit>
                     </Coverage>
                     <% end %>
-                    
+
                     <% if request[:data][:address].state == 'FL' %>
                     <Coverage>
                       <CoverageCd>QBE_HURRD</CoverageCd>
                       <Deductible>
                         <FormatInteger><%= ((request[:data][:coverage_selections]['hurricane']&.[]('selection')&.[]('value') || 0).to_d / 100).to_i %></FormatInteger>
                       </Deductible>
-                    </Coverage>                    
+                    </Coverage>
                     <% end %>
-                    
+
                     <QuestionAnswer>
                       <QuestionCd>QBEPL00040</QuestionCd>
                       <YesNoCd><%= request[:data][:gated_community] == 1 ? "Y" : "N" %></YesNoCd>
                     </QuestionAnswer>
-                    
+
                     <QBE_WH_Ded>1000</QBE_WH_Ded>
-                    
+
                   </Dwell>
                   <Coverage>
                     <CoverageCd>PL</CoverageCd>

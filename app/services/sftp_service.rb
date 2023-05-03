@@ -14,7 +14,7 @@ class SFTPService
     puts "Failed to connect to #{@host}"
   end
 
-  def disconnect
+  def  disconnect
     sftp_client.close_channel
     ssh_session.close
   end
@@ -44,6 +44,14 @@ class SFTPService
 
   def download_file(remote_path, local_path)
     @sftp_client.download!(remote_path, local_path)
+  end
+
+  def rename(old_name, new_name)
+     @sftp_client.rename!(old_name, new_name)
+  end
+
+  def mkdir(path)
+    @sftp_client.mkdir!(path)
   end
 
   def list_files(remote_path)

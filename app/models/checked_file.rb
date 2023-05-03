@@ -1,0 +1,2 @@
+class CheckedFile < ApplicationRecord
+end
