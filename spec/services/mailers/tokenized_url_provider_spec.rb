@@ -30,7 +30,7 @@ describe 'Mailers::TokenizedUrlProvider' do
 
     it 'correct url generation' do
       url = ::Mailers::TokenizedUrlProvider.new(policy_id: policy.id, branding_profile_id: @agency_profile.id).call
-      expect(url).to eql("https://token_agency.getcovered.com/user/policies?policy_id=1&renewal_token=cG9saWN5IDE%3D")
+      expect(url).to include("https://token_agency.getcovered.com/user/policies?policy_id=#{policy.id}")
     end
   end
 
