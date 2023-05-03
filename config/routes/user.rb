@@ -48,6 +48,7 @@ scope module: :user, path: "user" do
   resources :policies, only: [ :index, :show ] do
     collection do
       post :add_coverage_proof
+      post :cancel_auto_renewal
       delete :delete_coverage_proof_documents
     end
     member do

@@ -1,0 +1,21 @@
+<div style="text-align: left;font-family: 'Roboto', sans-serif !important;margin-top: 30px;">
+  <p>Dear <%= @policy.primary_user.profile.full_name %></p>
+  <p>We hope this email finds you well. We are writing to let you know that your insurance policy, <b><%= @policy.number %></b> has been successfully renewed.
+  <p>  Your coverage will continue uninterrupted, and you can rest assured that you and your loved ones are protected.
+    We understand how important insurance protection is, and we are glad that we could renew your policy without any hiccups.</p>
+
+  <p>Your policy will now remain in effect until <b><%= @renew_on_date %></b>.</p>
+
+  <p>Please take a moment to review your policy and make sure that it still meets your coverage needs.
+    If you have any questions or would like to make any changes, our team of insurance experts is here to help.</p>
+
+  <p>You can reach us at <a href="mailto:<%= t('support_email') %>"><%= t('support_email') %></a>.</p>
+  <p>Thank you for choosing us as your insurance provider. We are committed to providing you with the best possible coverage and customer service.</p>
+  <p>Best regards, Get Covered</p>
+</div>
+
+
+
+
+
+
