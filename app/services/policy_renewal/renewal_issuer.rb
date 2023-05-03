@@ -54,8 +54,8 @@ module PolicyRenewal
       policy.carrier_id == 1 &&
         policy.policy_type_id == ::PolicyType::RESIDENTIAL_ID &&
         policy.policy_in_system == true &&
-        policy.auto_renew ==true &&
-        policy.billing_status.any?([Policy.billing_statuses["CURRENT"],Policy.billing_statuses["RESCINDED"]])
+        policy.auto_renew == true &&
+        policy.billing_status.any?([Policy.billing_statuses["CURRENT"], Policy.billing_statuses["RESCINDED"]])
     end
 
   end
