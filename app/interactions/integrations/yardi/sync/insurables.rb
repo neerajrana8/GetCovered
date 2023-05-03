@@ -93,6 +93,9 @@ module Integrations
           addr = addr.gsub(/Red\sHawk\sCircle,(F|G|H)/, 'Red Hawk Circle, Apt \1')
           addr = addr.gsub(/(,\s|\s)(Apt|APT|Apt.|APT.)\s([A-Z])\s(\d)/, '\1\2 \3\4')
           
+          dotty_bois = ['St', 'Blvd', 'Rd', 'Cr', 'Crcl', 'Ct', 'Mt', 'Mntn', 'Mnt', 'Ave', 'Ln', 'Anx']
+          addr = addr.gsub(/(#{dotty_bois.join('|')})\./, '\1')
+          
           case addr
             when "5200 Wilshire Blvd, Apt 612, Apt 612"
               addr = "5200 Wilshire Blvd, Apt 612"

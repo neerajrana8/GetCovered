@@ -20,6 +20,7 @@ module CarrierMsiPolicyQuote
         ::CarrierPolicyType.where(carrier_id: MsiService.carrier_id, policy_type_id: PolicyType::RESIDENTIAL_ID).take,
         self.account || self.agency,
         self.policy_application.primary_insurable,
+        self.policy_application.effective_date,
         agency: self.agency
       )
     end

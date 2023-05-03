@@ -506,14 +506,14 @@ module CarrierQbeInsurable
 	          
             rates = create_qbe_rates(qbe_data[:data], split_deductible, number_insured)
             
-            irc = ::InsurableRateConfiguration.where(carrier_policy_type: carrier_policy_type, configurer: @carrier, configurable: irc_configurable_override || self)
+            irc = ::InsurableRateConfiguration.for_date(effective_date || Time.current.to_date).where(carrier_policy_type: carrier_policy_type, configurer: @carrier, configurable: irc_configurable_override || self)
                 .find{|irc| irc_configurable_override || irc.rates['applicability'] == applicability } || ::InsurableRateConfiguration.new(
               carrier_policy_type: carrier_policy_type,
               configurer: @carrier,
               configurable: irc_configurable_override || self,
               configuration: { 'coverage_options' => {}, "rules" => {} },
               rates: { 'rates' => [nil, {}, {}, {}, {}, {}] }
-            )
+            ).with_date(effective_date || Time.current.to_date)
             irc.rates['applicability'] = applicability unless irc_configurable_override
             
 	          if rates
