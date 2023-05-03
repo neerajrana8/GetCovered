@@ -8,7 +8,7 @@ class RenewalMailer < ApplicationMailer
     @organization = Agency.find(1)
     @renew_on_date = @policy.expiration_date + 1.day
     @GC_ADDRESS = Agency.get_covered.primary_address.nil? ? Address.find(1) : Agency.get_covered.primary_address
-    @renewal_url =
+    @renewal_url = ::Mailers::TokenizedUrlProvider.new(policy_id: @policy.id, branding_profile_id: @branding_profile.id).call
 
     mail(to: @policy.primary_user.contact_email,
          bcc: t('system_email'),

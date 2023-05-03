@@ -3,9 +3,12 @@ require 'rails_helper'
 describe 'Mailers::TokenizedUrlProvider' do
   before :all do
     @user = create_user
+    FactoryBot.create(:branding_profile, :default_branding_profile)
     @agency = Agency.find(1)
     @account = FactoryBot.create(:account, agency: @agency)
     @carrier = Carrier.find(1)
+
+    @agency_profile = FactoryBot.create(:branding_profile, profileable: @agency, url: 'token_agency.getcovered.com')
   end
 
   context 'generate renewal url' do
@@ -17,6 +20,7 @@ describe 'Mailers::TokenizedUrlProvider' do
         agency: @agency,
         carrier: @carrier,
         account: @account,
+        primary_user: @user,
         policy_type: policy_type,
         status: 'BOUND',
         effective_date: 10.days.ago,
@@ -25,7 +29,8 @@ describe 'Mailers::TokenizedUrlProvider' do
     end
 
     it 'correct url generation' do
-      url = Mailers::TokenizedUrlProvider(policy_id: policy.id).call
+      url = ::Mailers::TokenizedUrlProvider.new(policy_id: policy.id, branding_profile_id: @agency_profile.id).call
+      expect(url).to eql("https://token_agency.getcovered.com/user/policies?policy_id=1&renewal_token=cG9saWN5IDE%3D")
     end
   end
 

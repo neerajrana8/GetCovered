@@ -38,10 +38,13 @@ module PolicyRenewal
         #Once the update is successful we will need to regenerate the policy document using policy.qbe_issue_policy
         # This will regenerate the policy document and send it to the customer.
         policy.qbe_issue_policy
+        RenewalMailer.with(policy: policy).policy_renewal_success.deliver_later
         renewal_status_complete = true
       else
         #TBD
+        RenewalMailer.with(policy: policy).policy_renewal_failed.deliver_later
         renewal_status_complete = false
+
       end
 
       renewal_status_complete

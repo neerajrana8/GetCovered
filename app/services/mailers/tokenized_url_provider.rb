@@ -7,9 +7,10 @@ module Mailers
 
     # for welcome home mailers(prefill pma-onboarding form for lease users): "https://#{branding_profile_url}/#{form_url}?token=#{ERB::Util.url_encode(auth_token_for_email)}"
     # for renewal mailers(sent user to login page & redirect to cancel policy renewal button): /user/policies?policy_id=11929&renewal_token=dXNlciAzNjkxMCBjb21tdW5pdHkgMTAyMDU%3D
-    enum token_type: {
-      welcome_home_prefill:       0,
-      renewal_redirect:           1
+
+    TOKEN_TYPE = {
+      'welcome_home_prefill' => 0,
+      'renewal_redirect' => 1
     }
 
     attr_accessor :user
@@ -18,19 +19,19 @@ module Mailers
     attr_accessor :policy
 
 
-    def initialize(user_id = nil, community_id = nil, form_url = nil, branding_profile_id = nil, policy_id = nil)
+    def initialize(user_id: nil, community_id: nil, branding_profile_id: nil, policy_id: nil)
       @user = User.find_by_id(user_id)
       @community = Insurable.find_by_id(community_id)
       @branding_profile = BrandingProfile.find_by_id(branding_profile_id)
       @policy = Policy.find_by_id(policy_id)
     end
     #Mailers::TokenizedUrlProvider.token_types["renewal_redirect"]
-    def call(token_type = nil, form_url = "pma-tenant-onboarding") # "upload-coverage-proof" available option too
+    def call(token_type = TOKEN_TYPE['renewal_redirect'], form_url = "pma-tenant-onboarding") # "upload-coverage-proof" available option too
       tokenized_url = case token_type
-        when TokenizedUrlProvider.token_types["renewal_redirect"]
-          generate_renewal_redirect_token
-        when  TokenizedUrlProvider.token_types["welcome_home_prefill"]
-          generate_welcome_home_prefill_token(form_url)
+        when TOKEN_TYPE['renewal_redirect']
+          generate_renewal_redirect_token if is_params_valid_for_renewals_mailers?
+        when  TOKEN_TYPE['welcome_home_prefill']
+          generate_welcome_home_prefill_token(form_url) if is_params_valid_for_welcome_home_mailers?
         else
           raise "Unknown token type. Please check enum token_type of current service for available options."
       end
@@ -58,11 +59,19 @@ module Mailers
     def is_params_valid_for_welcome_home_mailers?
       #TODO: need to move out of logic in separeted set branding profile for mailers service
       set_branding_profile if @branding_profile.blank?
-      raise "Not valid params for welcome_home_prefill token generation" unless user.present? && community.present? && branding_profile.present?
+      if user.present? && community.present? && branding_profile.present?
+        true
+      else
+        raise "Not valid params for welcome_home_prefill token generation"
+      end
     end
 
     def is_params_valid_for_renewals_mailers?
-      raise "Not valid params for renewal_redirect token generation" unless policy.present?
+      if policy.present?
+        true
+      else
+        raise "Not valid params for renewal_redirect token generation"
+      end
     end
 
     def set_branding_profile
