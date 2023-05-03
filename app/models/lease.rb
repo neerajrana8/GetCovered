@@ -36,7 +36,7 @@ class Lease < ApplicationRecord
   before_validation :set_reference, if: proc { |lease| lease.reference.nil? }
 
   after_save :set_mpc_expirations,
-    if: Proc.new{|ls| ls.month_to_month && ls.saved_change_to_status? && ls.status == 'expired' }
+    if: Proc.new{|ls| !ls.master_policy_coverage_ids.blank? && ls.saved_change_to_status? && ls.status == 'expired' }
 
   after_commit :update_status,
      if: Proc.new{|ls| (ls.saved_change_to_start_date? || ls.saved_change_to_end_date?) && ls.status != 'expired' }
@@ -211,6 +211,7 @@ class Lease < ApplicationRecord
   
   def matching_policies(users: nil, policy_type_id: 1, policy_status: Policy.active_statuses, active_at: nil)
     # support all weird user types
+    user_set = users
     user_set ||= self.users
     user_set = [users] if users.class == ::User || users.class == ::Integer
     user_set = user_set.map{|u| u.class == ::Integer ? u : u.id }
@@ -226,7 +227,7 @@ class Lease < ApplicationRecord
   end
   
   def set_mpc_expirations
-    Policy.where(id: self.master_policy_coverage_ids).each{|mpc| mpc.update(expiration_date: self.end_date) }
+    Policy.where(id: self.master_policy_coverage_ids).each{|mpc| mpc.update(expiration_date: self.end_date) unless mpc.expiration_date && mpc.expiration_date < self.end_date }
   end
 
   private

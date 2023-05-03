@@ -3,9 +3,9 @@ module InsurablesMethods
 
   included do
     before_action :set_insurable,
-                  only: [:show, :get_qbe_county_options, :set_qbe_county]
-    before_action :set_master_policies, only: :show
-    before_action :set_user_from_auth_token, only: :show, if: :user_param_presented?
+                  only: [:show, :get_qbe_county_options, :set_qbe_county, :insurable_by_auth_token]
+    before_action :set_master_policies, only: [:show, :insurable_by_auth_token]
+    before_action :set_user_from_auth_token, only: [:show, :insurable_by_auth_token], if: :user_param_presented?
 
     before_action :set_substrate,
                   only: [:index]
@@ -151,6 +151,13 @@ module InsurablesMethods
     end
   end
 
+  def decode_auth_params
+    #_, @user_id, _, @community_id = EncryptionService.decrypt(CGI.unescape(insurable_encoded_params)).split
+    _, @user_id, _, @community_id = Base64.decode64(insurable_encoded_params).split
+    params[:id] = @community_id
+    params[:user_id] = @user_id
+  end
+
   private
 
   def view_path
@@ -158,11 +165,12 @@ module InsurablesMethods
   end
 
   def set_insurable
+    decode_auth_params if insurable_encoded_params.present?
     @insurable = access_model(::Insurable, params[:id])
   end
 
   def set_master_policies
-    if @insurable.unit?
+    if @insurable.is_a?(Insurable) && @insurable.unit?
       @master_policy_coverage =
           @insurable.policies.current.where(policy_type_id: PolicyType::MASTER_COVERAGES_IDS).take
       @master_policy = @master_policy_coverage&.policy
@@ -170,6 +178,12 @@ module InsurablesMethods
       @master_policy =
           @insurable.policies.current.where(policy_type_id: PolicyType::MASTER_IDS).take
       @master_policy_coverage = nil
+    end
+  end
+
+  def insurable_encoded_params
+    if params[:token].present?
+      params.require(:token)
     end
   end
 
@@ -183,7 +197,7 @@ module InsurablesMethods
       carrier_id = account.agency.providing_carrier_id(PolicyType::RESIDENTIAL_ID, insurable){|cid| (insurable.get_carrier_status(carrier_id) == :preferred) ? true : nil }
       carrier_policy_type = CarrierPolicyType.where(carrier_id: carrier_id, policy_type_id: PolicyType::RESIDENTIAL_ID).take
       uid = (carrier_id == ::MsiService.carrier_id ? '1005' : carrier_id == ::QbeService.carrier_id ? 'liability' : nil)
-      liability_options = ::InsurableRateConfiguration.get_inherited_irc(carrier_policy_type, account, insurable).configuration['coverage_options']&.[](uid)&.[]('options')
+      liability_options = ::InsurableRateConfiguration.get_inherited_irc(carrier_policy_type, account, insurable, Time.current.to_date).configuration['coverage_options']&.[](uid)&.[]('options')
       @max_liability = liability_options&.map{|opt| opt['value'].to_i }&.max
       @min_liability = liability_options&.map{|opt| opt['value'].to_i }&.min
     end

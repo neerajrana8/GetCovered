@@ -148,7 +148,7 @@ module Reporting
       end
       # generate account reports
       account_ids = ::Account.where(reporting_coverage_reports_generate: true).order(id: :asc).pluck(:id)
-      puts "[Reporting::CoverageReport.generate_all!] Generating #{account_id.count} PM account reports..."
+      puts "[Reporting::CoverageReport.generate_all!] Generating #{account_ids.count} PM account reports..."
       account_ids.each.with_index do |account_id, ind|
         account = Account.find(account_id)
         cd = (account.reporting_coverage_reports_settings || {})['coverage_determinant'] || 'any'
@@ -156,14 +156,14 @@ module Reporting
         case found&.[](2)
           when 'ready'
             # do nothing
-            puts "[Reporting::CoverageReport.generate_all!]   (#{ind+1}/#{account_id.count}) Report for PM '#{account.title}' already generated."
+            puts "[Reporting::CoverageReport.generate_all!]   (#{ind+1}/#{account_ids.count}) Report for PM '#{account.title}' already generated."
           when 'preparing', 'errored'
             # try to regenerate
-            puts "[Reporting::CoverageReport.generate_all!]   (#{ind+1}/#{account_id.count}) Report for PM '#{account.title}' exists but has not been fully generated; attempting generation."
+            puts "[Reporting::CoverageReport.generate_all!]   (#{ind+1}/#{account_ids.count}) Report for PM '#{account.title}' exists but has not been fully generated; attempting generation."
             Reporting::CoverageReport.find(found[3]).generate!
           when nil
             # try to create
-            puts "[Reporting::CoverageReport.generate_all!]   (#{ind+1}/#{account_id.count}) Generating report for PM '#{account.title}'."
+            puts "[Reporting::CoverageReport.generate_all!]   (#{ind+1}/#{account_ids.count}) Generating report for PM '#{account.title}'."
             Reporting::CoverageReport.create!(owner: account, report_time: report_time, coverage_determinant: cd).generate!
         end
       end

@@ -93,6 +93,9 @@ module Integrations
           addr = addr.gsub(/Red\sHawk\sCircle,(F|G|H)/, 'Red Hawk Circle, Apt \1')
           addr = addr.gsub(/(,\s|\s)(Apt|APT|Apt.|APT.)\s([A-Z])\s(\d)/, '\1\2 \3\4')
           
+          dotty_bois = ['St', 'Blvd', 'Rd', 'Cr', 'Crcl', 'Ct', 'Mt', 'Mntn', 'Mnt', 'Ave', 'Ln', 'Anx']
+          addr = addr.gsub(/(#{dotty_bois.join('|')})\./, '\1')
+          
           case addr
             when "5200 Wilshire Blvd, Apt 612, Apt 612"
               addr = "5200 Wilshire Blvd, Apt 612"
@@ -610,7 +613,12 @@ module Integrations
                 end
               end
               # now update lease special statuses
-              if ['bmr'].include?(integration.configuration['sync']['special_status_mode'])
+              if ['bmr','gqrs'].include?(integration.configuration['sync']['special_status_mode'])
+                special_status_markers = case integration.configuration['sync']['special_status_mode']
+                  when 'bmr';   ["BMR", "BRM"]
+                  when 'gqrs';  ["Gateway QRS"]
+                  else;         []
+                end.map{|m| m.strip.upcase }
                 result = ::Integrations::Yardi::ResidentData::GetUnitInformation.run!(integration: integration, property_id: comm[:yardi_id])
                 info = (result[:parsed_response].dig("Envelope", "Body", "GetUnitInformationResponse", "GetUnitInformationResult", "UnitInformation", "Property", "Units", "UnitInfo") rescue nil)
                 if info.nil? || !result[:success]
@@ -620,8 +628,7 @@ module Integrations
                   info.select! do |i|
                     u = i["Unit"]
                     next false if u.nil?
-                    # I don't think we need this now that the Essex pilot is over: next true if u["UnitType"]&.downcase&.index("bmr")
-                    next ["BMR", "BRM"].include?( (u["Identification"].class == ::Array ? u["Identification"] : [u["Identification"]]).find{|i| i["IDType"] == "LeaseDesc" }&.[]("IDValue")&.strip&.upcase )
+                    next special_status_markers.include?( (u["Identification"].class == ::Array ? u["Identification"] : [u["Identification"]]).find{|i| i["IDType"] == "LeaseDesc" }&.[]("IDValue")&.strip&.upcase )
                   end
                   # update all the leases
                   integration.integratable.leases.where(

@@ -1,3 +1,6 @@
+# https://github.com/sidekiq/sidekiq/wiki/Error-Handling#automatic-job-retry
+:max_retries: 4
+
 :concurrency: 10
 awsdev:
   :concurrency: 20
@@ -109,9 +112,9 @@ production:
   create_commissions_for_policy_premium_item_transactions_job:
     cron: '0 5 * * *' # Every day at 5:00 AM
     class: CreateCommissionsForPolicyPremiumItemTransactionsJob
-  gmail_mail_sync_job:
-    cron: '0 1 * * *'   # Every day at 1:00 AM
-    class: GmailMailSyncJob
+#  gmail_mail_sync_job:
+#    cron: '0 1 * * *'   # Every day at 1:00 AM
+#    class: GmailMailSyncJob
   # Yardi Sync
   yardi_sync_job:
     cron: '0 1 * * *' # Every day at 1:00 AM
@@ -120,6 +123,10 @@ production:
   user_merge_job:
     cron: '0 22 * * *' # Every day at 10:00 PM
     class: UserMergeJob
+  # Unmatched user emails
+  unmatched_user_email_job:
+    cron: '15 0 * * *' # Every day at 12:15 AM
+    class: UnmatchedUserEmailJob
   # Generic Actions
   perform_scheduled_actions_job:
     cron: '45 * * * *' # every hour, 45 minutes in

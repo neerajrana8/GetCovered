@@ -75,7 +75,7 @@ class InternalMailer < ApplicationMailer
   def set_variables
     @organization = params[:organization]
     @address = @organization.primary_address()
-    @branding_profile = @organization.branding_profiles.where(default: true).take
+    @branding_profile = @organization.branding_profiles.where(enabled: true).take
     @GC_ADDRESS = Agency.find(1).primary_address()
     @internal_mailer = true
   end

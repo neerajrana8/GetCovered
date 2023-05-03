@@ -27,7 +27,7 @@ module Concerns
       end
 
       def get_products
-        products_id = LeadEvent.includes(:policy_type).pluck(:policy_type_id, :title)&.uniq&.compact
+        products_id = PolicyType.all.pluck(:id, :title)
         products = products_id&.map { |el| %w[id title].zip(el).to_h }
         render json: products, status: :ok
       end

@@ -123,7 +123,7 @@ module Reporting
     
     def refresh!
       params = self.class.extract_params(self.account, self.policy_id)
-      self.update(*params)
+      self.update(params)
     end
 
 
