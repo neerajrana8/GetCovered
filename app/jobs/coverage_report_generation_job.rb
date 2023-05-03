@@ -1,7 +1,7 @@
-class ReportingJob < ApplicationJob
+class CoverageReportGenerationJob < ApplicationJob
   queue_as :default
 
-  def perform(account_report_or_all, report_time = Time.current.to_date, create_params: {})
+  def perform(account_report_or_all = :all, report_time = Time.current.to_date, create_params: {})
     case account_report_or_all
       when :all # generate all reports
         Reporting::CoverageReport.generate_all!(report_time)
