@@ -16,7 +16,7 @@ module V2
       end
       
       def latest
-        @coverage_report = access_model(Reporting::CoverageReport).where(fixed_filters).order("report_time desc").limit(1).first
+        @coverage_report = access_model(Reporting::CoverageReport).where(fixed_filters).where(owner: @organizable).order("report_time desc").limit(1).first
         render template: 'v2/shared/reporting/coverage_reports/show',
           status: :ok
       end
