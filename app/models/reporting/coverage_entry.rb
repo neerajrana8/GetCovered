@@ -159,6 +159,7 @@ module Reporting
               generate_unit_entries(
                 Insurable.confirmed.where(insurable_id: self.reportable_id, insurable_type_id: InsurableType::RESIDENTIAL_UNITS_IDS)
                                    .where.not(id: Reporting::UnitCoverageEntry.where(report_time: self.coverage_report.report_time).select(:insurable_id))
+                                   .where.not(account_id: nil)
                                    .send(*self.ownership_constraint)
                                    .pluck(:id)
               )
@@ -184,6 +185,7 @@ module Reporting
               generate_unit_entries(
                 self.reportable.profileable.units.confirmed.where(insurable_type_id: InsurableType::RESIDENTIAL_UNITS_IDS)
                                    .where.not(id: Reporting::UnitCoverageEntry.where(report_time: self.coverage_report.report_time).select(:insurable_id))
+                                   .where.not(account_id: nil)
                                    .send(*self.ownership_constraint)
                                    .where(id: ::IntegrationProfile.where(integration: self.reportable.integration, external_context: "unit_in_community_#{self.reportable.external_id}").select(:profileable_id))
                                    .pluck(:id)
@@ -339,7 +341,7 @@ module Reporting
       self.total_units += unit_entries.count
       unit_entries.each do |ue|
         self.total_units_unoccupied += 1 if !ue.occupied
-        case(self.coverage_report.coverage_determinant == 'mixed' ? ue.coverage_determinant : ue.send("coverage_status_#{self.coverage_report.coverage_determinant}"))
+        case(self.coverage_report.coverage_determinant == 'mixed' ? ue.coverage_status : ue.send("coverage_status_#{self.coverage_report.coverage_determinant}"))
           when 'none'
             self.total_units_with_no_policy += 1
           when 'internal'

@@ -29,8 +29,9 @@ module Reporting
       class_name: "Reporting::LeaseUserCoverageEntry",
       through: :lease_coverage_entries,
       source: :lease_user_coverage_entries
-      
-    before_create :prepare
+
+    before_validation :prepare,
+      on: :create
     
     enum coverage_status_any: COVERAGE_STATUSES,
       _prefix: true
