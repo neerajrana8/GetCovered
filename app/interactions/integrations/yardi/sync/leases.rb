@@ -510,7 +510,7 @@ module Integrations
           created_by_email = {}
           user_ip_ids = IntegrationProfile.where(integration: integration, external_context: 'resident', profileable_type: "User").pluck(:external_id, :profileable_id).to_h
           # mark defunct those leases which the horrific architecture of Yardi's database requires to be removed from their system when they have been superseded
-          # MOOSE WARNING: the 'defunct' boolean is a placeholder architectural solution just to get the feature working. ultimately we should be giving these leases a special status and doing something to their IPs...
+          # MOOSE WARNING: the 'defunct' boolean is a placeholder architectural solution just to get the feature working. ultimately we should be giving these leases a special status and doing something to their IPs, or implementing a call to check for and explicitly handle unit transfers
           IntegrationProfile.where(integration: integration, external_context: 'lease', profileable: unit.leases.where(defunct: false)).where.not(external_id: in_system).each do |lip|
             lip.profileable.update(defunct: true, status: 'expired', end_date: Time.current.to_date) 
           end
