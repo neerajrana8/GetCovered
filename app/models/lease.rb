@@ -230,6 +230,24 @@ class Lease < ApplicationRecord
     Policy.where(id: self.master_policy_coverage_ids).each{|mpc| mpc.update(expiration_date: self.end_date) unless mpc.expiration_date && mpc.expiration_date < self.end_date }
   end
 
+  def program_relevant_date
+    to_return = nil
+    if self.renewal_date.nil?
+      if self.sign_date.nil?
+        to_return = self.start_date
+      else
+        if self.sign_date <= (self.start_date - 1.year)
+          to_return = self.start_date
+        else
+          to_return = self.sign_date
+        end
+      end
+    else
+      to_return = self.renewal_date
+    end
+    return to_return
+  end
+
   private
 
   ## Initialize Lease
