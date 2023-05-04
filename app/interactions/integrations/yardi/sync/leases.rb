@@ -520,7 +520,7 @@ module Integrations
             rec = past_tenants.find{|l| l['Id'] == ip.external_id }
             l = ip.lease
             found_leases[ip.external_id] = l
-            if l.update({ insurable_id: unit.id, start_date: rec["LeaseFrom"].blank? ? nil : Date.parse(rec["LeaseFrom"]), end_date: rec["LeaseTo"].blank? ? Time.current.to_date : Date.parse(rec["LeaseTo"]), status: 'expired' }.compact)
+            if l.update({ insurable_id: unit.id, external_status: rec["Status"], start_date: rec["LeaseFrom"].blank? ? nil : Date.parse(rec["LeaseFrom"]), end_date: rec["LeaseTo"].blank? ? Time.current.to_date : Date.parse(rec["LeaseTo"]), status: 'expired' }.compact)
               expired_leases[ip.external_id] = l
             else
               lease_errors[ip.external_id] = "Failed to mark lease (GC id #{l.id}) expired: #{l.errors.to_h}"
@@ -534,14 +534,22 @@ module Integrations
             if in_system.include?(tenant["Id"])
               lease_ip = IntegrationProfile.where(integration: integration, external_context: 'lease', external_id: tenant["Id"]).take
               lease = lease_ip.profileable
+              # handle renewal stuff
+              unless tenant["LeaseFrom"].blank?
+                new_start_date = Date.parse(tenant["LeaseFrom"])
+                if new_start_date != lease.start_date && new_start_date != lease.renewal_date
+                  lease.renewal_date = new_start_date
+                  lease.renewal_count += 1
+                end
+              end
               # fix basic data
               lease.insurable_id = unit.id
-              lease.start_date = Date.parse(tenant["LeaseFrom"]) unless tenant["LeaseFrom"].blank?
               lease.end_date = Date.parse(tenant["LeaseTo"]) unless tenant["LeaseTo"].blank?
               lease.defunct = false # just in case it was once missing from yardi and now is magically back, for example if it got moved to a different unit. likewise, update statuses in case someone defuncted and expired us previously because we jumped units
               lease.sign_date = Date.parse(tenant["LeaseSign"]) unless tenant["LeaseSign"].blank?
               lease.month_to_month = ( lease.end_date && lease.end_date < Time.current.to_date && (RESIDENT_STATUSES['present'].include?(tenant['Status']) || RESIDENT_STATUSES['future'].include?(tenant['Status'])) )
               lease.end_date = nil if lease.month_to_month
+              lease.external_status = tenant["Status"]
               lease.status = 'current' if (lease.month_to_month || lease.end_date.nil? || lease.end_date > Time.current.to_date) && RESIDENT_STATUSES['present'].include?(tenant["Status"])
               lease.status = 'pending' if (lease.month_to_month || lease.end_date.nil? || lease.end_date > Time.current.to_date) && RESIDENT_STATUSES['future'].include?(tenant["Status"]) || RESIDENT_STATUSES['potential'].include?(tenant["Status"])
               lease.save if lease.changed?
@@ -581,7 +589,9 @@ module Integrations
                 sign_date: tenant["LeaseSign"].blank? ? nil : Date.parse(tenant["LeaseSign"]),
                 month_to_month: month_to_month,
                 lease_type_id: LeaseType.residential_id,
-                account: integration.integratable
+                account: integration.integratable,
+                external_status: tenant["Status"],
+                status: RESIDENT_STATUSES['present'].include?(tenant['Status']) ? "current" : "pending"
               )
               if lease.id.nil?
                 lease_errors[tenant["Id"]] = "Failed to create Lease: #{lease.errors.to_h}"
