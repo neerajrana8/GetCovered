@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2023_05_02_232404) do
+ActiveRecord::Schema.define(version: 2023_05_04_175243) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -30,7 +30,6 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
     t.jsonb "access_data"
     t.datetime "expires_at"
     t.index ["bearer_type", "bearer_id"], name: "index_access_tokens_on_bearer"
-    t.index ["bearer_type", "bearer_id"], name: "index_access_tokens_on_bearer_type_and_bearer_id"
     t.index ["expires_at"], name: "access_tokens_expires_at_index"
     t.index ["key"], name: "access_tokens_key_index"
   end
@@ -67,9 +66,9 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
     t.boolean "additional_interest", default: true
     t.integer "minimum_liability"
     t.string "additional_interest_name"
+    t.boolean "per_user_tracking", default: false
     t.boolean "reporting_coverage_reports_generate", default: false, null: false
     t.jsonb "reporting_coverage_reports_settings", default: {"coverage_determinant"=>"any"}, null: false
-    t.boolean "per_user_tracking", default: false
     t.index ["agency_id"], name: "index_accounts_on_agency_id"
     t.index ["call_sign"], name: "index_accounts_on_call_sign", unique: true
     t.index ["reporting_coverage_reports_generate"], name: "index_accounts_on_rcrg"
@@ -128,7 +127,6 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
     t.boolean "searchable", default: false
     t.string "neighborhood"
     t.index ["addressable_type", "addressable_id"], name: "index_addresses_on_addressable"
-    t.index ["addressable_type", "addressable_id"], name: "index_addresses_on_addressable_type_and_addressable_id"
   end
 
   create_table "agencies", force: :cascade do |t|
@@ -152,7 +150,6 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
     t.string "integration_designation"
     t.string "producer_code"
     t.jsonb "carrier_preferences", default: {"by_policy_type"=>{}}, null: false
-    t.boolean "passthrough", default: false
     t.index ["agency_id"], name: "index_agencies_on_agency_id"
     t.index ["call_sign"], name: "index_agencies_on_call_sign", unique: true
     t.index ["integration_designation"], name: "index_agencies_on_integration_designation", unique: true
@@ -166,19 +163,6 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
     t.string "slug"
     t.jsonb "nodes", default: {}
     t.boolean "enabled"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "application_notifications", force: :cascade do |t|
-    t.string "action"
-    t.string "subject"
-    t.integer "status"
-    t.integer "code"
-    t.boolean "read", default: false
-    t.integer "notifiable_id"
-    t.string "notifiable_type"
-    t.string "message"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -389,7 +373,6 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["assignable_type", "assignable_id"], name: "index_assignments_on_assignable"
-    t.index ["assignable_type", "assignable_id"], name: "index_assignments_on_assignable_type_and_assignable_id"
     t.index ["staff_id"], name: "index_assignments_on_staff_id"
   end
 
@@ -438,7 +421,6 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
     t.string "second_logo_url"
     t.string "second_footer_logo_url"
     t.index ["profileable_type", "profileable_id"], name: "index_branding_profiles_on_profileable"
-    t.index ["profileable_type", "profileable_id"], name: "index_branding_profiles_on_profileable_type_and_profileable_id"
     t.index ["url"], name: "index_branding_profiles_on_url", unique: true
   end
 
@@ -616,7 +598,6 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
     t.text "staff_notes"
     t.integer "amount"
     t.index ["claimant_type", "claimant_id"], name: "index_claims_on_claimant"
-    t.index ["claimant_type", "claimant_id"], name: "index_claims_on_claimant_type_and_claimant_id"
     t.index ["insurable_id"], name: "index_claims_on_insurable_id"
     t.index ["policy_id"], name: "index_claims_on_policy_id"
   end
@@ -640,7 +621,6 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
     t.index ["policy_id"], name: "index_commission_items_on_policy_id"
     t.index ["policy_quote_id"], name: "index_commission_items_on_policy_quote_id"
     t.index ["reason_type", "reason_id"], name: "index_commission_items_on_reason"
-    t.index ["reason_type", "reason_id"], name: "index_commission_items_on_reason_type_and_reason_id"
   end
 
   create_table "commission_strategies", force: :cascade do |t|
@@ -653,7 +633,6 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
     t.bigint "commission_strategy_id"
     t.index ["commission_strategy_id"], name: "index_commission_strategies_on_commission_strategy_id"
     t.index ["recipient_type", "recipient_id"], name: "index_commission_strategies_on_recipient"
-    t.index ["recipient_type", "recipient_id"], name: "index_commission_strategies_on_recipient_type_and_recipient_id"
   end
 
   create_table "commissions", force: :cascade do |t|
@@ -676,7 +655,6 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
     t.index ["approved_by_id"], name: "index_commissions_on_approved_by_id"
     t.index ["marked_paid_by_id"], name: "index_commissions_on_marked_paid_by_id"
     t.index ["recipient_type", "recipient_id"], name: "index_commissions_on_recipient"
-    t.index ["recipient_type", "recipient_id"], name: "index_commissions_on_recipient_type_and_recipient_id"
   end
 
   create_table "contact_records", force: :cascade do |t|
@@ -734,7 +712,6 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
     t.datetime "updated_at", null: false
     t.index ["created_at"], name: "index_events_on_created_at"
     t.index ["eventable_type", "eventable_id"], name: "index_events_on_eventable"
-    t.index ["eventable_type", "eventable_id"], name: "index_events_on_eventable_type_and_eventable_id"
   end
 
   create_table "external_charges", force: :cascade do |t|
@@ -789,9 +766,7 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
     t.datetime "updated_at", null: false
     t.boolean "hidden", default: false, null: false
     t.index ["assignable_type", "assignable_id"], name: "index_fees_on_assignable"
-    t.index ["assignable_type", "assignable_id"], name: "index_fees_on_assignable_type_and_assignable_id"
     t.index ["ownerable_type", "ownerable_id"], name: "index_fees_on_ownerable"
-    t.index ["ownerable_type", "ownerable_id"], name: "index_fees_on_ownerable_type_and_ownerable_id"
   end
 
   create_table "global_agency_permissions", force: :cascade do |t|
@@ -800,14 +775,6 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["agency_id"], name: "index_global_agency_permissions_on_agency_id"
-  end
-
-  create_table "global_permissions", force: :cascade do |t|
-    t.jsonb "permissions"
-    t.bigint "ownerable_id"
-    t.string "ownerable_type"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
   end
 
   create_table "histories", force: :cascade do |t|
@@ -821,9 +788,7 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
     t.datetime "updated_at", null: false
     t.string "author"
     t.index ["authorable_type", "authorable_id"], name: "index_histories_on_authorable"
-    t.index ["authorable_type", "authorable_id"], name: "index_histories_on_authorable_type_and_authorable_id"
     t.index ["recordable_type", "recordable_id"], name: "index_histories_on_recordable"
-    t.index ["recordable_type", "recordable_id"], name: "index_histories_on_recordable_type_and_recordable_id"
   end
 
   create_table "insurable_data", force: :cascade do |t|
@@ -999,10 +964,8 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
     t.datetime "status_changed"
     t.index ["archived_invoice_id"], name: "index_invoices_on_archived_invoice_id"
     t.index ["collector_type", "collector_id"], name: "index_invoices_on_collector"
-    t.index ["collector_type", "collector_id"], name: "index_invoices_on_collector_type_and_collector_id"
     t.index ["invoiceable_type", "invoiceable_id"], name: "index_invoices_on_invoiceable_type_and_invoiceable_id"
     t.index ["payer_type", "payer_id"], name: "index_invoices_on_payer"
-    t.index ["payer_type", "payer_id"], name: "index_invoices_on_payer_type_and_payer_id"
   end
 
   create_table "lead_events", force: :cascade do |t|
@@ -1103,6 +1066,9 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
     t.boolean "month_to_month", default: false, null: false
     t.integer "special_status", default: 0, null: false
     t.bigint "master_policy_coverage_ids", default: [], null: false, array: true
+    t.date "renewal_date"
+    t.integer "renewal_count", default: 0
+    t.string "external_status"
     t.index ["account_id"], name: "index_leases_on_account_id"
     t.index ["insurable_id"], name: "index_leases_on_insurable_id"
     t.index ["lease_type_id"], name: "index_leases_on_lease_type_id"
@@ -1124,10 +1090,8 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
     t.string "error_info"
     t.integer "analytics_category", default: 0, null: false
     t.index ["handler_type", "handler_id"], name: "index_line_item_changes_on_handler"
-    t.index ["handler_type", "handler_id"], name: "index_line_item_changes_on_handler_type_and_handler_id"
     t.index ["line_item_id"], name: "index_line_item_changes_on_line_item_id"
     t.index ["reason_type", "reason_id"], name: "index_line_item_changes_on_reason"
-    t.index ["reason_type", "reason_id"], name: "index_line_item_changes_on_reason_type_and_reason_id"
   end
 
   create_table "line_item_reductions", force: :cascade do |t|
@@ -1171,7 +1135,6 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
     t.boolean "hidden", default: false, null: false
     t.index ["archived_line_item_id"], name: "index_line_items_on_archived_line_item_id"
     t.index ["chargeable_type", "chargeable_id"], name: "index_line_items_on_chargeable"
-    t.index ["chargeable_type", "chargeable_id"], name: "index_line_items_on_chargeable_type_and_chargeable_id"
     t.index ["invoice_id"], name: "index_line_items_on_invoice_id"
     t.index ["policy_id"], name: "index_line_items_on_policy_id"
     t.index ["policy_quote_id"], name: "index_line_items_on_policy_quote_id"
@@ -1201,7 +1164,6 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
     t.index ["identity"], name: "index_login_activities_on_identity"
     t.index ["ip"], name: "index_login_activities_on_ip"
     t.index ["user_type", "user_id"], name: "index_login_activities_on_user"
-    t.index ["user_type", "user_id"], name: "index_login_activities_on_user_type_and_user_id"
   end
 
   create_table "master_policy_configurations", force: :cascade do |t|
@@ -1227,7 +1189,6 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
     t.boolean "prorate_admin_fee", default: false
     t.integer "charge_date"
     t.index ["carrier_policy_type_id", "configurable_type", "configurable_id"], name: "index_cpt_and_conf_on_mpc"
-    t.index ["carrier_policy_type_id"], name: "index_master_policy_configurations_on_carrier_policy_type_id"
     t.index ["configurable_type", "configurable_id"], name: "index_master_policy_configurations_on_configurable"
   end
 
@@ -1241,7 +1202,6 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
     t.jsonb "backtrace"
     t.text "description"
     t.index ["model_type", "model_id"], name: "index_model_errors_on_model"
-    t.index ["model_type", "model_id"], name: "index_model_errors_on_model_type_and_model_id"
   end
 
   create_table "module_permissions", force: :cascade do |t|
@@ -1264,7 +1224,6 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["noteable_type", "noteable_id"], name: "index_notes_on_noteable"
-    t.index ["noteable_type", "noteable_id"], name: "index_notes_on_noteable_type_and_noteable_id"
     t.index ["staff_id"], name: "index_notes_on_staff_id"
   end
 
@@ -1292,18 +1251,6 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["notifiable_type", "notifiable_id"], name: "index_notifications_on_notifiable"
-    t.index ["notifiable_type", "notifiable_id"], name: "index_notifications_on_notifiable_type_and_notifiable_id"
-  end
-
-  create_table "ownerships", force: :cascade do |t|
-    t.string "owner_type"
-    t.bigint "owner_id"
-    t.string "owned_type"
-    t.bigint "owned_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["owned_type", "owned_id"], name: "index_ownerships_on_owned"
-    t.index ["owner_type", "owner_id"], name: "index_ownerships_on_owner"
   end
 
   create_table "pages", force: :cascade do |t|
@@ -1708,11 +1655,9 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
     t.boolean "hidden", default: false, null: false
     t.index ["collection_plan_type", "collection_plan_id"], name: "index_policy_premium_items_on_cp"
     t.index ["collector_type", "collector_id"], name: "index_policy_premium_items_on_collector"
-    t.index ["collector_type", "collector_id"], name: "index_policy_premium_items_on_collector_type_and_collector_id"
     t.index ["fee_id"], name: "index_policy_premium_items_on_fee_id"
     t.index ["policy_premium_id"], name: "index_policy_premium_items_on_policy_premium_id"
     t.index ["recipient_type", "recipient_id"], name: "index_policy_premium_items_on_recipient"
-    t.index ["recipient_type", "recipient_id"], name: "index_policy_premium_items_on_recipient_type_and_recipient_id"
   end
 
   create_table "policy_premium_payment_terms", force: :cascade do |t|
@@ -1818,7 +1763,6 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
     t.integer "salutation", default: 0
     t.integer "language", default: 0
     t.index ["profileable_type", "profileable_id"], name: "index_profiles_on_profileable"
-    t.index ["profileable_type", "profileable_id"], name: "index_profiles_on_profileable_type_and_profileable_id"
   end
 
   create_table "refunds", force: :cascade do |t|
@@ -2002,7 +1946,6 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
     t.index ["reportable2_type", "reportable2_id"], name: "index_reports_on_reportable2"
     t.index ["reportable_type", "reportable_id", "created_at"], name: "reports_index"
     t.index ["reportable_type", "reportable_id"], name: "index_reports_on_reportable"
-    t.index ["reportable_type", "reportable_id"], name: "index_reports_on_reportable_type_and_reportable_id"
   end
 
   create_table "scheduled_actions", force: :cascade do |t|
@@ -2024,35 +1967,6 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
     t.index ["status", "trigger_time", "action"], name: "index_scheduled_actions_on_status_and_trigger_time_and_action"
   end
 
-  create_table "search_contents", force: :cascade do |t|
-    t.string "field"
-    t.string "value"
-    t.string "searchable_type"
-    t.bigint "searchable_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.tsvector "vectorized"
-    t.index "to_tsvector('english'::regconfig, (COALESCE(value, ''::character varying))::text)", name: "sc_vectorized_index", using: :gin
-    t.index ["searchable_type", "searchable_id"], name: "index_search_contents_on_searchable_type_and_searchable_id"
-    t.index ["vectorized"], name: "searchindex", using: :gin
-  end
-
-  create_table "sessions", force: :cascade do |t|
-    t.string "token"
-    t.string "ip_address"
-    t.integer "status", default: 0
-    t.jsonb "characteristics", default: {}
-    t.datetime "last_event"
-    t.datetime "start_time"
-    t.datetime "expiration_time"
-    t.string "sessionable_type"
-    t.bigint "sessionable_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["sessionable_type", "sessionable_id"], name: "index_sessions_on_sessionable"
-    t.index ["token"], name: "index_sessions_on_token", unique: true
-  end
-
   create_table "signable_documents", force: :cascade do |t|
     t.string "title", null: false
     t.integer "document_type", null: false
@@ -2068,9 +1982,7 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["referent_type", "referent_id"], name: "index_signable_documents_on_referent"
-    t.index ["referent_type", "referent_id"], name: "index_signable_documents_on_referent_type_and_referent_id"
     t.index ["signer_type", "signer_id"], name: "index_signable_documents_on_signer"
-    t.index ["signer_type", "signer_id"], name: "index_signable_documents_on_signer_type_and_signer_id"
     t.index ["status", "referent_type", "referent_id"], name: "signable_documents_signed_index"
   end
 
@@ -2082,19 +1994,6 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
     t.datetime "updated_at", null: false
     t.index ["global_agency_permission_id"], name: "index_staff_permissions_on_global_agency_permission_id"
     t.index ["staff_id"], name: "index_staff_permissions_on_staff_id"
-  end
-
-  create_table "staff_roles", force: :cascade do |t|
-    t.integer "role", default: 0
-    t.boolean "primary", default: false
-    t.bigint "staff_id", null: false
-    t.string "organizable_type"
-    t.bigint "organizable_id"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-    t.boolean "active", default: false
-    t.index ["organizable_type", "organizable_id"], name: "index_staff_roles_on_organizable_type_and_organizable_id"
-    t.index ["staff_id"], name: "index_staff_roles_on_staff_id"
   end
 
   create_table "staffs", force: :cascade do |t|
@@ -2139,9 +2038,7 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
     t.index ["invitations_count"], name: "index_staffs_on_invitations_count"
     t.index ["invited_by_id"], name: "index_staffs_on_invited_by_id"
     t.index ["invited_by_type", "invited_by_id"], name: "index_staffs_on_invited_by"
-    t.index ["invited_by_type", "invited_by_id"], name: "index_staffs_on_invited_by_type_and_invited_by_id"
     t.index ["organizable_type", "organizable_id"], name: "index_staffs_on_organizable"
-    t.index ["organizable_type", "organizable_id"], name: "index_staffs_on_organizable_type_and_organizable_id"
     t.index ["reset_password_token"], name: "index_staffs_on_reset_password_token", unique: true
     t.index ["role"], name: "index_staffs_on_role"
     t.index ["uid", "provider"], name: "index_staffs_on_uid_and_provider", unique: true
@@ -2260,7 +2157,6 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
     t.index ["invitations_count"], name: "index_users_on_invitations_count"
     t.index ["invited_by_id"], name: "index_users_on_invited_by_id"
     t.index ["invited_by_type", "invited_by_id"], name: "index_users_on_invited_by"
-    t.index ["invited_by_type", "invited_by_id"], name: "index_users_on_invited_by_type_and_invited_by_id"
     t.index ["mailchimp_id"], name: "index_users_on_mailchimp_id", unique: true
     t.index ["qbe_id"], name: "index_users_on_qbe_id", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
@@ -2269,9 +2165,7 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
-  add_foreign_key "master_policy_configurations", "carrier_policy_types"
   add_foreign_key "policy_coverages", "policies"
   add_foreign_key "policy_coverages", "policy_applications"
   add_foreign_key "policy_types", "policy_types", column: "master_policy_id"
-  add_foreign_key "staff_roles", "staffs"
 end
