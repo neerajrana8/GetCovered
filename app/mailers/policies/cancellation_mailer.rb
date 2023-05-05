@@ -9,21 +9,24 @@ module Policies
     def refund_request
       mail(
         subject: I18n.t('cancellation_mailer.refund_request.subject', agency_policy_type: @agency_policy_type),
-        bcc: @agency.contact_info['contact_email']
+        bcc: return_bcc_field,
+        cc:  t('support_email')
       )
     end
 
     def cancel_request
       mail(
         subject: I18n.t('cancellation_mailer.cancel_request.subject', agency_policy_type: @agency_policy_type),
-        bcc: @agency.contact_info['contact_email']
+        bcc: return_bcc_field,
+        cc:  t('support_email')
       )
     end
 
     def cancel_confirmation
       mail(
         subject: I18n.t('cancellation_mailer.cancel_confirmation.subject', agency_policy_type: @agency_policy_type),
-        bcc: @agency.contact_info['contact_email']
+        bcc: return_bcc_field,
+        cc:  t('support_email')
       )
     end
 
@@ -43,6 +46,10 @@ module Policies
 
       @policy_type_title = I18n.t("policy_type_model.#{@policy.policy_type.title.parameterize.underscore}")
       @agency_policy_type = "#{@agency.title} - #{@policy_type_title}"
+    end
+
+    def return_bcc_field
+      "#{@agency.contact_info.dig('contact_email')};#{t('system_email')}"
     end
 
 
