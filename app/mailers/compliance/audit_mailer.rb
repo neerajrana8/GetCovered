@@ -26,7 +26,7 @@ module Compliance
       get_insurable_liability_range(@community)
       set_locale(@user&.profile&.language || "en")
 
-      @onboarding_url = tokenized_url(@user.id, @community)
+      @onboarding_url = tokenized_url(@user.id, @community, "pma-tenant-onboarding", @branding_profile)
       @min_liability = @community.coverage_requirements_by_date(date: available_lease_date).where(designation: 'liability')&.take&.amount
 
       @requirements_date = @configuration.nil? ? lease_start_date : lease_start_date + @configuration.grace_period
@@ -64,11 +64,7 @@ module Compliance
     def set_variables
       @organization = params[:organization]
       @address = @organization.primary_address()
-      @branding_profile = @organization.branding_profiles.where(enabled: true).take
-      #TODO: need to be removed after mergin GCVR2-643 but retested as it bug fix from GCVR2-1209
-      if @branding_profile.blank?
-        @branding_profile = @organization.is_a?(Account) ? @organization.agency.branding_profiles.where(enabled: true).take : Agency.get_covered.branding_profiles.where(enabled: true).take
-      end
+      @branding_profile = set_branding_profile
       @GC_ADDRESS = Agency.get_covered.primary_address()
     end
 
@@ -90,6 +86,35 @@ module Compliance
       end
 
       return use_community
+    end
+
+    #TODO: hotfix will be moved to separate service with PolicyMailer logic in GCVR2-1028
+    def set_branding_profile
+      if is_second_nature?
+        #@organization.branding_profiles.blank? ? @organization.agency.branding_profiles.where(enabled: true).take : @organization.branding_profiles.where(enabled: true).take
+        if Rails.env.development? or ENV['RAILS_ENV'] == 'awsdev'
+          BrandingProfile.find_by(profileable_type: "Account", profileable_id: 40) || @organization.branding_profiles.where(enabled: true).take
+        else
+          BrandingProfile.find_by(profileable_type: "Account", profileable_id: 46) || @organization.branding_profiles.where(enabled: true).take
+        end
+      else
+        #TODO: need to be removed after mergin GCVR2-643 but retested as it bug fix from GCVR2-1209
+
+        possible_branding = @organization.branding_profiles.where(enabled: true)&.take
+        if possible_branding.blank?
+          @organization.is_a?(Account) ? @organization.agency.branding_profiles.where(enabled: true).take : Agency.get_covered.branding_profiles.where(enabled: true).take
+        else
+          possible_branding
+        end
+      end
+    end
+
+    def is_second_nature?
+      #TODO: need to move hardcoded id to env dependant logic
+      @second_nature_condition = false
+      @second_nature_condition = true if @organization.is_a?(Agency) && (@organization.id == 416 || @organization.id == 11)
+      @second_nature_condition = true if @organization.is_a?(Account) && (@organization.agency_id == 416 || @organization.agency_id == 11)
+      @second_nature_condition
     end
   end
 end
