@@ -66,9 +66,9 @@ ActiveRecord::Schema.define(version: 2023_05_04_175243) do
     t.boolean "additional_interest", default: true
     t.integer "minimum_liability"
     t.string "additional_interest_name"
-    t.boolean "per_user_tracking", default: false
     t.boolean "reporting_coverage_reports_generate", default: false, null: false
     t.jsonb "reporting_coverage_reports_settings", default: {"coverage_determinant"=>"any"}, null: false
+    t.boolean "per_user_tracking", default: false
     t.index ["agency_id"], name: "index_accounts_on_agency_id"
     t.index ["call_sign"], name: "index_accounts_on_call_sign", unique: true
     t.index ["reporting_coverage_reports_generate"], name: "index_accounts_on_rcrg"
