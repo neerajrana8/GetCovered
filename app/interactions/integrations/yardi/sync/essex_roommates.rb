@@ -1,7 +1,7 @@
 module Integrations
   module Yardi
     module Sync
-      class Roommates < ActiveInteraction::Base
+      class EssexRoommates < ActiveInteraction::Base # MOOSE WARNING: we don't have logic for tenant additions/removals, only full lease additions/removals
         object :integration
         string :property_id
         

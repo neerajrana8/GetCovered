@@ -35,6 +35,10 @@ module Integrations
           return eventable
         end
         
+        def special_event_behavior
+          :no_body
+        end
+        
       end
     end
   end
