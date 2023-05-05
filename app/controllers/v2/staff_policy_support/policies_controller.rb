@@ -51,7 +51,9 @@ module V2
         available_lease_date = @lease.nil? ? DateTime.current.to_date : @lease.sign_date.nil? ? @lease.start_date : @lease.sign_date
         @coverage_requirements = @policy.primary_insurable&.parent_community&.coverage_requirements_by_date(date: available_lease_date)
 
-        @master_policy_configuration = @policy.master_policy_configuration
+        # NOTE: needed to display Program Start Date in policy support screen
+        @master_policy_configuration = @policy.master_policy_configuration ||
+          @policy.primary_insurable&.parent_community&.master_policy_configurations&.first
       end
 
       def update
