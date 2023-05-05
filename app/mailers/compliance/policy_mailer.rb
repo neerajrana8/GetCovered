@@ -164,7 +164,12 @@ module Compliance
 
     def set_branding_profile
       if is_second_nature?
-        @organization.branding_profiles.blank? ? @organization.agency.branding_profiles.where(enabled: true).take : @organization.branding_profiles.where(enabled: true).take
+        #@organization.branding_profiles.blank? ? @organization.agency.branding_profiles.where(enabled: true).take : @organization.branding_profiles.where(enabled: true).take
+        if Rails.env.development? or ENV['RAILS_ENV'] == 'awsdev'
+          BrandingProfile.find_by(profileable_type: "Account", profileable_id: 40) || @organization.branding_profiles.where(enabled: true).take
+        else
+          BrandingProfile.find_by(profileable_type: "Account", profileable_id: 46) || @organization.branding_profiles.where(enabled: true).take
+        end
       else
         @organization.branding_profiles.where(enabled: true)&.take || BrandingProfile.global_default
         #branding_profile_to_use
