@@ -4,9 +4,27 @@ module Integrations
       class EssexRoommates < ActiveInteraction::Base # MOOSE WARNING: we don't have logic for tenant additions/removals, only full lease additions/removals
         object :integration
         string :property_id
+        array :csv_data
+        
+        CSV_FORMAT = {
+          property_id: 0,
+          primary_code: 5,
+          new_primary_first_name: 6,
+          new_primary_last_name: 7,
+          rooommate_code: 8,
+          old_primary_first_name: 9,
+          old_primary_last_name: 10,
+          roommate_move_out: 11
+        }
         
         # returns hash of tcode changes
         def execute
+          info = csv_data.select.with_index{|row,ind| ind != 0 && row[CSV_FORMAT[:property_id]]&.strip&.downcase == property_id.strip.downcase }
+           
+          
+        
+        
+        
           # prepare
           moveout_cutoff = ((Date.parse(integration.get_nested('sync', 'syncable_communities', property_id, 'last_sync_f')) - 1.day) rescue nil)
           to_return = {
