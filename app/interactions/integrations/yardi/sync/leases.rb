@@ -537,7 +537,7 @@ module Integrations
               # handle renewal stuff
               unless tenant["LeaseFrom"].blank?
                 new_start_date = Date.parse(tenant["LeaseFrom"])
-                if new_start_date != lease.start_date && new_start_date != lease.renewal_date
+                if new_start_date != lease.start_date && new_start_date != lease.renewal_date && new_start_date > ([lease.start_date, lease.renewal_date].compact.max + 60.days)
                   lease.renewal_date = new_start_date
                   lease.renewal_count += 1
                 end
