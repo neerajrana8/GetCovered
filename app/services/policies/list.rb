@@ -11,13 +11,6 @@ module Policies
       @filters = @params[:filter] if @params[:filter].present?
     end
 
-    def call_sorting
-      return unless @params[:sort].present?
-
-      @policies = @policies.order(updated_at: @params[:sort][:updated_at]) if @params[:sort][:updated_at].present?
-      @policies = @policies.order(created_at: @params[:sort][:created_at]) if @params[:sort][:created_at].present?
-    end
-
     def call
       fetch_policies
       call_filters
@@ -39,6 +32,13 @@ module Policies
     def call_filters
       call_users_filter
       call_insurable_filter
+    end
+
+    def call_sorting
+      return unless @params[:sort].present?
+
+      @policies = @policies.order(updated_at: @params[:sort][:updated_at]) if @params[:sort][:updated_at].present?
+      @policies = @policies.order(created_at: @params[:sort][:created_at]) if @params[:sort][:created_at].present?
     end
 
     def call_pagination
