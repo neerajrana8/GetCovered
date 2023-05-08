@@ -7,6 +7,7 @@ module V2
     class PoliciesController < StaffSuperAdminController
       include PoliciesMethods
       include ActionController::Caching
+      include ActionController::MimeResponds
 
       before_action :set_policy,
                     only: %i[update show refund_policy cancel_policy update_coverage_proof delete_policy_document
@@ -67,6 +68,14 @@ module V2
         response.headers['total-pages'] = @policies.total_pages
         response.headers['current-page'] = @policies.current_page
         response.headers['total-entries'] = total
+      end
+
+      # /v2/staff_super_admin/policies/export.csv
+      def export
+        @policies = ::Policies::List.new(params).call
+        json_data = render_to_string(template: 'v2/policies/list', formats: [:json])
+        data = JSON.parse(json_data)
+        render json: {data: data}
       end
 
       def show
