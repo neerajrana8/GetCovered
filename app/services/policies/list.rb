@@ -1,6 +1,6 @@
 module Policies
   class List
-    FILTER_KEYS =  %i[policy_in_system agency_id status account_id policy_type_id number].freeze
+    FILTER_KEYS = %i[policy_in_system agency_id status account_id policy_type_id number].freeze
     PAGE = 1
     PER = 50
 
@@ -27,12 +27,13 @@ module Policies
     end
 
     private
+
     def fetch_policies
       @policies = Policy.filter(@filters.slice(*FILTER_KEYS))
-                        .includes(:account, :carrier, :agency, :policy_type, users: :profile)
-                        .references(:profiles)
-                        .includes(policy_quotes: { policy_application: :billing_strategy }, primary_user: [:integration_profiles, :profile])
-                        .includes(primary_insurable: { insurable: :insurable }, insurables: [:agency, account: :agency])
+        .includes(:account, :carrier, :agency, :policy_type, users: :profile)
+        .references(:profiles)
+        .includes(policy_quotes: { policy_application: :billing_strategy }, primary_user: %i[integration_profiles profile])
+        .includes(primary_insurable: { insurable: :insurable }, insurables: [:agency, account: :agency])
     end
 
     def call_filters
@@ -62,7 +63,7 @@ module Policies
     end
 
     def call_insurable_filter
-      return unless  @filters[:insurable_id].present?
+      return unless @filters[:insurable_id].present?
 
       @policies = @policies.where(policy_insurables: { insurable_id: @filters[:insurable_id] })
     end
@@ -71,7 +72,7 @@ module Policies
       return unless @filters[:tcode].present?
 
       matched_integrations = IntegrationProfile
-                               .where('external_id LIKE ? AND profileable_type = ?', "%#{@filters[:tcode]}%", 'User')
+        .where('external_id LIKE ? AND profileable_type = ?', "%#{@filters[:tcode]}%", 'User')
       matched_integrations_ids = matched_integrations.pluck(:profileable_id)
       policy_ids = PolicyUser.where(user_id: matched_integrations_ids, primary: true).pluck(:policy_id)
       @policies = @policies.where(id: policy_ids)
