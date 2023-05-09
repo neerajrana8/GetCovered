@@ -37,8 +37,8 @@ module Policies
     def call_sorting
       return unless @params[:sort].present?
 
-      @policies = @policies.order(updated_at: @params[:sort][:updated_at]) if @params[:sort][:updated_at].present?
-      @policies = @policies.order(created_at: @params[:sort][:created_at]) if @params[:sort][:created_at].present?
+      @policies = @policies.order(updated_at: @params.dig(:sort, :updated_at)) if @params.dig(:sort, :updated_at).present?
+      @policies = @policies.order(created_at: @params.dig(:sort, :created_at)) if @params.dig(:sort, :created_at).present?
     end
 
     def call_pagination
@@ -57,8 +57,8 @@ module Policies
       return unless @filters[:users].present?
 
       payload = @filters[:users]
-      @policies = @policies.where('users.email LIKE ?', "%#{payload['email']['like']}%") if payload[:email].present?
-      @policies = @policies.where('profiles.full_name LIKE ?', "%#{payload[:profile][:full_name][:like]}%") if payload[:profile].present?
+      @policies = @policies.where('users.email LIKE ?', "%#{payload.dig(:email, :like)}%") if payload[:email].present?
+      @policies = @policies.where('profiles.full_name LIKE ?', "%#{payload.dig(:profile, :full_name, :like)}%") if payload[:profile].present?
       @policies = @policies.where(users: { id: payload[:id] }) if payload[:id].present?
     end
 

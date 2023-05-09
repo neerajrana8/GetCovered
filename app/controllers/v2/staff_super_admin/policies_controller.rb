@@ -72,12 +72,9 @@ module V2
 
       # /v2/staff_super_admin/policies/export.csv
       def export
-        @policies = ::Policies::List.new(params, export: true).call
-        policies_json = render_to_string(template: 'v2/policies/list', formats: [:json])
-        policies = JSON.parse(policies_json).dig('data') || []
-        respond_to do |format|
-          format.csv { send_data generate_csv(policies), filename: "policies-#{Time.now.strftime('%Y-%m-%d-%H-%M-%S')}.csv" }
-        end
+        params.permit!
+        ::Policies::SendPoliciesListJob.perform_later(params.to_h, current_staff.id)
+        render json: { success: true, message: "Export is in process, we'll email you once it's processed" }
       end
 
       def show
@@ -108,22 +105,6 @@ module V2
       end
 
       private
-
-      def generate_csv(policies)
-        require 'csv'
-        CSV.generate(headers: true) do |csv|
-          csv << ['Number', 'Status', 'T Code', 'Community', 'Building', 'Unit', 'PM Account', 'Agency', 'Effective_date',
-                  'Expiration Date', 'Cutomer Name', 'Email', 'Product', 'Billing Strategy', 'Update Date', 'Policy Source']
-          policies.each do |policy|
-            csv << [policy.dig('number'), policy.dig('status'), policy.dig('tcode'), policy.dig('primary_insurable', 'parent_community', 'title'),
-                    policy.dig('primary_insurable', 'parent_building', 'title'), policy.dig('primary_insurable', 'title'),
-                    policy.dig('account', 'title'), policy.dig('agency', 'title'), policy.dig('effective_date')&.to_date&.strftime("%B %d, %Y"),
-                    policy.dig('expiration_date')&.to_date&.strftime("%B %d, %Y"), policy.dig('primary_user', 'full_name'), policy.dig('primary_user', 'email'),
-                    policy.dig('policy_type_title'), policy.dig('billing_strategy'), policy.dig('updated_at')&.to_date&.strftime("%B %d, %Y"),
-                    (policy.dig('policy_in_system') == true ? 'Internal' : 'External')]
-          end
-        end
-      end
 
       def view_path
         super + '/policies'
