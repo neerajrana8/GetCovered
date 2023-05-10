@@ -1,3 +1,4 @@
+require 'net/sftp'
 require 'fileutils'
 require 'nokogiri'
 module CarrierQBE
@@ -8,24 +9,36 @@ module CarrierQBE
     def perform
       today = Time.current.to_date
       if [1, 2, 3, 4, 5].include?(today.wday)
-        sftp = SFTPService.new((Rails.application.credentials.qbe_sftp[Rails.env.to_sym][:url]).to_s,
-                               (Rails.application.credentials.qbe_sftp[Rails.env.to_sym][:login]).to_s,
-                               password: Rails.application.credentials.qbe_sftp[Rails.env.to_sym][:password])
-        sftp.connect
-        remote_files = sftp.list_files('Outbound/ACORD/')
+        ssh_session = Net::SSH.start(Rails.application.credentials.qbe_sftp[Rails.env.to_sym][:url],
+                                     Rails.application.credentials.qbe_sftp[Rails.env.to_sym][:login],
+                                     password: Rails.application.credentials.qbe_sftp[Rails.env.to_sym][:password])
+        client = Net::SFTP::Session.new(ssh_session)
+        client.connect!
+
+        remote_base_path = 'Outbound/ACORD/'
+        remote_files = Array.new
+        client.dir.foreach(remote_base_path) do |entry|
+          remote_files << entry.name
+        end
+
         if remote_files.present?
           # TODO: maybe change the public folder to something else for security purposes?
-          Dir.mkdir("#{Rails.root}/public/ftp_cp") unless File.exist?("#{Rails.root}/public/ftp_cp")
+          Dir.mkdir("#{Rails.root}/tmp/acord") unless File.exist?("#{Rails.root}/tmp/acord")
 
           remote_files.each do |file|
             next if CheckedFile.find_by(name: file)
 
-            remote_file_path = "/Outbound/#{file}"
-            file_path = "#{Rails.root}/public/ftp_cp/#{file}"
+            remote_file_path = "#{remote_base_path}#{file}"
+            local_file_path = "#{Rails.root}/tmp/acord/#{file}"
+
+            local_io = File.new(local_file_path, mode: 'wb')
+            client.download!(remote_file_path, local_io)
+            local_io.close
+
             # Need to download file for checksum GETCVR_DownloadTransOutput.xml
-            downloaded_file = sftp.download_file(remote_file_path, file_path)
+            # downloaded_file = sftp.download_file(remote_file_path, file_path)
             # Downloaded file's checksum
-            checksum = Digest::SHA256.file(file_path).hexdigest
+            checksum = Digest::SHA256.file(local_file_path).hexdigest
 
             # Check if the checksum exists in our DB
             if CheckedFile.find_by_checksum(checksum)
@@ -43,18 +56,15 @@ module CarrierQBE
               CheckedFile.create(name: file, checksum: checksum, created_at: created_at)
             end
             # We move files to processed folder so we don't keep downloading same files
-            sftp.mkdir('/Processed') unless sftp.rename("/Outbound/#{file}", "/Processed/#{file}")
+            client.mkdir('/Processed') unless client.rename("/Outbound/ACORD/#{file}", "/Processed/ACORD/#{file}")
             begin
-              # bucket = Rails.application.credentials.aws[ENV['RAILS_ENV'].to_sym][:bucket]
-              # target = s3.bucket(bucket).object('accord/' + file)
-              # target.upload_file(downloaded_file)
-              Utilities::S3Uploader.call(downloaded_file, file, '/ACORD/', nil)
+              Utilities::S3Uploader.call(local_io, file, '/ACORD/', nil)
             rescue => e
               Rails.logger.debug(e)
             end
           end
         end
-        sftp.disconnect
+        client.disconnect
         CarrierQBE::ProcessAccordFileJob.perform_now
       end
     end
