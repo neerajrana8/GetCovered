@@ -12,7 +12,7 @@ module CarrierQBE
                                (Rails.application.credentials.qbe_sftp[Rails.env.to_sym][:login]).to_s,
                                password: Rails.application.credentials.qbe_sftp[Rails.env.to_sym][:password])
         sftp.connect
-        remote_files = sftp.list_files('/Outbound/')
+        remote_files = sftp.list_files('Outbound/ACORD/')
         if remote_files.present?
           # TODO: maybe change the public folder to something else for security purposes?
           Dir.mkdir("#{Rails.root}/public/ftp_cp") unless File.exist?("#{Rails.root}/public/ftp_cp")
@@ -45,9 +45,10 @@ module CarrierQBE
             # We move files to processed folder so we don't keep downloading same files
             sftp.mkdir('/Processed') unless sftp.rename("/Outbound/#{file}", "/Processed/#{file}")
             begin
-              bucket = Rails.application.credentials.aws[ENV['RAILS_ENV'].to_sym][:bucket]
-              target = s3.bucket(bucket).object('accord/' + file)
-              target.upload_file(downloaded_file)
+              # bucket = Rails.application.credentials.aws[ENV['RAILS_ENV'].to_sym][:bucket]
+              # target = s3.bucket(bucket).object('accord/' + file)
+              # target.upload_file(downloaded_file)
+              Utilities::S3Uploader.call(downloaded_file, file, '/ACORD/', nil)
             rescue => e
               Rails.logger.debug(e)
             end
