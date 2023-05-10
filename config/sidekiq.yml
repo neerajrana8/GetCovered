@@ -36,6 +36,9 @@ production:
   generate_and_send_cancellation_list_job:
     cron: '30 2 * * *'   # Every day at 2:30 AM
     class: CarrierQBE::GenerateAndSendCancellationListJob
+  fetch_accord_file_job:
+    cron: '30 0 * * *'   # Every day at 12:30 AM
+    class: CarrierQBE::FetchAccordFileJob
   confie_report:
     cron: '35 * * * *' # Every hour, thirty-five minutes in
     class: Reports::ConfieReportJob
