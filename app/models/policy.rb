@@ -219,6 +219,9 @@ class Policy < ApplicationRecord
     where('number LIKE ?', "%#{number[:like]}%")
   }
 
+  scope :filter_by_carrier_id, ->(carrier_id) {
+    where(carrier_id: carrier_id)
+  }
 
   # TODO: Change after controller structure refactoring
   scope :filter_by_users, ->(payload) {
