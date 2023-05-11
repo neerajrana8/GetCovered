@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2023_05_02_232404) do
+ActiveRecord::Schema.define(version: 2023_05_04_175243) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -1066,6 +1066,9 @@ ActiveRecord::Schema.define(version: 2023_05_02_232404) do
     t.boolean "month_to_month", default: false, null: false
     t.integer "special_status", default: 0, null: false
     t.bigint "master_policy_coverage_ids", default: [], null: false, array: true
+    t.date "renewal_date"
+    t.integer "renewal_count", default: 0
+    t.string "external_status"
     t.index ["account_id"], name: "index_leases_on_account_id"
     t.index ["insurable_id"], name: "index_leases_on_insurable_id"
     t.index ["lease_type_id"], name: "index_leases_on_lease_type_id"
