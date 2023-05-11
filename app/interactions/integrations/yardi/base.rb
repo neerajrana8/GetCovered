@@ -16,6 +16,13 @@ module Integrations
       def get_eventable
         nil
       end
+      
+      def special_event_behavior
+        # nil => save the event as expected
+        # :no_save => don't save an event
+        # :no_body => omit the event body (used for file uploads since it is too large)
+        nil
+      end
 
       def action
         self.class.name.demodulize
@@ -84,9 +91,9 @@ module Integrations
           interface: 'SOAP',
           process: "yardi__#{self.get_event_process}",
           endpoint: get_endpoint,
-          request: request_body
+          request: special_event_behavior == :no_body ? "(REDACTED FOR EFFICIENCY)" : request_body
         )
-        event.save
+        event.save unless special_event_behavior == :no_save
         event.started = Time.now
         # make the call
         true_started = event.started
@@ -111,7 +118,7 @@ module Integrations
               event.completed = Time.now
               event.response = "TIMEOUT"
               event.status = 'error'
-              event.save
+              event.save unless special_event_behavior == :no_save
               event = event.dup
               event.id = nil # just to be safe and explicit
               event.started = Time.now
@@ -125,7 +132,7 @@ module Integrations
         if result.code == 200 && (result.response.body.index("Login failed.") || result.response.body.index("Invalid Interface Entity") || response_has_error?(result.response.body))
           event.status = 'error'
         end
-        event.save
+        event.save unless special_event_behavior == :no_save
         # all done, broski
         return {
           success: (event.status == 'success'),

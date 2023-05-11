@@ -5,7 +5,11 @@ class UnmatchedUserEmailJob < ApplicationJob
   queue_as :default
 
   def perform(force_test = false)
-    to_ignore = [38949,144027,46064,46963,38015,60618,129427,124098,53188,147449,124107,144608,145851,137354] # PU ids to ignore; hard-coded for now, will upgrade to use DB
+    # PU ids to ignore; hard-coded for now, will upgrade to use DB
+    to_ignore = [
+      38949,144027,46064,46963,38015,60618,129427,124098,53188,147449,
+      124107,144608,145851,137354,47212,50243,47212,124104,124094
+    ] # PU ids to ignore; hard-coded for now, will upgrade to use DB
 
     account = Account.find(33) #lcor
     integration = account.integrations.where(provider: 'yardi').take
