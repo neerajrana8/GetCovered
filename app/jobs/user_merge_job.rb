@@ -7,7 +7,7 @@ class UserMergeJob < ApplicationJob
     user_ids = User.where("created_at >= ?", (Time.current - days_to_check.days).beginning_of_day)
            .or(User.where("updated_at >= ?", (Time.current - days_to_check.days).beginning_of_day))
            .order(id: :asc).pluck(:id)
-    user_ids = Profile.where(profileable_type: "User").where("created_at >= ?", (Time.current - days_to_check.days).beginning_of_day)
+    user_ids += Profile.where(profileable_type: "User").where("created_at >= ?", (Time.current - days_to_check.days).beginning_of_day)
            .or(Profile.where(profileable_type: "User").where("updated_at >= ?", (Time.current - days_to_check.days).beginning_of_day))
            .where.not(profileable_id: user_ids)
            .pluck(:profileable_id)
