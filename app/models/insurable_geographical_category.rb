@@ -147,7 +147,7 @@ class InsurableGeographicalCategory < ApplicationRecord
     new_cutoffs = (cutoffs[1] || []) - (cutoffs[0] || [])
     new_cutoffs.each do |cutoff|
       InsurableRateConfiguration.where(end_date: nil).or(InsurableRateConfiguration.where("end_date > ?", cutoff))
-                                .where(configurer_type: "Carrier", configurer_id: QbeService.carrier_id, carrier_policy_type_id: cpt_id),
+                                .where(configurer_type: "Carrier", configurer_id: QbeService.carrier_id, carrier_policy_type_id: cpt_id)
                                 .where(configurable: Insurable.where(id: Address.where(addressable_type: "Insurable", state: self.state).select(:addressable_id)))
                                 .where("start_date < ?", cutoff)
                                 .update_all(end_date: cutoff)
