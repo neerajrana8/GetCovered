@@ -31,6 +31,10 @@ module Integrations
           return eventable
         end
         
+        def special_event_behavior
+          :no_body
+        end
+        
         def request_template(**params) # we overrode this when debugging; since it works there is no reason to unoverride it. but camelbase_datacase should give us the same result if we used the same format as in the _ext version, we shouldn't need the itf: stuff
           <<~XML
             <soapenv:Envelope

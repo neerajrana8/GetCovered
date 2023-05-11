@@ -20,7 +20,7 @@ module MasterPolicies
         insurable = lease.insurable
         community = insurable.parent_community
         account = insurable.account
-        integration = account&.integrations.where(provider: 'yardi')&.take
+        integration = account&.integrations&.where(provider: 'yardi')&.take
         next unless account
 
         per_user_tracking = account.per_user_tracking

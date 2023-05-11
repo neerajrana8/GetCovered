@@ -641,8 +641,8 @@ module Integrations
                       external_id: info.select{|i| i["PersonID"]&.[]("Type") == "Current Resident" }.map{|i| i["PersonID"]&.[]("__content__") }
                     ).select(:profileable_id)
                   ).select(:insurable_id)
-                  comm[:insurable].units.where.not(id: affordable_unit_ids).update_all(special_status: "none")
-                  integration.integratable.insurables.where(id: affordable_unit_ids).update_all(special_status: "affordable")
+                  comm[:insurable].units.where.not(id: affordable_unit_ids).where(special_status: "affordable").update_all(special_status: "none")
+                  integration.integratable.insurables.where(id: affordable_unit_ids, special_status: "none").update_all(special_status: "affordable")
                 end
               end # end special status handling
             end # end community loop
