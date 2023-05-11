@@ -1,6 +1,6 @@
 FROM ubuntu:14.04
 FROM ruby:3.0.1
-MAINTAINER dylan@getcoveredllc.com
+LABEL maintainer='dylan@getcoveredllc.com'
 
 # Install apt based dependencies required to run Rails as
 # well as RubyGems. As the Ruby image itself is based on a
@@ -37,7 +37,8 @@ RUN gem install bundler -v 2.2.27 && RAILS_ENV=development bundle install --jobs
 COPY Gemfile /getcovered/
 COPY Gemfile.lock /getcovered/
 
-RUN RAILS_ENV=development bundle install --path /bundle
+RUN bundle config set --local path '/bundle'
+RUN RAILS_ENV=development bundle install
 COPY . /getcovered
 
 # Add a script to be executed every time the container starts.
