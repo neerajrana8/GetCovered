@@ -24,7 +24,7 @@ module CarrierQBE
       failed_policies = []
       doc.xpath('//ACORD//InsuranceSvcRs').each do |node|
         transaction_type = node.at_xpath('RentPolicyStatusRS/TransactionType').content
-        policy_number = node.at_xpath('RentPolicyStatusRS/PersPolicy/PolicyNumber').content.sub(/^.../, '')
+        policy_number = node.at_xpath('RentPolicyStatusRS/PersPolicy/PolicyNumber').content
         if policy = Policy.find_by(number: policy_number)
 
           case transaction_type
