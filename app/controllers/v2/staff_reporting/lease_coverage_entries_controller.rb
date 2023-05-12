@@ -9,9 +9,9 @@ module V2
       before_action :set_parent, only: [:index]
     
       def index
+        @export = true if params[:export]
         super(:@lease_coverage_entries, @parent.lease_coverage_entries)
       end
-      
       
       private
       

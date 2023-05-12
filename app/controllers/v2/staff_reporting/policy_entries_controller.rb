@@ -24,6 +24,7 @@ module V2
       ).to_h
     
       def index
+        @export = true if params[:export]
         super(:@policy_entries, hacky_thing(@account.nil? ? ::Reporting::PolicyEntry.all : ::Reporting::PolicyEntry.where(account_id: @account.id)))
       end
       

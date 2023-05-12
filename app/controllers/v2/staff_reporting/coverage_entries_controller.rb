@@ -8,9 +8,9 @@ module V2
       before_action :set_coverage_report, only: %i[index]
     
       def index
+        @export = true if params[:export]
         super(:@coverage_entries, @coverage_report.coverage_entries.where(status: 'generated'))
       end
-      
       
       private
       
