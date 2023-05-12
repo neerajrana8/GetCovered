@@ -28,8 +28,6 @@ module CarrierQBE
         if policy = Policy.find_by(number: policy_number)
 
           case transaction_type
-          when 'W'
-            renewal(policy_number)
           when 'C'
             reason = node.at_xpath('RentPolicyStatusRS/PersPolicy/QBE_BusinessSource').content
             cancel_policy(policy, reason)
