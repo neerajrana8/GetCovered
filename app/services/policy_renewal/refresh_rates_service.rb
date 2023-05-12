@@ -85,7 +85,7 @@ module PolicyRenewal
         message += e.backtrace.join("\n")
         from = Rails.env == "production" ? "no-reply-#{ Rails.env.gsub('_','-') }@getcovered.io" : 'no-reply@getcovered.io'
         ActionMailer::Base.mail(from: from,
-                                to: 'hannabts@nitka.com',
+                                to: ['hannabts@nitka.com','dylan@getcovered.io'],
                                 subject: "[Get Covered] Renewal Refresh rates error",
                                 body: message).deliver_now()
       end
