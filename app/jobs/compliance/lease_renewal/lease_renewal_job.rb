@@ -1,5 +1,5 @@
 module Compliance
-  class FirstContactJob < ApplicationJob
+  class LeaseRenewalJob < ApplicationJob
     queue_as :default
     
     def perform(lease_ids: nil)

@@ -101,6 +101,9 @@ production:
   lapsed_job:
     cron: '0 5 * * *' # Every day at 5:00 AM
     class: Compliance::Policies::LapsedJob
+  lease_renewal:
+    cron: '45 22 * * *' # Each day at 10:45 PM
+    class: Compliance::LeaseRenewalJob
   # Access Tokens
   remove_expired_access_tokens_job:
     cron: '0 0 * * *' # Every day at midnight
