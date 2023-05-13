@@ -75,7 +75,9 @@ module PolicyRenewal
         policy_coverage.update(limit: higher_limit)
       end
       rescue Exception => e
-        return if policy_coverage.designation.in(['all_peril','loss_of_use','theft','wind_hail'])
+        # undefined method `in' for "all_peril":String
+        # return if policy_coverage.designation.in(['all_peril','loss_of_use','theft','wind_hail'])
+        return if ['all_peril','loss_of_use','theft','wind_hail'].include?(policy_coverage.designation)
         refresh_rates_status = false
         #Added for debug for now will move to logger
         message = "Unable to update rates for policy id: #{ policy.id }\n\n policy coverage id: #{ policy_coverage.id }"
@@ -83,7 +85,7 @@ module PolicyRenewal
         message += e.backtrace.join("\n")
         from = Rails.env == "production" ? "no-reply-#{ Rails.env.gsub('_','-') }@getcovered.io" : 'no-reply@getcovered.io'
         ActionMailer::Base.mail(from: from,
-                                to: 'hannabts@nitka.com',
+                                to: ['hannabts@nitka.com','dylan@getcovered.io'],
                                 subject: "[Get Covered] Renewal Refresh rates error",
                                 body: message).deliver_now()
       end
