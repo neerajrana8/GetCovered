@@ -13,7 +13,7 @@ module Compliance
       template = 'reminder'
       mail(
         from: @from,
-        to: @user.contact_email,
+        to: @to,
         bcc: t('system_email'),
         subject: subject,
         template_path: 'compliance/lease_renewal',
