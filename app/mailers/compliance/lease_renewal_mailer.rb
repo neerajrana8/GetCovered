@@ -5,7 +5,7 @@ module Compliance
     before_action :set_variables
     
     def reminder()
-      @to = user.contact_email
+      @to = @user.contact_email
       return false if @to.blank? || !@to.index("@")
       set_locale("en")
       @from = @pm_account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] : "policyverify@getcovered.io"
@@ -29,6 +29,10 @@ module Compliance
       @community = @lease.insurable.parent_community
       @user = @lease.primary_user
       @pm_account = @organization
+      # stuff the layout wants (and @organization)
+      @address = @organization.addresses.where(primary: true).nil? ? Address.find(1) : @organization.primary_address()
+      @branding_profile = set_branding_profile
+      @GC_ADDRESS = Agency.get_covered.primary_address.nil? ? Address.find(1) : Agency.get_covered.primary_address
     end
 
     #TODO: hotfix will be moved to separate service with PolicyMailer logic in GCVR2-1028
