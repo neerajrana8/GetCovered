@@ -1,0 +1,55 @@
+<p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+  <span style="font-size: 16px;">Dear <%= @user.profile.full_name %>,</span>
+</p>
+
+<p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+  <span style="font-size: 16px;">
+    Thank you for your continued residency at <%= @community.title %>. It has been a pleasure to serve you throughout your lease term, and we look forward to another year!
+  </span>
+</p>
+
+<p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+  <span style="font-size: 16px;">
+    As a reminder, you are required to purchase and maintain renters’ insurance throughout the entire term of your lease.  Please be aware that at time of renewal, minimum insurance liability coverage will be $300,000. Please review your lease at time of renewal to learn more about our updated insurance program.
+  </span>
+</p>
+
+<p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+  <span style="font-size: 16px;">
+    You may satisfy this requirement by visiting essex.policyverify.io and complete one of the following:
+  </span>
+</p>
+
+
+<p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+  <span style="font-size: 16px;">
+    Purchase coverage through our insurance partner Get Covered
+  </span>
+</p>
+
+<p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+  <span style="font-size: 16px;">
+    Or
+  </span>
+</p>
+
+<p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+  <span style="font-size: 16px;">
+    Submit proof of an active insurance policy by uploading a copy of your certificate of insurance
+  </span>
+</p>
+
+<p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+  <span style="font-size: 16px;">
+    Ensure the additional interest in your policy is listed as:
+  </span>
+</p>
+
+
+<p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+  <span style="font-size: 16px;">
+    <%= @pm_account.additional_interest ? @pm_account.title : @community.title %><br>
+    <%= @pm_account.primary_address().combined_street_address %><%= ", #{ @pm_account.primary_address().street_two }" unless @pm_account.primary_address().street_two.nil? %><br>
+    <%= @pm_account.primary_address().city %>, <%= @pm_account.primary_address().state %> <%= @pm_account.primary_address().combined_zip_code %>
+  </span>
+</p>
