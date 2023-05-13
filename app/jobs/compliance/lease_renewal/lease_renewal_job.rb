@@ -3,7 +3,7 @@ module Compliance
     queue_as :default
     
     def perform(lease_ids: nil)
-      next if Rails.env != "production" && lease_ids.nil?
+      return if Rails.env != "production" && lease_ids.nil?
       today = Time.current.to_date
       renewal_dates = [today + 30.days, today + 15.days, today + 5.days]
       lease_ids ||= ::Lease.where(renewal_date: renewal_dates)
