@@ -721,7 +721,7 @@ class Policy < ApplicationRecord
         #TODO: temp test need to remove according to GCVR2-1197
         begin
           if Rails.env.development? or ENV['RAILS_ENV'] == 'awsdev'
-            if status == 'CANCELLED'
+            if CANCELLED?
               Compliance::PolicyMailer.with(organization: self.account.nil? ? self.agency : self.account)
                                       .policy_lapsed(policy: self, lease: self.latest_lease)
                                       .deliver_now
@@ -731,7 +731,7 @@ class Policy < ApplicationRecord
                                       .deliver_now
             end
           else
-            if status == 'CANCELLED'
+            if CANCELLED?
               Compliance::PolicyMailer.with(organization: self.account.nil? ? self.agency : self.account)
                                       .policy_lapsed(policy: self, lease: self.latest_lease)
                                       .deliver_later(wait: 5.minutes)

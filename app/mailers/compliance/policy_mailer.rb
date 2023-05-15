@@ -43,12 +43,12 @@ module Compliance
       
         @from = @pm_account&.contact_info&.has_key?("contact_email") &&
           !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] :
-                  "policyverify@getcovered.io"
+                  t('policy_verify_email')
       
         mail(to: @user.contact_email,
-             bcc: "systememails@getcovered.io",
+             bcc: t('system_email'),
              from: @from,
-             subject: "You are out of compliance",
+             subject: t('policy_mailer.out_of_compliance.subject'),
              template_path: 'compliance/policy')
       end
     end
