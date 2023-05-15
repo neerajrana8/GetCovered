@@ -29,10 +29,12 @@ module PolicyRenewal
         invoices_generation_status = false
         return "Failed to create premium! #{premium.errors.to_h}"
       else
+        strategy = premium.billing_strategy
+        payment_plan = strategy.renewal.nil? ? strategy.new_business["payments"] : strategy.renewal["payments"]
         result = premium.initialize_all(quote.est_premium - quote.carrier_payment_data["policy_fee"] + (premium.total_tax < 0 ? premium.total_tax : 0),
-                                         billing_strategy_terms: premium.billing_strategy.new_business["payments"],
-                                         tax: (premium.total_tax <= 0 ? 0 : premium.total_tax),
-                                         tax_recipient: quote.policy_application.carrier)
+                                        billing_strategy_terms: payment_plan,
+                                        tax: (premium.total_tax <= 0 ? 0 : premium.total_tax),
+                                        tax_recipient: quote.policy_application.carrier)
         unless result.nil?
           invoices_generation_status = false
           return "Failed to initialize premium! #{result}"
