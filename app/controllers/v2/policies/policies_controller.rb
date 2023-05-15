@@ -36,7 +36,11 @@ module V2
         filtering_keys = %i[policy_in_system agency_id status account_id policy_type_id number]
         params_slice ||= []
         params_slice = filter.slice(*filtering_keys)
-        policies = Policy.filter(params_slice).includes(users: :profile).references(:profiles)
+        policies = Policy.filter(params_slice)
+                         .includes(:account, :carrier, :agency, :policy_type, users: :profile)
+                         .references(:profiles)
+                         .includes(policy_quotes: {policy_application: :billing_strategy}, primary_user: [:integration_profiles, :profile])
+                         .includes(primary_insurable: {insurable: :insurable}, insurables: [:agency, account: :agency])
 
         # Profile fields filtering
         if filter[:users].present?
