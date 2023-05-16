@@ -65,7 +65,7 @@ module PolicyRenewal
     end
 
     def update_premium
-      ppi = @relevant_premium.policy_premium_items.where(category: 'premium').take
+      ppi = @relevant_premium.policy_premium_items.where(category: 'premium', proration_refunds_allowed: true).take
       ppi.change_remaining_total_by(@premium_difference,
                                     clamp_start_date_to_effective_date: false,
                                     clamp_start_date_to_today: true,
@@ -73,7 +73,9 @@ module PolicyRenewal
     end
 
     def start_billing
-
+      @policy.invoices.where(status: 'available').each do |invoice|
+        invoice.pay(stripe_source: :default, allow_missed: true)[:success]
+      end
     end
 
     def valid_for_renewal?
