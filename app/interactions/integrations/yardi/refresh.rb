@@ -37,6 +37,7 @@ module Integrations
         billing_issues.push("Your billing & payments configuration is missing fields: #{missing_fields.join(", ")}") unless missing_fields.blank?
         billing_issues.push("You have not enabled billing & payments integration.") if !integration.configuration['billing_and_payments']['enabled']
         integration.configuration['billing_and_payments']['charge_push'] ||= {}
+        integration.configuration['billing_and_payments']['refund_push'] ||= {}
         integration.configuration['billing_and_payments']['charge_push']['title'] ||= "Insurance Non-Compliance Fee"
         integration.configuration['billing_and_payments']['refund_push']['title'] ||= "Insurance Non-Compliance Fee Correction"
         integration.configuration['billing_and_payments']['charge_push']['title_dated'] ||= false
