@@ -93,7 +93,8 @@ module PolicyRenewal
     end
 
     def irc
-      @irc ||= @community.insurable_rate_configurations.last
+      @cpt ||= CarrierPolicyType.where(carrier_id: @policy.carrier_id, policy_type_id: @carrier.policy_type_id).take
+      @irc ||= InsurableRateConfiguration.get_inherited_irc(@cpt, @community.account, @community, @policy.renewal_date)
     end
 
     def updated_coverage_options
