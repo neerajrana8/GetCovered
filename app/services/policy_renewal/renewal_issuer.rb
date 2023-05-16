@@ -26,14 +26,10 @@ module PolicyRenewal
       @relevant_premium = @policy.policy_premiums.order(created_at: :desc).first
       @premium_difference = @premium.nil? ? nil : @premium - @relevant_premium.total_premium
 
-      #policy.renew_count is incremented by 1 (if nil, treat as 0 and set to 1)
-      renewal_count = policy.renew_count.blank? ? 1 : policy.renew_count + 1
-      #policy.last_renewed_on is set to the date after the effective date
-      new_effective_date = policy.renewal_date
-      renewed_on = new_effective_date + 1.day
-      new_expiration_date = new_effective_date + 1.year
-      #policy.status is set to RENEWED
-      policy_status = Policy.statuses.values_at('RENEWED').first
+      renewal_count = (policy.renew_count || 0) + 1
+      renewed_on = policy.expiration_date + 1.day
+      new_expiration_date = policy.expiration_date + 1.year
+      policy_status = 'RENEWED'
 
       #update the policy
       if refresh_rates_status && invoices_generation_status && policy.update(renew_count: renewal_count, last_renewed_on: renewed_on,
@@ -66,9 +62,9 @@ module PolicyRenewal
 
     def update_premium
       ppi = @relevant_premium.policy_premium_items.where(category: 'premium', proration_refunds_allowed: true).take
-      ppi.change_remaining_total_by(@premium_difference,
+      ppi.change_remaining_total_by(@premium_difference, @policy.last_renewed_on,
                                     clamp_start_date_to_effective_date: false,
-                                    clamp_start_date_to_today: true,
+                                    clamp_start_date_to_today: false,
                                     clamp_start_date_to_first: false)
     end
 
