@@ -15,13 +15,13 @@ module PolicyRenewal
 
       invoices_generation_status = false
 
-      application = policy.policy_application
+      application = @policy.policy_application
       quote = application.qbe_estimate
-      quote.update(policy_id: policy.id) if quote.policy_id.blank?
+      quote.update(policy_id: @policy.id) if quote.policy_id.blank?
       quote.qbe_build_coverages
       application.qbe_quote(quote.id)
 
-      premium = PolicyPremium.create(policy_quote: quote)
+      premium = PolicyPremium.create(policy_quote: quote, policy: @policy)
       policy_fee = quote.carrier_payment_data['policy_fee']
       premium.fees.create(title: "Policy Fee", type: 'ORIGINATION', amount_type: 'FLAT', amount: policy_fee, enabled: true, ownerable_type: "Carrier", ownerable_id: ::QbeService.carrier_id, hidden: true) unless policy_fee == 0
 
