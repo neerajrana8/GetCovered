@@ -36,6 +36,18 @@ module Integrations
         missing_fields.push("url") if integration.credentials['urls']['billing_and_payments'].blank?
         billing_issues.push("Your billing & payments configuration is missing fields: #{missing_fields.join(", ")}") unless missing_fields.blank?
         billing_issues.push("You have not enabled billing & payments integration.") if !integration.configuration['billing_and_payments']['enabled']
+        integration.configuration['billing_and_payments']['charge_push'] ||= {}
+        integration.configuration['billing_and_payments']['refund_push'] ||= {}
+        integration.configuration['billing_and_payments']['charge_push']['title'] ||= "Insurance Non-Compliance Fee"
+        integration.configuration['billing_and_payments']['refund_push']['title'] ||= "Insurance Non-Compliance Fee Correction"
+        integration.configuration['billing_and_payments']['charge_push']['title_dated'] ||= false
+        integration.configuration['billing_and_payments']['refund_push']['title_dated'] ||= false
+        integration.configuration['billing_and_payments']['charge_push']['future_transaction'] ||= true
+        integration.configuration['billing_and_payments']['refund_push']['future_transaction'] ||= true
+        integration.configuration['billing_and_payments']['charge_push']['future_service'] ||= false
+        integration.configuration['billing_and_payments']['refund_push']['future_service'] ||= false
+        integration.configuration['billing_and_payments']['charge_push']['display_type'] ||= "Standard Charge Display Type"
+        integration.configuration['billing_and_payments']['refund_push']['display_type'] ||= "Standard Charge Display Type"
         if billing_issues.blank?
           result = Integrations::Yardi::BillingAndPayments::GetVersionNumber.run!(integration: integration)
           if !result[:success]

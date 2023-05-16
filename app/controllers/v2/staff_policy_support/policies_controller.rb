@@ -49,7 +49,7 @@ module V2
 
         @lease = @policy.latest_lease(lease_status: ['pending', 'current'])
         # get the correct date to use
-        @relevant_lease_date = @lease.program_relevant_date
+        @relevant_lease_date = @lease&.program_relevant_date
         available_lease_date = @lease.nil? ? DateTime.current.to_date : @lease.sign_date.nil? ? @lease.start_date : @lease.sign_date
         @coverage_requirements = @policy.primary_insurable&.parent_community&.coverage_requirements_by_date(date: available_lease_date)
 

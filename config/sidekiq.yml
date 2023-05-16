@@ -132,6 +132,13 @@ production:
   user_merge_job:
     cron: '0 22 * * *' # Every day at 10:00 PM
     class: UserMergeJob
+  # Report generation
+  coverage_report_generation_job:
+    cron: '45 22 * * *' # Every day at 10:45 PM
+    class: CoverageReportGenerationJob
+  policy_report_sync_job:
+    cron: '30 23 * * *' # Every day at 11:30 PM
+    class: PolicyReportSyncJob
   # Unmatched user emails
   unmatched_user_email_job:
     cron: '15 0 * * *' # Every day at 12:15 AM
