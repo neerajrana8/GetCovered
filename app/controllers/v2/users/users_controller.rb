@@ -2,9 +2,10 @@ module V2
   module Users
     class UsersController < ApiController
       include ActionController::Caching
+      include EmailsHelper
 
-      before_action :authenticate_staff!
-      before_action :check_permissions
+      before_action :authenticate_staff!, only: %i[list show]
+      before_action :check_permissions, only: %i[list show]
 
       def list
         page = 1
@@ -107,6 +108,49 @@ module V2
         end
       end
 
+      def matching
+        unless [params[:first_name], params[:last_name], params[:email]].all?(&:present?)
+          return render json: { error: 'Some of the required params are missing: first_name, last_name, email' }, status: 403
+        end
+
+        exact_match = ::User
+          .includes(:profile)
+          .where(
+            "(profiles.first_name ILIKE ? AND profiles.last_name ILIKE ?) AND (email ILIKE ? OR contact_email ILIKE ?)",
+            "%#{params[:first_name]}%", "%#{params[:last_name]}%", "%#{params[:email]}%", "%#{params[:email]}%"
+          )
+          .references(:profile)
+          .first
+
+        possible_matches = ::User
+          .includes(:profile)
+          .where(
+            "(profiles.first_name ILIKE ? AND profiles.last_name ILIKE ?) OR email ILIKE ? OR contact_email ILIKE ?",
+            "%#{params[:first_name]}%", "%#{params[:last_name]}%", "%#{params[:email]}%", "%#{params[:email]}%"
+          )
+          .references(:profile)
+
+        render json: {
+          exact_match: exact_match.then do |match|
+            {
+              id: match.id,
+              first_name: match.profile.first_name,
+              last_name: match.profile.last_name,
+              email: match.email,
+              contact_email: match.email
+            } if match.present?
+          end,
+          possible_matches: possible_matches.map do |match|
+            {
+              id: match.id,
+              first_name: match.profile.first_name,
+              last_name: match.profile.last_name,
+              email: masked_email(match.email),
+              contact_email: masked_email(match.email)
+            }
+          end
+        }, status: 200
+      end
 
       private
 
