@@ -22,7 +22,7 @@ module PolicyRenewal
       application.qbe_quote(quote.id)
 
       premium = PolicyPremium.create(policy_quote: quote, policy: @policy)
-      policy_fee = quote.carrier_payment_data['policy_fee']
+      policy_fee = (quote.carrier_payment_data['policy_fee'] || 0)
       premium.fees.create(title: "Policy Fee", type: 'ORIGINATION', amount_type: 'FLAT', amount: policy_fee, enabled: true, ownerable_type: "Carrier", ownerable_id: ::QbeService.carrier_id, hidden: true) unless policy_fee == 0
 
       unless premium.id
@@ -32,6 +32,8 @@ module PolicyRenewal
         strategy = premium.billing_strategy
         payment_plan = strategy.renewal.nil? ? strategy.new_business["payments"] : strategy.renewal["payments"]
         result = premium.initialize_all(quote.est_premium - quote.carrier_payment_data["policy_fee"] + (premium.total_tax < 0 ? premium.total_tax : 0),
+                                        start_date: @policy.expiration_date + 1.day,
+                                        last_date: @policy.expiration_date + 1.year,
                                         billing_strategy_terms: payment_plan,
                                         tax: (premium.total_tax <= 0 ? 0 : premium.total_tax),
                                         tax_recipient: quote.policy_application.carrier)
