@@ -36,6 +36,15 @@ module CarrierQBE
           when 'E'
             price = node.at_xpath('RentPolicyStatusRS/PersPolicy/CurrentTermAmt/Amt').content
             endorsement(policy, price)
+          when 'W'
+            price = node.at_xpath('RentPolicyStatusRS/PersPolicy/CurrentTermAmt/Amt').content
+            begin
+              PolicyRenewal::RenewalIssuer.call(policy, premium)
+            rescue StandardError => e
+              notify_renewal_failure(policy, e)
+            rescue Exception => e
+              notify_renewal_failure(policy, e)
+            end
           else
             failed << node.to_xml
           end
@@ -84,12 +93,19 @@ module CarrierQBE
       policy.policy_premiums.last.policy_premium_items.where(category: 'premium', title: 'premium').order('created_at desc').first if policy.policy_premiums&.last&.policy_premium_items&.where(category: 'premium')
     end
 
-    def renewal(policy_number)
-      if PolicyRenewal::RenewalIssuer.call(policy_number)
-        logger.info 'Success'
-      else
-        logger.info 'Failed'
-      end
+    def notify_renewal_failure(policy, error)
+      mailer.mail(from: "no-reply@getcoveredllc.com",
+                  to: dylan@getcovered.io,
+                  subject: "POLICY RENEWAL ERROR",
+                  body: "#{ policy }\n\n#{ error.to_json }").deliver
     end
+
+    # def renewal(policy_number)
+    #   if PolicyRenewal::RenewalIssuer.call(policy_number)
+    #     logger.info 'Success'
+    #   else
+    #     logger.info 'Failed'
+    #   end
+    # end
   end
 end
