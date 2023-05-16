@@ -65,6 +65,7 @@ class InternalMailer < ApplicationMailer
 
     mail(from: "no-reply-#{ Rails.env.gsub('_', '-') }@getcovered.io",
          to: "support@getcoveredinsurance.com",
+         bcc: "systememails@getcovered.io",
          subject: @subject,
          template_name: 'html_content')
   end
@@ -74,7 +75,7 @@ class InternalMailer < ApplicationMailer
   def set_variables
     @organization = params[:organization]
     @address = @organization.primary_address()
-    @branding_profile = @organization.branding_profiles.where(default: true).take
+    @branding_profile = @organization.branding_profiles.where(enabled: true).take
     @GC_ADDRESS = Agency.find(1).primary_address()
     @internal_mailer = true
   end

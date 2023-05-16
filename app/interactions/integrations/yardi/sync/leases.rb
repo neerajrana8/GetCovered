@@ -150,6 +150,7 @@ module Integrations
           luips = integration.integration_profiles.where(profileable: lease.lease_users).to_a
           tenanted_luips = luips.select{|luip| da_tenants.any?{|t| t["Id"] == luip.external_id } }
           free_lus = lease.lease_users.select{|lu| !tenanted_luips.any?{|luip| luip.profileable_id == lu.id } }.to_a
+          ejected_users = []
           lacks_both = da_tenants.map{|dt| dt["Id"] }.select{|i| !uips.any?{|uip| uip.external_id == i } && !luips.any?{|luip| luip.external_id == i } }
           lacks_uip = (da_tenants.map{|dt| dt["Id"] } - lacks_both).select{|i| !uips.any?{|uip| uip.external_id == i } }
           lacks_luip = (da_tenants.map{|dt| dt["Id"] } - lacks_both).select{|i| !luips.any?{|luip| luip.external_id == i } }
@@ -181,24 +182,28 @@ module Integrations
                 if result.nil?
                   succeeded = true
                 else
-                  errors.push("Failed to merge User models ##{} and ##{} (tenant #{ten["Id"]})! #{result.class.name}: #{(result.message rescue "<no message>")}")
+                  errors.push("Failed to merge User ##{doomed.id} into User ##{saved.id} (tenant #{ten["Id"]})! #{result.class.name}: #{(result.message rescue "<no message>")}")
                   next
                 end
               else
                 # only the luip matches ten
                 # WARNING: should we set the user to "was_whatever" to log that this happened?
+                ejected_users.push(uip.profileable)
                 if uip.update(profileable_id: luip.profileable.user_id)
                   succeeded = true 
                 else
+                  ejected_users.pop
                   errors.push("Failed to move UIP##{uip.id} from User##{uip.profileable_id} to User##{luip.profileable.uiser_id} (tenant #{ten["Id"]})! #{uip.errors.to_h}")
                   next
                 end
               end
             elsif tenant_user_match(ten, uip.profileable)
               # only the uip matches ten
+              ejected_users.push(luip.profileable.user)
               if luip.profileable.update(user_id: uip.profileable_id)
                 succeeded = true
               else
+                ejected_users.pop
                 errors.push("Failed to move LUIP##{luip.id}'s LeaseUser##{luip.profileable_id} from User##{luip.profileable.user_id} to User##{uip.profileable_id} (tenant #{ten["Id"]})! #{luip.errors.to_h}")
               end
             else
@@ -254,6 +259,7 @@ module Integrations
             if uip.id.nil?
               errors.push("Failed to create UIP for User##{luip.profileable.user_id} corresponding to LUIP##{luip.id} (tenant #{ten["Id"]})! #{uip.errors.to_h}")
             else
+              uips.push(uip)
               lacks_uip_no_more.push(ten)
             end
           end
@@ -369,7 +375,7 @@ module Integrations
               luip = integration.integration_profiles.create(
                 external_context: "lease_user_for_lease_#{tenant["Id"]}",
                 external_id: ten["Id"],
-                profileable: saved,
+                profileable: candidate_lu,
                 configuration: { 'synced_at' => Time.current.to_s, 'post_fix_em' => true, 'post_revamp' => true }
               )
               unless luip.id
@@ -420,6 +426,38 @@ module Integrations
             end
           end
           
+          # handle free_lus and ejected_users
+          ejected_users.select!{|eu| !lease.lease_users.reload.any?{|lu| lu.user_id == eu.id } }
+          ejected_users.uniq!
+          (free_lus + ejected_users).each do |itm| # WARNING: logic changes free_lus/ejected_users inside
+            user = (itm.class == ::LeaseUser ? itm.user : itm)
+            lease_user = (itm.class == ::LeaseUser ? itm : nil)
+            # look for matches
+            tenanted_luips.each do |luip|
+              ten = da_tenants.find{|dt| dt["Id"] == luip.external_id }
+              next unless tenant_user_match(ten, user)
+              # perform absorption
+              saved = [user, luip.profileable.user].max_by{|x| [x.sign_in_count, -x.created_at.to_i] }
+              doomed = [user, luip.profileable.user].find{|x| x.id != saved.id }
+              result = saved.absorb!(doomed)
+              # get rid of the old LU
+              lease_user&.integration_profiles&.delete_all
+              lease_user&.delete
+              # log our magic
+              free_lus.delete(lease_user) unless lease_user.nil?
+              ejected_users.delete(user)
+              break
+            end
+          end
+          
+          # delete lus for which there was no match, if the cleanse_lease_users flag is enabled
+          if cleanse_lease_users
+            free_lus.each do |dl|
+              dl.integration_profiles.each{|ip| ip.delete }
+              dl.delete
+            end
+          end
+          
           # handle results
           lacks_both -= lacks_both_no_more
           lacks_uip -= lacks_uip_no_more
@@ -452,7 +490,8 @@ module Integrations
           # group resident leases
           resident_datas = resident_data.group_by{|td| td["Status"] }
           future_tenants = (
-            (RESIDENT_STATUSES['future'] || []).map{|s| resident_datas[s] || [] }
+            (RESIDENT_STATUSES['future'] || []).map{|s| resident_datas[s] || [] } +
+            ((integration.id == 14) ? (resident_datas['Applicant'] || []) : [])
           ).flatten
           present_tenants = (
             (RESIDENT_STATUSES['present'] || []).map{|s| resident_datas[s] || [] } +
@@ -460,6 +499,7 @@ module Integrations
           ).flatten
           past_tenants = (
             (RESIDENT_STATUSES['past'] || []).map{|s| resident_datas[s] || [] } +
+            ((integration.id == 14) ? (resident_datas['Denied'] || []) : []) +
             (RESIDENT_STATUSES['nonfuture'] || []).map{|s| (resident_datas[s] || []).select{|td| !td['MoveOut'].blank? && (Date.parse(td['MoveOut']) rescue nil)&.<(Time.current.to_date) } }
           ).flatten
           # grab some variables we shall require in the execution of our noble purpose
@@ -470,9 +510,9 @@ module Integrations
           created_by_email = {}
           user_ip_ids = IntegrationProfile.where(integration: integration, external_context: 'resident', profileable_type: "User").pluck(:external_id, :profileable_id).to_h
           # mark defunct those leases which the horrific architecture of Yardi's database requires to be removed from their system when they have been superseded
-          # MOOSE WARNING: the 'defunct' boolean is a placeholder architectural solution just to get the feature working. ultimately we should be giving these leases a special status and doing something to their IPs...
+          # MOOSE WARNING: the 'defunct' boolean is a placeholder architectural solution just to get the feature working. ultimately we should be giving these leases a special status and doing something to their IPs, or implementing a call to check for and explicitly handle unit transfers
           IntegrationProfile.where(integration: integration, external_context: 'lease', profileable: unit.leases.where(defunct: false)).where.not(external_id: in_system).each do |lip|
-            lip.profileable.update(defunct: true, status: 'expired') 
+            lip.profileable.update(defunct: true, status: 'expired', end_date: Time.current.to_date) 
           end
           # update leases to expired
           in_system_lips = IntegrationProfile.references(:leases).includes(:lease).where(integration: integration, external_context: 'lease', external_id: past_tenants.map{|l| l['Id'] }, profileable_type: "Lease", leases: { status: ['current', 'pending'] })
@@ -480,7 +520,7 @@ module Integrations
             rec = past_tenants.find{|l| l['Id'] == ip.external_id }
             l = ip.lease
             found_leases[ip.external_id] = l
-            if l.update({ insurable_id: unit.id, end_date: rec["LeaseTo"].blank? ? Time.current.to_date : Date.parse(rec["LeaseTo"]), status: 'expired' }.compact)
+            if l.update({ insurable_id: unit.id, external_status: rec["Status"], start_date: rec["LeaseFrom"].blank? ? nil : Date.parse(rec["LeaseFrom"]), end_date: rec["LeaseTo"].blank? ? Time.current.to_date : Date.parse(rec["LeaseTo"]), status: 'expired' }.compact)
               expired_leases[ip.external_id] = l
             else
               lease_errors[ip.external_id] = "Failed to mark lease (GC id #{l.id}) expired: #{l.errors.to_h}"
@@ -494,37 +534,39 @@ module Integrations
             if in_system.include?(tenant["Id"])
               lease_ip = IntegrationProfile.where(integration: integration, external_context: 'lease', external_id: tenant["Id"]).take
               lease = lease_ip.profileable
+              # handle renewal stuff
+              unless tenant["LeaseFrom"].blank?
+                new_start_date = Date.parse(tenant["LeaseFrom"])
+                if new_start_date != lease.start_date && new_start_date != lease.renewal_date && new_start_date > ([lease.start_date, lease.renewal_date].compact.max + 60.days)
+                  lease.renewal_date = new_start_date
+                  lease.renewal_count += 1
+                end
+              end
               # fix basic data
               lease.insurable_id = unit.id
-              lease.start_date = Date.parse(tenant["LeaseFrom"]) unless tenant["LeaseFrom"].blank?
               lease.end_date = Date.parse(tenant["LeaseTo"]) unless tenant["LeaseTo"].blank?
               lease.defunct = false # just in case it was once missing from yardi and now is magically back, for example if it got moved to a different unit. likewise, update statuses in case someone defuncted and expired us previously because we jumped units
-              lease.status = 'current' if (lease.end_date.nil? || lease.end_date > Time.current.to_date) && RESIDENT_STATUSES['present'].include?(tenant["Status"])
-              lease.status = 'pending' if (lease.end_date.nil? || lease.end_date > Time.current.to_date) && RESIDENT_STATUSES['future'].include?(tenant["Status"]) || RESIDENT_STATUSES['potential'].include?(tenant["Status"])
               lease.sign_date = Date.parse(tenant["LeaseSign"]) unless tenant["LeaseSign"].blank?
+              lease.month_to_month = ( lease.end_date && lease.end_date < Time.current.to_date && (RESIDENT_STATUSES['present'].include?(tenant['Status']) || RESIDENT_STATUSES['future'].include?(tenant['Status'])) )
+              lease.end_date = nil if lease.month_to_month
+              lease.external_status = tenant["Status"]
+              lease.status = 'current' if (lease.month_to_month || lease.end_date.nil? || lease.end_date > Time.current.to_date) && RESIDENT_STATUSES['present'].include?(tenant["Status"])
+              lease.status = 'pending' if (lease.month_to_month || lease.end_date.nil? || lease.end_date > Time.current.to_date) && RESIDENT_STATUSES['future'].include?(tenant["Status"]) || RESIDENT_STATUSES['potential'].include?(tenant["Status"])
               lease.save if lease.changed?
               fmr = fix_missing(lease, tenant, da_tenants)
               update_errors[tenant["Id"]] = fmr[:errors] unless fmr[:errors].blank?
               next unless fmr[:success] # at least one user was uncreatable; stop processing the lease further, since we need to be able to assume all users are present in the below code
               # we can assume all tenants have corresponding users & lease users & appropriate IPs, if we're here
-              # remove any lease users that don't correspond to tenants
-              if cleanse_lease_users
-                doomed_lus = lease.lease_users.select{|lu| lu.moved_out_at.nil? && lu.integration_profiles.where(integration: integration, external_context: "lease_user_for_lease_#{tenant["Id"]}", external_id: da_tenants.map{|t| t["Id"] }).count == 0 }
-                doomed_lus.each do |dl|
-                  dl.integration_profiles.each{|ip| ip.delete }
-                  dl.delete
-                end
-              end
               # now ensure we update the move in/out dates and primary/lessee statuses
               lease.lease_users.reload.each do |lu|
                 ten = da_tenants.find{|t| t["Id"] == lu.integration_profiles.where(integration: integration).take&.external_id }
                 next if ten.nil? # can't happen but just in case
                 moved_in_at = (Date.parse(ten["MoveIn"]) rescue nil)
-                moved_out_at = (Date.parse(ten["MoveOut"]) rescue nil)
+                moved_out_at = (Date.parse(ten["MoveOut"]) rescue :broken)
                 primary = (tenant["Id"] == ten["Id"])
                 lessee = primary || (ten["Lessee"] == "Yes")
-                if (lu.moved_in_at != moved_in_at && !moved_in_at.blank?) || (lu.moved_out_at != moved_out_at && !moved_out_at.blank?) || (lu.primary != primary) || (lu.lessee != lessee)
-                  lu.update(moved_in_at: moved_in_at, moved_out_at: moved_out_at, primary: primary, lessee: lessee)
+                if (lu.moved_in_at != moved_in_at && !moved_in_at.blank?) || (lu.moved_out_at != moved_out_at && moved_out_at != :broken) || (lu.primary != primary) || (lu.lessee != lessee)
+                  lu.update({ moved_in_at: moved_in_at, moved_out_at: moved_out_at, primary: primary, lessee: lessee }.select{|k,v| v != :broken })
                 end
               end
               # handle ridiculous swaps
@@ -534,14 +576,22 @@ module Integrations
             end
             ################### CREATE MODE ######################
             next if tenant_index >= noncreatable_start
+            if tenant["LeaseFrom"].blank?
+              lease_errors[tenant["Id"]] = "Failed to create Lease: LeaseFrom is blank!"
+              next
+            end
             # create the lease
+            month_to_month = (!tenant["LeaseTo"].blank? && ((Date.parse(tenant["LeaseTo"]) rescue nil) || Time.current.to_date) < Time.current.to_date && (RESIDENT_STATUSES['present'].include?(tenant['Status']) || RESIDENT_STATUSES['future'].include?(tenant['Status'])))
             ActiveRecord::Base.transaction(requires_new: true) do
               lease = unit.leases.create(
                 start_date: Date.parse(tenant["LeaseFrom"]),
-                end_date: tenant["LeaseTo"].blank? ? nil : Date.parse(tenant["LeaseTo"]),
+                end_date: tenant["LeaseTo"].blank? || month_to_month ? nil : Date.parse(tenant["LeaseTo"]),
                 sign_date: tenant["LeaseSign"].blank? ? nil : Date.parse(tenant["LeaseSign"]),
+                month_to_month: month_to_month,
                 lease_type_id: LeaseType.residential_id,
-                account: integration.integratable
+                account: integration.integratable,
+                external_status: tenant["Status"],
+                status: RESIDENT_STATUSES['present'].include?(tenant['Status']) ? "current" : "pending"
               )
               if lease.id.nil?
                 lease_errors[tenant["Id"]] = "Failed to create Lease: #{lease.errors.to_h}"

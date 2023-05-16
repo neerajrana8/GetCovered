@@ -314,7 +314,15 @@
                                       "
                                     >
                                       <% if defined?(@internal_mailer).nil? %>
-                                      Get Covered is emailing you on behalf of <%= @organization.title %> to provide certificate of insurance (COI) verification services.
+                                        <% if defined?(@second_nature_condition).nil? %>
+                                          Get Covered is emailing you on behalf of <%= @organization.title %> to provide certificate of insurance (COI) verification services.
+                                        <% else %>
+                                          <% if @second_nature_condition %>
+                                            Second Nature is emailing you on behalf of <%= @organization.title %> to provide certificate of insurance (COI) verification services.
+                                          <% else %>
+                                            Get Covered is emailing you on behalf of <%= @organization.title %> to provide certificate of insurance (COI) verification services.
+                                          <% end %>
+                                        <% end %>
                                       <% elsif defined?(@internal_mailer) == "instance-variable" %>
                                       Get Covered <%= Rails.env.gsub("_", " ").titlecase %>: <%= @subject %>
                                       <% end %>
@@ -423,7 +431,15 @@
                                   >
                                     <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-top: 2em; padding-bottom: 2em;">
                                       <span style="font-size: 12px;">
-                                        <%= @from %> - ©<%=  Date.current.strftime('%Y') %> Get Covered, All Rights Reserved
+                                        <% if defined?(@second_nature_condition).nil? %>
+                                          <%= all_rights_reserved(@from, Date.current, 'Get Covered, All Rights Reserved') %>
+                                        <% else %>
+                                          <% if @second_nature_condition %>
+                                            <%= all_rights_reserved(@from, Date.current, 'Second Nature, All Rights Reserved') %>
+                                          <% else %>
+                                            <%= all_rights_reserved(@from, Date.current, 'Get Covered, All Rights Reserved') %>
+                                          <% end %>
+                                        <% end %>
                                       </span>
                                     </p>
                                   </td>

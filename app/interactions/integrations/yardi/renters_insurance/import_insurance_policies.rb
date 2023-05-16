@@ -7,6 +7,8 @@ module Integrations
         string :policy_xml, default: nil #some xml
         hash :policy_hash, default: nil, strip: false # some hash to convert into xml
         boolean :change, default: false # set to true to do change mode
+        boolean :cancel, default: false # set to true to override change and do a cancel mode (stupid strongly typed things...)
+        boolean :renewal, default: false # set to true to override change and do a renewal mode
         
         def execute(**params)
           super(**params, **{
@@ -26,7 +28,7 @@ module Integrations
         def get_policy_xml_from_hash
           harsh = policy_hash.deep_stringify_keys
           strang = '<RenterInsurance xmlns="http://yardi.com/RentersInsurance30" xmlns:MITS="http://my-company.com/namespace" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://yardi.com/RentersInsurance30 D:\YSI.NET_600822Plug-in8\Source\Interfaces\XSD\RentersInsurance.xsd">' + "\n"
-          strang += "<InsurancePolicy Type=\"#{change ? "change" : "new"}\">\n"
+          strang += "<InsurancePolicy Type=\"#{cancel ? "cancel" : renewal ? "renewal" : change ? "change" : "new"}\">\n"
           strang += "<Customer>\n"
           ids = harsh["Customer"]["Identification"]
           ids = [ids] unless ids.class == ::Array

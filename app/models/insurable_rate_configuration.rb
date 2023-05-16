@@ -38,6 +38,8 @@ class InsurableRateConfiguration < ApplicationRecord
   
   # Validations
   
+  validates_presence_of :start_date
+  
   validate :validate_configuration
   
   # Structurable structures used in this model (and a helpful rule-to-text method)
@@ -381,11 +383,15 @@ class InsurableRateConfiguration < ApplicationRecord
   
   # Class Methods
   
+  # Convenience query encapsulator
+  def self.for_date(date)
+    self.where(end_date: nil).or(self.where("end_date > ?", date)).where("start_date <= ?", date)
+  end
   
   # Returns an (unsaved) IRC representing the combined IRC formed by merging the entire inheritance hierarchy for some configurable
-  def self.get_inherited_irc(carrier_policy_type, configurer, configurable, agency: nil, exclude: nil, union_mode: false, &blck)
-    # Alternative: merge(get_hierarchy(carrier_policy_type, configurer, configurable, agency: agency).map{|ircs| merge(ircs, true) }, false)... but this won't work in union_mode since it stores arrays of all encountered values
-    hierarchy = get_hierarchy(carrier_policy_type, configurer, configurable, agency: agency, exclude: exclude, union_mode: union_mode, &blck)
+  def self.get_inherited_irc(carrier_policy_type, configurer, configurable, effective_date, agency: nil, exclude: nil, union_mode: false, &blck)
+    # Alternative: merge(get_hierarchy(carrier_policy_type, configurer, configurable, effective_date, agency: agency).map{|ircs| merge(ircs, true) }, false)... but this won't work in union_mode since it stores arrays of all encountered values
+    hierarchy = get_hierarchy(carrier_policy_type, configurer, configurable, effective_date, agency: agency, exclude: exclude, union_mode: union_mode, &blck)
     if union_mode
       # do a union merge of all the children
       unionized = cull_hierarchy!(copy_hierarchy(hierarchy), :parents_inclusive_all, configurer, configurable, preserve_empties: true) # cut out all IRCs for configurables >= configurable, leaving only children; preserve empties so if a configurer's entires are all destroyed, we still assign the same overridability offsets
@@ -425,6 +431,9 @@ class InsurableRateConfiguration < ApplicationRecord
         v1 == v2 ? v1 : (v1.nil? ^ v2.nil?) ? (v1 || v2) : condemnation
       end
     end
+    # dates
+    to_return.start_date = irc_array.map{|i| i.start_date }.compact.max || Time.current.to_date
+    to_return.end_date = irc_array.map{|i| i.end_date }.compact.min
     # rates
     to_return.rates = (override_level == true || override_level == false ? irc_array.reverse : irc_array.sort_by.with_index{|v,i| -override_level[i] }).find{|irc| !irc.rates.blank? && !irc.rates['rates'].blank? && !irc.rates['rates'].all?{|v| v.blank? } }&.rates || {}
     # configuration
@@ -442,20 +451,43 @@ class InsurableRateConfiguration < ApplicationRecord
   #   configurer:             an account/agency/carrier
   #   configurable:           an InsurableGeographicalCategory or an insurable
   #   agency:                 (optional) if configurer is an account, you can provide an agency to use instead of configurer.agency if desired
+  #   cull_repeated_times:    (optional) pass false to not remove duplicate configurer/configurable pair IRCs with overlapping time intervals (by default removes them, keeping the most recently created in each case)
   #   blck:                   (optional) a block for extra culling; will be called with IRC as parameter, returns true to keep, false to discard
   # returns:
   #   an array (ordered from least to most specific configurer) of arrays (ordered from least to most specific configurable) of IRCs
-  def self.get_hierarchy(carrier_policy_type, configurer, configurable, agency: nil, exclude: nil, union_mode: false, &blck)
+  def self.get_hierarchy(carrier_policy_type, configurer, configurable, effective_date, agency: nil, exclude: nil, union_mode: false, cull_repeated_times: true, &blck)
     # get configurer and configurable hierarchies
     configurers = get_configurer_hierarchy(configurer, carrier_policy_type.carrier, agency: agency)
     configurables = get_configurable_hierarchy(configurable, union_mode: union_mode)
     # get the insurable rate configurations
-    to_return = ::InsurableRateConfiguration.where(configurer: configurers, configurable: configurables, carrier_policy_type: carrier_policy_type).to_a
+    to_return = ::InsurableRateConfiguration.for_date(effective_date).where(configurer: configurers, configurable: configurables, carrier_policy_type: carrier_policy_type).to_a
     to_return.select! &blck unless blck.nil?
     # sort into hierarchy (i.e. array (ordered by configurer) of arrays (ordered by configurable))
     to_return = to_return.group_by{|irc| configurers.find_index{|c| irc.configurer_id == c.id && irc.configurer_type == c.class.name } }
       .sort_by{|configurable_index, ircs| configurable_index } # makes it into an array of [k,v] pairs
       .map{|val| val[1].sort_by{|irc| configurables.find_index{|c| irc.configurable_id == c.id && irc.configurable_type == c.class.name } } }
+    # remove any duplicate entries by time
+    if cull_repeated_times
+      to_return.map! do |data|
+        condemned = []
+        last = 0
+        (1...(data.length)).each do |ind|
+          # start looking at the next configurable if we've reached the end of the previous one
+          if data[ind].configurable_id != data[last].configurable_id || data[ind].configurable_type != data[last].configurable_type
+            last = ind
+            next
+          end
+          # otherwise, keep only the most recent configurable
+          if data[last].created_at > data[ind].created_at
+            condemned.push(ind)
+          else
+            condemned.push(last)
+            last = ind
+          end
+        end
+        data.map.with_index{|d,i| condemned.include?(i) ? nil : d }.compact
+      end
+    end
     # handle exclusions
     cull_hierarchy!(to_return, exclude, configurer, configurable) if exclude # optimize away some culling runs since exclude is usually nil
     # done
@@ -540,6 +572,35 @@ class InsurableRateConfiguration < ApplicationRecord
   def max_overridability(refresh: true)
     @max_overridability = nil if refresh
     @max_overridability ||= self.class.get_overridability_ceiling(self.configuration)
+  end
+  
+  def with_date(date)
+    cutoffs = self.get_state_igc&.irc_cutoffs&.[](self.carrier_policy_type_id&.to_s)
+    unless cutoffs.blank?
+      date_string = date.to_s
+      index = 0
+      index += 1 while index < cutoffs.length && cutoffs[index] <= date_string # index is now the index of the greater endpoint of our interval (alphabetical order works fine w date strings)
+      self.start_date = (index == 0 ? date : Date.parse(cutoffs[index-1]))
+      self.end_date = (index == cutoffs.length ? (Date.parse(cutoffs.last) + 1.year).at_beginning_of_year : Date.parse(cutoffs[index]))
+    else
+      self.start_date = date
+      self.end_date = date + 1.day
+    end
+    return self
+  end
+  
+  def get_state_igc
+    case self.configurable_type
+      when 'Insurable'
+        state = self.configurable&.primary_address&.state
+        return state.nil? ? nil : ::InsurableGeographicalCategory.get_for(state: state)
+      when 'InsurableGeographicalCategory'
+        return self.configurable if self.configurable.pure_state?
+        state = self.configurable&.state
+        return state.nil? ? nil : ::InsurableGeographicalCategory.get_for(state: state)
+      else
+        return nil
+    end
   end
   
   def annotate_options(
@@ -711,6 +772,7 @@ class InsurableRateConfiguration < ApplicationRecord
     end
     cip = (insurable.class != ::Insurable ? nil : insurable.carrier_profile(carrier_policy_type.carrier_id))
     irc_filter_block = nil
+    effective_date = Time.current.to_date + 1.day if effective_date.nil?
     # perform prep
     if carrier_policy_type.carrier_id == ::QbeService.carrier_id && insurable.class == ::Insurable
       # ensure we're prepared
@@ -738,7 +800,7 @@ class InsurableRateConfiguration < ApplicationRecord
     end
     # get coverage options and selection errors
     selections = selections.select{|uid, sel| sel && sel['selection'] }
-    irc = get_inherited_irc(carrier_policy_type, account || agency || carrier_policy_type.carrier, insurable, agency: agency, &irc_filter_block)
+    irc = get_inherited_irc(carrier_policy_type, account || agency || carrier_policy_type.carrier, insurable, effective_date, agency: agency, &irc_filter_block)
     coverage_options = irc.annotate_options(selections)
     selection_errors = irc.get_selection_errors(selections, coverage_options, insert_invisible_requirements: true)
     valid = selection_errors.blank?
@@ -758,7 +820,7 @@ class InsurableRateConfiguration < ApplicationRecord
           # prepare the call
           msis = MsiService.new
           result = msis.build_request(:final_premium,
-            effective_date: effective_date || (Time.current.to_date + 1.day), 
+            effective_date: effective_date, 
             additional_insured_count: additional_insured_count,
             additional_interest_count: additional_interest_count || (insurable.class == ::Insurable && (!insurable.account_id.nil? || !insurable.parent_community&.account_id.nil?) ? 1 : 0),
             coverages_formatted:  selections.map do |uid, sel|
@@ -842,7 +904,7 @@ class InsurableRateConfiguration < ApplicationRecord
           interval = { 'FL' => 'annual', 'SA' => 'bi_annual', 'QT' => 'quarter', 'QBE_MoRe' => 'month' }[billing_strategy_carrier_code]
           # try to fix things if our irc is missing info the qbe prepare method already verified that it has (should be because there are duplicate IRCs and one is missing data)
           if on_retry == 0 && (irc&.rates&.[]('rates')&.[](additional_insured_count.to_i + 1)&.[](interval).blank? rescue false)
-            ircs = ::InsurableRateConfiguration.where(configurable: irc.configurable, configurer: irc.configurer, carrier_policy_type_id: irc.carrier_policy_type_id).select{|i| irc_filter_block.call(i) }
+            ircs = ::InsurableRateConfiguration.for_date(effective_date).where(configurable: irc.configurable, configurer: irc.configurer, carrier_policy_type_id: irc.carrier_policy_type_id).select{|i| irc_filter_block.call(i) }
             if ircs.count > 1
               survivor = ircs.max{|i| i.created_at }
               ircs.each{|i| i.delete unless i == survivor }
@@ -964,7 +1026,7 @@ class InsurableRateConfiguration < ApplicationRecord
     # force_address_specific_rates is used to compel synchronous fetching of rates for our specific community, instead of using cached regional rates
     #   -- fasr is forced ON right now, because we aren't using regional rates... regional rates need to be updated to support the new "applicability" functionality
     def self.qbe_prepare_for_get_coverage_options(community, cip, number_insured, effective_date, traits_override: {}, force_address_specific_rates: false)
-      force_address_specific_rates = true # MOOSE WARNING: see note above. need to update regional system before allowing this to work.
+      force_address_specific_rates = true # MOOSE WARNING: see note above. need to update regional system before allowing this to be false.
       effective_date = Time.current.to_date + 1.day if effective_date.nil?
       # build CIP if none exists
       unless cip
@@ -983,7 +1045,7 @@ class InsurableRateConfiguration < ApplicationRecord
       cpt = CarrierPolicyType.where(carrier_id: QbeService.carrier_id, policy_type_id: ::PolicyType::RESIDENTIAL_ID).take
       applicability = QbeService.get_applicability(community, traits_override, cip: cip)
       unless cip.data['rates_resolution']&.[](number_insured.to_s) &&
-            ::InsurableRateConfiguration.where(
+            ::InsurableRateConfiguration.for_date(effective_date).where(
               configurer_type: "Carrier", configurer_id: ::QbeService.carrier_id, configurable: community, carrier_policy_type: cpt,
             ).find{|irc| irc.rates['applicability'] == applicability && !irc.rates['rates']&.[](number_insured.to_i)&.blank? }
         # begin 'unless' code here, sorry for the hideous indentation
@@ -1001,7 +1063,7 @@ class InsurableRateConfiguration < ApplicationRecord
           if igc.nil?
             do_synchronous_get = true
           else
-            irc = igc.insurable_rate_configurations.where(configurer_type: "Carrier", configurer_id: ::QbeService.carrier_id, configurable: igc, carrier_policy_type: cpt).take
+            irc = InsurableRateConfiguration.for_date(effective_date).where(configurer_type: "Carrier", configurer_id: ::QbeService.carrier_id, configurable: igc, carrier_policy_type: cpt).take
             if irc.nil? || irc.rates&.[]('rates')&.[](number_insured.to_i).blank?
               # the regional IRC hasn't yet been filled with rates we can use; fall back to synchronous get
               do_synchronous_get = true

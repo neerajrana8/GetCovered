@@ -10,10 +10,20 @@ module Insurables
 
       policy_insurables.each do |policy_insurable|
         policy = policy_insurable.policy
+
         policy_insurable.insurable&.units&.each do |unit|
-          next unless unit.policies.current.empty? && !unit.occupied?
+
+          # NOTE: Check of existing valid lease, if exists then continue to issue MPC (master policy child, or child policy)
+          lease = Lease.where(end_date: nil).or(Lease.where('end_date > ?', Time.current.to_date)).find_by(insurable_id: unit.id, status: 'current')
+          next unless lease
+
+          # NOTE: removed check for occupied because when lease is create unit is already occupied
+          # but have no master policy coverage
+          # PREVIOUS: next unless unit.policies.current.empty? && !unit.occupied?
+          next unless unit.policies.current.empty?
 
           policy_number = MasterPolicies::GenerateNextCoverageNumber.run!(master_policy_number: policy.number)
+
           unit.policies.create(
             agency: policy.agency,
             carrier: policy.carrier,
@@ -23,7 +33,8 @@ module Insurables
               policy_coverage.attributes.slice('limit', 'deductible', 'enabled', 'designation', 'title')
             end,
             number: policy_number,
-            policy_type_id: policy.policy_type.coverage,
+            # TODO: Must be id of Master policy coverage policy type
+            policy_type_id: PolicyType::MASTER_COVERAGE_ID, # policy.policy_type.coverage,
             policy: policy,
             effective_date: Time.zone.now,
             expiration_date: policy.expiration_date,

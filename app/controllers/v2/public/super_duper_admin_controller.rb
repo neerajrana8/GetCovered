@@ -3,7 +3,10 @@ module V2
   module Public
     class SuperDuperAdminController < PublicController
     
-    
+      def version_test
+        render json: { version: "22.16.00" },
+          status: 200
+      end
     
       def dump
         if (Rails.env == 'local' || Rails.env == 'awsdev' || Rails.env == 'development') && params[:secret] == "I told a goose a password and that goose said honk honk honk--hey! Dance, everybody!"

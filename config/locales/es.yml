@@ -31,7 +31,9 @@
 
 es:
   hello: "Hello world"
-
+  support_email: "support@getcoveredinsurance.com"
+  policy_verify_email: "policyverify@getcovered.io"
+  system_email: "systememails@getcovered.io"
   shared:
     hi_there: "Hola %{name},"
     help_center: "Centro de ayuda"
@@ -275,6 +277,8 @@ es:
     refund_was_not_successfully_sent: 'El reembolso no se envió correctamente'
     you_cannot_add_coverage_with_master: 'No puede agregar cobertura con el tipo de póliza maestra'
     unable_to_attach_payment: "No se puede adjuntar la fuente de pago al usuario"
+    auto_renewal_change: "Autorenewal option successfully updated"
+    auto_renewal_change_not_successfull: "Autorenewal option was not successfully updated"
   signable_documents_controller:
     signing_failed: 'Se produjo un error al intentar aplicar su firma; Por favor, inténtelo de nuevo más tarde'
     document_not_found: 'Documento no encontrado'
@@ -413,4 +417,4 @@ es:
       cip_save_error: "Ocurrió un error del operador"
       invalid_county_selection_error: "Selección de condado no válida"
       no_counties_available: "El transportista no puede proporcionar una lista de condados para esta dirección"
-    
+

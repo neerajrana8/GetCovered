@@ -46,7 +46,7 @@ class Account < ApplicationRecord
   # belongs_to relationships
   belongs_to :agency
   belongs_to :staff, optional: true # the owner
-
+  
   # has_many relationships
   has_many :staff_roles, as: :organizable
   has_many :staff, through: :staff_roles
@@ -54,7 +54,7 @@ class Account < ApplicationRecord
   has_many :ownerships, as: :owned
 
   has_many :branding_profiles, as: :profileable
-  has_many :payment_profiles, as: :payer
+  has_many :payment_profiles,  as: :payer
   has_many :master_policy_configurations, as: :configurable
   has_many :insurables 
   
@@ -92,6 +92,31 @@ class Account < ApplicationRecord
   has_many :histories, as: :recordable
 
   has_many :reports, as: :reportable
+
+  has_many :integrations,
+           as: :integratable
+           
+  has_many :insurable_rate_configurations,
+           as: :configurer
+
+  has_many :coverage_requirements
+
+  has_many :reporting_coverage_reports,
+    class_name: "Reporting::CoverageReport",
+    as: :owner
+
+  has_many :reporting_coverage_entries,
+    class_name: "Reporting::CoverageEntry",
+    through: :reporting_coverage_reports,
+    source: :coverage_entries
+
+  has_many :reporting_unit_coverage_entries,
+    class_name: "Reporting::UnitCoverageEntry",
+    foreign_key: :account_id
+
+  has_many :reporting_lease_user_coverage_entries,
+    class_name: "Reporting::LeaseUserCoverageEntry",
+    foreign_key: :account_id
 
   has_many :integrations, as: :integratable
 
@@ -138,7 +163,7 @@ class Account < ApplicationRecord
   def attach_payment_source(token = nil, make_default = true)
     AttachPaymentSource.run(account: self, token: token, make_default: make_default)
   end
-
+  
   # Get Msi General Party Info
   #
   # Get GeneralPartyInfo block for use in MSI requests

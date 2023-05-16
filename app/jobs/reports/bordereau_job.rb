@@ -7,11 +7,5 @@ module Reports
       range_end = Time.zone.now
       Reports::BordereauCreate.run!(range_start: range_start, range_end: range_end)
     end
-
-    private
-
-    def master_policies
-      Policy.where(policy_type_id: PolicyType::MASTER_IDS)
-    end
   end
 end

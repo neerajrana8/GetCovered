@@ -2,48 +2,49 @@
 #
 # Table name: policies
 #
-#  id                           :bigint           not null, primary key
-#  number                       :string
-#  effective_date               :date
-#  expiration_date              :date
-#  auto_renew                   :boolean          default(FALSE), not null
-#  last_renewed_on              :date
-#  renew_count                  :integer
-#  billing_status               :integer
-#  billing_dispute_count        :integer          default(0), not null
-#  billing_behind_since         :date
-#  status                       :integer
-#  status_changed_on            :datetime
-#  billing_dispute_status       :integer          default("UNDISPUTED"), not null
-#  billing_enabled              :boolean          default(FALSE), not null
-#  system_purchased             :boolean          default(FALSE), not null
-#  serviceable                  :boolean          default(FALSE), not null
-#  has_outstanding_refund       :boolean          default(FALSE), not null
-#  system_data                  :jsonb
-#  agency_id                    :bigint
-#  account_id                   :bigint
-#  carrier_id                   :bigint
-#  policy_type_id               :bigint
-#  created_at                   :datetime         not null
-#  updated_at                   :datetime         not null
-#  policy_in_system             :boolean
-#  auto_pay                     :boolean
-#  last_payment_date            :date
-#  next_payment_date            :date
-#  policy_group_id              :bigint
-#  declined                     :boolean
-#  address                      :string
-#  out_of_system_carrier_title  :string
-#  policy_id                    :bigint
-#  cancellation_reason          :integer
-#  branding_profile_id          :integer
-#  marked_for_cancellation      :boolean          default(FALSE), not null
-#  marked_for_cancellation_info :string
-#  marked_cancellation_time     :datetime
-#  marked_cancellation_reason   :string
-#  document_status              :integer          default("absent")
-#  force_placed                 :boolean
-#  cancellation_date            :date
+#  id                             :bigint           not null, primary key
+#  number                         :string
+#  effective_date                 :date
+#  expiration_date                :date
+#  auto_renew                     :boolean          default(FALSE), not null
+#  last_renewed_on                :date
+#  renew_count                    :integer
+#  billing_status                 :integer
+#  billing_dispute_count          :integer          default(0), not null
+#  billing_behind_since           :date
+#  status                         :integer
+#  status_changed_on              :datetime
+#  billing_dispute_status         :integer          default("UNDISPUTED"), not null
+#  billing_enabled                :boolean          default(FALSE), not null
+#  system_purchased               :boolean          default(FALSE), not null
+#  serviceable                    :boolean          default(FALSE), not null
+#  has_outstanding_refund         :boolean          default(FALSE), not null
+#  system_data                    :jsonb
+#  agency_id                      :bigint
+#  account_id                     :bigint
+#  carrier_id                     :bigint
+#  policy_type_id                 :bigint
+#  created_at                     :datetime         not null
+#  updated_at                     :datetime         not null
+#  policy_in_system               :boolean
+#  auto_pay                       :boolean
+#  last_payment_date              :date
+#  next_payment_date              :date
+#  policy_group_id                :bigint
+#  declined                       :boolean
+#  address                        :string
+#  out_of_system_carrier_title    :string
+#  policy_id                      :bigint
+#  cancellation_reason            :integer
+#  branding_profile_id            :integer
+#  marked_for_cancellation        :boolean          default(FALSE), not null
+#  marked_for_cancellation_info   :string
+#  marked_cancellation_time       :datetime
+#  marked_cancellation_reason     :string
+#  document_status                :integer          default("absent")
+#  force_placed                   :boolean
+#  cancellation_date              :date
+#  master_policy_configuration_id :integer
 #
 ##
 # =Policy Model
@@ -95,6 +96,7 @@ class Policy < ApplicationRecord
   include AgencyConfiePolicy
   include RecordChange
 
+  before_save :sanitize_policy_number
   before_save :set_status_changed_on, if: Proc.new { |policy| policy.status_changed? }
 
   after_create :schedule_coverage_reminders, if: -> { policy_type&.master_coverage }
@@ -142,6 +144,8 @@ class Policy < ApplicationRecord
   source: :user
 
   has_many :master_policy_configurations, as: :configurable
+
+  belongs_to :master_policy_configuration, optional: true # NOTE: Master Policy Coverage
 
   has_one :primary_policy_insurable, -> { where(primary: true) }, class_name: 'PolicyInsurable'
   has_one :primary_insurable, class_name: 'Insurable', through: :primary_policy_insurable, source: :insurable
@@ -231,7 +235,7 @@ class Policy < ApplicationRecord
   }
 
   accepts_nested_attributes_for :policy_premiums,
-  :insurables, :policy_users, :policy_insurables, :policy_application
+  :insurables, :policy_users, :policy_insurables, :policy_application, :master_policy_configurations
   accepts_nested_attributes_for :policy_coverages, allow_destroy: true
   #  after_save :update_leases, if: :saved_changes_to_status?
 
@@ -302,6 +306,8 @@ class Policy < ApplicationRecord
     pm_not_additional_interest: I18n.t('policy_model.rejection_reasons.pm_not_additional_interest'),
     policy_not_active: I18n.t('policy_model.rejection_reasons.policy_not_active'),
     name_not_correct: I18n.t('policy_model.rejection_reasons.name_not_correct'),
+    tenants_not_listed: I18n.t('policy_model.rejection_reasons.tenants_not_listed'),
+    am_requirement_not_met: I18n.t('policy_model.rejection_reasons.am_requirement_not_met'),
     other: I18n.t('policy_model.rejection_reasons.other')}
 
   #TODO: need to refactor to enum values for policy-support dashboard too
@@ -401,6 +407,10 @@ class Policy < ApplicationRecord
     self.expiration_date.end_of_day
   end
 
+  def renewal_date
+    self.expiration_date&.tomorrow
+  end
+
   def update_leases
     if BOUND? || RENEWED? || REINSTATED?
       insurables.each do |insurable|
@@ -444,6 +454,7 @@ class Policy < ApplicationRecord
   # Cancels a policy; returns nil if no errors, otherwise a string explaining the error
   def cancel(reason, last_active_moment = Time.current.to_date.end_of_day)
     last_active_moment = last_active_moment.end_of_day if last_active_moment.class == ::Date
+    reason = reason.to_s
     # Flee on invalid data
     return I18n.t('policy_model.cancellation_reason_invalid') unless self.class.cancellation_reasons.has_key?(reason)
     return I18n.t('policy_model.policy_is_already_cancelled') if self.status == 'CANCELLED'
@@ -613,9 +624,44 @@ class Policy < ApplicationRecord
     end
   end
 
-  #TODO: seems that we still can create multiple leases for one insurable for the same dates. need to figure out is it correct ot not
-  def latest_lease
-    self.insurables.extract_associated(:leases)&.first&.order(end_date: :desc)&.first
+  def latest_lease(lease_status: ['current', 'pending'], user_matches: [:all, :primary, :any, :none], prefer_more_users: true, lessees_only: false, current_only: false, future_users: true, fake_now: nil)
+    return nil if self.primary_insurable.blank? || self.primary_insurable.leases.blank?
+    lease_status = [lease_status] unless lease_status.class == ::Array
+    user_matches = [:all, :primary, :any] if user_matches == true
+    user_matches.map!{|um| um.to_sym }
+    user_matches = [:all] + user_matches unless user_matches.include?(:all) || (user_matches - [:none]).blank?
+    found = self.primary_insurable.leases.where(status: lease_status).order(start_date: :desc).sort_by{|l| lease_status.find_index(l.status) }.group_by do |lease|
+      lease_users = if current_only
+          lease.lease_users.send(*(lessees_only ? [:where, { lessee: true }] : [:itself]))
+        else
+          lease.active_lease_users(fake_now || Time.current.to_date, **({ lessee: (lessees_only || nil), allow_future: future_users }.compact))
+      end
+      case lease_users.count{|lu| self.users.any?{|u| u.id == lu.user_id } }
+        when self.users.count
+          :all
+        when 0
+          :none
+        else
+          lease_users.any?{|lu| lu.user_id == self.primary_user&.id } ? :primary : :any
+      end
+    end
+    (user_matches.class == ::Array ? user_matches : [user_matches]).each do |match_type|
+      unless found[match_type].blank?
+        return(
+          (prefer_more_users && [:any, :primary].include?(match_type)) ?
+            found[match_type].sort_by do |lease|
+              lease_users = if current_only
+                  lease.lease_users.send(*(lessees_only ? [:where, { lessee: true }] : [:itself]))
+                else
+                  lease.active_lease_users(fake_now || Time.current.to_date, **({ lessee: (lessees_only || nil), allow_future: future_users }.compact))
+              end
+              -lease_users.count{|lu| self.users.any?{|u| u.id == lu.user_id } }
+            end.first
+            : found[match_type].first
+        )
+      end
+    end
+    return nil
   end
 
   def lease_sign_date
@@ -663,34 +709,47 @@ class Policy < ApplicationRecord
   end
 
   def notify_users
-    # ['EXTERNAL_UNVERIFIED', 'EXTERNAL_VERIFIED', 'EXTERNAL_REJECTED'].include?(self.status)
-    if self.previous_changes.has_key?('status') && ['EXTERNAL_VERIFIED', 'EXTERNAL_REJECTED'].include?(self.status)
-      unless self.integration_profiles.count > 0 || self.agency_id == 416
+    # TODO: ADD GUARD STATEMENTS AND REMOVE NESTED CONDITIONS
+    if previous_changes.has_key?('status') && %w[EXTERNAL_UNVERIFIED EXTERNAL_VERIFIED EXTERNAL_REJECTED].include?(status)
+      unless integration_profiles.count.positive? && status == 'EXTERNAL_UNVERIFIED'
 
-        if self.account_id == 0 || self.agency_id == 0
+        if account_id == 0 || agency_id == 0
           reload() if inline_fix_external_policy_relationships
         end
 
+        #TODO: temp test need to remove according to GCVR2-1197
         begin
-          Compliance::PolicyMailer.with(organization: self.account.nil? ? self.agency : self.account)
-                                  .external_policy_status_changed(policy: self)
-                                  .deliver_now() unless self.in_system?
+          if Rails.env.development? or ENV['RAILS_ENV'] == 'awsdev'
+            Compliance::PolicyMailer.with(organization: self.account.nil? ? self.agency : self.account)
+                                    .external_policy_status_changed(policy: self)
+                                    .deliver_now unless self.in_system?
+          else
+            Compliance::PolicyMailer.with(organization: self.account.nil? ? self.agency : self.account)
+                                    .external_policy_status_changed(policy: self)
+                                    .deliver_later(wait: 5.minutes) unless self.in_system?
+          end
         rescue Exception => e
           @error = ModelError.create!(
             kind: "external_policy_status_change_notification_error",
             model_type: "Policy",
-            model_id: self.id,
+            model_id: id,
             information: e.to_json,
             backtrace: e.backtrace.to_json,
-            description: "Unable to generate external Policy status change email for Policy ID: #{ self.id }<br><br>"
+            description: "Unable to generate external Policy status change email for Policy ID: #{ id }<br><br>"
           )
         end
       end
     end
   end
 
+  def sanitize_policy_number
+    self.number = self.number&.strip
+  end
+
   def set_status_changed_on
     self.status_changed_on = DateTime.current
+    essex_webhook_check = Rails.env == "awsdev" ? 28 : Rails.env == "production" ? 45 : false
+    Policies::SendWebhookJob.perform_later(policy_id: self.id) if essex_webhook_check != false && self.account_id == essex_webhook_check
   end
 
   def inline_fix_external_policy_relationships

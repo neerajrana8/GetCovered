@@ -1,3 +1,6 @@
+# https://github.com/sidekiq/sidekiq/wiki/Error-Handling#automatic-job-retry
+:max_retries: 4
+
 :concurrency: 10
 awsdev:
   :concurrency: 20
@@ -17,13 +20,9 @@ production:
   - mailers
 
 :schedule:
-  insurables_refresh_insurable_data:
-    cron: '0 */2 * * *'   # Every day at 0:00 AM
-    class: Insurables::RefreshInsurableDataJob
-  # Compliance
-  configuration_sweep_job:
-    cron: '0 2 * * *'   # Every day at 2:00 AM
-    class: Compliance::Policies::MasterCoverageSweepJob
+#  configuration_sweep_job:
+#    cron: '0 2 * * *'   # Every day at 2:00 AM
+#    class: Compliance::Policies::MasterCoverageSweepJob
   first_contact_job:
     cron: '0 3 * * *' # Every Day at 3:00 AM
     class: Compliance::Audit::FirstContactJob
@@ -37,9 +36,15 @@ production:
   generate_and_send_cancellation_list_job:
     cron: '30 2 * * *'   # Every day at 2:30 AM
     class: CarrierQBE::GenerateAndSendCancellationListJob
+  fetch_accord_file_job:
+    cron: '30 0 * * *'   # Every day at 12:30 AM
+    class: CarrierQBE::FetchAccordFileJob
   confie_report:
     cron: '35 * * * *' # Every hour, thirty-five minutes in
     class: Reports::ConfieReportJob
+  DailyExternalActivityReportJob:
+    cron: '30 23 * * *' # 11:30pm
+    class: Reports::DailyExternalActivityReportJob
   # Invoices
   bill_due_invoices:
     cron: '30 0 * * *'   # Every day at 12:30 AM
@@ -63,6 +68,9 @@ production:
   bill_master_policies:
     cron: '0 4 1 * *'   # Each first day of month at 6:00 AM
     class: BillMasterPoliciesJob
+  expire:
+    cron: '0 23 * * *' # Each day at 11:00 PM
+    class: Policies::ExpireJob
   # Leads
   leads_status_update_job:
     cron: '0 6 * * *' # Every day at 6:00 AM
@@ -93,6 +101,12 @@ production:
   expiring_soon_job:
     cron: '0 6 * * *' # Every day at 6:00 AM
     class: Compliance::Policies::ExpiringSoonJob
+  lapsed_job:
+    cron: '0 5 * * *' # Every day at 5:00 AM
+    class: Compliance::Policies::LapsedJob
+  lease_renewal:
+    cron: '45 22 * * *' # Each day at 10:45 PM
+    class: Compliance::LeaseRenewalJob
   # Access Tokens
   remove_expired_access_tokens_job:
     cron: '0 0 * * *' # Every day at midnight
@@ -107,14 +121,36 @@ production:
   create_commissions_for_policy_premium_item_transactions_job:
     cron: '0 5 * * *' # Every day at 5:00 AM
     class: CreateCommissionsForPolicyPremiumItemTransactionsJob
-  gmail_mail_sync_job:
-    cron: '0 1 * * *'   # Every day at 1:00 AM
-    class: GmailMailSyncJob
+#  gmail_mail_sync_job:
+#    cron: '0 1 * * *'   # Every day at 1:00 AM
+#    class: GmailMailSyncJob
   # Yardi Sync
   yardi_sync_job:
     cron: '0 1 * * *' # Every day at 1:00 AM
     class: YardiSyncJob
+  # User merge
+  user_merge_job:
+    cron: '0 22 * * *' # Every day at 10:00 PM
+    class: UserMergeJob
+  # Report generation
+  coverage_report_generation_job:
+    cron: '45 22 * * *' # Every day at 10:45 PM
+    class: CoverageReportGenerationJob
+  policy_report_sync_job:
+    cron: '30 23 * * *' # Every day at 11:30 PM
+    class: PolicyReportSyncJob
+  # Unmatched user emails
+  unmatched_user_email_job:
+    cron: '15 0 * * *' # Every day at 12:15 AM
+    class: UnmatchedUserEmailJob
   # Generic Actions
   perform_scheduled_actions_job:
     cron: '45 * * * *' # every hour, 45 minutes in
     class: PerformScheduledActionsJob
+  # Update covered status Job
+  update_statuses_job:
+    cron: '0 6 * * *' # Daily , 06:00 AM
+    class: UpdateStatusesJob
+  master_policy_issue_job:
+    cron: '0 5 * * *'
+    class: MasterPolicies::IssueJob

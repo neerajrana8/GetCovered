@@ -83,7 +83,8 @@ module V2
           insurables_query = insurables_query.where('title LIKE ?', "%#{filter[:title][:like]}%") if filter[:title][:like].present?
         end
 
-        insurables = insurables_query.page(page).per(per)
+        ids = insurables_query.pluck(:id).uniq
+        insurables = Insurable.where(id: ids).page(page).per(per)
 
         @insurables = insurables
         @meta = {
@@ -135,7 +136,7 @@ module V2
       end
 
       def check_permissions
-        if current_staff && %(super_admin, staff, agent).include?(current_staff.role)
+        if current_staff && %(super_admin, staff, agent, policy_support).include?(current_staff.role)
           true
         else
           render json: { error: 'Permission denied' }, status: 403

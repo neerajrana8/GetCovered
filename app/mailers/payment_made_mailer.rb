@@ -17,7 +17,7 @@ class PaymentMadeMailer < ApplicationMailer
     subject = I18n.t("payment_made_mailer.send_successful_payment_notification.subject",
                      agency_title: @agency.title,
                      policy_type: @policy_type_title)
-    mail(from: @from, to: @user.email, subject: subject)
+    mail(from: @from, bcc: "systememails@getcovered.io", to: @user.email, subject: subject)
   end
 
 end

@@ -53,9 +53,9 @@ module V2
         # Tcode filtering
         if filter[:tcode].present?
           matched_integrations = IntegrationProfile
-                                   .where('external_id LIKE ? AND profileable_type = ?', "%#{filter[:tcode]}%", 'PolicyUser')
+                                   .where('external_id LIKE ? AND profileable_type = ?', "%#{filter[:tcode]}%", 'User')
           matched_integrations_ids = matched_integrations.pluck(:profileable_id)
-          policy_ids = PolicyUser.where(id: matched_integrations_ids).pluck(:policy_id)
+          policy_ids = PolicyUser.where(user_id: matched_integrations_ids, primary: true).pluck(:policy_id)
           policies = policies.where(id: policy_ids)
         end
 
@@ -79,6 +79,15 @@ module V2
       def show
         @policy = Policy.find(params[:id])
         render 'v2/policies/show'
+      end
+
+      def calculate_cost
+        resp = {}
+        policy = Policy.find(params[:id])
+        insurable = Insurable.find(params[:insurable_id])
+        mpc = policy.find_closest_master_policy_configuration(insurable, params[:start_date])
+        resp = { total_placement_amount: mpc.total_placement_amount } unless mpc.nil?
+        render json: resp
       end
 
       private

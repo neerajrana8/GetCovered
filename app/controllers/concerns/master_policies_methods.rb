@@ -18,10 +18,33 @@ module MasterPoliciesMethods
       error = nil
       ::ActiveRecord::Base.transaction do
         begin
-          @master_policy = Policy.create!(create_params.merge(agency: account.agency,
-                                                    carrier: carrier,
-                                                    account: account,
-                                                    status: 'BOUND'))
+          # create_params.policy.master_policy_configurations_attributes.first.carrier_policy_type_id = 5
+
+          # NOTE: Support only one Carrier for now
+          carrier = Carrier.find_by(call_sign: 'QBSI')
+          raise 'Carrier QBSI not found in the system' if carrier.blank?
+
+          carrier_policy_type = CarrierPolicyType.where(
+            carrier_id: carrier.id,
+            policy_type_id: PolicyType::MASTER_ID
+          ).take
+
+          if carrier_policy_type.blank?
+            raise "CarrierPolicyType(carrier_id: #{carrier.id}, policy_type_id: #{PolicyType::MASTER_ID}) not found"
+          end
+
+          carrier_policy_type_id = carrier_policy_type.id
+
+          if params[:policy][:master_policy_configurations_attributes].present?
+            params[:policy][:master_policy_configurations_attributes][0][:carrier_policy_type_id] = carrier_policy_type_id
+          end
+
+          new_policy_data = create_params.merge(agency: account.agency,
+                                                carrier: carrier,
+                                                account: account,
+                                                status: 'BOUND')
+
+          @master_policy = Policy.create!(new_policy_data)
           @policy_premium = PolicyPremium.create!(policy: @master_policy)
           @ppi = ::PolicyPremiumItem.create!(
             policy_premium: @policy_premium,
@@ -44,7 +67,13 @@ module MasterPoliciesMethods
       end
       
       if error.nil?
-        render json: { message: 'Master Policy and Policy Premium created', payload: { policy: @master_policy.attributes } },
+        # TODO: Move to jbuilder serializer
+        render json: {
+                 message: 'Master Policy and Policy Premium created',
+                 payload: {
+                   policy: @master_policy.attributes,
+                   master_policy_configurations: @master_policy.master_policy_configurations
+                 } },
                status: :created
       else
         render json: standard_error(
@@ -57,41 +86,59 @@ module MasterPoliciesMethods
     end
 
     def update
-      if @master_policy.policies.any?
-        render json: standard_error(
-                       :master_policy_update_error,
-                       'Master policy has created policies',
-                       @master_policy.errors.merge!(@policy_premium.errors)
-                     ),
-               status: :unprocessable_entity
-      else
-        error = nil
-        ::ActiveRecord::Base.transaction do
-          begin
-            @master_policy.update!(update_params)
+      # NOTE: Support only one Carrier for now
+      carrier = Carrier.find_by(call_sign: 'QBSI')
+      raise 'Carrier QBSI not found in the system' if carrier.blank?
+
+      carrier_policy_type = CarrierPolicyType.where(
+        carrier_id: carrier.id,
+        policy_type_id: PolicyType::MASTER_ID
+      ).take
+
+      if carrier_policy_type.blank?
+        raise "CarrierPolicyType(carrier_id: #{carrier.id}, policy_type_id: #{PolicyType::MASTER_ID}) not found"
+      end
+
+      carrier_policy_type_id = carrier_policy_type.id
+
+      if params[:policy][:master_policy_configurations_attributes].present?
+        params[:policy][:master_policy_configurations_attributes][0][:carrier_policy_type_id] = carrier_policy_type_id
+      end
+
+      error = nil
+      ::ActiveRecord::Base.transaction do
+        begin
+          @master_policy.update!(update_params)
+          unless @master_policy.policies.any?
             if create_policy_premium && create_policy_premium[:base] && create_policy_premium[:base] != @master_policy.policy_premiums.take.total_premium
               premium = @master_policy.policy_premiums.take
               ppi = premium.policy_premium_items.where(commission_calculation: 'no_payments').take
               ppi.update!(original_total_due: create_policy_premium[:base], total_due: create_policy_premium[:base])
-              pp.update_totals(persist: false)
-              pp.save!
+              @master_policy.premium.update_totals(persist: false)
+              @master_policy.premium.save!
             end
-          rescue ActiveRecord::RecordInvalid => err
-            error = err
-            raise ActiveRecord::Rollback
           end
+        rescue ActiveRecord::RecordInvalid => err
+          error = err
+          raise ActiveRecord::Rollback
         end
-        if error.nil?
-          render json: { message: 'Master Policy updated', payload: { policy: @master_policy.attributes } },
-                 status: :created
-        else
-          render json: standard_error(
-                         :master_policy_update_error,
-                         'Master policy was not updated',
-                         error.record.errors
-                       ),
-                 status: :unprocessable_entity
-        end
+      end
+
+      if error.nil?
+        # TODO: Move to jbuilder serializer
+        render json: { message: 'Master Policy updated',
+                       payload: {
+                         policy: @master_policy.attributes,
+                         master_policy_configurations: @master_policy.master_policy_configurations
+                       } },
+               status: :created
+      else
+        render json: standard_error(
+                 :master_policy_update_error,
+                 'Master policy was not updated',
+                 error.record.errors
+               ),
+               status: :unprocessable_entity
       end
     end
 
@@ -139,7 +186,49 @@ module MasterPoliciesMethods
             @master_policy.insurables << building
           end
 
-          @master_policy.start_automatic_master_coverage_policy_issue
+          # NOTE: Disable master policy coverage issueing
+          # @master_policy.start_automatic_master_coverage_policy_issue
+          #
+          #   master_policy_configurations_attributes: [
+          #   :id,
+          #   :program_type,
+          #   :grace_period,
+          #   :integration_charge_code,
+          #   :prorate_charges,
+          #   :admin_prorate_charges,
+          #   :auto_post_charges,
+          #   :consolidate_billing,
+          #   :program_start_date,
+          #   :program_delay,
+          #   :placement_cost,
+          #   :admin_cost,
+          #   :force_placement_cost,
+          #   :force_admin_cost,
+          #   :carrier_policy_type_id,
+          #   :configurable_type,
+          #   :configurable_id,
+          #   :enabled,
+          #   :integration_account_number,
+          #   :admin_fee,
+          #   :force_admin_cost,
+          #   :force_admin_fee,
+          #   :prorate_admin_fee,
+          #   :charge_date,
+          #   :enabled
+          # ]
+
+          if params[:master_policy_configurations].present?
+            if params[:master_policy_configurations][:id].present?
+              mpc = MasterPolicyConfiguration.find(params[:master_policy_configurations][:id])
+              mpc.update(params[:master_policy_configurations])
+            else
+              mpc_params[:configurable_id] = insurable.id
+              mpc_params[:configurable_type] = 'Insurable'
+              # TODO: How to get carrier policy type if carrier has many  ?
+              mpc_params[:carrier_policy_type_id] = @master_policy.carrier.carrier_policy_types.first.id
+              MasterPolicyConfiguration.create! mpc_params
+            end
+          end
 
           unless params[:auto_assign].nil?
             @master_policy.
@@ -223,6 +312,50 @@ module MasterPoliciesMethods
       end
     end
 
+    def cover_unit_with_configuration
+      unit = Insurable.find(params[:insurable_id])
+      mpc = @master_policy.find_closest_master_policy_configuration(unit)
+
+      if mpc.nil?
+        render json: { error: :invalid_master_policy_configuration }, status: 400
+      end
+
+      effective_date = @master_policy.effective_date
+      effective_date = mpc.program_start_date unless mpc.program_start_date.nil?
+
+      if params[:start_date].present?
+        effective_date = params[:start_date]
+      end
+
+      if unit.policies.where(policy_type_id: PolicyType::MASTER_MUTUALLY_EXCLUSIVE[@master_policy.policy_type_id]).current.empty? && unit.occupied?
+        policy_number = MasterPolicies::GenerateNextCoverageNumber.run!(master_policy_number: @master_policy.number)
+        policy = unit.policies.create(
+          agency: @master_policy.agency,
+          carrier: @master_policy.carrier,
+          account: @master_policy.account,
+          policy_coverages_attributes: @master_policy.policy_coverages.map do |policy_coverage|
+            policy_coverage.attributes.slice('limit', 'deductible', 'enabled', 'designation', 'title')
+          end,
+          number: policy_number,
+          policy_type: @master_policy.policy_type.coverage,
+          policy: @master_policy,
+          status: 'BOUND',
+          system_data: @master_policy.system_data,
+          effective_date: effective_date, # @master_policy.effective_date,
+          expiration_date: @master_policy.expiration_date
+        )
+        if policy.errors.blank?
+          unit.update(covered: true)
+          render json: policy.to_json, status: :ok
+        else
+          response = { error: :policy_creation_problem, message: 'Policy was not created', payload: policy.errors }
+          render json: response.to_json, status: :internal_server_error
+        end
+      else
+        render json: { error: :bad_unit, message: 'Unit does not fulfil the requirements' }.to_json, status: :bad_request
+      end
+    end
+
     def master_policy_coverages
       @master_policy_coverages = paginator(@master_policy.policies.master_policy_coverages.current)
       render template: 'v2/shared/master_policies/master_policy_coverages', status: :ok
@@ -283,7 +416,34 @@ module MasterPoliciesMethods
       permitted_params = params.require(:policy).permit(
         :account_id, :agency_id, :auto_renew, :carrier_id, :effective_date, :policy_type_id,
         :expiration_date, :number, system_data: [:landlord_sumplimental],
-        policy_coverages_attributes: %i[policy_application_id title limit deductible enabled designation]
+        policy_coverages_attributes: %i[policy_application_id title limit deductible enabled designation],
+        master_policy_configurations_attributes: [
+          :id,
+          :program_type,
+          :grace_period,
+          :integration_charge_code,
+          :prorate_charges,
+          :admin_prorate_charges,
+          :auto_post_charges,
+          :consolidate_billing,
+          :program_start_date,
+          :program_delay,
+          :placement_cost,
+          :admin_cost,
+          :force_placement_cost,
+          :force_admin_cost,
+          :carrier_policy_type_id,
+          :configurable_type,
+          :configurable_id,
+          :enabled,
+          :integration_account_number,
+          :admin_fee,
+          :force_admin_cost,
+          :force_admin_fee,
+          :prorate_admin_fee,
+          :charge_date,
+          :enabled
+        ]
       )
 
       permitted_params
@@ -296,7 +456,34 @@ module MasterPoliciesMethods
         :account_id, :agency_id, :auto_renew, :carrier_id, :effective_date,
         :expiration_date, :number, system_data: [:landlord_sumplimental],
         policy_coverages_attributes: %i[id policy_application_id policy_id title
-                                                                   limit deductible enabled designation]
+                                                                   limit deductible enabled designation],
+        master_policy_configurations_attributes: [
+          :id,
+          :program_type,
+          :grace_period,
+          :integration_charge_code,
+          :prorate_charges,
+          :admin_prorate_charges,
+          :auto_post_charges,
+          :consolidate_billing,
+          :program_start_date,
+          :program_delay,
+          :placement_cost,
+          :admin_cost,
+          :force_placement_cost,
+          :force_admin_cost,
+          :carrier_policy_type_id,
+          :configurable_type,
+          :configurable_id,
+          :enabled,
+          :integration_account_number,
+          :admin_fee,
+          :force_admin_cost,
+          :force_admin_fee,
+          :prorate_admin_fee,
+          :charge_date,
+          :enabled
+        ]
       )
 
       existed_ids = permitted_params[:policy_coverages_attributes]&.map { |policy_coverage| policy_coverage[:id] }
@@ -309,6 +496,10 @@ module MasterPoliciesMethods
       end
 
       permitted_params
+    end
+
+    def mpc_params
+      params.require(:master_policy_configurations).permit!
     end
 
     def create_policy_premium

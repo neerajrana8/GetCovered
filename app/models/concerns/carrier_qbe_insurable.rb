@@ -140,7 +140,7 @@ module CarrierQbeInsurable
 	            
               # if address has no county, restrict by city and try to get the county if necessary
 	            if @address.county.nil?
-	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| opt['locality'].downcase == @address.city.downcase || opt['locality'].downcase == @address.neighborhood&.downcase }
+	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| qbe_cities_match(opt['locality'], @address.city) || qbe_cities_match(opt['locality'], @address.neighborhood) }
                 if @carrier_profile.data["county_resolution"]["matches"].length > 1
                   @address.geocode if @address.latitude.blank?
                   unless @address.latitude.blank?
@@ -152,11 +152,11 @@ module CarrierQbeInsurable
 
               # if address has a county, restrict by it
 	            if !@address.county.nil?
-	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| (opt['locality'].downcase == @address.city.downcase || opt['locality'].downcase == @address.neighborhood&.downcase) && qbe_standardize_county_string(opt['county']) == qbe_standardize_county_string(@address.county) } # just in case one is "Whatever County" and the other is just "Whatever", one has a dash and one doesn't, etc
+	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| (qbe_cities_match(opt['locality'], @address.city) || qbe_cities_match(opt['locality'], @address.neighborhood)) && qbe_standardize_county_string(opt['county']) == qbe_standardize_county_string(@address.county) } # just in case one is "Whatever County" and the other is just "Whatever", one has a dash and one doesn't, etc
 	            end
               
-              if @carrier_profile.data['county_resolution']['matches'].count{|opt| opt['locality'].downcase == @address.city.downcase } == 1 && @carrier_profile.data['county_resolution']['matches'].count{|opt| opt['locality'].downcase == @address.neighborhood&.downcase } == 1
-                @carrier_profile.data['county_resolution']['matches'].select!{|opt| opt['locality'].downcase == @address.neighborhood&.downcase }
+              if @carrier_profile.data['county_resolution']['matches'].count{|opt| qbe_cities_match(opt['locality'], @address.city) } == 1 && @carrier_profile.data['county_resolution']['matches'].count{|opt| qbe_cities_match(opt['locality'], @address.neighborhood) } == 1
+                @carrier_profile.data['county_resolution']['matches'].select!{|opt| qbe_cities_match(opt['locality'], @address.neighborhood) }
               end
 	  
 	            case @carrier_profile.data["county_resolution"]["matches"].length
@@ -506,14 +506,14 @@ module CarrierQbeInsurable
 	          
             rates = create_qbe_rates(qbe_data[:data], split_deductible, number_insured)
             
-            irc = ::InsurableRateConfiguration.where(carrier_policy_type: carrier_policy_type, configurer: @carrier, configurable: irc_configurable_override || self)
+            irc = ::InsurableRateConfiguration.for_date(effective_date || Time.current.to_date).where(carrier_policy_type: carrier_policy_type, configurer: @carrier, configurable: irc_configurable_override || self)
                 .find{|irc| irc_configurable_override || irc.rates['applicability'] == applicability } || ::InsurableRateConfiguration.new(
               carrier_policy_type: carrier_policy_type,
               configurer: @carrier,
               configurable: irc_configurable_override || self,
               configuration: { 'coverage_options' => {}, "rules" => {} },
               rates: { 'rates' => [nil, {}, {}, {}, {}, {}] }
-            )
+            ).with_date(effective_date || Time.current.to_date)
             irc.rates['applicability'] = applicability unless irc_configurable_override
             
 	          if rates
@@ -934,4 +934,13 @@ module CarrierQbeInsurable
                  .gsub(/SAINT|STREET|ROAD|MOUNT/, { "SAINT" => "ST", "STREET" => "ST", "ROAD" => "RD", "MOUNT" => "MT" })
                  .gsub(/[^a-z]/i, '')
   end
+  
+  # helper method to match cities
+  def qbe_cities_match(city1, city2)
+    return false if city1.nil? || city2.nil?
+    city1 = " #{city1.downcase.gsub(".", "")} ".gsub(" saint ", " st ").gsub(" street ", " st ").gsub(" mount ", " mt ").gsub(" road ", " rd ").strip.squish
+    city2 = " #{city2.downcase.gsub(".", "")} ".gsub(" saint ", " st ").gsub(" street ", " st ").gsub(" mount ", " mt ").gsub(" road ", " rd ").strip.squish
+    return city1 == city2
+  end
+    
 end

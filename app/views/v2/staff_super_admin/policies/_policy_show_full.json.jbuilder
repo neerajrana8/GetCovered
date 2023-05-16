@@ -14,6 +14,10 @@ else
   end
 end
 
+if policy.policy_type&.master_coverage
+  json.master_policy_configuration @master_policy_configuration
+end
+
 if policy.account.present?
   json.account policy.account
 else
@@ -37,6 +41,13 @@ json.users do
       json.spouse policy_user.spouse
       json.partial! "v2/staff_super_admin/users/user_show_full.json.jbuilder", user: policy_user.user
     end
+  end
+end
+
+json.primary_user do
+  if policy.primary_user.present?
+    json.email policy.primary_user.email
+    json.full_name policy.primary_user.full_name
   end
 end
 
@@ -99,6 +110,10 @@ end
 
 json.branding_profile_url policy.branding_profile&.url
 
-if policy.integration_profiles.present?
-  json.tcode policy&.integration_profiles&.first&.external_id
+#if policy.integration_profiles.present?
+#  json.tcode policy&.integration_profiles&.first&.external_id
+#end
+
+if policy&.primary_user&.integration_profiles.present?
+  json.tcode policy&.primary_user&.integration_profiles&.first&.external_id
 end

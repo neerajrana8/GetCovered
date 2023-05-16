@@ -36,6 +36,7 @@ class Insurable < ApplicationRecord
   include RecordChange
   include SetSlug
   include ExpandedCovered
+  include SpecialStatusable
 
   before_validation :set_confirmed_automatically
   before_save :flush_parent_insurable_id, :if => Proc.new { |ins| ::InsurableType::COMMUNITIES_IDS.include?(ins.insurable_type_id) }
@@ -44,6 +45,8 @@ class Insurable < ApplicationRecord
   after_commit :create_profile_by_carrier,
     on: :create
 
+  # NOTE: Disable according to #GCVR2-768 Master Policy Fixes
+  # NOTE: Master policy assignment moved to MasterCoverageSweepJob
   after_create :assign_master_policy
 
   belongs_to :account, optional: true
@@ -79,7 +82,7 @@ class Insurable < ApplicationRecord
 
   has_many :integration_profiles,
            as: :profileable
-  
+
   has_many :insurable_rate_configurations,
            as: :configurable
 
@@ -89,10 +92,8 @@ class Insurable < ApplicationRecord
 
   enum category: %w[property entity]
 
-  enum special_status: {
-    none: 0,
-    affordable: 1
-  }, _prefix: true
+  enum special_status: SPECIAL_STATUSES,
+    _prefix: true
 
   #validates_presence_of :title, :slug WARNING: THIS IS DISABLED TO ALLOW TITLELESS NONPREFERRED UNITS!
 
@@ -130,6 +131,19 @@ class Insurable < ApplicationRecord
   #  end
   #end
   
+  def latest_lease(fake_now: nil)
+    return nil unless ::InsurableType::RESIDENTIAL_UNITS_IDS.include?(self.insurable_type_id)
+    query = self.leases
+    if fake_now
+      query = query.where(end_date: nil).or(query.where("end_date > ?", fake_now.to_date)).where("start_date <= ?", fake_now.to_date)
+    else
+      query = query.where(status: 'current')
+    end
+    query = query.order("start_date desc")
+    return(query.first)
+  end
+  
+
   # returns carrier status, which may differ by carrier; for MSI and QBE, it returns :preferred or :nonpreferred
   def get_carrier_status(carrier, refresh: nil)
     carrier = case carrier
@@ -147,7 +161,7 @@ class Insurable < ApplicationRecord
     end
     self.respond_to?("#{carrier}_get_carrier_status") ? self.send("#{carrier}_get_carrier_status", **{ refresh: refresh }.compact) : nil
   end
-  
+
   # Insurable.primary_address
   #
   def primary_address
@@ -186,15 +200,15 @@ class Insurable < ApplicationRecord
     return if insurable.nil?
     errors.add(:account, I18n.t('insurable_model.must_belong_to_same_account')) if insurable.account && account && insurable.account != account
   end
-  
+
   def residential_units
     units(unit_type_ids: [4])
   end
-  
+
   def commercial_units
     units(unit_type_ids: [5])
   end
-  
+
   def units(unit_type_ids: [4,5])
     # special logic in case we haven't been saved yet
     if self.id.nil?
@@ -217,7 +231,7 @@ class Insurable < ApplicationRecord
     # return the units
     return ::Insurable.where(insurable_type_id: unit_type_ids, insurable_id: nonunit_parent_ids) # WARNING: some code (msi insurable concern) expects query rather than array output here (uses scopes on this call)
   end
-  
+
   def query_for_full_hierarchy(exclude_self: false)
     # WARNING: at some point, we can use an activerecord callback to store all nonunit child insurable ids in a field and thus skip the loop
     # loopy schloopy
@@ -278,7 +292,7 @@ class Insurable < ApplicationRecord
 
     return to_return
   end
-  
+
   def authorized_to_provide_for_address?(carrier_id, policy_type_id, agency: nil)
     addresses.each do |address|
       return true if authorized == true
@@ -301,8 +315,8 @@ class Insurable < ApplicationRecord
 
   def refresh_policy_type_ids(and_save: false)
     self.policy_type_ids = self.carrier_insurable_profiles.any?{|cip| cip.carrier_id == DepositChoiceService.carrier_id && cip.external_carrier_id } ? [DepositChoiceService.policy_type_id] : []
-    
-    
+
+
     # THIS IS TURNED OFF FOR NOW, IT'S GOTTEN INSANELY MORE COMPLICATED SO WE'RE RESTRICTING TO DEPOSIT CHOICE:
     #my_own_little_agency = (self.agency_id ? ::Agency.where(id: self.agency_id).take : nil) || self.account&.agency || nil
     #if my_own_little_agency.nil? || self.primary_address.nil?
@@ -387,7 +401,7 @@ class Insurable < ApplicationRecord
             return { error_type: :invalid_community, message: "The requested residential building/community does not exist" }
           end
           community = (results.parent_community || results)
-          community.primary_addres.update(neighborhood: neighborhood) if !neighborhood.blank? && community.primary_address.neighborhood.blank?
+          community.primary_address.update(neighborhood: neighborhood) if !neighborhood.blank? && community.primary_address.neighborhood.blank?
           unit = results.insurables.new(
             title: unit_title == :titleless ? nil : unit_title,
             insurable_type: ::InsurableType.where(title: "Residential Unit").take,
@@ -624,9 +638,11 @@ class Insurable < ApplicationRecord
   end
 
   def refresh_insurable_data
-    InsurablesData::Refresh.run!(insurable: self)
+    # Todo: Remove before 2023-02-01, left in place to make sure no errors would pop up
+    # InsurablesData::Refresh.run!(insurable: self)
+    nil
   end
-  
+
   def get_qbe_traits(
     force_defaults: false,  # pass true here to force defaults even if the property's state does not support QBE defaults for final bind
     extra_settings: nil,    # pass policy_application.extra_settings if you have any
@@ -673,7 +689,23 @@ class Insurable < ApplicationRecord
   end
 
   def coverage_requirements_by_date(date: DateTime.current.to_date)
-    return self.coverage_requirements.where("start_date < ?", date).order("start_date desc").limit(1).take
+    # return self.coverage_requirements.where("start_date < ?", date).order('start_date desc').limit(1).take
+
+    if account
+      tokens = [account.id, id, date]
+      requirements = CoverageRequirement.where('(account_id = ? OR insurable_id = ?) AND start_date <= ?', *tokens)
+    else
+      tokens = [id, date]
+      requirements = CoverageRequirement.where('insurable_id = ? AND start_date <= ?', *tokens)
+    end
+
+    sorted_requirements = requirements.sort_by(&:start_date).reverse
+    reqs = {}
+    sorted_requirements.each do |r|
+      reqs[r.designation] = r.id unless reqs.include?(r.designation)
+    end
+    found_requirements = CoverageRequirement.where(id: reqs.values)
+    found_requirements
   end
 
   private
@@ -688,6 +720,9 @@ class Insurable < ApplicationRecord
     end
   end
 
+  # NOTE: Commented out according to GCVR2-768: Master Policy Fixes
+  # NOTE: Master Policy Assignment moved MasterCoverageSweepJob
+  # NOTE: Recovered
   def assign_master_policy
     return if InsurableType::COMMUNITIES_IDS.include?(insurable_type_id) || insurable.blank?
 
@@ -733,7 +768,7 @@ class Insurable < ApplicationRecord
                         end
       return(splat.size == 1 ? splat[0] : nil)
     end
-    
+
     def set_confirmed_automatically
       self.confirmed = !self.account_id.nil?
     end

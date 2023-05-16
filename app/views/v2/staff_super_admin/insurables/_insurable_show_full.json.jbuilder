@@ -97,3 +97,7 @@ json.agency do
     json.title insurable.agency.title
   end
 end
+
+if @master_policy.present?
+  json.master_policy_configurations [MasterPolicy::ConfigurationFinder.call(@master_policy, insurable)]
+end

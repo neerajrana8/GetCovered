@@ -60,6 +60,7 @@ en:
       or_visit: "or visit"
       we_look_forward: "We look forward to providing you with quality coverage and outstanding service."
       thank_you: "Thank you,"
+      let_us_know: "Let us know if we can help! Enjoy your day."
       team_name: "The Get Covered Team"
       email_preview_text: "Insurance documents attached"
   payment_made_mailer:
@@ -160,15 +161,6 @@ en:
   invoice_mailer:
     invoice_complete:
       subject: "%{product_type} Invoice Paid"
-      body: "Hello %{recipient_name},\n
-             Thank you for selecting a %{product_type} from %{agency_title}.\n
-             Your account invoice for %{product_type} %{product_identifier} in the amount of $%{invoice_total} was successfully paid on %{invoice_date}.\n
-             To review your policy information, please visit the following link:\n
-                %{url}\n
-             If you have any questions, please contact us at %{support_email}.\n
-             Thank you,\n
-             The Get Covered Team\n
-             %{support_email}"
     invoice_missed:
       subject: "%{product_type} Invoice Missed"
       body: "Hello %{recipient_name},\n
@@ -180,4 +172,40 @@ en:
              Thank you,\n
              The Get Covered Team\n
              %{support_email}"
-
+  activate_account_mailer:
+    third_party_insurance:
+      subject: "Finish Registering Your Get Covered Account - Policy Submission"
+      thank_you_for_registering: "Thank you for registering your insurance documents!"
+      please_click: "Please click below to finish activating your account."
+      the_gc_portal_will_allow: "The Get Covered portal will allow you to update your personal information, settings and manage your insurance documents."
+      let_us_know: "Let us know if we can help! Enjoy your day."
+      activate_your_account: "Activate Your Account"
+    master_policy_enrollment:
+      subject: "Finish Registering Your Get Covered Account - Master Policy"
+      thank_you_for_registering: "Thank you for enrolling! You have met the insurance requirements per your lease agreement."
+      please_click: "Please click below to finish activating your account."
+      the_gc_portal_will_allow: "The Get Covered portal will allow you to update your personal information, settings and manage your insurance enrollment."
+    renters_insurance_policy_purchase:
+      subject: "Finish Registering Your Get Covered Account - Residential"
+      thank_you_for_registering: "Thank you for purchasing a renters insurance policy with Get Covered!"
+      please_click: "Please click below to finish activating your account."
+      the_gc_portal_will_allow: "The Get Covered portal will allow you to access your policy documents, update your personal information and review your billing details."
+  policy_mailer:
+    coverage_proof_uploaded:
+      subject: 'Policy Submission Received'
+    notify_new_child_policy:
+      subject: 'Master Policy Enrollment Confirmation'
+    policy_expiring_soon:
+      subject: "Your insurance will expire soon!"
+      content: "Hello, %{first_name}!\n
+                  Your insurance policy on file with us is set to expire on %{policy_expiration_date}.\n
+                  Please submit your new insurance policy or renewal documents before the expiration date.Thank you!"
+    enrolled_in_master:
+      subject: "Default Policy Enrollment"
+  renewal_mailer:
+    policy_renewing_soon:
+      subject: "Your insurance policy is renewing soon"
+    policy_renewal_success:
+      subject: "Your insurance policy has been renewed"
+    policy_renewal_failed:
+      subject: "Your insurance policy renewal has failed"

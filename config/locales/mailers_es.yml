@@ -58,7 +58,8 @@ es:
       or_visit: "or visite"
       we_look_forward: "Esperamos brindarle una cobertura de calidad y un servicio excepcional."
       thank_you: "Gracias,"
-      team_name: "TEl equipo de Get Covered"
+      let_us_know: "Déjanos saber si podemos ayudarle! ¡Que tenga un buen día."
+      team_name: "El equipo de Get Covered"
       email_preview_text: "Documentos de seguro adjuntos"
   payment_made_mailer:
     send_successful_payment_notification:
@@ -145,15 +146,6 @@ es:
   invoice_mailer:
     invoice_complete:
       subject: "%{product_type} Factura Premium Pagada"
-      body: "Hola %{recipient_name},\n
-             Gracias por elegir una %{product_type} de %{agency_title}.\n
-             La factura de la prima de su cuenta de $%{invoice_total} se pagó con éxito el %{invoice_date}.\n
-             Para revisar la información de su póliza, visite el siguiente enlace:\n
-                %{url}\n
-             Si tiene alguna pregunta, comuníquese con nosotros a %{support_email}.\n
-             Gracias,\n
-             El equipo de Get Covered\n
-             %{support_email}"
     invoice_missed:
       subject: "%{product_type} Factura Perdida"
       body: "Hola %{recipient_name},\n
@@ -165,3 +157,36 @@ es:
              Gracias,\n
              El equipo de Get Covered\n
              %{support_email}"
+  activate_account_mailer:
+    third_party_insurance:
+      subject: "Termina de registrar su cuenta Get Covered - Envío de la póliza"
+      thank_you_for_registering: "¡Gracias por registrar sus documentos de seguro!"
+      please_click: "Por favor, click abajo para terminar de activar su cuenta."
+      the_gc_portal_will_allow: "El portal de Get Covered le permitirá actualizar su información personal, configuraciones y administrar sus documentos de seguro."
+      let_us_know: "Déjanos saber si podemos aydarle! ¡Que tenga un buen día! "
+      activate_your_account: "Activa su cuenta"
+    master_policy_enrollment:
+      subject: "Termina de registrar su cuenta Get Covered - Master Póliza"
+      thank_you_for_registering: "¡Gracias por inscribirte! Ha cumplido con los requisitos de seguro según su contrato de arrendamiento."
+      please_click: "Por favor, click abajo para terminar de activar su cuenta."
+      the_gc_portal_will_allow: "El portal de Get Covered le permitirá actualizar su información personal, configuraciones y administrar sus documentos de seguro."
+    renters_insurance_policy_purchase:
+      subject: "Termina de registrar su cuenta Get Covered - Residential"
+      thank_you_for_registering: "¡Gracias por comprar una póliza de seguro de inquilinos con Get Covered!"
+      please_click: "Por favor, click abajo para terminar de activar su cuenta."
+      the_gc_portal_will_allow: "El portal de Get Covered le permitirá actualizar su información personal, configuraciones y administrar sus documentos de seguro."
+  policy_mailer:
+    policy_expiring_soon:
+      subject: "Your insurance will expire soon!"
+      content: "Hello, %{first_name}!\n
+                  Your insurance policy on file with us is set to expire on %{policy_expiration_date}.\n
+                  Please submit your new insurance policy or renewal documents before the expiration date.Thank you!"
+    enrolled_in_master:
+      subject: "Default Policy Enrollment"
+  renewal_mailer:
+    policy_renewing_soon:
+      subject: "Your insurance policy is renewing soon"
+    policy_renewal_success:
+      subject: "Your insurance policy has been renewed"
+    policy_renewal_failed:
+      subject: "Your insurance policy renewal has failed"

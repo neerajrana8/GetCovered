@@ -1,0 +1,31 @@
+<div style="text-align: left;font-family: 'Roboto', sans-serif !important;margin-top: 30px;">
+  <p>Dear <%= @policy.primary_user.profile.full_name %></p>
+  <p>We are writing to inform you that your insurance policy is due for renewal soon.
+    Your policy, <b><%= @policy.number %></b>, will renew on <b><%= @renew_on_date %></b>.
+    This policy provides you with:
+
+    <ul>
+    <% @policy.coverages.each do |coverage|  %>
+      <li><p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-left: 3em">
+        <span style="font-size: 14px;"><%= coverage.title %></span>
+      </p></li>
+    <% end %>
+    </ul>
+
+    To avoid any gap in coverage, we would recommend renewing your policy well in advance.
+      You can easily renew your policy online by logging into your <a href="<%= @renewal_url %>">your account on our website</a> or contacting our customer service team for assistance.</p>
+
+
+  <p>If you have any questions or would like to discuss your policy options, our team of insurance experts would be happy to assist you.
+     You can reach us at <a href="mailto:<%= t('support_email') %>"><%= t('support_email') %></a>.</p>
+  <p>Thank you for choosing us as your insurance provider. We look forward to serving you for another year.</p>
+  <p>Best regards, Get Covered</p>
+</div>
+
+
+
+
+
+
+
+

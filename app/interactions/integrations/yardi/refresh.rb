@@ -3,11 +3,13 @@ module Integrations
     class Refresh< ActiveInteraction::Base
       object :integration
       
+      SPECIAL_STATUS_MODES = [
+        nil,                  # no checks for lease special statuses
+        'bmr'                 # set special status 'affordable' if LeaseDesc is 'BMR' or 'BRM' ('BRM' is included because of what was presumably a typo in an email from Essex lol, not sure if we really need it)
+      ].freeze
     
       def execute
-        if integration.provider != 'yardi'
-          return nil
-        end
+        return nil if integration.provider != 'yardi'
         # ensure the basic schema is present
         integration.credentials ||= {}
         integration.credentials['voyager'] ||= {}
@@ -34,6 +36,18 @@ module Integrations
         missing_fields.push("url") if integration.credentials['urls']['billing_and_payments'].blank?
         billing_issues.push("Your billing & payments configuration is missing fields: #{missing_fields.join(", ")}") unless missing_fields.blank?
         billing_issues.push("You have not enabled billing & payments integration.") if !integration.configuration['billing_and_payments']['enabled']
+        integration.configuration['billing_and_payments']['charge_push'] ||= {}
+        integration.configuration['billing_and_payments']['refund_push'] ||= {}
+        integration.configuration['billing_and_payments']['charge_push']['title'] ||= "Insurance Non-Compliance Fee"
+        integration.configuration['billing_and_payments']['refund_push']['title'] ||= "Insurance Non-Compliance Fee Correction"
+        integration.configuration['billing_and_payments']['charge_push']['title_dated'] ||= false
+        integration.configuration['billing_and_payments']['refund_push']['title_dated'] ||= false
+        integration.configuration['billing_and_payments']['charge_push']['future_transaction'] ||= true
+        integration.configuration['billing_and_payments']['refund_push']['future_transaction'] ||= true
+        integration.configuration['billing_and_payments']['charge_push']['future_service'] ||= false
+        integration.configuration['billing_and_payments']['refund_push']['future_service'] ||= false
+        integration.configuration['billing_and_payments']['charge_push']['display_type'] ||= "Standard Charge Display Type"
+        integration.configuration['billing_and_payments']['refund_push']['display_type'] ||= "Standard Charge Display Type"
         if billing_issues.blank?
           result = Integrations::Yardi::BillingAndPayments::GetVersionNumber.run!(integration: integration)
           if !result[:success]
@@ -110,14 +124,20 @@ module Integrations
         integration.configuration['sync']['push_policies'] = false if integration.configuration['sync']['push_policies'].nil?
         integration.configuration['sync']['push_master_policy_invoices'] = false if integration.configuration['sync']['push_master_policy_invoices'].nil?
         integration.configuration['sync']['policy_push'] ||= {}
+        integration.configuration['sync']['policy_push']['push_roommate_policies'] = true if integration.configuration['sync']['policy_push']['push_roommate_policies'].nil?
         integration.configuration['sync']['policy_push']['push_document'] = false if integration.configuration['sync']['policy_push']['push_document'].nil?
         integration.configuration['sync']['policy_push']['attachment_type_options'] ||= []
         integration.configuration['sync']['policy_push']['attachment_type'] ||= nil
+        integration.configuration['sync']['policy_push']['force_primary_lessee'] ||= false
+        integration.configuration['sync']['policy_push']['force_primary_lessee_for_documents'] ||= false
         integration.configuration['sync']['master_policy_invoices'] ||= {}
         integration.configuration['sync']['master_policy_invoices']['charge_description'] ||= "Master Policy"
         integration.configuration['sync']['master_policy_invoices']['log'] ||= []
         integration.configuration['sync']['sync_history'] ||= []
         integration.configuration['sync']['next_sync'] ||= nil
+        unless SPECIAL_STATUS_MODES.include?(integration.configuration['sync']['special_status_mode'])
+          renters_warnings.push("An invalid special status mode is specified. Warning: the system will ignore it! Mode specified: '#{integration.configuration['sync']['special_status_mode']}'")
+        end
         
         # set up syncable_communities
         result = Integrations::Yardi::RentersInsurance::GetPropertyConfigurations.run!(integration: integration)
@@ -129,6 +149,7 @@ module Integrations
               'name' => c["MarketingName"],
               'gc_id' => (integration.configuration['sync']['syncable_communities'] || {})[c["Code"]]&.[]('gc_id'), # WARNING: insurables sync fills this out
               'enabled' => (integration.configuration['sync']['syncable_communities'] || {})[c["Code"]]&.[]('enabled') ? true : false,
+              'insurables_only' => (integration.configuration['sync']['syncable_communities'] || {})[c["Code"]]&.[]('insurables_only') ? true : false,
               'last_sync_i' =>  integration.configuration['sync']['syncable_communities'][c["Code"]]&.[]('last_sync_i'),
               'last_sync_f' => integration.configuration['sync']['syncable_communities'][c["Code"]]&.[]('last_sync_f'),
               'last_sync_p' => integration.configuration['sync']['syncable_communities'][c["Code"]]&.[]('last_sync_p')

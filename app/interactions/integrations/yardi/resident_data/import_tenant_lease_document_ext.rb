@@ -4,7 +4,7 @@ module Integrations
       class ImportTenantLeaseDocumentExt < Integrations::Yardi::ResidentData::Base
         string :property_id
         string :resident_id
-        string :attachment
+        object :attachment, class: :Object
         string :attachment_type
         string :file_extension # pdf, xls, xlsx, doc, docx
         string :description, default: "GC Verified Policy"
@@ -19,7 +19,7 @@ module Integrations
             AttachmentType: attachment_type,
             Description: description,
             FileExtension: file_extension,
-            Attachment: Base64.strict_encode64(attachment.class == ::String ? attachment : attachment.download)
+            Attachment: Base64.strict_encode64(attachment.class == ::String ? attachment : attachment.download) + "\n"
           }.compact)
         end
                 
@@ -33,6 +33,10 @@ module Integrations
         
         def get_eventable
           return eventable
+        end
+        
+        def special_event_behavior
+          :no_body
         end
         
       end

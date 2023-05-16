@@ -26,7 +26,15 @@ json.lease_type do
 end
 
 json.users do
-  json.array! lease.users do |user|
-    json.partial! "v2/staff_super_admin/users/user_show_full.json.jbuilder", user: user
+  unless lease.lease_users.blank?
+    json.array! lease&.lease_users do |lease_user|
+      json.partial! "v2/staff_super_admin/users/user_show_full.json.jbuilder", user: lease_user.user
+      json.lessee lease_user.lessee
+      json.moved_in_at lease_user.moved_in_at
+      json.moved_out_at lease_user.moved_out_at
+      if lease_user.user.integration_profiles.present?
+        json.t_code lease_user.user&.integration_profiles&.first&.external_id
+      end
+    end
   end
 end

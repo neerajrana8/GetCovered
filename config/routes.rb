@@ -80,6 +80,7 @@ Rails.application.routes.draw do
     draw :staff_agency
     draw :staff_super_admin
     draw :staff_policy_support
+    draw :staff_reporting
     draw :public
     draw :sdk
     draw :dashboards
@@ -89,7 +90,16 @@ Rails.application.routes.draw do
     draw :leads
     draw :branding_profiles
     draw :policies
+    draw :carriers
+    draw :coverage_requirements
+    draw :reports
+
+    if Rails.env.development? or ENV['RAILS_ENV'] == 'awsdev'
+      # GC TOOL
+      match '/stats/:action', via: [:get, :post], controller: :stats
+    end
   end
+
 
   root to: "application#redirect_home"
 end

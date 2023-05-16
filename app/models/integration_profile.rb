@@ -19,6 +19,7 @@
 class IntegrationProfile < ApplicationRecord
   belongs_to :integration
   belongs_to :profileable, polymorphic: true
+  has_many :integration_profiles, as: :profileable
   
   # profileable expansions for convenient joins
   has_one :self_reference, class_name: 'IntegrationProfile', foreign_key: :id

@@ -17,6 +17,7 @@ module V2
         super(:@policies, @substrate, :agency, :account, :primary_user)
       end
 
+      # TODO: Needs refactoring
       def show
         if @policy.primary_insurable.nil?
           @min_liability = 1000000
@@ -28,7 +29,7 @@ module V2
           carrier_id = agency&.providing_carrier_id(PolicyType::RESIDENTIAL_ID, insurable){|cid| (insurable.get_carrier_status(carrier_id) == :preferred) ? true : nil }
           carrier_policy_type = CarrierPolicyType.where(carrier_id: carrier_id, policy_type_id: PolicyType::RESIDENTIAL_ID).take
           uid = (carrier_id == ::MsiService.carrier_id ? '1005' : carrier_id == ::QbeService.carrier_id ? 'liability' : nil)
-          liability_options = (::InsurableRateConfiguration.get_inherited_irc(carrier_policy_type, account || agency, insurable, agency: agency)&.configuration['coverage_options']&.[](uid)&.[]('options') rescue  nil)
+          liability_options = (::InsurableRateConfiguration.get_inherited_irc(carrier_policy_type, account || agency, insurable, Time.current.to_date, agency: agency)&.configuration['coverage_options']&.[](uid)&.[]('options') rescue  nil)
           if liability_options.nil?
             @min_liability = 1000000
             @max_liability = 30000000
@@ -45,10 +46,38 @@ module V2
         if @max_liability.nil? || @max_liability == 0 || @max_liability == "null"
           @max_liability = 30000000
         end
+
+        @lease = @policy.latest_lease(lease_status: ['pending', 'current'])
+        # get the correct date to use
+        @relevant_lease_date = @lease&.program_relevant_date
+        available_lease_date = @lease.nil? ? DateTime.current.to_date : @lease.sign_date.nil? ? @lease.start_date : @lease.sign_date
+        @coverage_requirements = @policy.primary_insurable&.parent_community&.coverage_requirements_by_date(date: available_lease_date)
+
+        # NOTE: needed to display Program Start Date in policy support screen
+        @master_policy_configuration = @policy.master_policy_configuration ||
+          @policy.primary_insurable&.parent_community&.master_policy_configurations&.first
       end
 
       def update
         if @policy.update(update_policy_attributes)
+
+          # # TODO: Place to update policy status depended objects
+          active_policy_types = {}
+          insurables = @policy.insurables
+          insurables.each do |insurable|
+            policies = insurable.policies.where(status: %w[BOUND BOUND_WITH_WARNING])
+            policies.each do |policy|
+              active_policy_types[policy.policy_type_id] = policy
+            end
+            ::Insurables::StatusUpdater.call(insurable)
+          end
+
+          active_policy_types.each do |policy_type, policy|
+            if policy_type == PolicyType::MASTER_COVERAGE_ID
+              policy.update(status: 10) # Cancel MASTER_COVERAGE child policy
+            end
+          end
+
           render json: @policy.to_json,
                  status: 202
         else

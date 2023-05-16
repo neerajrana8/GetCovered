@@ -1,0 +1,21 @@
+<div style="text-align: left;font-family: 'Roboto', sans-serif !important;margin-top: 30px;">
+  <p>Dear <%= @policy.primary_user.profile.full_name %></p>
+  <p>We hope this email finds you well.
+     We are writing to inform you that the renewal process for your insurance policy <b><%= @policy.number %></b>, has failed.</p>
+  <p>This means that your coverage may be temporarily suspended until we can resolve the issue.
+    We understand how important it is to have uninterrupted insurance protection, and we apologize for any inconvenience this may cause. Our team is currently investigating the issue and working to resolve it as soon as possible.</p>
+
+  <p>In the meantime, we advise you to take the necessary precautions to protect yourself and your loved ones.
+    If you have any questions or concerns, please don't hesitate to contact our customer service team at <a href="mailto:<%= t('support_email') %>"><%= t('support_email') %></a>.
+    We will keep you updated on the status of the renewal process and will notify you as soon as it has been successfully completed.</p>
+
+  <p>Thank you for your understanding and for choosing us as your insurance provider.</p>
+  <p>Best regards, Get Covered</p>
+</div>
+
+
+
+
+
+
+
