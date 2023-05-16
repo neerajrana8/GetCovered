@@ -1,11 +1,11 @@
 class CoverageReportGenerationJob < ApplicationJob
   queue_as :default
 
-  def perform(account_report_or_all = :all, report_time = Time.current.to_date, create_params: {})
+  def perform(account_report_or_all = :all, report_time = Time.current, create_params: {})
     case account_report_or_all
       when :all # generate all reports
         Reporting::CoverageReport.generate_all!(report_time)
-      when Reporting::CoverageReport # regenerate a particular report
+      when Reporting::CoverageReport # regenerate a particular report (doesn't use report_time)
         account_report_or_all.generate! unless account_report_or_all.status == 'ready'
       when ::Account, nil # generate a single report
         account = account_report_or_all

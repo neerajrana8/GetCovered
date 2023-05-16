@@ -91,18 +91,18 @@ module Compliance
     #TODO: hotfix will be moved to separate service with PolicyMailer logic in GCVR2-1028
     def set_branding_profile
       if is_second_nature?
-        #@organization.branding_profiles.blank? ? @organization.agency.branding_profiles.where(enabled: true).take : @organization.branding_profiles.where(enabled: true).take
+        #@organization.branding_profiles.blank? ? @organization.agency.branding_profiles.where(enabled: true, default: true).take : @organization.branding_profiles.where(enabled: true, default: true).take
         if Rails.env.development? or ENV['RAILS_ENV'] == 'awsdev'
-          BrandingProfile.find_by(profileable_type: "Account", profileable_id: 40) || @organization.branding_profiles.where(enabled: true).take
+          BrandingProfile.find_by(profileable_type: "Account", profileable_id: 40) || @organization.branding_profiles.where(enabled: true, default: true).take
         else
-          BrandingProfile.find_by(profileable_type: "Account", profileable_id: 46) || @organization.branding_profiles.where(enabled: true).take
+          BrandingProfile.find_by(profileable_type: "Account", profileable_id: 46) || @organization.branding_profiles.where(enabled: true, default: true).take
         end
       else
         #TODO: need to be removed after mergin GCVR2-643 but retested as it bug fix from GCVR2-1209
 
-        possible_branding = @organization.branding_profiles.where(enabled: true)&.take
+        possible_branding = @organization.branding_profiles.where(enabled: true, default: true)&.take
         if possible_branding.blank?
-          @organization.is_a?(Account) ? @organization.agency.branding_profiles.where(enabled: true).take : Agency.get_covered.branding_profiles.where(enabled: true).take
+          @organization.is_a?(Account) ? @organization.agency.branding_profiles.where(enabled: true, default: true).take : Agency.get_covered.branding_profiles.where(enabled: true, default: true).take
         else
           possible_branding
         end
