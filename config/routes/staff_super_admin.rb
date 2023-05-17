@@ -336,6 +336,9 @@
         put :auto_assign_all
         put :auto_assign_insurable
       end
+      collection do
+        post :upload_coverage_list, path: 'upload-coverage-list', to: 'master_policies#upload_coverage_list'
+      end
     end
 
     resources :module_permissions,
