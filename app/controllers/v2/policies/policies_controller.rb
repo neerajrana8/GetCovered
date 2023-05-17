@@ -33,7 +33,7 @@ module V2
           filter[:agency_id] = [current_agency.id] unless current_agency.agency_id.nil?
         end
 
-        filtering_keys = %i[policy_in_system agency_id status account_id policy_type_id number]
+        filtering_keys = %i[policy_in_system agency_id status account_id policy_type_id number carrier_id]
         params_slice ||= []
         params_slice = filter.slice(*filtering_keys)
         policies = Policy.filter(params_slice).includes(users: :profile).references(:profiles)
