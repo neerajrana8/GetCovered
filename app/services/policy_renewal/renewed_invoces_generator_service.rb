@@ -41,7 +41,7 @@ module PolicyRenewal
           invoices_generation_status = false
           return "Failed to initialize premium! #{result}"
         else
-          quote.generate_invoices_for_term(false, false)
+          quote.generate_invoices_for_term(true, false)
           invoices_generation_status = true
         end
       end
