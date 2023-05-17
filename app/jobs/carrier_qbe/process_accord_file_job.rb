@@ -95,7 +95,7 @@ module CarrierQBE
 
     def notify_renewal_failure(policy, error)
       mailer.mail(from: "no-reply@getcoveredllc.com",
-                  to: dylan@getcovered.io,
+                  to: "dylan@getcovered.io",
                   subject: "POLICY RENEWAL ERROR",
                   body: "#{ policy }\n\n#{ error.to_json }").deliver
     end
