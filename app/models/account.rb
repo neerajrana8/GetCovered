@@ -93,12 +93,6 @@ class Account < ApplicationRecord
 
   has_many :reports, as: :reportable
 
-  has_many :integrations,
-           as: :integratable
-           
-  has_many :insurable_rate_configurations,
-           as: :configurer
-
   has_many :coverage_requirements
 
   has_many :reporting_coverage_reports,

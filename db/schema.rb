@@ -777,6 +777,14 @@ ActiveRecord::Schema.define(version: 2023_05_04_175243) do
     t.index ["agency_id"], name: "index_global_agency_permissions_on_agency_id"
   end
 
+  create_table "global_permissions", force: :cascade do |t|
+    t.jsonb "permissions"
+    t.bigint "ownerable_id"
+    t.string "ownerable_type"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "histories", force: :cascade do |t|
     t.integer "action", default: 0
     t.json "data", default: {}
@@ -1996,6 +2004,20 @@ ActiveRecord::Schema.define(version: 2023_05_04_175243) do
     t.index ["staff_id"], name: "index_staff_permissions_on_staff_id"
   end
 
+  create_table "staff_roles", force: :cascade do |t|
+    t.integer "role", default: 0
+    t.boolean "primary", default: false
+    t.bigint "staff_id", null: false
+    t.string "organizable_type"
+    t.bigint "organizable_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.boolean "active", default: false
+    t.boolean "enabled", default: true
+    t.index ["organizable_type", "organizable_id"], name: "index_staff_roles_on_organizable_type_and_organizable_id"
+    t.index ["staff_id"], name: "index_staff_roles_on_staff_id"
+  end
+
   create_table "staffs", force: :cascade do |t|
     t.string "provider", default: "email", null: false
     t.string "uid", default: "", null: false
@@ -2168,4 +2190,5 @@ ActiveRecord::Schema.define(version: 2023_05_04_175243) do
   add_foreign_key "policy_coverages", "policies"
   add_foreign_key "policy_coverages", "policy_applications"
   add_foreign_key "policy_types", "policy_types", column: "master_policy_id"
+  add_foreign_key "staff_roles", "staffs"
 end
