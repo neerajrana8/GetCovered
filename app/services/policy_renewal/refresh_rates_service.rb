@@ -45,8 +45,13 @@ module PolicyRenewal
     def need_to_upgrade?(policy_coverage)
       billing_strategy = policy.policy_application.billing_strategy
       upd_rates = updated_rates(billing_strategy)
-      current_limit = upd_rates.find{|el| el["schedule"] == policy_coverage.designation &&
-                                          el["coverage_limits"][policy_coverage.designation] == policy_coverage.limit}
+      unless upd_rates.nil?
+        current_limit = upd_rates.find{|el| el["schedule"] == policy_coverage.designation &&
+                                            el["coverage_limits"][policy_coverage.designation] == policy_coverage.limit}
+      else
+        current_limit = []
+      end
+
       current_limit.blank?
     end
 
