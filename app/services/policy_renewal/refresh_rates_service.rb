@@ -45,12 +45,8 @@ module PolicyRenewal
     def need_to_upgrade?(policy_coverage)
       billing_strategy = policy.policy_application.billing_strategy
       upd_rates = updated_rates(billing_strategy)
-      unless upd_rates.nil?
-        current_limit = upd_rates.find{|el| el["schedule"] == policy_coverage.designation &&
-                                            el["coverage_limits"][policy_coverage.designation] == policy_coverage.limit}
-      else
-        current_limit = []
-      end
+      current_limit = upd_rates.find{|el| el["schedule"] == policy_coverage.designation &&
+                                          el["coverage_limits"][policy_coverage.designation] == policy_coverage.limit}
 
       current_limit.blank?
     end
@@ -99,8 +95,7 @@ module PolicyRenewal
 
     def irc
       @cpt ||= CarrierPolicyType.where(carrier_id: @policy.carrier_id, policy_type_id: @policy.policy_type_id).take
-      @irc ||= InsurableRateConfiguration.get_inherited_irc(@cpt, @community.account, @community, @policy.renewal_date)
-    end
+      @irc ||= InsurableRateConfiguration.get_inherited_irc(@cpt, @community.account || @policy.account || @policy.agency || @policy.carrier, @community, @policy.renewal_date)    end
 
     def updated_coverage_options
       irc.configuration["coverage_options"]
