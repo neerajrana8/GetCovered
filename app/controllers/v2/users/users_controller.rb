@@ -145,8 +145,10 @@ module V2
               id: match.id,
               first_name: match.profile.first_name,
               last_name: match.profile.last_name,
-              email: masked_email(match.email),
-              contact_email: masked_email(match.email)
+              email_masked: masked_email(match.email),
+              email: match.email,
+              contact_email_masked: masked_email(match.contact_email),
+              contact_email: match.contact_email
             }
           end
         }, status: 200
