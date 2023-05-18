@@ -164,6 +164,7 @@ class User < ApplicationRecord
   # absorb another user
   def absorb!(other)
     return "Users can only absorb Users, not #{other.class.name.pluralize}!" unless other.class == ::User
+    return nil if self.id == other.id
     begin
       ActiveRecord::Base.transaction(requires_new: true) do
         other.invoices.update_all(payer_id: self.id)

@@ -86,14 +86,14 @@ class PolicyPremium < ApplicationRecord
     persist ? self.save : true
   end
   
-  def initialize_all(premium_amount, billing_strategy_terms: nil, tax: nil, taxes: nil, term_group: nil, collector: nil, filter_fees: nil, tax_recipient: nil, first_payment_down_payment: false, first_payment_down_payment_override: nil, first_tax_payment_down_payment_override: nil)
+  def initialize_all(premium_amount, billing_strategy_terms: nil, start_date: nil, last_date: nil, tax: nil, taxes: nil, term_group: nil, collector: nil, filter_fees: nil, tax_recipient: nil, first_payment_down_payment: false, first_payment_down_payment_override: nil, first_tax_payment_down_payment_override: nil)
     tax = taxes if tax.nil? && !taxes.nil?
     return "Tax must be >= 0" if tax && tax < 0
     return "Tax recipient must be specified" unless !tax || tax == 0 || !tax_recipient.nil?
     return "PolicyPremium must be persisted to the database before initializing" unless self.id
     result = nil
     ActiveRecord::Base.transaction do
-      result = self.create_payment_terms(term_group: term_group, billing_strategy_terms: billing_strategy_terms)
+      result = self.create_payment_terms(term_group: term_group, start_date: start_date, last_date: last_date, billing_strategy_terms: billing_strategy_terms)
       raise ActiveRecord::Rollback unless result.nil? || result.end_with?("already exist")
       # premium
       result = self.itemize_premium(premium_amount, and_update_totals: false, term_group: term_group, collector: collector, first_payment_down_payment: first_payment_down_payment, first_payment_down_payment_override: first_payment_down_payment_override)
