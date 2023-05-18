@@ -140,7 +140,9 @@ module V2
               contact_email: match.email
             } if match.present?
           end,
-          possible_matches: possible_matches.map do |match|
+          possible_matches: possible_matches.filter_map do |match|
+            return unless match.email || match.contact_email
+
             {
               id: match.id,
               first_name: match.profile.first_name,
