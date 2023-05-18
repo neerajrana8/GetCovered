@@ -34,6 +34,7 @@ en:
   support_email: "support@getcoveredinsurance.com"
   policy_verify_email: "policyverify@getcovered.io"
   system_email: "systememails@getcovered.io"
+  all_policies_list: 'All Policies List'
   shared:
     hi_there: "Hi there %{name},"
     help_center: "Help center"

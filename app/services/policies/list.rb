@@ -1,5 +1,5 @@
 module Policies
-  class List
+  class List < ApplicationService
     FILTER_KEYS = %i[policy_in_system agency_id status account_id policy_type_id number].freeze
     PAGE = 1
     PER = 50

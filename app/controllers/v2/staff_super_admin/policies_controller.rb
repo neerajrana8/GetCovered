@@ -7,7 +7,6 @@ module V2
     class PoliciesController < StaffSuperAdminController
       include PoliciesMethods
       include ActionController::Caching
-      include ActionController::MimeResponds
 
       before_action :set_policy,
                     only: %i[update show refund_policy cancel_policy update_coverage_proof delete_policy_document

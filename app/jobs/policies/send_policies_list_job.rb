@@ -1,3 +1,5 @@
+require 'csv'
+
 module Policies
   class SendPoliciesListJob < ApplicationJob
 
@@ -21,7 +23,6 @@ module Policies
     private
 
     def generate_csv(policies)
-      require 'csv'
       csv_string = CSV.generate(headers: true) do |csv|
         csv << ['Number', 'Status', 'T Code', 'Community', 'Building', 'Unit', 'PM Account', 'Agency', 'Effective_date',
                 'Expiration Date', 'Cutomer Name', 'Email', 'Product', 'Billing Strategy', 'Update Date', 'Policy Source']

@@ -5,8 +5,8 @@ module Policies
       attachments['policies_list.csv'] = {mime_type: 'text/csv', content: csv_file}
 
       mail(to: @current_staff.email,
-           bcc: 'systememails@getcovered.io',
-           subject: 'All Policies List')
+           bcc: t('system_email'),
+           subject: t('all_policies_list'))
     end
   end
 end
