@@ -623,7 +623,7 @@ module Integrations
                 info = (result[:parsed_response].dig("Envelope", "Body", "GetUnitInformationResponse", "GetUnitInformationResult", "UnitInformation", "Property", "Units", "UnitInfo") rescue nil)
                 if info.nil? || !result[:success]
                   to_return[:community_errors][comm[:yardi_id]] = "GetUnitInformation call failed (Event ##{result[:event]&.id}); unable to update lease special statuses!"
-                elsif integration.configuration['sync']['special_status_mode'] == 'bmr'
+                elsif !special_status_markers.blank?
                   # get rid of everyone who isn't BMR
                   info.select! do |i|
                     u = i["Unit"]
