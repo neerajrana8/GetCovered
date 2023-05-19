@@ -463,31 +463,19 @@ class Policy < ApplicationRecord
     return I18n.t('policy_model.policy_is_already_cancelled') if self.status == 'CANCELLED'
     return I18n.t('policy_model.cancellation_already_pending') if self.marked_for_cancellation
     # get the current policy quote and prorate
-    pq = self.current_quote
     special_logic = SPECIAL_CANCELLATION_REFUND_LOGIC[reason]
-    result = nil
+    errors = []
     case special_logic
       when :prorated_refund
-       result =  pq.policy_premium.prorate(new_last_moment: last_active_moment)
+       policy.policy_premiums.each do |pp|
+        errors << pp.prorate(new_last_moment: last_active_moment)
+       end
       when :full_refund
-        pq.policy_premium.policy_premium_items.each do |ppi|
-          ppi.line_items.each do |li|
-            ::LineItemReduction.create!(
-              reason: "Test Policy Refund",
-              refundability: 'cancel_or_refund',
-              amount_interpretation: 'max_total_after_reduction',
-              amount: 0,
-              line_item: li
-            )
-          end
-        end
-      when :early_cancellation
-        max_days_for_full_refund = CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_id).take&.max_days_for_full_refund || 0
-        if max_days_for_full_refund != 0 && last_active_moment < (self.created_at.to_date + max_days_for_full_refund.days).end_of_day
-          pq.policy_premium.policy_premium_items.where(category: ['premium', 'tax']).each do |ppi|
+        policy.policy_premiums.each do |pp|
+          pp.policy_premium_items.each do |ppi|
             ppi.line_items.each do |li|
               ::LineItemReduction.create!(
-                reason: "Early Cancellation Refund",
+                reason: "Test Policy Refund",
                 refundability: 'cancel_or_refund',
                 amount_interpretation: 'max_total_after_reduction',
                 amount: 0,
@@ -496,18 +484,38 @@ class Policy < ApplicationRecord
             end
           end
         end
-        result = pq.policy_premium.prorate(new_last_moment: last_active_moment)
+      when :early_cancellation
+        max_days_for_full_refund = CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_id).take&.max_days_for_full_refund || 0
+        if max_days_for_full_refund != 0 && last_active_moment < (self.created_at.to_date + max_days_for_full_refund.days).end_of_day
+          policy.policy_premiums.each do |pp|
+            pp.policy_premium_items.where(category: ['premium', 'tax']).each do |ppi|
+              ppi.line_items.each do |li|
+                ::LineItemReduction.create!(
+                  reason: "Early Cancellation Refund",
+                  refundability: 'cancel_or_refund',
+                  amount_interpretation: 'max_total_after_reduction',
+                  amount: 0,
+                  line_item: li
+                )
+              end
+            end
+            errors << pp.prorate(new_last_moment: last_active_moment)
+          end
+        end
       else # :no_refund will end up here; by default we don't refund
-        result = pq.policy_premium.prorate(new_last_moment: last_active_moment, force_no_refunds: true)
+        policy.policy_premiums.each do |pp|
+          pp.prorate(new_last_moment: last_active_moment, force_no_refunds: true)
+        end
     end
+    errors.compact!
     # Mark cancelled or handle proration error
-    if result.nil?
+    if errors.blank?
       update_columns(status: 'CANCELLED', cancellation_reason: reason, cancellation_date: last_active_moment.to_date)
       RentGuaranteeCancellationEmailJob.perform_later(self) if self.policy_type.slug == 'rent-guarantee'
     else
       update_columns(
         marked_for_cancellation: true,
-        marked_for_cancellation_info: result,
+        marked_for_cancellation_info: errors.join("\n\n"),
         marked_cancellation_time: last_active_moment,
         marked_cancellation_reason: reason
       )
