@@ -467,11 +467,11 @@ class Policy < ApplicationRecord
     errors = []
     case special_logic
       when :prorated_refund
-       policy.policy_premiums.each do |pp|
+       self.policy_premiums.each do |pp|
         errors << pp.prorate(new_last_moment: last_active_moment)
        end
       when :full_refund
-        policy.policy_premiums.each do |pp|
+        self.policy_premiums.each do |pp|
           pp.policy_premium_items.each do |ppi|
             ppi.line_items.each do |li|
               ::LineItemReduction.create!(
@@ -486,7 +486,7 @@ class Policy < ApplicationRecord
         end
       when :early_cancellation
         max_days_for_full_refund = CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_id).take&.max_days_for_full_refund || 0
-        policy.policy_premiums.each do |pp|
+        self.policy_premiums.each do |pp|
           if max_days_for_full_refund != 0 && last_active_moment < (self.created_at.to_date + max_days_for_full_refund.days).end_of_day
             pp.policy_premium_items.where(category: ['premium', 'tax']).each do |ppi|
               ppi.line_items.each do |li|
@@ -503,7 +503,7 @@ class Policy < ApplicationRecord
           errors << pp.prorate(new_last_moment: last_active_moment)
         end
       else # :no_refund will end up here; by default we don't refund
-        policy.policy_premiums.each do |pp|
+        self.policy_premiums.each do |pp|
           pp.prorate(new_last_moment: last_active_moment, force_no_refunds: true)
         end
     end
