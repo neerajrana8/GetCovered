@@ -57,6 +57,7 @@ json.cache! policy do
     if policy.primary_user.present?
       json.email policy.primary_user.email
       json.full_name policy.primary_user.profile&.full_name
+      json.contact_email policy.primary_user.contact_email
     end
   end
   json.billing_strategy policy.policy_quotes&.last&.policy_application&.billing_strategy&.title

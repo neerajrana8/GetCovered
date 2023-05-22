@@ -30,7 +30,8 @@ module Policies
           csv << [policy.dig('number'), policy.dig('status'), policy.dig('tcode'), policy.dig('primary_insurable', 'parent_community', 'title'),
                   policy.dig('primary_insurable', 'parent_building', 'title'), policy.dig('primary_insurable', 'title'),
                   policy.dig('account', 'title'), policy.dig('agency', 'title'), policy.dig('effective_date')&.to_date&.strftime("%B %d, %Y"),
-                  policy.dig('expiration_date')&.to_date&.strftime("%B %d, %Y"), policy.dig('primary_user', 'full_name'), policy.dig('primary_user', 'email'),
+                  policy.dig('expiration_date')&.to_date&.strftime("%B %d, %Y"), policy.dig('primary_user', 'full_name'),
+                  (policy.dig('primary_user', 'email') || policy.dig('primary_user', 'contact_email')),
                   policy.dig('policy_type_title'), policy.dig('billing_strategy'), policy.dig('updated_at')&.to_date&.strftime("%B %d, %Y"),
                   (policy.dig('policy_in_system') == true ? 'Internal' : 'External')]
         end

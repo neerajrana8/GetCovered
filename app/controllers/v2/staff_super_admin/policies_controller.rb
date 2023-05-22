@@ -73,7 +73,7 @@ module V2
       def export
         params.permit!
         ::Policies::SendPoliciesListJob.perform_later(params.to_h, current_staff.id)
-        render json: { success: true, message: "Export is in process, we'll email you once it's processed" }
+        render json: { success: true, message: "Export is in the process, we'll email you once it's processed" }
       end
 
       def show
