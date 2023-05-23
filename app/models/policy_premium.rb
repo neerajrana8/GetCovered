@@ -437,14 +437,16 @@ class PolicyPremium < ApplicationRecord
       if new_last_moment && new_last_moment <= (self.prorated_last_moment || self.policy_rep.expiration_moment)
         new_first_moment = nil # since NFM is less restrictive than a previously applied proration, just apply the NLM part
       else
-        return "The requested new_first_moment #{new_first_moment.to_s} is invalid; it cannot precede the original or current prorated beginning of term (#{(self.prorated_first_moment || self.policy_rep.effective_moment).to_s})"
+        new_first_moment = (self.prorated_first_moment || self.policy_rep.effective_moment)
+        #return "The requested new_first_moment #{new_first_moment.to_s} is invalid; it cannot precede the original or current prorated beginning of term (#{(self.prorated_first_moment || self.policy_rep.effective_moment).to_s})"
       end
     end
     if new_last_moment && new_last_moment > (self.prorated_last_moment || self.policy_rep.expiration_moment)
       if new_first_moment && new_first_moment >= (self.prorated_first_moment || self.policy_rep.effective_moment)
         new_last_moment = nil
       else
-        return "The requested new_last_moment #{new_last_moment.to_s} is invalid; it cannot be after the original or current prorated end of term (#{(self.prorated_last_moment || self.policy_rep.expiration_moment).to_s})"
+        new_last_moment = (self.prorated_last_moment || self.policy_rep.expiration_moment)
+        #return "The requested new_last_moment #{new_last_moment.to_s} is invalid; it cannot be after the original or current prorated end of term (#{(self.prorated_last_moment || self.policy_rep.expiration_moment).to_s})"
       end
     end
     to_return = nil
