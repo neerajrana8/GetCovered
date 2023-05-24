@@ -11,8 +11,9 @@ module CarrierQBE
       # Fetch Unprocessed Files
       files = CheckedFile.where(processed: false)
       files.each do |file|
-        CarrierQBE::CreatePolicyJob.perform_now(file.name) unless Rails.env.production?
-        file.update(processed: true) if process_accord_file(file.name)
+        Qbe::Acord::Parse.call(file.id)
+        # CarrierQBE::CreatePolicyJob.perform_now(file.name) unless Rails.env.production?
+        # file.update(processed: true) if process_accord_file(file.name)
       end
     end
 
