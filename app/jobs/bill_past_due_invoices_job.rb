@@ -4,6 +4,14 @@ class BillPastDueInvoicesJob < ApplicationJob
   queue_as :default
   before_perform :set_invoices
 
+  # MOOSE WARNING: this boi is old and his time has passed.
+  #                the 3-repeat functionality has been integrated into bill_due_invoices_job.
+  #                this has been preserved here for now since I was just about to add renewed policy
+  #                support to it and turn it back on, when I realized I could do it all in the other job.
+  #                BUT IF I'M WRONG I DON'T WANNA DIG THROUGH OLD COMMITS DESPERATELY.
+  #                SO, BOYO, IF YOU'RE SIGNIFICANTLY IN THE FUTURE AFTER MAY 24, 2023...
+  #                THEN YOU CAN DELETE THIS!
+
   def perform(*_args)
     return # MOOSE WARNING: we turn this off at request of miguel and jared
     @invoices.each do |invoice|
