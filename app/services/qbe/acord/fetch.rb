@@ -101,9 +101,8 @@ module Qbe
       # @return [nil]
       # Maps files from remote server to @remote_files instance variable
       def get_remote_files
-        remote_base_path = 'Outbound/ACORD/'
         @remote_files = Array.new
-        @client.dir.foreach(remote_base_path) do |entry|
+        @client.dir.foreach(@remote_base_path) do |entry|
           @remote_files << entry.name
         end
       end
