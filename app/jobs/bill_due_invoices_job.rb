@@ -55,16 +55,23 @@ class BillDueInvoicesJob < ApplicationJob
       # fine, then its only purpose is to ensure auto_pay       #
       # and policy_in_system are true.                          #
       # ******************************************************* #
+      policy_query = Policy.where(
+        policy_in_system: true,
+        auto_pay: true,
+        status: Policy.active_statuses # includes EXTERNAL_VERIFIED, but policy_in_system: true excludes those
+      )
       @invoices = Invoice.where(
         invoiceable_type: "PolicyQuote",
         invoiceable_id: PolicyQuote.where(
           status: 'accepted',
-          policy_id: Policy.where(
-            policy_in_system: true,
-            auto_pay: true,
-            status: Policy.active_statuses # includes EXTERNAL_VERIFIED, but policy_in_system: true excludes those
-          ).select(:id)
-        ).select(:id),
+          policy_id: policy_query.select(:id)
+        ).select(:id)
+      ).or(
+        Invoice.where(
+          invoiceable_type: "Policy",
+          invoiceable_id: policy_query.select(:id)
+        )
+      ).where(
         status: ['available', 'missed'],
         external: false
       ).where(
