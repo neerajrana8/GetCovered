@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2023_05_04_175243) do
+ActiveRecord::Schema.define(version: 2023_05_24_230059) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -1066,6 +1066,7 @@ ActiveRecord::Schema.define(version: 2023_05_04_175243) do
     t.boolean "month_to_month", default: false, null: false
     t.integer "special_status", default: 0, null: false
     t.bigint "master_policy_coverage_ids", default: [], null: false, array: true
+    t.boolean "excluded_from_compliance", default: false, null: false
     t.date "renewal_date"
     t.integer "renewal_count", default: 0
     t.string "external_status"
@@ -1323,6 +1324,7 @@ ActiveRecord::Schema.define(version: 2023_05_04_175243) do
     t.boolean "force_placed"
     t.date "cancellation_date"
     t.integer "master_policy_configuration_id"
+    t.integer "renewal_status", default: 0
     t.index ["account_id"], name: "index_policies_on_account_id"
     t.index ["agency_id"], name: "index_policies_on_agency_id"
     t.index ["carrier_id"], name: "index_policies_on_carrier_id"

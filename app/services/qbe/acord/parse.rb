@@ -62,10 +62,11 @@ module Qbe
 
           if Policy.exists?(number: policy_number)
             policy = Policy.find_by_number(policy_number)
+            check_premium = false
 
             case transaction_type
             when 'N' # TransactionType New Business
-
+              check_premium = true
             when 'W' # TransactionType Renewal
 
             when 'P' # TransactionType Pending Cancellation
@@ -76,11 +77,17 @@ module Qbe
               cancellation_reason = node.at_xpath('RentPolicyStatusRS/PersPolicy/QBE_BusinessSource').content
               cancel_policy(policy, cancellation_reason)
             when 'R' # TransactionType Reinstatement
-
+              # Todo: enable this
+              check_premium = true
             when 'E' # TransactionType Endorsement
-
+              check_premium = true
             when 'L' # TransactionType Claim Activity
+              # Todo: add a claim counter?
+              check_premium = true
+            end
 
+            if check_premium
+              recorded_premium = node.at_xpath('RentPolicyStatusRS/PersPolicy/CurrentTermAmt/Amt').content
             end
           else
             add_to_duplicate_report(node)

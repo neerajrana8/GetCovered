@@ -267,6 +267,10 @@ class Policy < ApplicationRecord
   enum billing_dispute_status: { UNDISPUTED: 0, DISPUTED: 1, AWAITING_POSTDISPUTE_PROCESSING: 2,
     NOT_REQUIRED: 3 }
 
+  enum renewal_status: { NONE: 0, UPCOMING: 1, REJECTED: 2, PREPARING: 3,
+                         PREPARED: 4, PREPARATION_FAILED: 5, PENDING: 6,
+                         RENEWED: 7, FAILED: 8 }, _prefix: :renewal
+
   enum cancellation_code: { # WARNING: remove this, it's old
     AP: 0,
     AR: 1,
