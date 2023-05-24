@@ -8,12 +8,10 @@ module Qbe
     class Fetch < ApplicationService
 
       attr_accessor :remote_base_path
-      attr_accessor :s3_base_path
 
-      def initialize(remote_base_path, s3_base_path)
+      def initialize(remote_base_path)
         @local_base_path = "#{ Rails.root }/tmp/acord/"
         @remote_base_path = remote_base_path
-        @s3_base_path = s3_base_path
       end
 
       # Qbe::Acord::Fetch.call()
@@ -31,10 +29,12 @@ module Qbe
             @remote_files.each do |file|
               next if CheckedFile.find_by(name: file)
 
-              remote_file_path = "#{ @remote_base_path }#{ file }"
               local_file_path = "#{ @local_base_path }#{ file }"
+              remote_file_path = "#{ @remote_base_path }#{ file }"
 
-              local_io = File.new(local_file_path)
+              puts local_file_path
+
+              local_io = File.new(local_file_path, mode: 'wb')
               @client.download!(remote_file_path, local_io)
               local_io.close
 
@@ -60,7 +60,7 @@ module Qbe
               end
               # End the process by uploading the file to s3
               begin
-                Utilities::S3Uploader.call(local_io, file, @s3_base_path, nil)
+                Utilities::S3Uploader.call(local_io, file, '/ACORD/', nil)
               rescue => e
                 Rails.logger.debug(e)
               end
@@ -83,7 +83,7 @@ module Qbe
       # @return [nil]
       # Creates local save directory for ACORD files if it does not already exist
       def create_local_directory_if_does_not_exist
-        Dir.mkdir("#{Rails.root}/tmp/acord") unless Dir.exist?("#{Rails.root}/tmp/acord")
+        Dir.mkdir("#{Rails.root}/tmp/acord") unless File.exist?("#{Rails.root}/tmp/acord")
       end
 
       # start_sftp_connection()
@@ -103,7 +103,7 @@ module Qbe
       def get_remote_files
         @remote_files = Array.new
         @client.dir.foreach(@remote_base_path) do |entry|
-          @remote_files << entry.name
+          @remote_files << entry.name if entry.name.last(3) == "xml"
         end
       end
 
