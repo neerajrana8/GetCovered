@@ -12,7 +12,7 @@ class BillDueInvoicesJob < ApplicationJob
         invoiceable_id = invoice.invoiceable_id
         invoiceable_type = invoice.invoiceable_type
         charge_invoice_group(to_charge)
-        to_charge = []
+        to_charge.clear
       end
       to_charge.push(invoice)
     end
@@ -22,8 +22,11 @@ class BillDueInvoicesJob < ApplicationJob
   private
   
     def charge_invoice_group(invs)
-      # flee if the group contains no available invoice
-      return if invs.blank? || invs.find{|i| i.status == 'available' }.nil?
+      # flee if the group contains no available invoice and the most recent missed invoice has been retried 3 times already
+      if invs.count > 0 && !invs.any?{|inv| inv.status == 'available' }
+        invs.clear unless invs.last.stripe_charges.where("created_at > ?", invs.last.due_date.end_of_day).count < 3
+      end
+      return if invs.blank?
       # charge the invoices in the group until failure
       invs.each do |invoice|
         break unless invoice.pay(stripe_source: :default, allow_missed: true)[:success] # WARNING: remove 'break unless' if you want to keep trying even after a failure
@@ -51,17 +54,25 @@ class BillDueInvoicesJob < ApplicationJob
       # If the aforementioned problem has already been fixed,   #
       # fine, then its only purpose is to ensure auto_pay       #
       # and policy_in_system are true.                          #
-      #                                                         #
-      # Note pt. 2                                              #
-      # Dylan Gaines has made these changes as of October 17,   #
-      # 2022.  I added the status to the policy query, and      #
-      # re-enabled the missed invoice status                    #
       # ******************************************************* #
-      policy_ids = Policy.select(:id).policy_in_system(true).current.where(auto_pay: true, status: ["BOUND", "BOUND_WITH_WARNING"]).pluck(:id)
-      @invoices = Invoice.where(invoiceable_type: 'PolicyQuote', invoiceable_id: PolicyQuote.select(:id).where(status: 'accepted', policy_id: policy_ids)).or(
-                            Invoice.where(invoiceable_type: 'PolicyGroupQuote', invoiceable_id: PolicyGroupQuote.select(:id).where(status: 'accepted', policy_group_id: PolicyGroup.select(:id).policy_in_system(true).current.where(auto_pay: true)))
-                         ).or(
-                            Invoice.where(invoiceable_type: 'Policy', invoiceable_id: policy_ids)
-                         ).where("due_date <= '#{Time.current.to_date.to_s(:db)}'").where(status: ['available', 'missed'], external: false).order(invoiceable_type: :asc, invoiceable_id: :asc, due_date: :asc)
+      @invoices = Invoice.where(
+        invoiceable_type: "PolicyQuote",
+        invoiceable_id: PolicyQuote.where(
+          status: 'accepted',
+          policy_id: Policy.where(
+            policy_in_system: true,
+            auto_pay: true,
+            status: Policy.active_statuses # includes EXTERNAL_VERIFIED, but policy_in_system: true excludes those
+          ).select(:id)
+        ).select(:id),
+        status: ['available', 'missed'],
+        external: false
+      ).where(
+        "due_date <= ?", Time.current.to_date
+      ).order(
+        invoiceable_type: :asc,
+        invoiceable_id: :asc,
+        due_date: :asc
+      )
     end
 end
