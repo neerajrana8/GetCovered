@@ -19,5 +19,7 @@ module CarrierQBE
                                policy_in_system: true,
                                billing_status: [Policy.billing_statuses["CURRENT"], Policy.billing_statuses["RESCINDED"]]
       ).distinct
+    end
+
   end
 end
