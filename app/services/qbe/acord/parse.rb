@@ -91,7 +91,7 @@ module Qbe
 
               if check_premium
                 relevant_premium = policy.policy_premiums.order(created_at: :desc).first
-                Qbe::Finance::PremiumUpdater.call(relevant_premium, recorded_premium)
+                Qbe::Finance::PremiumUpdater.call(relevant_premium, recorded_premium, DateTime.current.to_date)
               end
             rescue Exception => e
               # Notification_block
