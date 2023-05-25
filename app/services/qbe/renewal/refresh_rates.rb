@@ -5,8 +5,7 @@ module Qbe
 
       attr_accessor :policy
       attr_accessor :community
-      attr_accessor :number_of_insured
-      attr_accessor :refresh_rates_status
+      attr_accessor :number_of_insured_users
 
       def initialize(policy)
         @policy = policy
