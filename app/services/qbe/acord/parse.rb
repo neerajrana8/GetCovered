@@ -62,13 +62,14 @@ module Qbe
 
           if Policy.exists?(number: policy_number)
             policy = Policy.find_by_number(policy_number)
+            recorded_premium = node.at_xpath('RentPolicyStatusRS/PersPolicy/CurrentTermAmt/Amt').content
             check_premium = false
 
             case transaction_type
             when 'N' # TransactionType New Business
               check_premium = true
             when 'W' # TransactionType Renewal
-
+              Qbe::Renewal::issuer.call(policy, recorded_premium)
             when 'P' # TransactionType Pending Cancellation
 
             when 'X' # TransactionType Rescind Cancellation
@@ -86,9 +87,9 @@ module Qbe
               check_premium = true
             end
 
-            if check_premium
-              recorded_premium = node.at_xpath('RentPolicyStatusRS/PersPolicy/CurrentTermAmt/Amt').content
-            end
+            # if check_premium
+            #
+            # end
           else
             add_to_duplicate_report(node)
           end
