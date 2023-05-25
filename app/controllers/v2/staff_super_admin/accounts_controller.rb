@@ -89,7 +89,8 @@ module V2
       def account_params
         permitted_params =
           params.require(:account).permit(
-            :enabled, :staff_id, :title, :whitelabel, :agency_id, :additional_interest_name, :additional_interest, contact_info: {},
+            :enabled, :staff_id,
+            :title, :whitelabel, :agency_id, :additional_interest_name, :additional_interest, :per_user_tracking , contact_info: {},
                                                                   settings: {}, addresses_attributes: %i[
                                                                     city country county id latitude longitude
                                                                     plus_four state street_name street_number
