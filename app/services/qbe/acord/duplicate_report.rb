@@ -127,7 +127,7 @@ module Qbe
         begin
           upload = Utilities::S3Uploader.call(File.open(local_path), file_name, '/duplicate-report/', nil)
         rescue Exception => e
-
+          # Todo: Need to do something useful with this error
         else
           CarrierQBE::DuplicatePoliciesMailer.notify(upload, file_name).deliver
         end

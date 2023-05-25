@@ -27,17 +27,7 @@ module Qbe
 
               relevant_premium = @policy.policy_premiums.order(created_at: :desc).first
               unless relevant_premium.nil?
-                formatted_premium = @premium.nil? ? nil : @premium.to_i * 100
-                premium_difference = @premium.nil? ? nil : formatted_premium - relevant_premium.total_premium
-
-                ppi = relevant_premium.policy_premium_items
-                                      .where(category: 'premium', proration_refunds_allowed: true)
-                                      .take
-
-                ppi.change_remaining_total_by(premium_difference, policy.last_renewed_on,
-                                              clamp_start_date_to_effective_date: false,
-                                              clamp_start_date_to_today: false,
-                                              clamp_start_date_to_first: false)
+                Qbe::Finance::PremiumUpdater.call(relevant_premium, @premium, policy.last_renewed_on)
               end
 
               @policy.invoices.where(status: 'missed', due_date: @policy.last_renewed_on..DateTime.current.to_date)
