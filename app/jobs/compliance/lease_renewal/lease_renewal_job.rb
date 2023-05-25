@@ -16,6 +16,9 @@ module Compliance
         .where.not(
           external_status: 'Notice'
         )
+        .where.not(
+          special_status: 'affordable' # MOOSE WARNING: if this job is expanded to more than just QBE, need to add logic like in other mailers to check whether to exclude individual leases or entire units
+        )
         .pluck(:id) # if there are jillions, doing it this way saves RAM at the expense of extra DB queries
       lease_ids.each do |lease_id|
         lease = ::Lease.where(id: lease_id).take
