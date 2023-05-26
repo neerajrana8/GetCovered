@@ -479,7 +479,7 @@ module Integrations
           return { lease_errors: { 'all' => "No yardi integration provided" } } unless integration
           return { lease_errors: { 'all' => "Invalid yardi integration provided" } } unless integration.provider == 'yardi'
           # set up outputs
-          lease_errors = {}
+          lease_errors = {}ect":{"minLat":31.00069615495643,"maxLat":31.498489725807264,"minLon":-96.26745131610816,"maxLon":-95.42699721454566},"bPropertyType":"For Sale","freeSearch":true,"maxPrice":"300000","minLotSqft":435600,"bS
           created_leases = {}
           found_leases = {}
           expired_leases = {}
@@ -511,7 +511,7 @@ module Integrations
           user_ip_ids = IntegrationProfile.where(integration: integration, external_context: 'resident', profileable_type: "User").pluck(:external_id, :profileable_id).to_h
           # mark defunct those leases which the horrific architecture of Yardi's database requires to be removed from their system when they have been superseded
           # MOOSE WARNING: the 'defunct' boolean is a placeholder architectural solution just to get the feature working. ultimately we should be giving these leases a special status and doing something to their IPs, or implementing a call to check for and explicitly handle unit transfers
-          IntegrationProfile.where(integration: integration, external_context: 'lease', profileable: unit.leases.where(defunct: false)).where.not(external_id: in_system).each do |lip|
+          IntegrationProfile.where(integration: integration, external_context: 'lease', profileable: unit.leases.where(defunct: false)).where.not(external_id: resident_data.map{|l| l['Id'] }).each do |lip|
             lip.profileable.update(defunct: true, status: 'expired', end_date: Time.current.to_date) 
           end
           # update leases to expired
