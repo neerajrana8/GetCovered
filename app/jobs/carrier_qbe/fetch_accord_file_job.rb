@@ -11,7 +11,7 @@ module CarrierQBE
       if [1, 2, 3, 4, 5].include?(DateTime.current.wday)
         remote_path = Rails.env == 'production' ? 'Outbound/ACORD/' : 'Outbound/'
         Qbe::Acord::Fetch.call(remote_path)
-        CarrierQBE::ProcessAccordFileJob.perform_now
+        CarrierQBE::ProcessAccordFileJob.perform_later
       end
     end
   end

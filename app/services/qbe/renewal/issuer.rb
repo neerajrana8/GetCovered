@@ -46,24 +46,8 @@ module Qbe
                 end
               end
 
-              dat_total_tho = 0
-              first_invoice.line_items.group_by{|li| li.id.nil? }.each do |unsaved, lis|
-                if unsaved
-                  lis.each do |li|
-                    dat_total_tho += li.total_due unless li.priced_in
-                    li.priced_in = true
-                  end
-                else
-                  ::LineItem.where(id: lis.map{|li| li.id }, priced_in: false).each do |li|
-                    dat_total_tho += li.total_due
-                    li.update!(priced_in: true)
-                  end
-                end
-              end
-
-              first_invoice.update(original_total_due: first_invoice.original_total_due += dat_total_tho,
-                                   total_due: first_invoice.total_due += dat_total_tho,
-                                   total_payable: first_invoice.total_payable += dat_total_tho)
+              first_invoice.send("mark_line_items_priced_in")
+              first_invoice.save
 
               payment_attempt = first_invoice.pay(stripe_source: :default, allow_missed: true)
               if payment_attempt[:success]
