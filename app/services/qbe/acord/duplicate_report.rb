@@ -129,7 +129,8 @@ module Qbe
         rescue Exception => e
           # Todo: Need to do something useful with this error
         else
-          CarrierQBE::DuplicatePoliciesMailer.notify(upload, file_name).deliver
+          # Todo: need to fix generated csv
+          # CarrierQBE::DuplicatePoliciesMailer.notify(upload, file_name).deliver
         end
       end
 

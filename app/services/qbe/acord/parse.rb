@@ -9,10 +9,15 @@ module Qbe
 
       attr_accessor :checked_file_id
       attr_accessor :override_read
+      attr_accessor :options
 
-      def initialize(checked_file_id, override_read = false)
+      def initialize(checked_file_id, options)
         @checked_file_id = checked_file_id
         @override_read = override_read
+        @options = {
+          :override_read => false,
+          :transactions => %w(N W P X C R E L)
+        }.merge!(options)
       end
 
       def call

@@ -14,12 +14,12 @@ module Qbe
       def call
         renewal_attempt = false
 
-        if @policy.update renewal_status: 'PENDING'
+        if @policy.update renewal_status: 'PREPARED'
           renewal_count = (@policy.renew_count || 0) + 1
           renewed_on = @policy.expiration_date + 1.day
           new_expiration_date = @policy.expiration_date + 1.year
           if @policy.update renew_count: renewal_count, last_renewed_on: renewed_on,
-                            expiration_date: new_expiration_date
+                            expiration_date: new_expiration_date, renewal_status: 'PENDING'
             begin
               @policy.invoices.where(status: 'quoted').update_all(status: 'upcoming')
               @policy.invoices.where(status: 'upcoming', due_date: @policy.created_at..DateTime.current.to_date)
