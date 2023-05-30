@@ -37,10 +37,10 @@ production:
     cron: '30 2 * * *'   # Every day at 2:30 AM
     class: CarrierQBE::GenerateAndSendCancellationListJob
   mark_renewal_upcoming:
-    cron: '5 0 * * * '
+    cron: '0 0 * * *'
     class: CarrierQBE::MarkRenewalUpcomingJob
   prepare_for_renewal:
-    cron: '5 0 * * * '
+    cron: '0 1 * * *'
     class: CarrierQBE::PrepareForRenewalJob
   fetch_accord_file_job:
     cron: '30 0 * * *'   # Every day at 12:30 AM
