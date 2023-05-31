@@ -352,6 +352,7 @@
       only: [ :update, :index, :show ] do
         collection do
           post :add_coverage_proof
+          get :export
         end
         member do
           get "histories",

@@ -69,6 +69,13 @@ module V2
         response.headers['total-entries'] = total
       end
 
+      # /v2/staff_super_admin/policies/export.csv
+      def export
+        params.permit!
+        ::Policies::SendPoliciesListJob.perform_later(params.to_h, current_staff.id)
+        render json: { success: true, message: "Export is in the process, we'll email you once it's processed" }
+      end
+
       def show
         # NOTE: show master_policy_configurations for policies which are covered by master policies
         @master_policy_configuration = @policy.master_policy_configuration if @policy.policy_type&.master_coverage
