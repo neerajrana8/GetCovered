@@ -3,8 +3,8 @@ module V2
     class PoliciesController < ApiController
       include ActionController::Caching
 
-      before_action :authenticate_staff!
-      before_action :check_permissions
+      before_action :authenticate_staff!, only: %i[list show calculate_cost]
+      before_action :check_permissions, only: %i[list show calculate_cost]
 
       def list
         page = 1
@@ -88,6 +88,26 @@ module V2
         mpc = policy.find_closest_master_policy_configuration(insurable, params[:start_date])
         resp = { total_placement_amount: mpc.total_placement_amount } unless mpc.nil?
         render json: resp
+      end
+
+      def belongs
+        unless params[:policy_number].present? && (params[:user_id].present? || params[:email].present?)
+          return render json: { error: 'Some of the required params are missing: policy_number, user_id/email' }, status: 403
+        end
+
+        filtered_by_number = Policy.includes(:users).where(number: params[:policy_number])
+
+        filtered_by_user =
+          if params[:user_id]
+            filtered_by_number.where(users: { id: params[:user_id] })
+          elsif params[:email]
+            filtered_by_number.where(users: { email: params[:email] })
+          end
+
+        render json: {
+          exists: filtered_by_number.any?,
+          belongs_to_provided_user: filtered_by_user.any?
+        }, status: 200
       end
 
       private
