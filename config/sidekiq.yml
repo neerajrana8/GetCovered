@@ -142,6 +142,9 @@ production:
   policy_report_sync_job:
     cron: '30 23 * * *' # Every day at 11:30 PM
     class: PolicyReportSyncJob
+  the_mike_jones_report_job:
+    cron: '0 0 1 * *' # The first of every month at midnight
+    class: Reports::TheMikeJonesReportJob
   # Unmatched user emails
   unmatched_user_email_job:
     cron: '15 0 * * *' # Every day at 12:15 AM
