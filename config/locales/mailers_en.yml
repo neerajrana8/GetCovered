@@ -195,6 +195,8 @@ en:
       subject: 'Policy Submission Received'
     notify_new_child_policy:
       subject: 'Master Policy Enrollment Confirmation'
+    out_of_compliance:
+      subject: 'You are out of compliance'
     policy_expiring_soon:
       subject: "Your insurance will expire soon!"
       content: "Hello, %{first_name}!\n

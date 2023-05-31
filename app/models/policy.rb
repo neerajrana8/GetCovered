@@ -725,7 +725,8 @@ class Policy < ApplicationRecord
 
   def notify_users
     # TODO: ADD GUARD STATEMENTS AND REMOVE NESTED CONDITIONS
-    if previous_changes.has_key?('status') && %w[EXTERNAL_UNVERIFIED EXTERNAL_VERIFIED EXTERNAL_REJECTED].include?(status)
+    return if self.in_system?
+    if previous_changes.has_key?('status') && %w[EXTERNAL_UNVERIFIED EXTERNAL_VERIFIED EXTERNAL_REJECTED CANCELLED].include?(status)
       unless integration_profiles.count.positive? && status == 'EXTERNAL_UNVERIFIED'
 
         if account_id == 0 || agency_id == 0
@@ -735,13 +736,25 @@ class Policy < ApplicationRecord
         #TODO: temp test need to remove according to GCVR2-1197
         begin
           if Rails.env.development? or ENV['RAILS_ENV'] == 'awsdev'
-            Compliance::PolicyMailer.with(organization: self.account.nil? ? self.agency : self.account)
-                                    .external_policy_status_changed(policy: self)
-                                    .deliver_now unless self.in_system?
+            if CANCELLED?
+              Compliance::PolicyMailer.with(organization: self.account.nil? ? self.agency : self.account)
+                                      .policy_lapsed(policy: self, lease: self.latest_lease)
+                                      .deliver_now
+            else
+              Compliance::PolicyMailer.with(organization: self.account.nil? ? self.agency : self.account)
+                                      .external_policy_status_changed(policy: self)
+                                      .deliver_now
+            end
           else
-            Compliance::PolicyMailer.with(organization: self.account.nil? ? self.agency : self.account)
-                                    .external_policy_status_changed(policy: self)
-                                    .deliver_later(wait: 5.minutes) unless self.in_system?
+            if CANCELLED?
+              Compliance::PolicyMailer.with(organization: self.account.nil? ? self.agency : self.account)
+                                      .policy_lapsed(policy: self, lease: self.latest_lease)
+                                      .deliver_later(wait: 5.minutes)
+            else
+              Compliance::PolicyMailer.with(organization: self.account.nil? ? self.agency : self.account)
+                                      .external_policy_status_changed(policy: self)
+                                      .deliver_later(wait: 5.minutes)
+            end
           end
         rescue Exception => e
           @error = ModelError.create!(
