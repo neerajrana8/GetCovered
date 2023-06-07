@@ -219,6 +219,9 @@ class Policy < ApplicationRecord
     where('number LIKE ?', "%#{number[:like]}%")
   }
 
+  scope :filter_by_carrier_id, ->(carrier_id) {
+    where(carrier_id: carrier_id)
+  }
 
   # TODO: Change after controller structure refactoring
   scope :filter_by_users, ->(payload) {
@@ -263,6 +266,10 @@ class Policy < ApplicationRecord
 
   enum billing_dispute_status: { UNDISPUTED: 0, DISPUTED: 1, AWAITING_POSTDISPUTE_PROCESSING: 2,
     NOT_REQUIRED: 3 }
+
+  enum renewal_status: { NONE: 0, UPCOMING: 1, REJECTED: 2, PREPARING: 3,
+                         PREPARED: 4, PREPARATION_FAILED: 5, PENDING: 6,
+                         RENEWED: 7, FAILED: 8 }, _prefix: :renewal
 
   enum cancellation_code: { # WARNING: remove this, it's old
     AP: 0,
@@ -460,31 +467,19 @@ class Policy < ApplicationRecord
     return I18n.t('policy_model.policy_is_already_cancelled') if self.status == 'CANCELLED'
     return I18n.t('policy_model.cancellation_already_pending') if self.marked_for_cancellation
     # get the current policy quote and prorate
-    pq = self.current_quote
     special_logic = SPECIAL_CANCELLATION_REFUND_LOGIC[reason]
-    result = nil
+    errors = []
     case special_logic
       when :prorated_refund
-       result =  pq.policy_premium.prorate(new_last_moment: last_active_moment)
+       self.policy_premiums.each do |pp|
+        errors << pp.prorate(new_last_moment: last_active_moment)
+       end
       when :full_refund
-        pq.policy_premium.policy_premium_items.each do |ppi|
-          ppi.line_items.each do |li|
-            ::LineItemReduction.create!(
-              reason: "Test Policy Refund",
-              refundability: 'cancel_or_refund',
-              amount_interpretation: 'max_total_after_reduction',
-              amount: 0,
-              line_item: li
-            )
-          end
-        end
-      when :early_cancellation
-        max_days_for_full_refund = CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_id).take&.max_days_for_full_refund || 0
-        if max_days_for_full_refund != 0 && last_active_moment < (self.created_at.to_date + max_days_for_full_refund.days).end_of_day
-          pq.policy_premium.policy_premium_items.where(category: ['premium', 'tax']).each do |ppi|
+        self.policy_premiums.each do |pp|
+          pp.policy_premium_items.each do |ppi|
             ppi.line_items.each do |li|
               ::LineItemReduction.create!(
-                reason: "Early Cancellation Refund",
+                reason: "Test Policy Refund",
                 refundability: 'cancel_or_refund',
                 amount_interpretation: 'max_total_after_reduction',
                 amount: 0,
@@ -493,18 +488,38 @@ class Policy < ApplicationRecord
             end
           end
         end
-        result = pq.policy_premium.prorate(new_last_moment: last_active_moment)
+      when :early_cancellation
+        max_days_for_full_refund = CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_id).take&.max_days_for_full_refund || 0
+        self.policy_premiums.each do |pp|
+          if max_days_for_full_refund != 0 && last_active_moment < (self.created_at.to_date + max_days_for_full_refund.days).end_of_day
+            pp.policy_premium_items.where(category: ['premium', 'tax']).each do |ppi|
+              ppi.line_items.each do |li|
+                ::LineItemReduction.create!(
+                  reason: "Early Cancellation Refund",
+                  refundability: 'cancel_or_refund',
+                  amount_interpretation: 'max_total_after_reduction',
+                  amount: 0,
+                  line_item: li
+                )
+              end
+            end
+          end
+          errors << pp.prorate(new_last_moment: last_active_moment)
+        end
       else # :no_refund will end up here; by default we don't refund
-        result = pq.policy_premium.prorate(new_last_moment: last_active_moment, force_no_refunds: true)
+        self.policy_premiums.each do |pp|
+          pp.prorate(new_last_moment: last_active_moment, force_no_refunds: true)
+        end
     end
+    errors.compact!
     # Mark cancelled or handle proration error
-    if result.nil?
+    if errors.blank?
       update_columns(status: 'CANCELLED', cancellation_reason: reason, cancellation_date: last_active_moment.to_date)
       RentGuaranteeCancellationEmailJob.perform_later(self) if self.policy_type.slug == 'rent-guarantee'
     else
       update_columns(
         marked_for_cancellation: true,
-        marked_for_cancellation_info: result,
+        marked_for_cancellation_info: errors.join("\n\n"),
         marked_cancellation_time: last_active_moment,
         marked_cancellation_reason: reason
       )
@@ -710,7 +725,8 @@ class Policy < ApplicationRecord
 
   def notify_users
     # TODO: ADD GUARD STATEMENTS AND REMOVE NESTED CONDITIONS
-    if previous_changes.has_key?('status') && %w[EXTERNAL_UNVERIFIED EXTERNAL_VERIFIED EXTERNAL_REJECTED].include?(status)
+    return if self.in_system?
+    if previous_changes.has_key?('status') && %w[EXTERNAL_UNVERIFIED EXTERNAL_VERIFIED EXTERNAL_REJECTED CANCELLED].include?(status)
       unless integration_profiles.count.positive? && status == 'EXTERNAL_UNVERIFIED'
 
         if account_id == 0 || agency_id == 0
@@ -720,13 +736,25 @@ class Policy < ApplicationRecord
         #TODO: temp test need to remove according to GCVR2-1197
         begin
           if Rails.env.development? or ENV['RAILS_ENV'] == 'awsdev'
-            Compliance::PolicyMailer.with(organization: self.account.nil? ? self.agency : self.account)
-                                    .external_policy_status_changed(policy: self)
-                                    .deliver_now unless self.in_system?
+            if CANCELLED?
+              Compliance::PolicyMailer.with(organization: self.account.nil? ? self.agency : self.account)
+                                      .policy_lapsed(policy: self, lease: self.latest_lease)
+                                      .deliver_now
+            else
+              Compliance::PolicyMailer.with(organization: self.account.nil? ? self.agency : self.account)
+                                      .external_policy_status_changed(policy: self)
+                                      .deliver_now
+            end
           else
-            Compliance::PolicyMailer.with(organization: self.account.nil? ? self.agency : self.account)
-                                    .external_policy_status_changed(policy: self)
-                                    .deliver_later(wait: 5.minutes) unless self.in_system?
+            if CANCELLED?
+              Compliance::PolicyMailer.with(organization: self.account.nil? ? self.agency : self.account)
+                                      .policy_lapsed(policy: self, lease: self.latest_lease)
+                                      .deliver_later(wait: 5.minutes)
+            else
+              Compliance::PolicyMailer.with(organization: self.account.nil? ? self.agency : self.account)
+                                      .external_policy_status_changed(policy: self)
+                                      .deliver_later(wait: 5.minutes)
+            end
           end
         rescue Exception => e
           @error = ModelError.create!(

@@ -769,6 +769,7 @@ class InsurableRateConfiguration < ApplicationRecord
     if insurable.class == ::Insurable && !::InsurableType::COMMUNITIES_IDS.include?(insurable.insurable_type_id)
       unit = insurable
       insurable = insurable.parent_community
+      account ||= insurable.account
     end
     cip = (insurable.class != ::Insurable ? nil : insurable.carrier_profile(carrier_policy_type.carrier_id))
     irc_filter_block = nil

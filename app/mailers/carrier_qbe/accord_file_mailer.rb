@@ -5,5 +5,10 @@ module CarrierQBE
       @failed = failed
       mail(subject: 'Failed records from QBE', to: "dylan@getcovered.io")
     end
+
+    def premium_update_failed(policy)
+
+    end
+
   end
 end

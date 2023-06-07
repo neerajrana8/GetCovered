@@ -327,13 +327,13 @@ class PolicyQuote < ApplicationRecord
   
   def generate_invoices_for_term(renewal = false, refresh = false)
     # flee if renewal is true (unsupported right now)
-    if renewal
-      app "============================================================"
-      return {
-        internal: "Invoice generation for policy renewals is not yet supported!",
-        external: "policy_quote.cannot_gen_invoices_for_renewal"
-      }
-    end
+    # if renewal
+    #   app "============================================================"
+    #   return {
+    #     internal: "Invoice generation for policy renewals is not yet supported!",
+    #     external: "policy_quote.cannot_gen_invoices_for_renewal"
+    #   }
+    # end
     # prepare
     invoices.destroy_all if refresh
     # get line items (format: { collector: { policy_premium_payment_term: [line_item,...] } }), with PPPTs in order
@@ -361,7 +361,7 @@ class PolicyQuote < ApplicationRecord
           by_pppt.map do |pppt, line_item_array|
             index += 1
             available_date = pppt.invoice_available_date_override || (index == 0 ? Time.current.to_date : pppt.first_moment.beginning_of_day - 1.day - self.available_period) # MOOSE WARNING: model must support .available_period
-            due_date = pppt.invoice_due_date_override || (index == 0 ? Time.current.to_date + 1.day : pppt.first_moment.beginning_of_day - 1.day)
+            due_date = pppt.invoice_due_date_override || (index == 0 ? (renewal ? pppt.first_moment.end_of_day : Time.current.to_date + 1.day) : pppt.first_moment.beginning_of_day - 1.day)
             #TODO: Thats  also can create duplicate invoices emails by change status in callbacks - NEED TO CHECK
             created = ::Invoice.create(
               available_date: available_date,

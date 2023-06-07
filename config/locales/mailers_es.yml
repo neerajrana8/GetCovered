@@ -176,6 +176,8 @@ es:
       please_click: "Por favor, click abajo para terminar de activar su cuenta."
       the_gc_portal_will_allow: "El portal de Get Covered le permitirá actualizar su información personal, configuraciones y administrar sus documentos de seguro."
   policy_mailer:
+    out_of_compliance:
+      subject: 'Estás fuera de cumplimiento'
     policy_expiring_soon:
       subject: "Your insurance will expire soon!"
       content: "Hello, %{first_name}!\n

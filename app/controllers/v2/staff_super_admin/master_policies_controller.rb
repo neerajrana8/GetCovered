@@ -51,9 +51,45 @@ module V2
         render @master_policy.as_json(include: :policy_coverages)
       end
 
+      def upload_coverage_list
+        @account = Account.find(params["account_id"])
+        @file = Utilities::S3Uploader.call(params["file"], build_upload_file_name(@account.slug), '/eois/qbe-specialty/master/', nil)
+
+        job_config = {
+          document: @file,
+          account: @account.title,
+          tpp: params["tpp"],
+          tpp_limit: params["tpp_limit"],
+          tpp_aggregate: params["tpp_aggregate"],
+          tpl: params["tpl"],
+          tpl_limit: params["tpl_limit"],
+          tpl_aggregate: params["tpl_aggregate"]
+        }
+
+        CarrierQbe::ProcessExternalMasterPolicyUploadJob.perform_later(job_config)
+
+        render json: { success: true, file_url: @file }.to_json, status: :ok
+      end
+
       def set_policy
         @master_policy = Policy.find_by(policy_type_id: PolicyType::MASTER_IDS, id: params[:id])
         render(json: { error: :not_found, message: 'Master policy not found' }, status: :not_found) if @master_policy.blank?
+      end
+
+      private
+
+      def upload_coverage_list_params
+        params.require(:coverage_list).permit(:account_id, :tpp, :tpp_limit, :tpp_aggregate, :tpl, :tpl_limit,
+                                              :tpl_aggregate, :file)
+      end
+
+      def build_upload_file_name(account_slug)
+        [
+          'master-list',
+          account_slug,
+          DateTime.current.strftime('%Y%m%d%H%M%S'),
+          'csv'
+        ].join('.')
       end
     end
   end
