@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 class AddSuperAdminRole < ActiveRecord::Migration[6.1]
-  def change
+  def up
     staffs = Staff.where(role: 'super_admin')
     staffs.each do |staff|
       if staff.staff_roles.where(role: 'super_admin').count === 0
@@ -8,5 +10,9 @@ class AddSuperAdminRole < ActiveRecord::Migration[6.1]
         GlobalPermission.create(ownerable: staff_role, permissions: GlobalPermission::AVAILABLE_PERMISSIONS)
       end
     end
+  end
+
+  def down
+    raise ActiveRecord::IrreversibleMigration
   end
 end
